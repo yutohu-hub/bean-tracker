@@ -56,6 +56,22 @@ roasters:
     country: JP
     url: https://rec-coffee.com
     currency: JPY
+  - name: 27 Coffee Roasters
+    country: JP
+    url: https://27coffee.jp
+    currency: JPY
+  - name: Cafe de L'Ambre
+    country: JP
+    url: https://cafedelambre.com
+    currency: JPY
+  - name: Overview Coffee Japan
+    country: JP
+    url: https://overviewcoffee.jp
+    currency: JPY
+  - name: Verve Coffee Japan
+    country: JP
+    url: https://www.vervecoffee.jp
+    currency: JPY
 
   # ---- 北欧 ----
   - name: Tim Wendelboe
