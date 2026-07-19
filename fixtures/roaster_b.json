@@ -1,0 +1,7 @@
+{
+  "_roaster": {"name": "Nordic Test Coffee", "country": "NO", "url": "https://example-b.com", "currency": "USD"},
+  "products": [
+    {"handle": "el-suelo", "title": "Colombia El Suelo Washed", "tags": ["washed"],
+     "variants": [{"price": "18.00", "grams": 250, "available": true}]}
+  ]
+}

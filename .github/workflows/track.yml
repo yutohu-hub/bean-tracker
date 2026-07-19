@@ -1,0 +1,39 @@
+name: Bean Tracker 巡回
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"   # 6時間ごと（UTC）
+  workflow_dispatch:         # 手動実行ボタン
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crawl
+  cancel-in-progress: false
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 依存インストール
+        run: pip install -r requirements.txt
+
+      - name: 巡回と差分検知
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python main.py
+
+      - name: 結果をコミット
+        run: |
+          git config user.name "bean-tracker-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/ docs/
+          git diff --cached --quiet || git commit -m "crawl: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push

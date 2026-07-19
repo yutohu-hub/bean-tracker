@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEAN TRACKER — 世界の豆・再入荷トラッカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F6F5F2;--surface:#fff;--ink:#1C1B18;--ink-2:#6C685E;--line:#E5E2DA;
+--green:#1F7A45;--green-bg:#E7F3EC;--amber:#8A5A00;--amber-bg:#FBF1DC;
+--red:#9C2B2B;--red-bg:#F8E9E9;--accent:#2E4A8A;--accent-bg:#EAEFFA;
+--mono:"IBM Plex Mono",monospace;--sans:"Zen Kaku Gothic New",sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
+a{color:inherit;text-decoration:none}
+.topbar{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.topbar-inner{max-width:1120px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{font-family:var(--mono);font-weight:600;font-size:15px}.logo span{color:var(--green)}
+.searchbox{flex:1;min-width:180px}
+.searchbox input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:6px;font-size:13px;background:var(--bg)}
+.searchbox input:focus{outline:2px solid var(--accent);outline-offset:-1px;background:#fff}
+.head{max-width:1120px;margin:0 auto;padding:24px 20px 4px}
+h1{font-size:21px;font-weight:700}
+.statline{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin-top:10px;display:flex;gap:18px;flex-wrap:wrap}
+.statline b{color:var(--ink)}
+.tabs{max-width:1120px;margin:0 auto;padding:14px 20px 0;display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tab{font-size:13px;padding:8px 16px;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;cursor:pointer;background:none;color:var(--ink-2);font-family:var(--sans)}
+.tab.active{background:var(--surface);border-color:var(--line);color:var(--ink);font-weight:700}
+.tab .n{font-family:var(--mono);font-size:11px;margin-left:5px;color:var(--green)}
+.controls{max-width:1120px;margin:0 auto;padding:12px 20px 4px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select{font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-family:var(--sans)}
+.result-count{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin-left:auto}
+.list{max-width:1120px;margin:0 auto;padding:12px 20px 40px;display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px;transition:.15s}
+.item:hover{border-color:#C9C4B8;box-shadow:0 2px 10px rgba(28,27,24,.05)}
+.item-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.pname{font-weight:700;font-size:14.5px;line-height:1.45}
+.roaster-line{font-size:12px;color:var(--ink-2);margin-top:2px}
+.flag{font-family:var(--mono);font-size:10.5px;border:1px solid var(--line);border-radius:3px;padding:0 5px;margin-right:5px}
+.badge{flex-shrink:0;font-family:var(--mono);font-size:10.5px;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.badge.stock{background:var(--green-bg);color:var(--green)}
+.badge.new{background:var(--accent-bg);color:var(--accent)}
+.badge.out{background:var(--red-bg);color:var(--red)}
+.event-line{font-family:var(--mono);font-size:11px;border-radius:4px;padding:4px 8px}
+.event-line.restock{color:var(--amber);background:var(--amber-bg)}
+.event-line.new{color:var(--accent);background:var(--accent-bg)}
+.event-line.soldout{color:var(--red);background:var(--red-bg)}
+.price-row{display:flex;align-items:baseline;gap:8px;font-family:var(--mono)}
+.price{font-size:16px;font-weight:600}.per{font-size:11.5px;color:var(--ink-2)}
+.meta{display:grid;grid-template-columns:56px 1fr;gap:2px 10px;font-size:12px;border-top:1px dashed var(--line);padding-top:8px}
+.meta dt{color:var(--ink-2);font-family:var(--mono);font-size:11px}
+.empty{grid-column:1/-1;text-align:center;padding:64px 20px;color:var(--ink-2)}
+footer{max-width:1120px;margin:0 auto;padding:16px 20px 48px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--ink-2);line-height:1.9}
+.fail{color:var(--red)}
+@media(max-width:640px){.list{grid-template-columns:1fr;padding:10px 14px 32px}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <div class="logo">BEAN<span>TRACKER</span></div>
+  <div class="searchbox"><input id="search" type="search" placeholder="豆・ロースター・産地で検索…" aria-label="検索"></div>
+</div></div>
+
+<div class="head">
+  <h1>世界の豆・再入荷トラッカー</h1>
+  <div class="statline">
+    <span>収録 <b id="s-products">–</b> 商品</span>
+    <span>在庫あり <b id="s-stock">–</b></span>
+    <span>ロースター <b id="s-roasters">–</b> 軒</span>
+    <span>最終巡回 <b id="s-generated">–</b></span>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="new">新着<span class="n" id="n-new"></span></button>
+  <button class="tab" data-tab="restock">再入荷<span class="n" id="n-restock"></span></button>
+  <button class="tab" data-tab="soldout">売り切れ<span class="n" id="n-soldout"></span></button>
+  <button class="tab" data-tab="all">在庫一覧<span class="n" id="n-all"></span></button>
+</div>
+
+<div class="controls">
+  <select id="f-roaster"><option value="all">全ロースター</option></select>
+  <select id="f-origin"><option value="all">全産地</option></select>
+  <select id="f-sort">
+    <option value="time">新しい順</option>
+    <option value="cheap">100g単価が安い順</option>
+    <option value="pricey">100g単価が高い順</option>
+  </select>
+  <span class="result-count"><span id="count">0</span> 件</span>
+</div>
+
+<main class="list" id="list"></main>
+
+<footer id="foot">
+  価格は各ストアの通貨のまま表示（換算なし）。データは各ロースター公式ECの公開情報。<br>
+  <span id="fail-line"></span>
+</footer>
+
+<script>
+let DB=null, tab="new";
+const fmtTs=t=>{const d=new Date(t*1000);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`};
+const money=(p,c)=>{const sym={USD:"$",CAD:"C$",AUD:"A$",NZD:"NZ$",GBP:"£",EUR:"€",JPY:"¥",DKK:"kr ",SEK:"kr ",NOK:"kr "}[c]||c+" ";return c==="JPY"?sym+Math.round(p).toLocaleString():sym+p.toFixed(2)};
+
+async function init(){
+  const res=await fetch("data.json");
+  DB=await res.json();
+  document.getElementById("s-products").textContent=DB.stats.products;
+  document.getElementById("s-stock").textContent=DB.stats.in_stock;
+  document.getElementById("s-roasters").textContent=DB.stats.roasters;
+  document.getElementById("s-generated").textContent=DB.generated;
+  if(DB.stats.failed_roasters?.length){
+    document.getElementById("fail-line").innerHTML=`<span class="fail">取得できなかった店（要調整）: ${DB.stats.failed_roasters.join(", ")}</span>`;
+  }
+  const ev=t=>DB.events.filter(e=>e.type===t).length;
+  document.getElementById("n-new").textContent=ev("new");
+  document.getElementById("n-restock").textContent=ev("restock");
+  document.getElementById("n-soldout").textContent=ev("soldout");
+  document.getElementById("n-all").textContent=DB.stats.in_stock;
+
+  const rs=[...new Set(DB.products.map(p=>p.roaster))].sort();
+  const os=[...new Set(DB.products.map(p=>p.origin).filter(Boolean))].sort();
+  for(const r of rs){const o=document.createElement("option");o.value=r;o.textContent=r;fR.appendChild(o)}
+  for(const g of os){const o=document.createElement("option");o.value=g;o.textContent=g;fO.appendChild(o)}
+  render();
+}
+
+const fR=document.getElementById("f-roaster"),fO=document.getElementById("f-origin"),
+      fS=document.getElementById("f-sort"),q=document.getElementById("search"),
+      list=document.getElementById("list");
+
+function rows(){
+  if(tab==="all") return DB.products.filter(p=>p.available).map(p=>({...p,_ts:p.last_seen,_ev:null}));
+  return DB.events.filter(e=>e.type===tab).map(e=>({...e,_ts:e.ts,_ev:e}));
+}
+
+function render(){
+  if(!DB)return;
+  const term=q.value.trim().toLowerCase();
+  let items=rows().filter(p=>
+    (fR.value==="all"||p.roaster===fR.value)&&
+    (fO.value==="all"||p.origin===fO.value)&&
+    (!term||[p.title,p.roaster,p.origin,p.process,p.tags||""].join(" ").toLowerCase().includes(term)));
+  const s=fS.value;
+  items.sort((a,b)=>s==="cheap"?(a.per100??1e9)-(b.per100??1e9):s==="pricey"?(b.per100??-1)-(a.per100??-1):b._ts-a._ts);
+  document.getElementById("count").textContent=items.length;
+  if(!items.length){list.innerHTML=`<div class="empty">該当なし。フィルタを変えるか、次の巡回をお待ちを。</div>`;return}
+  list.innerHTML=items.slice(0,200).map(p=>{
+    const ev=p._ev;
+    let evLine="";
+    if(ev){
+      if(ev.type==="restock")evLine=`<div class="event-line restock">↻ 再入荷: ${fmtTs(ev.ts)}（約${Math.round(ev.oos_hours/24*10)/10}日ぶり）</div>`;
+      else if(ev.type==="new")evLine=`<div class="event-line new">⤴ 新着: ${fmtTs(ev.ts)}</div>`;
+      else evLine=`<div class="event-line soldout">✕ 売り切れ: ${fmtTs(ev.ts)}</div>`;
+    }
+    const badge=ev?.type==="soldout"||!p.available?`<span class="badge out">Sold Out</span>`
+      :ev?.type==="new"?`<span class="badge new">NEW</span>`:`<span class="badge stock">In Stock</span>`;
+    return `<a class="item" href="${p.url}" target="_blank" rel="noopener">
+      <div class="item-head"><div>
+        <div class="pname">${p.title}</div>
+        <div class="roaster-line"><span class="flag">${p.country}</span>${p.roaster}</div>
+      </div>${badge}</div>
+      ${evLine}
+      <div class="price-row"><span class="price">${money(p.price,p.currency)}</span>
+        <span class="per">${p.grams?`/ ${p.grams}g`:""}${p.per100?` ・ ${money(p.per100,p.currency)}/100g`:""}</span></div>
+      <dl class="meta">
+        ${p.origin?`<dt>産地</dt><dd>${p.origin}</dd>`:""}
+        ${p.process?`<dt>精製</dt><dd>${p.process}</dd>`:""}
+      </dl></a>`;
+  }).join("");
+}
+
+document.getElementById("tabs").addEventListener("click",e=>{
+  const b=e.target.closest(".tab");if(!b)return;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  b.classList.add("active");tab=b.dataset.tab;render();
+});
+[fR,fO,fS].forEach(el=>el.addEventListener("change",render));
+q.addEventListener("input",render);
+init();
+</script>
+</body>
+</html>

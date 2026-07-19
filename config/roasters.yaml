@@ -1,0 +1,164 @@
+# ============================================================
+# 巡回対象ロースター一覧
+# platform: auto  → Shopify → WooCommerce の順に自動判定
+# ここに1ブロック追記するだけで巡回対象が増える
+# ============================================================
+
+settings:
+  min_oos_hours: 12      # これ以上欠品していた商品が復活したら「再入荷」と判定
+  max_pages: 4           # 1店舗あたり最大取得ページ数（250商品/ページ）
+  timeout_sec: 20
+  concurrency: 8
+
+roasters:
+  # ---- 日本 ----
+  - name: Apollon's Gold
+    country: JP
+    url: https://shop.apollons-gold.com
+    currency: USD
+  - name: Coffee County
+    country: JP
+    url: https://coffeecounty.cc
+    currency: JPY
+  - name: Onibus Coffee
+    country: JP
+    url: https://onibuscoffee.com
+    currency: JPY
+  - name: Fuglen Coffee Roasters
+    country: JP
+    url: https://fuglencoffee.jp
+    currency: JPY
+  - name: Kurasu
+    country: JP
+    url: https://kurasu.kyoto
+    currency: JPY
+
+  # ---- 北欧 ----
+  - name: Tim Wendelboe
+    country: NO
+    url: https://timwendelboe.no
+    currency: USD
+  - name: Coffee Collective
+    country: DK
+    url: https://coffeecollective.dk
+    currency: DKK
+  - name: La Cabra
+    country: DK
+    url: https://lacabra.dk
+    currency: EUR
+  - name: April Coffee Roasters
+    country: DK
+    url: https://aprilcoffeeroasters.com
+    currency: EUR
+  - name: Drop Coffee
+    country: SE
+    url: https://dropcoffee.com
+    currency: SEK
+
+  # ---- 欧州 ----
+  - name: Square Mile Coffee
+    country: UK
+    url: https://shop.squaremilecoffee.com
+    currency: GBP
+  - name: Crankhouse Coffee
+    country: UK
+    url: https://www.crankhousecoffee.co.uk
+    currency: GBP
+  - name: The Barn
+    country: DE
+    url: https://thebarn.de
+    currency: EUR
+  - name: Friedhats
+    country: NL
+    url: https://friedhats.com
+    currency: EUR
+  - name: Manhattan Coffee Roasters
+    country: NL
+    url: https://manhattancoffeeroasters.com
+    currency: EUR
+  - name: Gardelli Specialty Coffees
+    country: IT
+    url: https://shop.gardellicoffee.com
+    currency: EUR
+
+  # ---- 北米 ----
+  - name: George Howell Coffee
+    country: US
+    url: https://georgehowellcoffee.com
+    currency: USD
+  - name: Onyx Coffee Lab
+    country: US
+    url: https://onyxcoffeelab.com
+    currency: USD
+  - name: Heart Coffee Roasters
+    country: US
+    url: https://heartroasters.com
+    currency: USD
+  - name: Sey Coffee
+    country: US
+    url: https://sey.coffee
+    currency: USD
+  - name: Hydrangea
+    country: US
+    url: https://hydrangea.coffee
+    currency: USD
+  - name: Dayglow Coffee
+    country: US
+    url: https://dayglow.coffee
+    currency: USD
+  - name: Olympia Coffee Roasting
+    country: US
+    url: https://www.olympiacoffee.com
+    currency: USD
+  - name: Luna
+    country: US
+    url: https://enjoylunacoffee.com
+    currency: USD
+  - name: September
+    country: CA
+    url: https://september.coffee
+    currency: CAD
+  - name: Eight Ounce Coffee
+    country: CA
+    url: https://eightouncecoffee.com
+    currency: CAD
+  - name: Revolver
+    country: CA
+    url: https://revolvercoffee.ca
+    currency: CAD
+
+  # ---- オセアニア ----
+  - name: Single O
+    country: AU
+    url: https://singleo.com.au
+    currency: AUD
+  - name: Proud Mary Coffee
+    country: AU
+    url: https://proudmarycoffee.com.au
+    currency: AUD
+  - name: Market Lane Coffee
+    country: AU
+    url: https://shop.marketlane.com.au
+    currency: AUD
+  - name: ONA Coffee
+    country: AU
+    url: https://onacoffee.com.au
+    currency: AUD
+  - name: Slow Coffee
+    country: NZ
+    url: https://slowcoffee.co.nz
+    currency: NZD
+
+  # ---- その他 ----
+  - name: One Half Coffee
+    country: MY
+    url: https://onehalfcoffee.com
+    currency: USD
+  - name: Wes Ngopi
+    country: MY
+    url: https://wes-ngopi.com
+    currency: USD
+  - name: Atmans Coffee
+    country: ES
+    url: https://atmanscoffee.com
+    currency: EUR
