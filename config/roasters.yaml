@@ -62,6 +62,18 @@ roasters:
     country: FI
     url: https://goodlifecoffee.fi
     currency: EUR
+  - name: Coffea Circulor
+    country: SE
+    url: https://coffeacirculor.com
+    currency: SEK
+  - name: Koppi
+    country: SE
+    url: https://koppi.se
+    currency: SEK
+  - name: Prolog Coffee
+    country: DK
+    url: https://prologcoffee.com
+    currency: DKK
 
   # ---- 欧州 ----
   - name: Square Mile Coffee
@@ -120,6 +132,62 @@ roasters:
     country: UK
     url: https://climpsonandsons.com
     currency: GBP
+  - name: Girls Who Grind
+    country: UK
+    url: https://girlswhogrindcoffee.com
+    currency: GBP
+  - name: Round Hill Roastery
+    country: UK
+    url: https://roundhillroastery.com
+    currency: GBP
+  - name: Origin Coffee
+    country: UK
+    url: https://www.origincoffee.co.uk
+    currency: GBP
+  - name: Coaltown Coffee
+    country: UK
+    url: https://coaltowncoffee.co.uk
+    currency: GBP
+  - name: Dark Arts Coffee
+    country: UK
+    url: https://darkartscoffee.co.uk
+    currency: GBP
+  - name: Batch Coffee
+    country: UK
+    url: https://www.batchcoffee.co.uk
+    currency: GBP
+  - name: Colonna Coffee
+    country: UK
+    url: https://colonnacoffee.com
+    currency: GBP
+  - name: Right Side Coffee
+    country: ES
+    url: https://rightsidecoffee.com
+    currency: EUR
+  - name: Cafes El Magnifico
+    country: ES
+    url: https://cafeselmagnifico.com
+    currency: EUR
+  - name: Kaffemik
+    country: AT
+    url: https://www.kaffemik.at
+    currency: EUR
+  - name: Bonanza Coffee
+    country: DE
+    url: https://www.bonanzacoffee.de
+    currency: EUR
+  - name: Five Elephant
+    country: DE
+    url: https://fiveelephant.com
+    currency: EUR
+  - name: 19grams
+    country: DE
+    url: https://www.19grams.coffee
+    currency: EUR
+  - name: Elbgold
+    country: DE
+    url: https://www.elbgold.com
+    currency: EUR
 
   # ---- 北米 ----
   - name: George Howell Coffee
@@ -186,6 +254,66 @@ roasters:
     country: CA
     url: https://philsebastian.com
     currency: CAD
+  - name: Verve Coffee Roasters
+    country: US
+    url: https://www.vervecoffee.com
+    currency: USD
+  - name: Counter Culture Coffee
+    country: US
+    url: https://counterculturecoffee.com
+    currency: USD
+  - name: Intelligentsia Coffee
+    country: US
+    url: https://www.intelligentsia.com
+    currency: USD
+  - name: Ruby Coffee Roasters
+    country: US
+    url: https://rubycoffeeroasters.com
+    currency: USD
+  - name: Madcap Coffee
+    country: US
+    url: https://madcapcoffee.com
+    currency: USD
+  - name: Kickapoo Coffee
+    country: US
+    url: https://kickapoocoffee.com
+    currency: USD
+  - name: JBC Coffee Roasters
+    country: US
+    url: https://jbccoffeeroasters.com
+    currency: USD
+  - name: Methodical Coffee
+    country: US
+    url: https://methodicalcoffee.com
+    currency: USD
+  - name: Broadsheet Coffee
+    country: US
+    url: https://broadsheetcoffee.com
+    currency: USD
+  - name: Cat and Cloud Coffee
+    country: US
+    url: https://catandcloud.com
+    currency: USD
+  - name: Greater Goods Coffee
+    country: US
+    url: https://greatergoodsroasting.com
+    currency: USD
+  - name: Monogram Coffee
+    country: CA
+    url: https://monogramcoffee.com
+    currency: CAD
+  - name: Rogue Wave Coffee
+    country: CA
+    url: https://roguewavecoffee.ca
+    currency: CAD
+  - name: Subtext Coffee
+    country: CA
+    url: https://www.subtext.coffee
+    currency: CAD
+  - name: Bows and Arrows
+    country: CA
+    url: https://bowsandarrowscoffee.com
+    currency: CAD
 
   # ---- オセアニア ----
   - name: Single O
@@ -227,6 +355,26 @@ roasters:
   - name: Coffee Supreme
     country: NZ
     url: https://coffeesupreme.com
+    currency: NZD
+  - name: Padre Coffee
+    country: AU
+    url: https://www.padrecoffee.com.au
+    currency: AUD
+  - name: Wood and Co
+    country: AU
+    url: https://www.woodandcocoffee.com.au
+    currency: AUD
+  - name: Industry Beans
+    country: AU
+    url: https://industrybeans.com
+    currency: AUD
+  - name: Flight Coffee
+    country: NZ
+    url: https://flightcoffee.co.nz
+    currency: NZD
+  - name: Kokako
+    country: NZ
+    url: https://www.kokako.co.nz
     currency: NZD
 
   # ---- その他 ----
