@@ -2,6 +2,7 @@
 from __future__ import annotations
 import asyncio
 import json
+import random
 import re
 from dataclasses import dataclass, asdict
 
@@ -67,17 +68,30 @@ def _grams_from_text(text: str) -> int:
     return int(val * 1000) if m.group(2) == "kg" else int(val)
 
 
+# Cloudflare等のレート制限で一時的に5xxを返す店が多いため、リトライで拾う。
+async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
+                          retries: int = 3) -> httpx.Response | None:
+    for attempt in range(retries):
+        try:
+            resp = await client.get(url, params=params)
+        except httpx.HTTPError:
+            resp = None
+        else:
+            if resp.status_code == 200 or resp.status_code == 404:
+                return resp
+        if attempt < retries - 1:
+            await asyncio.sleep(1.5 * (2 ** attempt) + random.uniform(0, 0.5))
+    return resp
+
+
 # ---------------- Shopify ----------------
 
 async def _fetch_shopify(client: httpx.AsyncClient, r: dict, max_pages: int) -> list[Product] | None:
     base = r["url"].rstrip("/")
     products: list[Product] = []
     for page in range(1, max_pages + 1):
-        try:
-            resp = await client.get(f"{base}/products.json", params={"limit": 250, "page": page})
-        except httpx.HTTPError:
-            return None if page == 1 else products
-        if resp.status_code != 200:
+        resp = await _get_with_retry(client, f"{base}/products.json", {"limit": 250, "page": page})
+        if resp is None or resp.status_code != 200:
             return None if page == 1 else products
         try:
             batch = resp.json().get("products", [])
@@ -128,12 +142,9 @@ async def _fetch_woo(client: httpx.AsyncClient, r: dict, max_pages: int) -> list
     base = r["url"].rstrip("/")
     products: list[Product] = []
     for page in range(1, max_pages + 1):
-        try:
-            resp = await client.get(f"{base}/wp-json/wc/store/v1/products",
-                                    params={"per_page": 100, "page": page})
-        except httpx.HTTPError:
-            return None if page == 1 else products
-        if resp.status_code != 200:
+        resp = await _get_with_retry(client, f"{base}/wp-json/wc/store/v1/products",
+                                     {"per_page": 100, "page": page})
+        if resp is None or resp.status_code != 200:
             return None if page == 1 else products
         try:
             batch = resp.json()

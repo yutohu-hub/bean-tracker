@@ -138,7 +138,7 @@ roasters:
     currency: AUD
   - name: Market Lane Coffee
     country: AU
-    url: https://shop.marketlane.com.au
+    url: https://marketlane.com.au
     currency: AUD
   - name: ONA Coffee
     country: AU
