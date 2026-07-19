@@ -114,6 +114,14 @@ roasters:
     country: DK
     url: https://prologcoffee.com
     currency: DKK
+  - name: Da Matteo
+    country: SE
+    url: https://damatteo.se
+    currency: SEK
+  - name: Johan and Nystrom
+    country: SE
+    url: https://johanochnystrom.se
+    currency: SEK
 
   # ---- 欧州 ----
   - name: Square Mile Coffee
@@ -256,6 +264,10 @@ roasters:
     country: CH
     url: https://www.stollkaffee.ch
     currency: CHF
+  - name: Coffee Lab Tbilisi
+    country: GE
+    url: https://coffeelab.ge
+    currency: GEL
 
   # ---- 北米 ----
   - name: George Howell Coffee
@@ -272,7 +284,7 @@ roasters:
     currency: USD
   - name: Sey Coffee
     country: US
-    url: https://sey.coffee
+    url: https://www.seycoffee.com
     currency: USD
   - name: Hydrangea
     country: US
@@ -454,6 +466,26 @@ roasters:
     country: US
     url: https://regaliacoffee.com
     currency: USD
+  - name: Andytown Coffee
+    country: US
+    url: https://andytownsf.com
+    currency: USD
+  - name: Variety Coffee
+    country: US
+    url: https://www.varietycoffeeroasters.com
+    currency: USD
+  - name: Parlor Coffee
+    country: US
+    url: https://www.parlorcoffee.com
+    currency: USD
+  - name: Detour Coffee
+    country: CA
+    url: https://detourcoffee.com
+    currency: CAD
+  - name: Propeller Coffee
+    country: CA
+    url: https://propellercoffee.com
+    currency: CAD
 
   # ---- オセアニア ----
   - name: Single O
@@ -512,6 +544,14 @@ roasters:
     country: NZ
     url: https://flightcoffee.co.nz
     currency: NZD
+  - name: Veneziano Coffee
+    country: AU
+    url: https://venezianocoffee.com.au
+    currency: AUD
+  - name: Eight Thirty Coffee
+    country: NZ
+    url: https://www.eighthirty.com
+    currency: NZD
   - name: Kokako
     country: NZ
     url: https://www.kokako.co.nz
@@ -540,6 +580,16 @@ roasters:
     country: MX
     url: https://cafeconjiribilla.com
     currency: MXN
+
+  # ---- 中東 ----
+  - name: RAW Coffee Company
+    country: AE
+    url: https://rawcoffeecompany.com
+    currency: AED
+  - name: Cafe Younes
+    country: LB
+    url: https://cafeyounes.com
+    currency: USD
 
   # ---- アジア ----
   - name: Nylon Coffee
