@@ -54,6 +54,14 @@ roasters:
     country: SE
     url: https://dropcoffee.com
     currency: SEK
+  - name: Kaffa Roastery
+    country: FI
+    url: https://kaffaroastery.fi
+    currency: EUR
+  - name: Good Life Coffee
+    country: FI
+    url: https://goodlifecoffee.fi
+    currency: EUR
 
   # ---- 欧州 ----
   - name: Square Mile Coffee
@@ -80,6 +88,38 @@ roasters:
     country: IT
     url: https://shop.gardellicoffee.com
     currency: EUR
+  - name: 3fe Coffee
+    country: IE
+    url: https://3fe.com
+    currency: EUR
+  - name: Belleville Brulerie
+    country: FR
+    url: https://www.cafesbelleville.com
+    currency: EUR
+  - name: Coutume Cafe
+    country: FR
+    url: https://www.coutumecafe.com
+    currency: EUR
+  - name: Nomad Coffee Roasters
+    country: ES
+    url: https://nomadroasters.com
+    currency: EUR
+  - name: Assembly Coffee
+    country: UK
+    url: https://assemblycoffee.co.uk
+    currency: GBP
+  - name: Volcano Coffee Works
+    country: UK
+    url: https://volcanocoffeeworks.com
+    currency: GBP
+  - name: Workshop Coffee
+    country: UK
+    url: https://workshopcoffee.com
+    currency: GBP
+  - name: Climpson and Sons
+    country: UK
+    url: https://climpsonandsons.com
+    currency: GBP
 
   # ---- 北米 ----
   - name: George Howell Coffee
@@ -114,6 +154,18 @@ roasters:
     country: US
     url: https://enjoylunacoffee.com
     currency: USD
+  - name: Sightglass Coffee
+    country: US
+    url: https://sightglasscoffee.com
+    currency: USD
+  - name: Black and White Coffee Roasters
+    country: US
+    url: https://blackwhiteroasters.com
+    currency: USD
+  - name: Passenger Coffee
+    country: US
+    url: https://passengercoffee.com
+    currency: USD
   - name: September
     country: CA
     url: https://september.coffee
@@ -125,6 +177,14 @@ roasters:
   - name: Revolver
     country: CA
     url: https://revolvercoffee.ca
+    currency: CAD
+  - name: Pilot Coffee Roasters
+    country: CA
+    url: https://pilotcoffeeroasters.com
+    currency: CAD
+  - name: Phil and Sebastian Coffee
+    country: CA
+    url: https://philsebastian.com
     currency: CAD
 
   # ---- オセアニア ----
@@ -148,6 +208,26 @@ roasters:
     country: NZ
     url: https://slowcoffee.co.nz
     currency: NZD
+  - name: Seven Seeds
+    country: AU
+    url: https://sevenseeds.com.au
+    currency: AUD
+  - name: St Ali
+    country: AU
+    url: https://stali.com.au
+    currency: AUD
+  - name: Code Black Coffee
+    country: AU
+    url: https://codeblackcoffee.com.au
+    currency: AUD
+  - name: Axil Coffee Roasters
+    country: AU
+    url: https://axilcoffee.com.au
+    currency: AUD
+  - name: Coffee Supreme
+    country: NZ
+    url: https://coffeesupreme.com
+    currency: NZD
 
   # ---- その他 ----
   - name: One Half Coffee
@@ -162,3 +242,7 @@ roasters:
     country: ES
     url: https://atmanscoffee.com
     currency: EUR
+  - name: Rosetta Roastery
+    country: ZA
+    url: https://rosettaroastery.com
+    currency: ZAR
