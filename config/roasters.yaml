@@ -228,6 +228,34 @@ roasters:
     country: DE
     url: https://www.elbgold.com
     currency: EUR
+  - name: North Star Coffee
+    country: UK
+    url: https://www.northstarroast.com
+    currency: GBP
+  - name: Grumpy Mule
+    country: UK
+    url: https://www.grumpymule.co.uk
+    currency: GBP
+  - name: Rave Coffee
+    country: UK
+    url: https://ravecoffee.co.uk
+    currency: GBP
+  - name: Two Chimps Coffee
+    country: UK
+    url: https://twochimpscoffee.com
+    currency: GBP
+  - name: Father Carpenter
+    country: NL
+    url: https://fathercarpenter.com
+    currency: EUR
+  - name: Bocca Coffee
+    country: NL
+    url: https://bocca.nl
+    currency: EUR
+  - name: Stoll Kaffee
+    country: CH
+    url: https://www.stollkaffee.ch
+    currency: CHF
 
   # ---- 北米 ----
   - name: George Howell Coffee
@@ -354,6 +382,78 @@ roasters:
     country: CA
     url: https://bowsandarrowscoffee.com
     currency: CAD
+  - name: Stumptown Coffee
+    country: US
+    url: https://www.stumptowncoffee.com
+    currency: USD
+  - name: Equator Coffees
+    country: US
+    url: https://www.equatorcoffees.com
+    currency: USD
+  - name: Wrecking Ball Coffee
+    country: US
+    url: https://www.wreckingballcoffee.com
+    currency: USD
+  - name: Temple Coffee
+    country: US
+    url: https://templecoffee.com
+    currency: USD
+  - name: Klatch Coffee
+    country: US
+    url: https://klatchroasting.com
+    currency: USD
+  - name: Bird Rock Coffee
+    country: US
+    url: https://www.birdrockcoffee.com
+    currency: USD
+  - name: Coffee Manufactory
+    country: US
+    url: https://www.coffeemanufactory.com
+    currency: USD
+  - name: Groundwork Coffee
+    country: US
+    url: https://www.groundworkcoffee.com
+    currency: USD
+  - name: Kuma Coffee
+    country: US
+    url: https://www.kumacoffee.com
+    currency: USD
+  - name: Tandem Coffee
+    country: US
+    url: https://www.tandemcoffee.com
+    currency: USD
+  - name: Vigilante Coffee
+    country: US
+    url: https://www.vigilantecoffee.com
+    currency: USD
+  - name: Ceremony Coffee
+    country: US
+    url: https://ceremonycoffee.com
+    currency: USD
+  - name: Devocion
+    country: US
+    url: https://www.devocion.com
+    currency: USD
+  - name: Partners Coffee
+    country: US
+    url: https://www.partnerscoffee.com
+    currency: USD
+  - name: Joe Coffee
+    country: US
+    url: https://www.joecoffeecompany.com
+    currency: USD
+  - name: Mother Tongue Coffee
+    country: US
+    url: https://mothertongue.coffee
+    currency: USD
+  - name: Case Study Coffee
+    country: US
+    url: https://www.casestudycoffee.com
+    currency: USD
+  - name: Regalia Coffee
+    country: US
+    url: https://regaliacoffee.com
+    currency: USD
 
   # ---- オセアニア ----
   - name: Single O
@@ -434,6 +534,12 @@ roasters:
     country: ZA
     url: https://rosettaroastery.com
     currency: ZAR
+
+  # ---- 中南米 ----
+  - name: Cafe con Jiribilla
+    country: MX
+    url: https://cafeconjiribilla.com
+    currency: MXN
 
   # ---- アジア ----
   - name: Nylon Coffee
