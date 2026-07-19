@@ -122,6 +122,10 @@ roasters:
     country: SE
     url: https://johanochnystrom.se
     currency: SEK
+  - name: Reykjavik Roasters
+    country: IS
+    url: https://reykjavikroasters.is
+    currency: ISK
 
   # ---- 欧州 ----
   - name: Square Mile Coffee
@@ -235,6 +239,46 @@ roasters:
   - name: Elbgold
     country: DE
     url: https://www.elbgold.com
+    currency: EUR
+  - name: Fjord Coffee
+    country: DE
+    url: https://fjord-coffee.de
+    currency: EUR
+  - name: Father's Coffee
+    country: PL
+    url: https://father.coffee
+    currency: PLN
+  - name: Coffeeplant
+    country: PL
+    url: https://coffeeplant.pl
+    currency: PLN
+  - name: Java Coffee
+    country: PL
+    url: https://javacoffee.pl
+    currency: PLN
+  - name: Fabrica Coffee
+    country: PT
+    url: https://fabricacoffeeroasters.com
+    currency: EUR
+  - name: Kima Coffee
+    country: ES
+    url: https://kimacoffee.com
+    currency: EUR
+  - name: Syra Coffee
+    country: ES
+    url: https://syra.coffee
+    currency: EUR
+  - name: OR Coffee
+    country: BE
+    url: https://www.orcoffee.be
+    currency: EUR
+  - name: Mok Coffee
+    country: BE
+    url: https://mokcoffee.be
+    currency: EUR
+  - name: Caffenation
+    country: BE
+    url: https://caffenation.be
     currency: EUR
   - name: North Star Coffee
     country: UK
@@ -466,6 +510,10 @@ roasters:
     country: US
     url: https://regaliacoffee.com
     currency: USD
+  - name: Volcanica Coffee
+    country: US
+    url: https://volcanicacoffee.com
+    currency: USD
   - name: Andytown Coffee
     country: US
     url: https://andytownsf.com
@@ -580,6 +628,20 @@ roasters:
     country: MX
     url: https://cafeconjiribilla.com
     currency: MXN
+  - name: Cafe Britt
+    country: CR
+    url: https://www.cafebritt.com
+    currency: USD
+
+  # ---- アフリカ ----
+  - name: Question Coffee
+    country: RW
+    url: https://questioncoffee.com
+    currency: USD
+  - name: Kaldis Coffee
+    country: ET
+    url: https://kaldiscoffee.com
+    currency: USD
 
   # ---- 中東 ----
   - name: RAW Coffee Company
