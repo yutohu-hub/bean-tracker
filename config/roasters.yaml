@@ -444,6 +444,18 @@ roasters:
     country: HK
     url: https://cocoespresso.com
     currency: HKD
+  - name: Sensory Zero
+    country: HK
+    url: https://sensoryzero.com
+    currency: HKD
+  - name: Fineprint Coffee
+    country: HK
+    url: https://fineprintco.com
+    currency: HKD
+  - name: Rufous Coffee
+    country: TW
+    url: https://www.rufous.com.tw
+    currency: TWD
   - name: Blue Tokai Coffee
     country: IN
     url: https://bluetokaicoffee.com
