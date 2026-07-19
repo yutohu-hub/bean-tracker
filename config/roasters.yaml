@@ -32,10 +32,34 @@ roasters:
     country: JP
     url: https://kurasu.kyoto
     currency: JPY
+  - name: Glitch Coffee
+    country: JP
+    url: https://shop.glitchcoffee.com
+    currency: JPY
+  - name: Light Up Coffee
+    country: JP
+    url: https://lightupcoffee.com
+    currency: JPY
+  - name: Woodberry Coffee
+    country: JP
+    url: https://woodberrycoffee.com
+    currency: JPY
+  - name: Raw Sugar Roast
+    country: JP
+    url: https://rawsugarroast.com
+    currency: JPY
+  - name: Passage Coffee
+    country: JP
+    url: https://passagecoffee.com
+    currency: JPY
+  - name: Rec Coffee
+    country: JP
+    url: https://rec-coffee.com
+    currency: JPY
 
   # ---- 北欧 ----
   - name: Tim Wendelboe
-    country: NO
+    country: "NO"
     url: https://timwendelboe.no
     currency: USD
   - name: Coffee Collective
@@ -394,3 +418,37 @@ roasters:
     country: ZA
     url: https://rosettaroastery.com
     currency: ZAR
+
+  # ---- アジア ----
+  - name: Nylon Coffee
+    country: SG
+    url: https://nyloncoffee.sg
+    currency: SGD
+  - name: Alchemist Singapore
+    country: SG
+    url: https://alchemist.com.sg
+    currency: SGD
+  - name: Tiong Hoe Coffee
+    country: SG
+    url: https://tionghoe.com
+    currency: SGD
+  - name: Yardstick Coffee
+    country: PH
+    url: https://yardstickcoffee.com
+    currency: PHP
+  - name: Curve Coffee Roasters
+    country: HK
+    url: https://curvecoffeeroasters.com
+    currency: HKD
+  - name: Coco Espresso
+    country: HK
+    url: https://cocoespresso.com
+    currency: HKD
+  - name: Blue Tokai Coffee
+    country: IN
+    url: https://bluetokaicoffee.com
+    currency: INR
+  - name: Kapi Kottai
+    country: IN
+    url: https://kapikottai.coffee
+    currency: INR
