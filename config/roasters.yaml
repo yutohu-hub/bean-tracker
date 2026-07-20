@@ -32,10 +32,90 @@ roasters:
     country: JP
     url: https://kurasu.kyoto
     currency: JPY
+  - name: Glitch Coffee
+    country: JP
+    url: https://shop.glitchcoffee.com
+    currency: JPY
+  - name: Light Up Coffee
+    country: JP
+    url: https://lightupcoffee.com
+    currency: JPY
+  - name: Woodberry Coffee
+    country: JP
+    url: https://woodberrycoffee.com
+    currency: JPY
+  - name: Raw Sugar Roast
+    country: JP
+    url: https://rawsugarroast.com
+    currency: JPY
+  - name: Passage Coffee
+    country: JP
+    url: https://passagecoffee.com
+    currency: JPY
+  - name: Rec Coffee
+    country: JP
+    url: https://rec-coffee.com
+    currency: JPY
+  - name: 27 Coffee Roasters
+    country: JP
+    url: https://27coffee.jp
+    currency: JPY
+  - name: Cafe de L'Ambre
+    country: JP
+    url: https://cafedelambre.com
+    currency: JPY
+  - name: Overview Coffee Japan
+    country: JP
+    url: https://overviewcoffee.jp
+    currency: JPY
+  - name: Verve Coffee Japan
+    country: JP
+    url: https://www.vervecoffee.jp
+    currency: JPY
 
   # ---- 北欧 ----
+  - name: Kaffebox
+    country: "NO"
+    url: https://kaffebox.no
+    currency: NOK
+  - name: Lippe
+    country: "NO"
+    url: https://www.lippekaffe.no
+    currency: NOK
+  - name: Fjaera
+    country: "NO"
+    url: https://www.fjaera.no
+    currency: NOK
+  - name: Supreme Roastworks
+    country: "NO"
+    url: https://www.srw.no
+    currency: NOK
+  - name: Standout Coffee
+    country: "SE"
+    url: https://www.standoutcoffee.com
+    currency: SEK
+  - name: Lykke Kaffegardar
+    country: "SE"
+    url: https://lykkekaffe.se
+    currency: SEK
+  - name: Impact Roasters
+    country: "DK"
+    url: https://impactroasters.dk
+    currency: DKK
+  - name: Copenhagen Coffee Lab
+    country: "DK"
+    url: https://copenhagencoffeelab.com
+    currency: DKK
+  - name: Love Coffee
+    country: "SE"
+    url: https://lovecoffee.se
+    currency: SEK
+  - name: Cafetoria
+    country: "FI"
+    url: https://cafetoria.fi
+    currency: EUR
   - name: Tim Wendelboe
-    country: NO
+    country: "NO"
     url: https://timwendelboe.no
     currency: USD
   - name: Coffee Collective
@@ -54,8 +134,348 @@ roasters:
     country: SE
     url: https://dropcoffee.com
     currency: SEK
+  - name: Kaffa Roastery
+    country: FI
+    url: https://kaffaroastery.fi
+    currency: EUR
+  - name: Good Life Coffee
+    country: FI
+    url: https://goodlifecoffee.fi
+    currency: EUR
+  - name: Coffea Circulor
+    country: SE
+    url: https://coffeacirculor.com
+    currency: SEK
+  - name: Koppi
+    country: SE
+    url: https://koppi.se
+    currency: SEK
+  - name: Prolog Coffee
+    country: DK
+    url: https://prologcoffee.com
+    currency: DKK
+  - name: Da Matteo
+    country: SE
+    url: https://damatteo.se
+    currency: SEK
+  - name: Johan and Nystrom
+    country: SE
+    url: https://johanochnystrom.se
+    currency: SEK
+  - name: Reykjavik Roasters
+    country: IS
+    url: https://reykjavikroasters.is
+    currency: ISK
 
   # ---- 欧州 ----
+  - name: Kiss the Hippo
+    country: "UK"
+    url: https://kissthehippo.com
+    currency: GBP
+  - name: Clifton Coffee
+    country: "UK"
+    url: https://cliftoncoffee.co.uk
+    currency: GBP
+  - name: Hasbean
+    country: "UK"
+    url: https://www.hasbean.co.uk
+    currency: GBP
+  - name: Ozone Coffee
+    country: "UK"
+    url: https://ozonecoffee.co.uk
+    currency: GBP
+  - name: Caravan Coffee
+    country: "UK"
+    url: https://caravancoffeeroasters.co.uk
+    currency: GBP
+  - name: Union Coffee
+    country: "UK"
+    url: https://unionroasted.com
+    currency: GBP
+  - name: James Gourmet
+    country: "UK"
+    url: https://www.jamesgourmetcoffee.com
+    currency: GBP
+  - name: Modern Standard
+    country: "UK"
+    url: https://www.modernstandardcoffee.com
+    currency: GBP
+  - name: Coffee Compass
+    country: "UK"
+    url: https://www.coffeecompass.co.uk
+    currency: GBP
+  - name: Redemption Roasters
+    country: "UK"
+    url: https://redemptionroasters.com
+    currency: GBP
+  - name: Old Spike
+    country: "UK"
+    url: https://oldspikeroastery.com
+    currency: GBP
+  - name: The Gentlemen Baristas
+    country: "UK"
+    url: https://thegentlemenbaristas.com
+    currency: GBP
+  - name: Roasting House
+    country: "UK"
+    url: https://www.roastinghouse.co.uk
+    currency: GBP
+  - name: Butterworth
+    country: "UK"
+    url: https://butterworthandson.co.uk
+    currency: GBP
+  - name: Steampunk Coffee
+    country: "UK"
+    url: https://www.steampunkcoffee.co.uk
+    currency: GBP
+  - name: Perky Blenders
+    country: "UK"
+    url: https://perkyblenders.com
+    currency: GBP
+  - name: Ue Coffee
+    country: "UK"
+    url: https://www.uecoffeeroasters.com
+    currency: GBP
+  - name: Dark Woods
+    country: "UK"
+    url: https://www.darkwoodscoffee.co.uk
+    currency: GBP
+  - name: Foundry Coffee
+    country: "UK"
+    url: https://foundrycoffeeroasters.com
+    currency: GBP
+  - name: Quarter Horse
+    country: "UK"
+    url: https://quarterhorsecoffee.com
+    currency: GBP
+  - name: Manumit Coffee
+    country: "UK"
+    url: https://manumitcoffee.co.uk
+    currency: GBP
+  - name: ManCoCo
+    country: "UK"
+    url: https://www.mancoco.co.uk
+    currency: GBP
+  - name: Heart and Graft
+    country: "UK"
+    url: https://www.heartandgraft.co.uk
+    currency: GBP
+  - name: Cast Iron Coffee
+    country: "UK"
+    url: https://castironroasters.com
+    currency: GBP
+  - name: Triple Co Roast
+    country: "UK"
+    url: https://triplecoroast.com
+    currency: GBP
+  - name: Giraffe Coffee
+    country: "NL"
+    url: https://giraffecoffee.nl
+    currency: EUR
+  - name: Screaming Beans
+    country: "NL"
+    url: https://screamingbeans.nl
+    currency: EUR
+  - name: Coffeelab NL
+    country: "NL"
+    url: https://coffeelab.nl
+    currency: EUR
+  - name: Hoppenworth
+    country: "DE"
+    url: https://hoppenworth-ploch.de
+    currency: EUR
+  - name: Kaffeefabrik
+    country: "AT"
+    url: https://www.kaffeefabrik.at
+    currency: EUR
+  - name: Alt Wien
+    country: "AT"
+    url: https://www.altwien.at
+    currency: EUR
+  - name: Ineffable Coffee
+    country: "ES"
+    url: https://ineffablecoffee.com
+    currency: EUR
+  - name: Hola
+    country: "ES"
+    url: https://www.holacoffee.es
+    currency: EUR
+  - name: Ditta Artigianale
+    country: "IT"
+    url: https://dittaartigianale.it
+    currency: EUR
+  - name: Nomad Coffee Barcelona
+    country: "ES"
+    url: https://nomadcoffee.es
+    currency: EUR
+  - name: Cafes Guilis
+    country: "ES"
+    url: https://www.cafesguilis.com
+    currency: EUR
+  - name: Espressofabriek
+    country: "NL"
+    url: https://espressofabriek.nl
+    currency: EUR
+  - name: Small Batch UK
+    country: "UK"
+    url: https://smallbatchcoffee.co.uk
+    currency: GBP
+  - name: Ancoats Coffee
+    country: "UK"
+    url: https://ancoats-coffee.co.uk
+    currency: GBP
+  - name: Horsham Coffee
+    country: "UK"
+    url: https://www.horshamcoffeeroaster.co.uk
+    currency: GBP
+  - name: Skylark Coffee
+    country: "UK"
+    url: https://skylark.coffee
+    currency: GBP
+  - name: Bailies Coffee
+    country: "UK"
+    url: https://bailiescoffee.com
+    currency: GBP
+  - name: Grindhouse
+    country: "UK"
+    url: https://grindhousecoffee.co.uk
+    currency: GBP
+  - name: Roasted Brown
+    country: "IE"
+    url: https://roastedbrown.com
+    currency: EUR
+  - name: Bell Lane
+    country: "IE"
+    url: https://belllane.ie
+    currency: EUR
+  - name: Calendar Coffee
+    country: "IE"
+    url: https://calendarcoffee.ie
+    currency: EUR
+  - name: Silverskin
+    country: "IE"
+    url: https://www.silverskincoffee.com
+    currency: EUR
+  - name: Bewleys
+    country: "IE"
+    url: https://www.bewleys.com
+    currency: EUR
+  - name: Ariosa Coffee
+    country: "IE"
+    url: https://ariosacoffee.com
+    currency: EUR
+  - name: Full Circle Roasters
+    country: "IE"
+    url: https://www.fullcircleroasters.ie
+    currency: EUR
+  - name: Cloud Picker2
+    country: "IE"
+    url: https://www.cloudpickercoffee.ie
+    currency: EUR
+  - name: Badger and Dodo
+    country: "IE"
+    url: https://badgeranddodo.ie
+    currency: EUR
+  - name: Kokoa Collection
+    country: "UK"
+    url: https://www.kokoacollection.com
+    currency: GBP
+  - name: Keen Coffee
+    country: "NL"
+    url: https://keencoffee.com
+    currency: EUR
+  - name: Roasting Party
+    country: "UK"
+    url: https://roastingparty.com
+    currency: GBP
+  - name: Vicafe
+    country: "CH"
+    url: https://vicafe.ch
+    currency: CHF
+  - name: L'Arbre a Cafe
+    country: "FR"
+    url: https://www.larbreacafe.com
+    currency: EUR
+  - name: Caffe Nero IT
+    country: "IT"
+    url: https://www.lucaffe.com
+    currency: EUR
+  - name: Cross Coffee
+    country: "DE"
+    url: https://www.crosscoffee.de
+    currency: EUR
+  - name: Double eye
+    country: "DE"
+    url: https://doubleeye.de
+    currency: EUR
+  - name: Man versus Machine
+    country: "DE"
+    url: https://www.mvsm.coffee
+    currency: EUR
+  - name: Kaffeeform
+    country: "DE"
+    url: https://kaffeeform.com
+    currency: EUR
+  - name: Murnauer
+    country: "DE"
+    url: https://www.murnauer-kaffeeroesterei.de
+    currency: EUR
+  - name: Iron and Fire UK
+    country: "UK"
+    url: https://ironandfire.co.uk
+    currency: GBP
+  - name: Presto Coffee
+    country: "UK"
+    url: https://www.prestocoffee.com
+    currency: GBP
+  - name: Adams and Russell
+    country: "UK"
+    url: https://adamsandrussell.co.uk
+    currency: GBP
+  - name: Lost Barn
+    country: "UK"
+    url: https://lostbarncoffee.com
+    currency: GBP
+  - name: Redber Coffee
+    country: "UK"
+    url: https://www.redber.co.uk
+    currency: GBP
+  - name: Bonsoy
+    country: "UK"
+    url: https://blackcatcoffee.co.uk
+    currency: GBP
+  - name: Dusty Ape
+    country: "UK"
+    url: https://www.dustyape.com
+    currency: GBP
+  - name: Girls Bean
+    country: "UK"
+    url: https://www.beanberrycoffee.com
+    currency: GBP
+  - name: Papercup
+    country: "UK"
+    url: https://www.papercupcoffee.co.uk
+    currency: GBP
+  - name: Dear Green
+    country: "UK"
+    url: https://www.deargreencoffee.com
+    currency: GBP
+  - name: Balance UK
+    country: "UK"
+    url: https://balancecoffee.co.uk
+    currency: GBP
+  - name: Blossom Coffee
+    country: "UK"
+    url: https://blossomcoffeeroasters.com
+    currency: GBP
+  - name: Obadiah Coffee
+    country: "UK"
+    url: https://obadiahcoffee.com
+    currency: GBP
+  - name: Coffeeangel
+    country: "IE"
+    url: https://coffeeangel.com
+    currency: EUR
   - name: Square Mile Coffee
     country: UK
     url: https://shop.squaremilecoffee.com
@@ -80,8 +500,1036 @@ roasters:
     country: IT
     url: https://shop.gardellicoffee.com
     currency: EUR
+  - name: 3fe Coffee
+    country: IE
+    url: https://3fe.com
+    currency: EUR
+  - name: Belleville Brulerie
+    country: FR
+    url: https://www.cafesbelleville.com
+    currency: EUR
+  - name: Coutume Cafe
+    country: FR
+    url: https://www.coutumecafe.com
+    currency: EUR
+  - name: Nomad Coffee Roasters
+    country: ES
+    url: https://nomadroasters.com
+    currency: EUR
+  - name: Assembly Coffee
+    country: UK
+    url: https://assemblycoffee.co.uk
+    currency: GBP
+  - name: Volcano Coffee Works
+    country: UK
+    url: https://volcanocoffeeworks.com
+    currency: GBP
+  - name: Workshop Coffee
+    country: UK
+    url: https://workshopcoffee.com
+    currency: GBP
+  - name: Climpson and Sons
+    country: UK
+    url: https://climpsonandsons.com
+    currency: GBP
+  - name: Girls Who Grind
+    country: UK
+    url: https://girlswhogrindcoffee.com
+    currency: GBP
+  - name: Round Hill Roastery
+    country: UK
+    url: https://roundhillroastery.com
+    currency: GBP
+  - name: Origin Coffee
+    country: UK
+    url: https://www.origincoffee.co.uk
+    currency: GBP
+  - name: Coaltown Coffee
+    country: UK
+    url: https://coaltowncoffee.co.uk
+    currency: GBP
+  - name: Dark Arts Coffee
+    country: UK
+    url: https://darkartscoffee.co.uk
+    currency: GBP
+  - name: Batch Coffee
+    country: UK
+    url: https://www.batchcoffee.co.uk
+    currency: GBP
+  - name: Colonna Coffee
+    country: UK
+    url: https://colonnacoffee.com
+    currency: GBP
+  - name: Right Side Coffee
+    country: ES
+    url: https://rightsidecoffee.com
+    currency: EUR
+  - name: Cafes El Magnifico
+    country: ES
+    url: https://cafeselmagnifico.com
+    currency: EUR
+  - name: Kaffemik
+    country: AT
+    url: https://www.kaffemik.at
+    currency: EUR
+  - name: Bonanza Coffee
+    country: DE
+    url: https://www.bonanzacoffee.de
+    currency: EUR
+  - name: Five Elephant
+    country: DE
+    url: https://fiveelephant.com
+    currency: EUR
+  - name: 19grams
+    country: DE
+    url: https://www.19grams.coffee
+    currency: EUR
+  - name: Elbgold
+    country: DE
+    url: https://www.elbgold.com
+    currency: EUR
+  - name: Fjord Coffee
+    country: DE
+    url: https://fjord-coffee.de
+    currency: EUR
+  - name: Father's Coffee
+    country: PL
+    url: https://father.coffee
+    currency: PLN
+  - name: Coffeeplant
+    country: PL
+    url: https://coffeeplant.pl
+    currency: PLN
+  - name: Java Coffee
+    country: PL
+    url: https://javacoffee.pl
+    currency: PLN
+  - name: Fabrica Coffee
+    country: PT
+    url: https://fabricacoffeeroasters.com
+    currency: EUR
+  - name: Kima Coffee
+    country: ES
+    url: https://kimacoffee.com
+    currency: EUR
+  - name: Syra Coffee
+    country: ES
+    url: https://syra.coffee
+    currency: EUR
+  - name: OR Coffee
+    country: BE
+    url: https://www.orcoffee.be
+    currency: EUR
+  - name: Mok Coffee
+    country: BE
+    url: https://mokcoffee.be
+    currency: EUR
+  - name: Caffenation
+    country: BE
+    url: https://caffenation.be
+    currency: EUR
+  - name: North Star Coffee
+    country: UK
+    url: https://www.northstarroast.com
+    currency: GBP
+  - name: Grumpy Mule
+    country: UK
+    url: https://www.grumpymule.co.uk
+    currency: GBP
+  - name: Rave Coffee
+    country: UK
+    url: https://ravecoffee.co.uk
+    currency: GBP
+  - name: Two Chimps Coffee
+    country: UK
+    url: https://twochimpscoffee.com
+    currency: GBP
+  - name: Father Carpenter
+    country: NL
+    url: https://fathercarpenter.com
+    currency: EUR
+  - name: Bocca Coffee
+    country: NL
+    url: https://bocca.nl
+    currency: EUR
+  - name: Stoll Kaffee
+    country: CH
+    url: https://www.stollkaffee.ch
+    currency: CHF
+  - name: Coffee Lab Tbilisi
+    country: GE
+    url: https://coffeelab.ge
+    currency: GEL
 
   # ---- 北米 ----
+  - name: Corvus Coffee
+    country: "US"
+    url: https://www.corvuscoffee.com
+    currency: USD
+  - name: Sweet Bloom Coffee
+    country: "US"
+    url: https://sweetbloomcoffee.com
+    currency: USD
+  - name: Novo Coffee
+    country: "US"
+    url: https://novocoffee.com
+    currency: USD
+  - name: Prodigal
+    country: "US"
+    url: https://getprodigal.com
+    currency: USD
+  - name: Sump Coffee
+    country: "US"
+    url: https://sumpcoffee.com
+    currency: USD
+  - name: Blueprint Coffee
+    country: "US"
+    url: https://blueprintcoffee.com
+    currency: USD
+  - name: Comandante
+    country: "US"
+    url: https://comandantegrinder.com
+    currency: USD
+  - name: Brandywine Coffee
+    country: "US"
+    url: https://www.brandywinecoffeeroasters.com
+    currency: USD
+  - name: Elixr Coffee
+    country: "US"
+    url: https://elixrcoffee.com
+    currency: USD
+  - name: ReAnimator Coffee
+    country: "US"
+    url: https://www.reanimatorcoffee.com
+    currency: USD
+  - name: La Colombe
+    country: "US"
+    url: https://www.lacolombe.com
+    currency: USD
+  - name: Dogwood Coffee
+    country: "US"
+    url: https://dogwoodcoffee.com
+    currency: USD
+  - name: Spyhouse Coffee
+    country: "US"
+    url: https://www.spyhousecoffee.com
+    currency: USD
+  - name: Peace Coffee
+    country: "US"
+    url: https://peacecoffee.com
+    currency: USD
+  - name: Wonderstate Coffee
+    country: "US"
+    url: https://www.wonderstate.com
+    currency: USD
+  - name: Metric Coffee
+    country: "US"
+    url: https://www.metriccoffee.com
+    currency: USD
+  - name: Dark Matter Coffee
+    country: "US"
+    url: https://www.darkmattercoffee.com
+    currency: USD
+  - name: Passion House
+    country: "US"
+    url: https://passionhousecoffee.com
+    currency: USD
+  - name: Gaslight Coffee
+    country: "US"
+    url: https://gaslightcoffeeroasters.com
+    currency: USD
+  - name: Sparrows Coffee
+    country: "US"
+    url: https://www.sparrowscoffee.com
+    currency: USD
+  - name: Rowster Coffee
+    country: "US"
+    url: https://rowstercoffee.com
+    currency: USD
+  - name: Chromatic Coffee
+    country: "US"
+    url: https://chromaticcoffee.com
+    currency: USD
+  - name: Red Bay Coffee
+    country: "US"
+    url: https://redbaycoffee.com
+    currency: USD
+  - name: Highwire Coffee
+    country: "US"
+    url: https://highwirecoffee.com
+    currency: USD
+  - name: Modcup Coffee
+    country: "US"
+    url: https://modcup.com
+    currency: USD
+  - name: Amavida Coffee
+    country: "US"
+    url: https://amavida.com
+    currency: USD
+  - name: Buddy Brew
+    country: "US"
+    url: https://buddybrew.com
+    currency: USD
+  - name: Kahwa Coffee
+    country: "US"
+    url: https://www.kahwacoffee.com
+    currency: USD
+  - name: Press Coffee
+    country: "US"
+    url: https://www.presscoffee.com
+    currency: USD
+  - name: Cartel Coffee Lab
+    country: "US"
+    url: https://cartelroasting.co
+    currency: USD
+  - name: Peixoto Coffee
+    country: "US"
+    url: https://peixotocoffee.com
+    currency: USD
+  - name: Provision Coffee
+    country: "US"
+    url: https://provisioncoffee.com
+    currency: USD
+  - name: Ozo Coffee
+    country: "US"
+    url: https://ozocoffee.com
+    currency: USD
+  - name: Conscious Coffees
+    country: "US"
+    url: https://consciouscoffees.com
+    currency: USD
+  - name: Backyard Beans
+    country: "US"
+    url: https://backyardbeans.com
+    currency: USD
+  - name: One Village Coffee
+    country: "US"
+    url: https://onevillagecoffee.com
+    currency: USD
+  - name: Rival Bros Coffee
+    country: "US"
+    url: https://rivalbros.com
+    currency: USD
+  - name: Anchorhead Coffee
+    country: "US"
+    url: https://www.anchorheadcoffee.com
+    currency: USD
+  - name: Herkimer Coffee
+    country: "US"
+    url: https://herkimercoffee.com
+    currency: USD
+  - name: Zoka Coffee
+    country: "US"
+    url: https://www.zokacoffee.com
+    currency: USD
+  - name: Vita Coffee
+    country: "US"
+    url: https://www.caffevita.com
+    currency: USD
+  - name: Lighthouse Roasters
+    country: "US"
+    url: https://lighthouseroasters.com
+    currency: USD
+  - name: Middle Fork Roasters
+    country: "US"
+    url: https://middleforkroasters.com
+    currency: USD
+  - name: Compass Coffee
+    country: "US"
+    url: https://www.compasscoffee.com
+    currency: USD
+  - name: Lost Sock Roasters
+    country: "US"
+    url: https://lostsockroasters.com
+    currency: USD
+  - name: Swings Coffee
+    country: "US"
+    url: https://www.swingscoffee.com
+    currency: USD
+  - name: Small Planes Coffee
+    country: "US"
+    url: https://smallplanescoffee.com
+    currency: USD
+  - name: Black Powder Coffee
+    country: "US"
+    url: https://blackpowdercoffee.com
+    currency: USD
+  - name: Never Coffee
+    country: "US"
+    url: https://www.nevercoffeelab.com
+    currency: USD
+  - name: Good Coffee
+    country: "US"
+    url: https://goodcoffeepdx.com
+    currency: USD
+  - name: Push X Pull
+    country: "US"
+    url: https://pushxpullcoffee.com
+    currency: USD
+  - name: Roseline Coffee
+    country: "US"
+    url: https://roselinecoffee.com
+    currency: USD
+  - name: Water Ave Coffee
+    country: "US"
+    url: https://wateravenuecoffee.com
+    currency: USD
+  - name: Guilder Coffee
+    country: "US"
+    url: https://guildercoffee.com
+    currency: USD
+  - name: Case Coffee
+    country: "US"
+    url: https://casecoffeeroasters.com
+    currency: USD
+  - name: Dune Coffee
+    country: "US"
+    url: https://www.dunecoffee.com
+    currency: USD
+  - name: Barrington Coffee
+    country: "US"
+    url: https://www.barringtoncoffee.com
+    currency: USD
+  - name: Gimme Coffee
+    country: "US"
+    url: https://gimmecoffee.com
+    currency: USD
+  - name: Utopian Coffee
+    country: "US"
+    url: https://utopiancoffee.com
+    currency: USD
+  - name: Kicking Horse
+    country: "CA"
+    url: https://kickinghorsecoffee.com
+    currency: CAD
+  - name: Sorellina
+    country: "CA"
+    url: https://sorellina.ca
+    currency: CAD
+  - name: 49th Parallel
+    country: "CA"
+    url: https://49thcoffee.com
+    currency: CAD
+  - name: Nemesis Coffee
+    country: "CA"
+    url: https://nemesis.coffee
+    currency: CAD
+  - name: Timbertrain
+    country: "CA"
+    url: https://timbertraincoffeeroasters.com
+    currency: CAD
+  - name: Discovery Coffee
+    country: "CA"
+    url: https://discoverycoffee.com
+    currency: CAD
+  - name: Little Victories
+    country: "CA"
+    url: https://littlevictoriescoffee.com
+    currency: CAD
+  - name: Rabbit Hole Coffee
+    country: "CA"
+    url: https://rabbitholeroasters.com
+    currency: CAD
+  - name: Pallet Coffee
+    country: "CA"
+    url: https://palletcoffeeroasters.com
+    currency: CAD
+  - name: Rosso Coffee
+    country: "CA"
+    url: https://rossocoffeeroasters.com
+    currency: CAD
+  - name: Lady Falcon
+    country: "US"
+    url: https://www.ladyfalconcoffeeclub.com
+    currency: USD
+  - name: Big Shoulders
+    country: "US"
+    url: https://bigshoulderscoffee.com
+    currency: USD
+  - name: Overview
+    country: "US"
+    url: https://www.overviewcoffee.com
+    currency: USD
+  - name: Klatch2
+    country: "US"
+    url: https://www.klatchcoffee.com
+    currency: USD
+  - name: Elm Coffee
+    country: "US"
+    url: https://www.elmcoffeeroasters.com
+    currency: USD
+  - name: Merit Coffee
+    country: "US"
+    url: https://meritcoffee.com
+    currency: USD
+  - name: Summermoon
+    country: "US"
+    url: https://summermooncoffee.com
+    currency: USD
+  - name: Mostra Coffee
+    country: "US"
+    url: https://mostracoffee.com
+    currency: USD
+  - name: James Coffee
+    country: "US"
+    url: https://jamescoffeeco.com
+    currency: USD
+  - name: Bear Coast
+    country: "US"
+    url: https://bearcoastcoffee.com
+    currency: USD
+  - name: Better Buzz
+    country: "US"
+    url: https://betterbuzzcoffee.com
+    currency: USD
+  - name: Communal Coffee
+    country: "US"
+    url: https://communalcoffee.com
+    currency: USD
+  - name: Achilles Coffee
+    country: "US"
+    url: https://achillescoffeeroasters.com
+    currency: USD
+  - name: Manzanita Roasting
+    country: "US"
+    url: https://manzanitaroasting.com
+    currency: USD
+  - name: Lofty Coffee
+    country: "US"
+    url: https://www.loftycoffee.com
+    currency: USD
+  - name: Ryan Bros
+    country: "US"
+    url: https://ryanbroscoffee.com
+    currency: USD
+  - name: Kribi Coffee
+    country: "US"
+    url: https://www.kribicoffee.com
+    currency: USD
+  - name: Ritual2
+    country: "US"
+    url: https://www.ritualcoffee.com
+    currency: USD
+  - name: Four Barrel
+    country: "US"
+    url: https://fourbarrelcoffee.com
+    currency: USD
+  - name: Saint Frank
+    country: "US"
+    url: https://www.saintfrankcoffee.com
+    currency: USD
+  - name: Grand Coffee
+    country: "US"
+    url: https://grandcoffee.net
+    currency: USD
+  - name: Contraband Coffee
+    country: "US"
+    url: https://www.contrabandcoffee.com
+    currency: USD
+  - name: Sightseer Coffee
+    country: "US"
+    url: https://sightseercoffee.com
+    currency: USD
+  - name: Speckled Ax
+    country: "US"
+    url: https://speckledax.com
+    currency: USD
+  - name: Coffee By Design
+    country: "US"
+    url: https://www.coffeebydesign.com
+    currency: USD
+  - name: Bard Coffee
+    country: "US"
+    url: https://www.bardcoffee.com
+    currency: USD
+  - name: Gracenote Coffee
+    country: "US"
+    url: https://gracenotecoffee.com
+    currency: USD
+  - name: Speedwell2
+    country: "US"
+    url: https://speedwellcoffee.com
+    currency: USD
+  - name: 1000 Faces
+    country: "US"
+    url: https://1000facescoffee.com
+    currency: USD
+  - name: Dancing Goats
+    country: "US"
+    url: https://dancinggoats.com
+    currency: USD
+  - name: Radio Roasters
+    country: "US"
+    url: https://radioroasters.com
+    currency: USD
+  - name: Fidalgo Coffee
+    country: "US"
+    url: https://fidalgocoffee.com
+    currency: USD
+  - name: Bluebeard Coffee
+    country: "US"
+    url: https://www.bluebeardcoffee.com
+    currency: USD
+  - name: Verve Roasters
+    country: "US"
+    url: https://www.vervecoffeeroasters.com
+    currency: USD
+  - name: Cxffeeblack
+    country: "US"
+    url: https://cxffeeblack.com
+    currency: USD
+  - name: BLK and Bold
+    country: "US"
+    url: https://www.blkandbold.com
+    currency: USD
+  - name: Just Coffee Coop
+    country: "US"
+    url: https://justcoffee.coop
+    currency: USD
+  - name: Higher Grounds
+    country: "US"
+    url: https://highergroundstrading.com
+    currency: USD
+  - name: Equal Exchange
+    country: "US"
+    url: https://shop.equalexchange.coop
+    currency: USD
+  - name: Larrys Coffee
+    country: "US"
+    url: https://larryscoffee.com
+    currency: USD
+  - name: Camano Island
+    country: "US"
+    url: https://camanoislandcoffee.com
+    currency: USD
+  - name: Cafe Mam
+    country: "US"
+    url: https://cafemam.com
+    currency: USD
+  - name: Dean's Beans
+    country: "US"
+    url: https://www.deansbeans.com
+    currency: USD
+  - name: Grounds for Change
+    country: "US"
+    url: https://groundsforchange.com
+    currency: USD
+  - name: Ethical Bean
+    country: "CA"
+    url: https://ethicalbean.com
+    currency: CAD
+  - name: Salt Spring Coffee
+    country: "CA"
+    url: https://www.saltspringcoffee.com
+    currency: CAD
+  - name: Level Ground
+    country: "CA"
+    url: https://levelground.com
+    currency: CAD
+  - name: Muskoka Roastery
+    country: "CA"
+    url: https://muskokaroastery.com
+    currency: CAD
+  - name: Balzac's Coffee
+    country: "CA"
+    url: https://balzacs.com
+    currency: CAD
+  - name: Birds and Beans
+    country: "CA"
+    url: https://birdsandbeans.ca
+    currency: CAD
+  - name: Transcend Coffee
+    country: "CA"
+    url: https://transcendcoffee.ca
+    currency: CAD
+  - name: Fresh Roasted Coffee
+    country: "US"
+    url: https://www.freshroastedcoffee.com
+    currency: USD
+  - name: Coffee Bros
+    country: "US"
+    url: https://coffeebros.com
+    currency: USD
+  - name: Atlas Coffee Club
+    country: "US"
+    url: https://atlascoffeeclub.com
+    currency: USD
+  - name: Trade Coffee
+    country: "US"
+    url: https://www.drinktrade.com
+    currency: USD
+  - name: Nguyen Coffee
+    country: "US"
+    url: https://nguyencoffeesupply.com
+    currency: USD
+  - name: Copper Cow
+    country: "US"
+    url: https://coppercowcoffee.com
+    currency: USD
+  - name: Wandering Bear
+    country: "US"
+    url: https://wanderingbearcoffee.com
+    currency: USD
+  - name: Stone Street
+    country: "US"
+    url: https://stonestreetcoffee.com
+    currency: USD
+  - name: Death Wish Coffee
+    country: "US"
+    url: https://www.deathwishcoffee.com
+    currency: USD
+  - name: Cometeer
+    country: "US"
+    url: https://cometeer.com
+    currency: USD
+  - name: Grady's Cold Brew
+    country: "US"
+    url: https://gradyscoldbrew.com
+    currency: USD
+  - name: Presta Coffee
+    country: "US"
+    url: https://prestacoffee.com
+    currency: USD
+  - name: EXO Roast
+    country: "US"
+    url: https://www.exocoffee.com
+    currency: USD
+  - name: Regent Coffee
+    country: "US"
+    url: https://regentcoffee.com
+    currency: USD
+  - name: Go Get Em Tiger
+    country: "US"
+    url: https://gget.com
+    currency: USD
+  - name: Cafecito Organico
+    country: "US"
+    url: https://cafecitoorganico.com
+    currency: USD
+  - name: Zeke's Coffee
+    country: "US"
+    url: https://zekescoffee.com
+    currency: USD
+  - name: Rise Up Coffee
+    country: "US"
+    url: https://www.riseupcoffee.com
+    currency: USD
+  - name: Quartermaine
+    country: "US"
+    url: https://quartermaine.com
+    currency: USD
+  - name: Ceremony2
+    country: "US"
+    url: https://shop.ceremonycoffee.com
+    currency: USD
+  - name: Flat Track
+    country: "US"
+    url: https://flattrackcoffee.com
+    currency: USD
+  - name: Third Coast
+    country: "US"
+    url: https://thirdcoastcoffee.com
+    currency: USD
+  - name: Waypost Coffee
+    country: "US"
+    url: https://waypostcoffee.com
+    currency: USD
+  - name: Bold Bean
+    country: "US"
+    url: https://boldbeancoffee.com
+    currency: USD
+  - name: Vice City Bean
+    country: "US"
+    url: https://vicecitybean.com
+    currency: USD
+  - name: Panther Coffee
+    country: "US"
+    url: https://panthercoffee.com
+    currency: USD
+  - name: Muletown Coffee
+    country: "US"
+    url: https://muletowncoffee.com
+    currency: USD
+  - name: Barista Parlor
+    country: "US"
+    url: https://baristaparlor.com
+    currency: USD
+  - name: Crema Coffee
+    country: "US"
+    url: https://www.crema-coffee.com
+    currency: USD
+  - name: Thread Coffee
+    country: "US"
+    url: https://threadcoffee.com
+    currency: USD
+  - name: Rook Coffee
+    country: "US"
+    url: https://rookcoffee.com
+    currency: USD
+  - name: Booskerdoo
+    country: "US"
+    url: https://booskerdoo.com
+    currency: USD
+  - name: Small World
+    country: "US"
+    url: https://smallworldcoffee.com
+    currency: USD
+  - name: Kaladi Coffee
+    country: "US"
+    url: https://kaladicoffee.com
+    currency: USD
+  - name: Pablos Coffee
+    country: "US"
+    url: https://pabloscoffee.com
+    currency: USD
+  - name: Copper Moon
+    country: "US"
+    url: https://coppermooncoffee.com
+    currency: USD
+  - name: Valentine Coffee
+    country: "US"
+    url: https://valentinecoffeeco.com
+    currency: USD
+  - name: Stone Creek
+    country: "US"
+    url: https://stonecreekcoffee.com
+    currency: USD
+  - name: Colectivo Coffee
+    country: "US"
+    url: https://colectivocoffee.com
+    currency: USD
+  - name: Anodyne Coffee
+    country: "US"
+    url: https://anodynecoffee.com
+    currency: USD
+  - name: Pilcrow Coffee
+    country: "US"
+    url: https://pilcrowcoffee.com
+    currency: USD
+  - name: MadPriest
+    country: "US"
+    url: https://madpriestcoffee.com
+    currency: USD
+  - name: Slingshot Coffee
+    country: "US"
+    url: https://www.slingshotcoffee.com
+    currency: USD
+  - name: Joe Van Gogh
+    country: "US"
+    url: https://joevangogh.com
+    currency: USD
+  - name: Methodical Charleston
+    country: "US"
+    url: https://secondstatecoffee.com
+    currency: USD
+  - name: Domestique
+    country: "US"
+    url: https://domestiquecoffee.com
+    currency: USD
+  - name: Prevail Coffee
+    country: "US"
+    url: https://prevailcoffee.com
+    currency: USD
+  - name: Tweed Craft
+    country: "US"
+    url: https://tweedcoffee.com
+    currency: USD
+  - name: Kohana Coffee
+    country: "US"
+    url: https://kohanacoffee.com
+    currency: USD
+  - name: Cartel2
+    country: "US"
+    url: https://www.cartelcoffeelab.com
+    currency: USD
+  - name: Verde Coffee
+    country: "US"
+    url: https://verdecoffee.com
+    currency: USD
+  - name: Hidden House
+    country: "US"
+    url: https://hiddenhousecoffee.com
+    currency: USD
+  - name: Kean Coffee
+    country: "US"
+    url: https://keancoffee.com
+    currency: USD
+  - name: Wide Awake
+    country: "US"
+    url: https://wideawakecoffee.com
+    currency: USD
+  - name: Lamill Coffee
+    country: "US"
+    url: https://lamillcoffee.com
+    currency: USD
+  - name: Coffee Commissary
+    country: "US"
+    url: https://coffeecommissary.com
+    currency: USD
+  - name: Oddly Correct
+    country: "US"
+    url: https://oddlycorrect.com
+    currency: USD
+  - name: Thou Mayest
+    country: "US"
+    url: https://thoumayest.com
+    currency: USD
+  - name: PT's Coffee
+    country: "US"
+    url: https://www.ptscoffee.com
+    currency: USD
+  - name: Repetition Coffee
+    country: "US"
+    url: https://repetitioncoffee.com
+    currency: USD
+  - name: Blue Sail
+    country: "US"
+    url: https://bluesailcoffee.com
+    currency: USD
+  - name: Friedrichs Coffee
+    country: "US"
+    url: https://friedrichscoffee.com
+    currency: USD
+  - name: UP Coffee
+    country: "US"
+    url: https://upcoffeeroasters.com
+    currency: USD
+  - name: True Stone
+    country: "US"
+    url: https://truestonecoffee.com
+    currency: USD
+  - name: Elemental OK
+    country: "US"
+    url: https://elementalcoffee.com
+    currency: USD
+  - name: Topeca Coffee
+    country: "US"
+    url: https://topecacoffee.com
+    currency: USD
+  - name: Doubleshot Tulsa
+    country: "US"
+    url: https://doubleshotcoffee.com
+    currency: USD
+  - name: Fire Dept Coffee
+    country: "US"
+    url: https://firedeptcoffee.com
+    currency: USD
+  - name: Black Rifle
+    country: "US"
+    url: https://www.blackriflecoffee.com
+    currency: USD
+  - name: Alpha Coffee
+    country: "US"
+    url: https://alphacoffee.com
+    currency: USD
+  - name: La Barba
+    country: "US"
+    url: https://labarbacoffee.com
+    currency: USD
+  - name: Millcreek Coffee
+    country: "US"
+    url: https://millcreekcoffee.com
+    currency: USD
+  - name: Salt Lake Roasting
+    country: "US"
+    url: https://roasting.com
+    currency: USD
+  - name: Push and Pour
+    country: "US"
+    url: https://pushandpour.com
+    currency: USD
+  - name: Dawson Taylor
+    country: "US"
+    url: https://dawsontaylor.com
+    currency: USD
+  - name: Form and Function
+    country: "US"
+    url: https://formandfunctioncoffee.com
+    currency: USD
+  - name: Roast House
+    country: "US"
+    url: https://roasthousecoffee.com
+    currency: USD
+  - name: Doma Coffee
+    country: "US"
+    url: https://domacoffee.com
+    currency: USD
+  - name: Montana Coffee
+    country: "US"
+    url: https://coffeetraders.com
+    currency: USD
+  - name: Treeline Coffee
+    country: "US"
+    url: https://treelinecoffee.com
+    currency: USD
+  - name: Rockin Rudys
+    country: "US"
+    url: https://rockinrudys.com
+    currency: USD
+  - name: Old Soul
+    country: "US"
+    url: https://oldsoulco.com
+    currency: USD
+  - name: Camellia Coffee
+    country: "US"
+    url: https://camelliacoffeeroasters.com
+    currency: USD
+  - name: Pachamama Coffee
+    country: "US"
+    url: https://pachamamacoffee.com
+    currency: USD
+  - name: Coffeeworks
+    country: "US"
+    url: https://coffeeworks.com
+    currency: USD
+  - name: Java Blend
+    country: "CA"
+    url: https://javablendcoffee.com
+    currency: CAD
+  - name: Sam James
+    country: "CA"
+    url: https://samjamescoffeebar.com
+    currency: CAD
+  - name: Boxcar Social
+    country: "CA"
+    url: https://boxcarsocial.ca
+    currency: CAD
+  - name: Ancora Coffee
+    country: "US"
+    url: https://ancoracoffee.com
+    currency: USD
+  - name: Crema Madison
+    country: "US"
+    url: https://www.cremacoffeeroasters.com
+    currency: USD
+  - name: True Coffee
+    country: "US"
+    url: https://truecoffeeroasters.com
+    currency: USD
+  - name: Backlot Coffee
+    country: "US"
+    url: https://backlotcoffee.com
+    currency: USD
+  - name: Kickapoo IL
+    country: "US"
+    url: https://www.bridgeportcoffee.net
+    currency: USD
+  - name: Carabello Coffee
+    country: "US"
+    url: https://www.carabellocoffee.com
+    currency: USD
+  - name: Luck Bros
+    country: "US"
+    url: https://luckbroscoffee.com
+    currency: USD
+  - name: Ceremony MI2
+    country: "US"
+    url: https://mightygoodcoffee.com
+    currency: USD
+  - name: Roos Roast
+    country: "US"
+    url: https://roosroast.com
+    currency: USD
   - name: George Howell Coffee
     country: US
     url: https://georgehowellcoffee.com
@@ -96,7 +1544,7 @@ roasters:
     currency: USD
   - name: Sey Coffee
     country: US
-    url: https://sey.coffee
+    url: https://www.seycoffee.com
     currency: USD
   - name: Hydrangea
     country: US
@@ -114,6 +1562,18 @@ roasters:
     country: US
     url: https://enjoylunacoffee.com
     currency: USD
+  - name: Sightglass Coffee
+    country: US
+    url: https://sightglasscoffee.com
+    currency: USD
+  - name: Black and White Coffee Roasters
+    country: US
+    url: https://blackwhiteroasters.com
+    currency: USD
+  - name: Passenger Coffee
+    country: US
+    url: https://passengercoffee.com
+    currency: USD
   - name: September
     country: CA
     url: https://september.coffee
@@ -126,8 +1586,260 @@ roasters:
     country: CA
     url: https://revolvercoffee.ca
     currency: CAD
+  - name: Pilot Coffee Roasters
+    country: CA
+    url: https://pilotcoffeeroasters.com
+    currency: CAD
+  - name: Phil and Sebastian Coffee
+    country: CA
+    url: https://philsebastian.com
+    currency: CAD
+  - name: Verve Coffee Roasters
+    country: US
+    url: https://www.vervecoffee.com
+    currency: USD
+  - name: Counter Culture Coffee
+    country: US
+    url: https://counterculturecoffee.com
+    currency: USD
+  - name: Intelligentsia Coffee
+    country: US
+    url: https://www.intelligentsia.com
+    currency: USD
+  - name: Ruby Coffee Roasters
+    country: US
+    url: https://rubycoffeeroasters.com
+    currency: USD
+  - name: Madcap Coffee
+    country: US
+    url: https://madcapcoffee.com
+    currency: USD
+  - name: Kickapoo Coffee
+    country: US
+    url: https://kickapoocoffee.com
+    currency: USD
+  - name: JBC Coffee Roasters
+    country: US
+    url: https://jbccoffeeroasters.com
+    currency: USD
+  - name: Methodical Coffee
+    country: US
+    url: https://methodicalcoffee.com
+    currency: USD
+  - name: Broadsheet Coffee
+    country: US
+    url: https://broadsheetcoffee.com
+    currency: USD
+  - name: Cat and Cloud Coffee
+    country: US
+    url: https://catandcloud.com
+    currency: USD
+  - name: Greater Goods Coffee
+    country: US
+    url: https://greatergoodsroasting.com
+    currency: USD
+  - name: Monogram Coffee
+    country: CA
+    url: https://monogramcoffee.com
+    currency: CAD
+  - name: Rogue Wave Coffee
+    country: CA
+    url: https://roguewavecoffee.ca
+    currency: CAD
+  - name: Subtext Coffee
+    country: CA
+    url: https://www.subtext.coffee
+    currency: CAD
+  - name: Bows and Arrows
+    country: CA
+    url: https://bowsandarrowscoffee.com
+    currency: CAD
+  - name: Stumptown Coffee
+    country: US
+    url: https://www.stumptowncoffee.com
+    currency: USD
+  - name: Equator Coffees
+    country: US
+    url: https://www.equatorcoffees.com
+    currency: USD
+  - name: Wrecking Ball Coffee
+    country: US
+    url: https://www.wreckingballcoffee.com
+    currency: USD
+  - name: Temple Coffee
+    country: US
+    url: https://templecoffee.com
+    currency: USD
+  - name: Klatch Coffee
+    country: US
+    url: https://klatchroasting.com
+    currency: USD
+  - name: Bird Rock Coffee
+    country: US
+    url: https://www.birdrockcoffee.com
+    currency: USD
+  - name: Coffee Manufactory
+    country: US
+    url: https://www.coffeemanufactory.com
+    currency: USD
+  - name: Groundwork Coffee
+    country: US
+    url: https://www.groundworkcoffee.com
+    currency: USD
+  - name: Kuma Coffee
+    country: US
+    url: https://www.kumacoffee.com
+    currency: USD
+  - name: Tandem Coffee
+    country: US
+    url: https://www.tandemcoffee.com
+    currency: USD
+  - name: Vigilante Coffee
+    country: US
+    url: https://www.vigilantecoffee.com
+    currency: USD
+  - name: Ceremony Coffee
+    country: US
+    url: https://ceremonycoffee.com
+    currency: USD
+  - name: Devocion
+    country: US
+    url: https://www.devocion.com
+    currency: USD
+  - name: Partners Coffee
+    country: US
+    url: https://www.partnerscoffee.com
+    currency: USD
+  - name: Joe Coffee
+    country: US
+    url: https://www.joecoffeecompany.com
+    currency: USD
+  - name: Mother Tongue Coffee
+    country: US
+    url: https://mothertongue.coffee
+    currency: USD
+  - name: Case Study Coffee
+    country: US
+    url: https://www.casestudycoffee.com
+    currency: USD
+  - name: Regalia Coffee
+    country: US
+    url: https://regaliacoffee.com
+    currency: USD
+  - name: Volcanica Coffee
+    country: US
+    url: https://volcanicacoffee.com
+    currency: USD
+  - name: Andytown Coffee
+    country: US
+    url: https://andytownsf.com
+    currency: USD
+  - name: Variety Coffee
+    country: US
+    url: https://www.varietycoffeeroasters.com
+    currency: USD
+  - name: Parlor Coffee
+    country: US
+    url: https://www.parlorcoffee.com
+    currency: USD
+  - name: Detour Coffee
+    country: CA
+    url: https://detourcoffee.com
+    currency: CAD
+  - name: Propeller Coffee
+    country: CA
+    url: https://propellercoffee.com
+    currency: CAD
 
   # ---- オセアニア ----
+  - name: Wolff Coffee
+    country: "AU"
+    url: https://wolffcoffeeroasters.com.au
+    currency: AUD
+  - name: Bun Coffee
+    country: "AU"
+    url: https://buncoffee.com.au
+    currency: AUD
+  - name: Genovese Coffee
+    country: "AU"
+    url: https://www.genovese.com.au
+    currency: AUD
+  - name: Vittoria Coffee
+    country: "AU"
+    url: https://vittoriacoffee.com
+    currency: AUD
+  - name: Zest Coffee
+    country: "AU"
+    url: https://www.zestcoffee.com.au
+    currency: AUD
+  - name: Dukes Coffee
+    country: "AU"
+    url: https://dukescoffee.com.au
+    currency: AUD
+  - name: Grinders Coffee
+    country: "AU"
+    url: https://www.grinderscoffee.com.au
+    currency: AUD
+  - name: Coffee Alchemy
+    country: "AU"
+    url: https://coffeealchemy.com.au
+    currency: AUD
+  - name: Rumble Coffee
+    country: "AU"
+    url: https://rumblecoffee.com.au
+    currency: AUD
+  - name: Inglewood Coffee
+    country: "AU"
+    url: https://inglewoodcoffeeroasters.com.au
+    currency: AUD
+  - name: Everyday Coffee
+    country: "AU"
+    url: https://everyday-coffee.com
+    currency: AUD
+  - name: Barangaroo
+    country: "AU"
+    url: https://mecca.coffee
+    currency: AUD
+  - name: Wide Open Road
+    country: "AU"
+    url: https://wideopenroad.com.au
+    currency: AUD
+  - name: Pablo and Rusty
+    country: "AU"
+    url: https://pabloandrustys.com.au
+    currency: AUD
+  - name: Havana Coffee
+    country: "NZ"
+    url: https://havana.co.nz
+    currency: NZD
+  - name: Ozone NZ
+    country: "NZ"
+    url: https://ozonecoffee.co.nz
+    currency: NZD
+  - name: Peoples Coffee
+    country: "NZ"
+    url: https://peoplescoffee.co.nz
+    currency: NZD
+  - name: Red Rabbit
+    country: "NZ"
+    url: https://www.redrabbitcoffee.co.nz
+    currency: NZD
+  - name: Meebz Coffee
+    country: "NZ"
+    url: https://meebz.co.nz
+    currency: NZD
+  - name: Espresso Workshop
+    country: "NZ"
+    url: https://espressoworkshop.co.nz
+    currency: NZD
+  - name: Blackboard Coffee
+    country: "AU"
+    url: https://www.blackboardcoffee.com.au
+    currency: AUD
+  - name: Barossa Coffee
+    country: "AU"
+    url: https://barossacoffee.com.au
+    currency: AUD
   - name: Single O
     country: AU
     url: https://singleo.com.au
@@ -148,6 +1860,54 @@ roasters:
     country: NZ
     url: https://slowcoffee.co.nz
     currency: NZD
+  - name: Seven Seeds
+    country: AU
+    url: https://sevenseeds.com.au
+    currency: AUD
+  - name: St Ali
+    country: AU
+    url: https://stali.com.au
+    currency: AUD
+  - name: Code Black Coffee
+    country: AU
+    url: https://codeblackcoffee.com.au
+    currency: AUD
+  - name: Axil Coffee Roasters
+    country: AU
+    url: https://axilcoffee.com.au
+    currency: AUD
+  - name: Coffee Supreme
+    country: NZ
+    url: https://coffeesupreme.com
+    currency: NZD
+  - name: Padre Coffee
+    country: AU
+    url: https://www.padrecoffee.com.au
+    currency: AUD
+  - name: Wood and Co
+    country: AU
+    url: https://www.woodandcocoffee.com.au
+    currency: AUD
+  - name: Industry Beans
+    country: AU
+    url: https://industrybeans.com
+    currency: AUD
+  - name: Flight Coffee
+    country: NZ
+    url: https://flightcoffee.co.nz
+    currency: NZD
+  - name: Veneziano Coffee
+    country: AU
+    url: https://venezianocoffee.com.au
+    currency: AUD
+  - name: Eight Thirty Coffee
+    country: NZ
+    url: https://www.eighthirty.com
+    currency: NZD
+  - name: Kokako
+    country: NZ
+    url: https://www.kokako.co.nz
+    currency: NZD
 
   # ---- その他 ----
   - name: One Half Coffee
@@ -162,3 +1922,111 @@ roasters:
     country: ES
     url: https://atmanscoffee.com
     currency: EUR
+  - name: Rosetta Roastery
+    country: ZA
+    url: https://rosettaroastery.com
+    currency: ZAR
+
+  # ---- 中南米 ----
+  - name: Cafe con Jiribilla
+    country: MX
+    url: https://cafeconjiribilla.com
+    currency: MXN
+  - name: Cafe Britt
+    country: CR
+    url: https://www.cafebritt.com
+    currency: USD
+
+  # ---- アフリカ ----
+  - name: Garden of Coffee
+    country: "ET"
+    url: https://gardenofcoffee.com
+    currency: USD
+  - name: Question Coffee
+    country: RW
+    url: https://questioncoffee.com
+    currency: USD
+  - name: Kaldis Coffee
+    country: ET
+    url: https://kaldiscoffee.com
+    currency: USD
+
+  # ---- 中東 ----
+  - name: RAW Coffee Company
+    country: AE
+    url: https://rawcoffeecompany.com
+    currency: AED
+  - name: Cafe Younes
+    country: LB
+    url: https://cafeyounes.com
+    currency: USD
+
+  # ---- アジア ----
+  - name: Elabrew
+    country: "SG"
+    url: https://www.dutchcolony.sg
+    currency: SGD
+  - name: Homeground Coffee
+    country: "SG"
+    url: https://homegroundcoffeeroasters.com
+    currency: SGD
+  - name: Bettr Coffee
+    country: "SG"
+    url: https://bettr.coffee
+    currency: SGD
+  - name: Common Man2
+    country: "SG"
+    url: https://commonmancoffeeroasters.com
+    currency: SGD
+  - name: Kurasu Global
+    country: "SG"
+    url: https://kurasu.sg
+    currency: SGD
+  - name: Parchmen
+    country: "SG"
+    url: https://parchmen.co
+    currency: SGD
+  - name: Nylon Coffee
+    country: SG
+    url: https://nyloncoffee.sg
+    currency: SGD
+  - name: Alchemist Singapore
+    country: SG
+    url: https://alchemist.com.sg
+    currency: SGD
+  - name: Tiong Hoe Coffee
+    country: SG
+    url: https://tionghoe.com
+    currency: SGD
+  - name: Yardstick Coffee
+    country: PH
+    url: https://yardstickcoffee.com
+    currency: PHP
+  - name: Curve Coffee Roasters
+    country: HK
+    url: https://curvecoffeeroasters.com
+    currency: HKD
+  - name: Coco Espresso
+    country: HK
+    url: https://cocoespresso.com
+    currency: HKD
+  - name: Sensory Zero
+    country: HK
+    url: https://sensoryzero.com
+    currency: HKD
+  - name: Fineprint Coffee
+    country: HK
+    url: https://fineprintco.com
+    currency: HKD
+  - name: Rufous Coffee
+    country: TW
+    url: https://www.rufous.com.tw
+    currency: TWD
+  - name: Blue Tokai Coffee
+    country: IN
+    url: https://bluetokaicoffee.com
+    currency: INR
+  - name: Kapi Kottai
+    country: IN
+    url: https://kapikottai.coffee
+    currency: INR
