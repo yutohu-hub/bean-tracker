@@ -44,6 +44,18 @@ const ROASTERS = {
   pm: { name: "Proud Mary", city: "Melbourne", country: "AU", platform: "Shopify", note: "豪州の華やかロースター", coord: [144.96, -37.81],
     founded: "2009", style: "浅〜中浅煎り・果実系", ship: "海外発送(1〜2週間)", focus: "コロンビア・エチオピア",
     bio: "メルボルンを拠点に、鮮やかな果実味とエネルギッシュな味づくりで知られるオーストラリアの人気ロースター。COE入賞ロットやコロンビアのゲイシャ・シドラなど、攻めた希少品種のラインナップにも定評がある。" },
+  lacabra: { name: "La Cabra", city: "Aarhus", country: "DK", platform: "Shopify", note: "透明感を極める北欧派", coord: [10.20, 56.16],
+    founded: "2012", style: "極浅煎り・北欧スタイル", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
+    bio: "デンマーク・オーフス発。花や果実の輪郭を澄んだまま引き出す極浅焙煎で世界的な支持を集め、ニューヨークにも展開。生産地との継続的な関係を軸に、シーズンごとに銘品を入れ替える。" },
+  manhattan: { name: "Manhattan Coffee", city: "Rotterdam", country: "NL", platform: "Shopify", note: "蘭の実験派デュオ", coord: [4.48, 51.92],
+    founded: "2017", style: "浅煎り・華やか系", ship: "海外発送(1〜2週間)", focus: "エチオピア・ゲイシャ",
+    bio: "エスター・マースダムとベン・モロウがロッテルダムで立ち上げた焙煎所。華やかで甘さの際立つ浅煎りと、ゲイシャなど希少ロットの目利きで知られ、欧州のスペシャルティ好きから厚い支持を得ている。" },
+  fuglen: { name: "Fuglen Coffee", city: "Oslo", country: "NO", platform: "Shopify", note: "北欧×東京の橋渡し", coord: [10.73, 59.92],
+    founded: "2014", style: "浅煎り・北欧スタイル", ship: "海外発送(1〜2週間)", focus: "エチオピア・ケニア",
+    bio: "オスロと東京にまたがるコーヒー＆カクテルの名店。北欧らしい澄んだ浅煎りを軸に、両都市のカルチャーを結ぶ存在として親しまれている。日本のシーンにも縁の深いロースター。" },
+  kurasu: { name: "Kurasu", city: "京都", country: "JP", platform: "Shopify", note: "京都発・世界へ届ける", coord: [135.77, 35.00],
+    founded: "2016", style: "浅〜中浅煎り・季節替わり", ship: "国内発送(2〜4日)", focus: "エチオピア・コロンビア",
+    bio: "京都を拠点に、器具からコーヒーまでを世界へ届けるロースター＆ショップ。飲みやすく澄んだ浅〜中浅を軸に、季節ごとに世界の生産地からロットを迎える。国内からも手に取りやすい一軒。" },
 };
 
 const BEANS = [
@@ -103,11 +115,72 @@ const BEANS = [
   { id: 44, r: "pm", name: "La Miel Geisha", origin: "コロンビア", process: "Natural", amount: 50, cur: "AUD", per: "100g", status: "sold", color: "#1C1B19", accent: "#D9B44A", year: "2026", vt: "geisha" },
   { id: 45, r: "pm", name: "El Tejar Sidra", origin: "コロンビア", process: "Washed", amount: 45, cur: "AUD", per: "100g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026", vt: "sidra" },
   { id: 46, r: "pm", name: "El Naranjo", origin: "グアテマラ", process: "Washed", amount: 23, cur: "AUD", per: "250g", status: "archive", color: "#E2DBC8", accent: "#5A4632", year: "2025" },
+
+  /* --- La Cabra (Aarhus) --- */
+  { id: 47, r: "lacabra", name: "Gogogu", origin: "エチオピア", process: "Washed", amount: 140, cur: "DKK", per: "250g", status: "now", color: "#EFE9DA", accent: "#D98CA6", year: "2026" },
+  { id: 48, r: "lacabra", name: "Chelbesa", origin: "エチオピア", process: "Washed", amount: 135, cur: "DKK", per: "250g", status: "now", color: "#F2EFE6", accent: "#8A3B2E", year: "2026" },
+  { id: 49, r: "lacabra", name: "Mustafa", origin: "コロンビア", process: "Washed", amount: 130, cur: "DKK", per: "250g", status: "sold", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
+  { id: 50, r: "lacabra", name: "Monkaaba", origin: "コロンビア", process: "Washed", amount: 145, cur: "DKK", per: "250g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+
+  /* --- Manhattan Coffee (Rotterdam) --- */
+  { id: 51, r: "manhattan", name: "Shoondhisa", origin: "エチオピア", process: "Natural", amount: 17, cur: "EUR", per: "250g", status: "now", color: "#7C2D3C", accent: "#F2E9DC", year: "2026" },
+  { id: 52, r: "manhattan", name: "Los Patios Geisha", origin: "コロンビア", process: "Washed", amount: 29, cur: "EUR", per: "100g", status: "now", color: "#F2EFE6", accent: "#2F5233", year: "2026", vt: "geisha" },
+  { id: 53, r: "manhattan", name: "Brooklyn", origin: "ブレンド", process: "Natural", amount: 13, cur: "EUR", per: "250g", status: "now", color: "#22303A", accent: "#C8792E", year: "2026" },
+  { id: 54, r: "manhattan", name: "Kebena Decaf", origin: "エチオピア", process: "Washed", amount: 15, cur: "EUR", per: "250g", status: "archive", color: "#E2DBC8", accent: "#5A4632", year: "2025" },
+
+  /* --- Fuglen Coffee (Oslo / 東京) --- */
+  { id: 55, r: "fuglen", name: "Guji Shakiso", origin: "エチオピア", process: "Washed", amount: 175, cur: "NOK", per: "250g", status: "now", color: "#F4F1E8", accent: "#D98CA6", year: "2026" },
+  { id: 56, r: "fuglen", name: "Nyeri Gichathaini", origin: "ケニア", process: "Washed", amount: 185, cur: "NOK", per: "250g", status: "sold", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
+  { id: 57, r: "fuglen", name: "Huila Pitalito", origin: "コロンビア", process: "Washed", amount: 165, cur: "NOK", per: "250g", status: "now", color: "#EFE9DA", accent: "#5A4632", year: "2026" },
+
+  /* --- Kurasu (京都) --- */
+  { id: 58, r: "kurasu", name: "Guji Natural", origin: "エチオピア", process: "Natural", amount: 1700, cur: "JPY", per: "100g", status: "now", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
+  { id: 59, r: "kurasu", name: "El Paraíso Lychee", origin: "コロンビア", process: "Anaerobic", amount: 2400, cur: "JPY", per: "100g", status: "now", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
+  { id: 60, r: "kurasu", name: "Cachoeira", origin: "ブラジル", process: "Natural", amount: 1500, cur: "JPY", per: "100g", status: "now", color: "#4A3826", accent: "#E8C8A0", year: "2026" },
+  { id: 61, r: "kurasu", name: "Gatomboya AA", origin: "ケニア", process: "Washed", amount: 1900, cur: "JPY", per: "100g", status: "sold", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
 ];
 
-/* 為替レート（試作用の固定値 — 実装ではAPIで日次取得） */
-const RATES_TO_JPY = { JPY: 1, USD: 150, NOK: 14.5, DKK: 22, EUR: 165, AUD: 100 };
+/* 為替（対円）— 既定は固定値。起動時にライブ値を取得して上書きし、
+   一定間隔＋タブ復帰時に再取得して変動を自動反映する。 */
+const FX_CURRENCIES = ["USD", "NOK", "DKK", "EUR", "AUD"];
+const FX_DEFAULT = { JPY: 1, USD: 150, NOK: 14.5, DKK: 22, EUR: 165, AUD: 100 };
+const RATES_TO_JPY = { ...FX_DEFAULT };
 const CUR_SYMBOL = { JPY: "¥", USD: "$", NOK: "kr ", DKK: "kr ", EUR: "€", AUD: "A$" };
+
+/* ライブ為替の取得（キー不要・CORS対応の無料APIを順に試す）。
+   返り値は「1通貨あたり何円か」= 対円レート。失敗時は例外。 */
+async function fetchLiveRates() {
+  // 1) Frankfurter（ECBデータ）。base=JPY で各通貨レートを得て逆数化。
+  try {
+    const res = await fetch(
+      `https://api.frankfurter.app/latest?base=JPY&symbols=${FX_CURRENCIES.join(",")}`,
+      { cache: "no-store" }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const raw = (data && data.rates) || {};
+      const out = { JPY: 1 };
+      for (const c of FX_CURRENCIES) {
+        const v = Number(raw[c]);
+        if (v > 0) out[c] = 1 / v;
+      }
+      if (Object.keys(out).length > 1) return { rates: out, date: data.date, source: "Frankfurter (ECB)" };
+    }
+  } catch {}
+  // 2) フォールバック: open.er-api.com（base=JPY, rates は JPY→各通貨）。
+  const res2 = await fetch("https://open.er-api.com/v6/latest/JPY", { cache: "no-store" });
+  if (!res2.ok) throw new Error(`fx http ${res2.status}`);
+  const data2 = await res2.json();
+  const raw2 = (data2 && data2.rates) || {};
+  const out2 = { JPY: 1 };
+  for (const c of FX_CURRENCIES) {
+    const v = Number(raw2[c]);
+    if (v > 0) out2[c] = 1 / v;
+  }
+  if (Object.keys(out2).length <= 1) throw new Error("fx empty");
+  const date = data2.time_last_update_utc ? new Date(data2.time_last_update_utc).toISOString().slice(0, 10) : null;
+  return { rates: out2, date, source: "open.er-api.com" };
+}
 
 function toJPY(bean) { return bean.amount * RATES_TO_JPY[bean.cur]; }
 function fmtPrice(bean, disp) {
@@ -129,7 +202,7 @@ const STATUS = {
   archive: { label: "ARCHIVE", jp: "記録", dot: GRAY },
 };
 
-const ORIGINS = ["すべて", "エチオピア", "ケニア", "コロンビア", "パナマ", "グアテマラ", "エクアドル", "ブレンド"];
+const ORIGINS = ["すべて", "エチオピア", "ケニア", "コロンビア", "パナマ", "グアテマラ", "ブラジル", "エクアドル", "ブレンド"];
 
 /* ---------- パッケージ(標本)描画 ---------- */
 function Package({ bean, small }) {
@@ -489,24 +562,24 @@ function Splash({ done }) {
 /* ---------- 好み診断 ---------- */
 const QUESTIONS = [
   { q: "どんな味わいが好きですか?", options: [
-    { label: "すっきり明るい酸味", pts: { tw: 3, cc: 1, sey: 2, barn: 1 } },
-    { label: "フルーティで甘やか", pts: { onyx: 3, bibi: 1, pm: 2, april: 1 } },
-    { label: "バランスよく飲みやすい", pts: { cc: 3, bibi: 1, april: 1 } },
-    { label: "飲んだことのない味に出会いたい", pts: { onyx: 2, tw: 1, bibi: 1, glitch: 2, pm: 1 } },
+    { label: "すっきり明るい酸味", pts: { tw: 3, cc: 1, sey: 2, barn: 1, lacabra: 2, fuglen: 1 } },
+    { label: "フルーティで甘やか", pts: { onyx: 3, bibi: 1, pm: 2, april: 1, manhattan: 2 } },
+    { label: "バランスよく飲みやすい", pts: { cc: 3, bibi: 1, april: 1, kurasu: 2, fuglen: 1 } },
+    { label: "飲んだことのない味に出会いたい", pts: { onyx: 2, tw: 1, bibi: 1, glitch: 2, pm: 1, manhattan: 1 } },
   ]},
   { q: "焙煎度の好みは?", options: [
-    { label: "浅煎り一筋", pts: { tw: 3, cc: 1, sey: 2, glitch: 2 } },
-    { label: "浅〜中浅で幅広く", pts: { cc: 2, onyx: 2, barn: 2, april: 1 } },
-    { label: "おまかせで楽しみたい", pts: { bibi: 2, onyx: 1, pm: 1 } },
+    { label: "浅煎り一筋", pts: { tw: 3, cc: 1, sey: 2, glitch: 2, lacabra: 2, manhattan: 1, fuglen: 1 } },
+    { label: "浅〜中浅で幅広く", pts: { cc: 2, onyx: 2, barn: 2, april: 1, kurasu: 2 } },
+    { label: "おまかせで楽しみたい", pts: { bibi: 2, onyx: 1, pm: 1, kurasu: 1 } },
   ]},
   { q: "精製方式への冒険度は?", options: [
-    { label: "クリーンな Washed が基本", pts: { tw: 3, cc: 2, sey: 2, april: 1 } },
-    { label: "Natural や Honey も好き", pts: { onyx: 2, bibi: 2, barn: 1, pm: 1 } },
-    { label: "Anaerobic など実験系も試したい", pts: { onyx: 3, bibi: 1, pm: 2, glitch: 1 } },
+    { label: "クリーンな Washed が基本", pts: { tw: 3, cc: 2, sey: 2, april: 1, lacabra: 2, fuglen: 1 } },
+    { label: "Natural や Honey も好き", pts: { onyx: 2, bibi: 2, barn: 1, pm: 1, manhattan: 1 } },
+    { label: "Anaerobic など実験系も試したい", pts: { onyx: 3, bibi: 1, pm: 2, glitch: 1, kurasu: 1 } },
   ]},
   { q: "豆の買い方は?", options: [
-    { label: "国内でさっと届いてほしい", pts: { bibi: 3, glitch: 3 } },
-    { label: "海外からの取り寄せも楽しい", pts: { tw: 2, onyx: 2, cc: 2, april: 2, sey: 2, barn: 2, pm: 2 } },
+    { label: "国内でさっと届いてほしい", pts: { bibi: 3, glitch: 3, kurasu: 3 } },
+    { label: "海外からの取り寄せも楽しい", pts: { tw: 2, onyx: 2, cc: 2, april: 2, sey: 2, barn: 2, pm: 2, lacabra: 2, manhattan: 2, fuglen: 2 } },
   ]},
 ];
 
@@ -520,6 +593,10 @@ const TYPE_LABEL = {
   sey: { type: "生産者トレース型", desc: "誰が作った豆かを知り、澄んだ果実味を好むタイプ。" },
   barn: { type: "ヨーロピアン果実型", desc: "ケニアの果実味など、王道の華やかさを好むタイプ。" },
   pm: { type: "サウス・エナジェティック型", desc: "鮮烈で攻めた味づくりにワクワクするタイプ。" },
+  lacabra: { type: "透明感クリスタル型", desc: "花や果実の輪郭を澄んだまま味わいたいタイプ。" },
+  manhattan: { type: "ヨーロピアン華やか型", desc: "甘く華やかな浅煎りと希少ロットに惹かれるタイプ。" },
+  fuglen: { type: "北欧トラベラー型", desc: "北欧の澄んだ浅煎りを気軽に楽しみたいタイプ。" },
+  kurasu: { type: "京都デイリー型", desc: "飲みやすさと季節感を大切にする、国内志向のタイプ。" },
 };
 
 /* 全ロースター分のスコアを 0 で初期化 */
@@ -651,6 +728,15 @@ const FLAVOR_MAP = {
   39: { fx: 76, fy: 40, fam: "berry", notes: "ストロベリー・ドライアプリコット" },
   42: { fx: 80, fy: 46, fam: "tropical", notes: "パイナップル・ライチ" },
   43: { fx: 30, fy: 56, fam: "choco", notes: "キャラメル・カカオ・オレンジ" },
+  47: { fx: 56, fy: 12, fam: "floral", notes: "ジャスミン・柑橘・白桃" },
+  48: { fx: 54, fy: 14, fam: "floral", notes: "花・シトラス・ピーチ" },
+  49: { fx: 34, fy: 54, fam: "choco", notes: "ラズベリー・カカオ・黒糖" },
+  51: { fx: 80, fy: 40, fam: "berry", notes: "ストロベリー・トロピカル" },
+  55: { fx: 46, fy: 16, fam: "floral", notes: "ジャスミン・レモン" },
+  57: { fx: 28, fy: 52, fam: "choco", notes: "キャラメル・オレンジ" },
+  58: { fx: 74, fy: 34, fam: "berry", notes: "ブルーベリー・ハニー" },
+  59: { fx: 90, fy: 44, fam: "tropical", notes: "ライチ・パイナップル" },
+  60: { fx: 22, fy: 64, fam: "choco", notes: "ナッツ・ミルクチョコ" },
 };
 
 function FlavorMapView({ onOpen, cur }) {
@@ -899,12 +985,49 @@ export default function BeanTracker() {
   const [processF, setProcessF] = useState("すべて");
   const [splashDone, setSplashDone] = useState(false);
   const [splashGone, setSplashGone] = useState(false);
+  const [fx, setFx] = useState({ live: false, loading: true, error: false, at: null, date: null, source: null });
+  const [fxVersion, setFxVersion] = useState(0);
 
   useEffect(() => {
     const t1 = setTimeout(() => setSplashDone(true), 1700);   // 表示を終えてフェード開始
     const t2 = setTimeout(() => setSplashGone(true), 2400);   // 完全に取り除く
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
+
+  // ライブ為替: 起動時に取得 → 10分ごと＋タブ復帰/フォーカス時に再取得して変動を自動反映
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const { rates, date, source } = await fetchLiveRates();
+        if (!alive) return;
+        Object.assign(RATES_TO_JPY, rates);           // その場で上書き → 全表示が新レートで再計算
+        setFx({ live: true, loading: false, error: false, at: new Date(), date, source });
+        setFxVersion((v) => v + 1);                   // 価格表示・帯フィルタを再描画
+      } catch {
+        if (!alive) return;
+        setFx((p) => (p.live ? { ...p } : { ...p, loading: false, error: true }));
+      }
+    };
+    load();
+    const id = setInterval(load, 10 * 60 * 1000);
+    const onVis = () => { if (document.visibilityState === "visible") load(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", load);
+    return () => {
+      alive = false;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", load);
+    };
+  }, []);
+
+  const fxTime = fx.at
+    ? `${String(fx.at.getHours()).padStart(2, "0")}:${String(fx.at.getMinutes()).padStart(2, "0")}`
+    : "";
+  const fxTitle = fx.live
+    ? `1 USD = ¥${RATES_TO_JPY.USD.toFixed(1)} / 1 EUR = ¥${RATES_TO_JPY.EUR.toFixed(1)} / 1 AUD = ¥${RATES_TO_JPY.AUD.toFixed(1)}（出典: ${fx.source}${fx.date ? " · " + fx.date : ""}）`
+    : "為替APIに接続できないため固定値で表示中";
 
   const goRoaster = (rid, tab) => { setRoasterId(rid); setRoasterTab(tab || "now"); setView("roaster"); window.scrollTo(0, 0); };
 
@@ -922,7 +1045,7 @@ export default function BeanTracker() {
     (statusF === "all" || b.status === statusF) &&
     (processF === "すべて" || b.process.includes(processF)) &&
     PRICE_BANDS[priceF].test(toJPY(b))
-  ), [origin, statusF, priceF, processF, displayCur]);
+  ), [origin, statusF, priceF, processF, displayCur, fxVersion]);
 
   return (
     <div style={{ minHeight: "100vh", background: PAPER, fontFamily: `"Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif`, color: INK }}>
@@ -974,7 +1097,13 @@ export default function BeanTracker() {
               <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9, color: GRAY }}>v0.1</div>
             </div>
           </div>
-          <div style={{ fontSize: 10, color: GRAY, marginTop: 2 }}>世界中のコーヒー豆に辿り着くためのインフラ</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 2 }}>
+            <div style={{ fontSize: 10, color: GRAY }}>世界中のコーヒー豆に辿り着くためのインフラ</div>
+            <div title={fxTitle} style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontFamily: "ui-monospace, monospace", fontSize: 9, color: GRAY, whiteSpace: "nowrap" }}>
+              <span className={fx.live ? "bt-live" : ""} style={{ width: 6, height: 6, borderRadius: 999, background: fx.live ? GREEN : (fx.error ? "#B8433A" : "#C8B36A") }} />
+              {fx.live ? `為替LIVE · ${fxTime}更新` : fx.loading ? "為替 取得中…" : "為替 固定値"}
+            </div>
+          </div>
           <div style={{ display: "flex", gap: 16, marginTop: 10, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
             {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"]].map(([k, l]) => (
               <button key={k} onClick={() => setView(k)}
@@ -1100,7 +1229,7 @@ export default function BeanTracker() {
             {/* フッター注記 */}
             <div style={{ marginTop: 36, borderTop: `1px solid ${LINE}`, paddingTop: 14, fontSize: 10.5, color: GRAY, lineHeight: 1.7 }}>
               パッケージは実画像の代わりの試作表示です。実装では巡回システムが取得した実際のパッケージ画像が入ります。
-              評価機能はありません — この図鑑は探して辿り着くためのインフラです。 為替レートは試作用の固定値です（実装では日次取得）。
+              評価機能はありません — この図鑑は探して辿り着くためのインフラです。 円⇄ドル換算はライブ為替（対応時）を用い、変動を自動反映します。取得できない環境では固定値にフォールバックします。
             </div>
           </>
         )}
