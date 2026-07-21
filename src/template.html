@@ -4,376 +4,542 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BEAN TRACKER — 世界の豆・図鑑</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --ink:#17150F; --paper:#FAFAF7; --gray:#8A857B; --line:#E4E1D8;
-    --green:#2F5233; --amber:#A87B2E; --mono:"IBM Plex Mono",ui-monospace,monospace;
-    --sans:"Zen Kaku Gothic New",system-ui,sans-serif;
-  }
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
-  #root{max-width:1120px;margin:0 auto}
-  .loading{padding:80px 20px;text-align:center;color:var(--gray);font-family:var(--mono);font-size:13px}
+  html,body{background:#FAFAF7;color:#17150F;
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  #root{min-height:100vh}
+  .boot{padding:90px 20px;text-align:center;color:#8A857B;font-family:ui-monospace,monospace;font-size:13px}
   button{font-family:inherit}
   a{color:inherit}
-  @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .bt-card{animation:fadein .25s ease both}
-  @keyframes sheetup{from{transform:translateY(100%)}to{transform:none}}
+  ::-webkit-scrollbar{height:0;width:0}
 </style>
 </head>
 <body>
-<div id="root"><div class="loading">世界の豆をならべています…</div></div>
+<div id="root"><div class="boot">世界の豆をならべています…</div></div>
 
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/d3@7/dist/d3.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <script type="text/babel" data-presets="react">
-const { useState, useMemo, useEffect } = React;
+const { useState, useMemo, useEffect, useRef } = React;
 
-/* ---- デザイントークン ---- */
+/* ============ トークン ============ */
 const INK="#17150F", PAPER="#FAFAF7", GRAY="#8A857B", LINE="#E4E1D8", GREEN="#2F5233", AMBER="#A87B2E";
 
-/* ---- 通貨（試作用の固定レート：実装では日次取得）---- */
+/* ============ 通貨（試作用の固定レート） ============ */
 const RATES_TO_JPY = {
   JPY:1, USD:150, EUR:162, GBP:190, CAD:110, AUD:99, NZD:91, DKK:22, SEK:14, NOK:14,
-  CHF:167, PLN:38, ISK:1.1, SGD:112, HKD:19, TWD:4.7, INR:1.8, MXN:8.2, ZAR:8.2,
-  AED:41, GEL:55, PHP:2.6, MYR:32,
+  CHF:167, PLN:38, ISK:1.1, SGD:112, HKD:19, TWD:4.7, INR:1.8, MXN:8.2, ZAR:8.2, AED:41, GEL:55, PHP:2.6, MYR:32,
 };
-const CUR_SYMBOL = { JPY:"¥", USD:"$", EUR:"€", GBP:"£", CAD:"C$", AUD:"A$", NZD:"NZ$",
-  DKK:"kr ", SEK:"kr ", NOK:"kr ", CHF:"CHF ", SGD:"S$", HKD:"HK$", TWD:"NT$", INR:"₹" };
+const CUR_SYMBOL = { JPY:"¥",USD:"$",EUR:"€",GBP:"£",CAD:"C$",AUD:"A$",NZD:"NZ$",DKK:"kr ",SEK:"kr ",NOK:"kr ",CHF:"CHF ",SGD:"S$",HKD:"HK$",TWD:"NT$",INR:"₹" };
+const symOf = c => CUR_SYMBOL[c] || (c?c+" ":"");
+function toJPY(b){ const r=RATES_TO_JPY[b.cur]; return r?b.amount*r:null; }
+function fmtLocal(b){ if(!b.amount) return "—"; const v=b.cur==="JPY"?Math.round(b.amount).toLocaleString():b.amount.toLocaleString(undefined,{maximumFractionDigits:2}); return symOf(b.cur)+v; }
+function fmtDisp(b, disp){ const j=toJPY(b); if(j==null) return fmtLocal(b); return disp==="JPY"?`¥${Math.round(j).toLocaleString()}`:`$${(j/RATES_TO_JPY.USD).toFixed(2)}`; }
+function per100JPY(b){ const j=toJPY(b); const g=b.grams||perGrams(b); return (j&&g)?(j/g)*100:null; }
+function perGrams(b){ return b.grams||0; }
 
-function symOf(c){ return CUR_SYMBOL[c] || (c ? c+" " : ""); }
-function fmtLocal(amount, cur){
-  if(!amount) return "—";
-  const s = symOf(cur);
-  const v = (cur==="JPY") ? Math.round(amount).toLocaleString() : amount.toLocaleString(undefined,{maximumFractionDigits:2});
-  return `${s}${v}`;
-}
-function toJPY(amount, cur){ const r=RATES_TO_JPY[cur]; return r?amount*r:null; }
-function fmtDisp(amount, cur, mode){
-  if(mode==="local") return fmtLocal(amount, cur);
-  const jpy = toJPY(amount, cur);
-  if(jpy==null) return fmtLocal(amount, cur);
-  if(mode==="JPY") return `¥${Math.round(jpy).toLocaleString()}`;
-  return `$${(jpy/RATES_TO_JPY.USD).toFixed(2)}`; // USD
-}
-
-/* ---- 標本の色（画像が無い豆向け。名前から決定的に生成）---- */
-function hashHue(str){ let h=0; for(let i=0;i<str.length;i++){h=(h*31+str.charCodeAt(i))>>>0;} return h; }
-function specimen(bean){
-  const h = hashHue(bean.name + bean.r);
-  const dark = (h % 2) === 0;
-  const hue = h % 360;
-  const bg = dark ? `hsl(${hue},18%,16%)` : `hsl(${hue},22%,88%)`;
-  const accent = dark ? `hsl(${hue},30%,82%)` : `hsl(${hue},45%,28%)`;
-  return { bg, accent };
-}
-
-const STATUS = {
-  now:  { label:"NOW",      jp:"在庫あり",  dot:GREEN },
-  sold: { label:"SOLD OUT", jp:"売り切れ",  dot:AMBER },
-  new:  { label:"NEW",      jp:"新着",      dot:GREEN },
+/* ============ 国 → 座標（ロースター地球儀用） ============ */
+const COUNTRY = {
+  JP:{c:[138,36],n:"日本"}, NO:{c:[9,61],n:"ノルウェー"}, SE:{c:[16,62],n:"スウェーデン"}, DK:{c:[10,56],n:"デンマーク"},
+  FI:{c:[26,64],n:"フィンランド"}, IS:{c:[-19,65],n:"アイスランド"}, UK:{c:[-2,54],n:"イギリス"}, GB:{c:[-2,54],n:"イギリス"},
+  DE:{c:[10,51],n:"ドイツ"}, NL:{c:[5.5,52],n:"オランダ"}, IT:{c:[12,42],n:"イタリア"}, IE:{c:[-8,53],n:"アイルランド"},
+  FR:{c:[2,47],n:"フランス"}, ES:{c:[-4,40],n:"スペイン"}, AT:{c:[14,47.5],n:"オーストリア"}, CH:{c:[8,47],n:"スイス"},
+  PL:{c:[19,52],n:"ポーランド"}, PT:{c:[-8,39.5],n:"ポルトガル"}, BE:{c:[4.6,50.6],n:"ベルギー"}, GE:{c:[43,42],n:"ジョージア"},
+  US:{c:[-98,39],n:"アメリカ"}, CA:{c:[-106,56],n:"カナダ"}, AU:{c:[134,-25],n:"オーストラリア"}, NZ:{c:[172,-41],n:"ニュージーランド"},
+  MY:{c:[102,4],n:"マレーシア"}, SG:{c:[104,1.35],n:"シンガポール"}, PH:{c:[122,12],n:"フィリピン"}, HK:{c:[114,22.3],n:"香港"},
+  TW:{c:[121,24],n:"台湾"}, IN:{c:[79,22],n:"インド"}, MX:{c:[-102,23],n:"メキシコ"}, CR:{c:[-84,10],n:"コスタリカ"},
+  RW:{c:[30,-2],n:"ルワンダ"}, ET:{c:[40,8],n:"エチオピア"}, ZA:{c:[24,-29],n:"南アフリカ"}, AE:{c:[54,24],n:"UAE"}, LB:{c:[36,34],n:"レバノン"},
 };
 
-/* ============ データ変換：実 data.json → 図鑑モデル ============ */
+/* ============ 味わい系統 ============ */
+const FLAVORS = {
+  citrus:{label:"柑橘",color:"#D9B441"}, floral:{label:"花・お茶",color:"#D98CA6"},
+  berry:{label:"ベリー",color:"#7C4D8F"}, tropical:{label:"トロピカル",color:"#D97E3A"}, choco:{label:"チョコ・甘み",color:"#7A5232"},
+};
+const AFRICA = ["ethiopia","kenya","rwanda","burundi","エチオピア","ケニア","ルワンダ","ブルンジ","yemen","イエメン"];
+const DEEP = ["brazil","sumatra","india","ブラジル","インド","blend","ブレンド","guatemala","グアテマラ"];
+function flavorCoords(b){
+  const o=(b.origin||"").toLowerCase(), p=(b.process||"").toLowerCase();
+  let fx=45; // clean→experimental
+  if(p.includes("washed")) fx=24; else if(p.includes("honey")) fx=48;
+  else if(p.includes("anaerobic")||p.includes("carbonic")||p.includes("thermal")) fx=88; else if(p.includes("natural")) fx=70;
+  let fy=50; // bright→deep
+  if(AFRICA.some(a=>o.includes(a))) fy=20; else if(DEEP.some(a=>o.includes(a))) fy=72;
+  else if(o.includes("colombia")||o.includes("コロンビア")||o.includes("panama")||o.includes("パナマ")) fy=38;
+  let fam="choco";
+  if(AFRICA.some(a=>o.includes(a))) fam = p.includes("natural")?"berry":"floral";
+  else if(o.includes("colombia")||o.includes("panama")||o.includes("ecuador")||o.includes("コロンビア")||o.includes("パナマ")) fam = p.includes("natural")?"tropical":"citrus";
+  else if(DEEP.some(a=>o.includes(a))) fam="choco";
+  else fam = p.includes("natural")?"berry":"citrus";
+  return {fx,fy,fam};
+}
+
+const STATUS = { now:{label:"NOW",jp:"在庫あり",dot:GREEN}, sold:{label:"SOLD OUT",jp:"売り切れ",dot:AMBER} };
+
+/* ============ データ変換：実 data.json → モデル ============ */
 function slug(s){ return (s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); }
-function detectVariety(t){ const s=(t||"").toLowerCase();
+function detectVt(t){ const s=(t||"").toLowerCase();
   if(s.includes("geisha")||s.includes("gesha")||s.includes("ゲイシャ")) return "geisha";
   if(s.includes("sidra")||s.includes("シドラ")) return "sidra"; return null; }
 
 function adapt(payload){
   const products = payload.products || [];
   const roasters = {};
-  for(const p of products){
-    const id = slug(p.roaster);
-    if(!roasters[id]) roasters[id] = { id, name:p.roaster, country:p.country||"", count:0, url:"" };
-    roasters[id].count++;
-    if(!roasters[id].url && p.url){ try{ roasters[id].url = new URL(p.url).origin; }catch(e){} }
-  }
-  const beans = products.map((p,i)=>({
-    id: p.key || String(i),
-    r: slug(p.roaster),
-    roasterName: p.roaster,
-    country: p.country || "",
-    name: p.title || "(無題)",
-    origin: p.origin || "",
-    process: p.process || "",
-    amount: p.price || 0,
-    cur: p.currency || "",
-    grams: p.grams || 0,
-    per100: (p.per100 ?? null),
-    image: p.image || "",
-    url: p.url || "",
-    status: p.available ? "now" : "sold",
-    vt: detectVariety((p.title||"")+" "+(p.tags||"")),
-  }));
-  // 新着イベント（new / restock）を先頭に
-  const newKeys = new Set(
-    (payload.events||[]).filter(e=>e.type==="new"||e.type==="restock").map(e=>e.key)
-  );
-  return { roasters, beans, newKeys, stats: payload.stats||{}, generated: payload.generated||"" };
+  const beans = products.map((p,i)=>{
+    const rid = slug(p.roaster);
+    if(!roasters[rid]) roasters[rid] = { id:rid, name:p.roaster, country:p.country||"", count:0, live:0, url:"" };
+    roasters[rid].count++;
+    if(p.available) roasters[rid].live++;
+    if(!roasters[rid].url && p.url){ try{ roasters[rid].url=new URL(p.url).origin; }catch(e){} }
+    return {
+      id:p.key||String(i), r:rid, roasterName:p.roaster, country:p.country||"",
+      name:p.title||"(無題)", origin:p.origin||"", process:p.process||"",
+      amount:p.price||0, cur:p.currency||"", grams:p.grams||0, per100:(p.per100??null),
+      image:p.image||"", url:p.url||"", status:p.available?"now":"sold",
+      vt:detectVt((p.title||"")+" "+(p.tags||"")),
+    };
+  });
+  const newKeys = new Set((payload.events||[]).filter(e=>e.type==="new"||e.type==="restock").map(e=>e.key));
+  return { roasters, beans, newKeys, stats:payload.stats||{}, generated:payload.generated||"" };
 }
 
-/* ---------- パッケージ（標本） ---------- */
+/* ============ パッケージ（標本） ============ */
+function hashN(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+function specimen(b){ const h=hashN(b.name+b.r), dark=(h%2)===0, hue=h%360;
+  return { bg: dark?`hsl(${hue},18%,16%)`:`hsl(${hue},22%,88%)`, accent: dark?`hsl(${hue},30%,82%)`:`hsl(${hue},45%,28%)` }; }
 function Package({ bean, small }){
-  const [imgok, setImgok] = useState(true);
-  const sp = specimen(bean);
-  if(bean.image && imgok){
-    return (
-      <div style={{borderRadius:6,aspectRatio:"3 / 4",overflow:"hidden",background:"#EFEBE2",
-        boxShadow:"0 1px 2px rgba(23,21,15,0.10)",position:"relative"}}>
-        <img src={bean.image} alt={bean.name} loading="lazy" onError={()=>setImgok(false)}
-          style={{width:"100%",height:"100%",objectFit:"cover",
-            filter: bean.status==="sold" ? "grayscale(0.5) contrast(0.95)" : "none",
-            opacity: bean.status==="sold" ? 0.8 : 1}} />
-      </div>
-    );
+  const [ok,setOk]=useState(true);
+  if(bean.image && ok){
+    return (<div style={{borderRadius:6,aspectRatio:"3 / 4",overflow:"hidden",background:"#EFEBE2",boxShadow:"0 1px 2px rgba(23,21,15,0.1)"}}>
+      <img src={bean.image} alt={bean.name} loading="lazy" onError={()=>setOk(false)}
+        style={{width:"100%",height:"100%",objectFit:"cover",filter:bean.status==="sold"?"grayscale(0.5)":"none",opacity:bean.status==="sold"?0.82:1}}/>
+    </div>);
   }
-  const faded = bean.status==="sold";
-  return (
-    <div style={{background:sp.bg,borderRadius:6,aspectRatio:"3 / 4",position:"relative",overflow:"hidden",
-      filter:faded?"grayscale(0.4)":"none",opacity:faded?0.9:1,boxShadow:"0 1px 2px rgba(23,21,15,0.10)"}}>
-      <div style={{position:"absolute",top:0,left:0,right:0,height:"12%",background:"rgba(23,21,15,0.10)",borderBottom:"1px solid rgba(23,21,15,0.12)"}}/>
-      <div style={{position:"absolute",top:"17%",left:0,right:0,textAlign:"center",color:sp.accent,fontSize:small?7.5:9,letterSpacing:"0.16em",fontWeight:700,padding:"0 6px",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>
-        {bean.roasterName.toUpperCase()}
-      </div>
-      <div style={{position:"absolute",top:"37%",left:"10%",right:"10%",textAlign:"center"}}>
-        <div style={{color:sp.accent,fontWeight:700,fontSize:small?11:13,lineHeight:1.25,display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{bean.name}</div>
-        <div style={{marginTop:6,height:1,background:sp.accent,opacity:0.5}}/>
-        {bean.process && <div style={{marginTop:6,color:sp.accent,fontSize:small?8:9,letterSpacing:"0.08em",opacity:0.9}}>{bean.process.toUpperCase()}</div>}
-      </div>
+  const sp=specimen(bean), faded=bean.status==="sold";
+  return (<div style={{background:sp.bg,borderRadius:6,aspectRatio:"3 / 4",position:"relative",overflow:"hidden",filter:faded?"grayscale(0.4)":"none",opacity:faded?0.9:1,boxShadow:"0 1px 2px rgba(23,21,15,0.1)"}}>
+    <div style={{position:"absolute",top:0,left:0,right:0,height:"12%",background:"rgba(23,21,15,0.1)",borderBottom:"1px solid rgba(23,21,15,0.12)"}}/>
+    <div style={{position:"absolute",top:"17%",left:0,right:0,textAlign:"center",color:sp.accent,fontSize:small?7.5:9,letterSpacing:"0.16em",fontWeight:700,padding:"0 6px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{bean.roasterName.toUpperCase()}</div>
+    <div style={{position:"absolute",top:"37%",left:"10%",right:"10%",textAlign:"center"}}>
+      <div style={{color:sp.accent,fontWeight:700,fontSize:small?11:13,lineHeight:1.25,display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{bean.name}</div>
+      <div style={{marginTop:6,height:1,background:sp.accent,opacity:0.5}}/>
+      {bean.process && <div style={{marginTop:6,color:sp.accent,fontSize:small?8:9,letterSpacing:"0.08em",opacity:0.9}}>{bean.process.toUpperCase()}</div>}
     </div>
-  );
+  </div>);
 }
 
-/* ---------- 豆カード ---------- */
-function BeanCard({ bean, onOpen, onRoaster, mode }){
-  const s = STATUS[bean.status];
-  return (
-    <div className="bt-card" style={{cursor:"pointer"}} onClick={()=>onOpen(bean)}>
-      <Package bean={bean} small/>
-      <div style={{padding:"8px 2px 0"}}>
-        <div style={{display:"flex",alignItems:"center",gap:5}}>
-          <span style={{width:6,height:6,borderRadius:999,background:s.dot,flexShrink:0}}/>
-          <span style={{fontFamily:"var(--mono)",fontSize:9,color:s.dot,letterSpacing:"0.06em"}}>{s.label}</span>
-          {bean.amount>0 &&
-            <span style={{marginLeft:"auto",fontFamily:"var(--mono)",fontSize:9,color:INK}}>
-              {fmtDisp(bean.amount,bean.cur,mode)}{bean.grams?`/${bean.grams}g`:""}
-            </span>}
-        </div>
-        <div style={{fontSize:12,fontWeight:700,color:INK,marginTop:3,lineHeight:1.3,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{bean.name}</div>
-        <button onClick={(e)=>{e.stopPropagation();onRoaster(bean.r);}}
-          style={{fontSize:10.5,color:GRAY,marginTop:2,background:"none",border:"none",padding:0,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:2,textAlign:"left"}}>
-          {bean.roasterName}
-        </button>
+/* ============ 豆カード ============ */
+function BeanCard({ bean, onOpen, onRoaster, disp }){
+  const s=STATUS[bean.status];
+  return (<div className="bt-card" style={{cursor:"pointer"}} onClick={()=>onOpen(bean)}>
+    <Package bean={bean} small/>
+    <div style={{padding:"8px 2px 0"}}>
+      <div style={{display:"flex",alignItems:"center",gap:5}}>
+        <span style={{width:6,height:6,borderRadius:999,background:s.dot,flexShrink:0}}/>
+        <span style={{fontFamily:"ui-monospace,monospace",fontSize:9,color:s.dot,letterSpacing:"0.06em"}}>{s.label}</span>
+        {bean.amount>0 && <span style={{marginLeft:"auto",fontFamily:"ui-monospace,monospace",fontSize:9,color:INK}}>{fmtDisp(bean,disp)}{bean.grams?`/${bean.grams}g`:""}</span>}
       </div>
+      <div style={{fontSize:12,fontWeight:700,color:INK,marginTop:3,lineHeight:1.3,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{bean.name}</div>
+      <button onClick={e=>{e.stopPropagation();onRoaster(bean.r);}} style={{fontSize:10.5,color:GRAY,marginTop:2,background:"none",border:"none",padding:0,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:2,textAlign:"left"}}>{bean.roasterName}</button>
     </div>
-  );
+  </div>);
 }
 
-/* ---------- 詳細シート ---------- */
-function DetailSheet({ bean, onClose, onRoaster, mode }){
+/* ============ 詳細シート ============ */
+function DetailSheet({ bean, onClose, onRoaster, disp }){
   if(!bean) return null;
-  const s = STATUS[bean.status];
-  const rows = [
-    ["国", bean.country],
-    ["産地", bean.origin],
-    ["精製", bean.process],
-    ["現地価格", bean.amount ? `${fmtLocal(bean.amount,bean.cur)}${bean.grams?` / ${bean.grams}g`:""}` : "—"],
-    [mode==="USD"?"ドル換算":"円換算", bean.amount ? fmtDisp(bean.amount,bean.cur,mode==="local"?"JPY":mode) : "—"],
-    ["100gあたり", bean.per100!=null ? fmtLocal(bean.per100,bean.cur) : "—"],
-  ].filter(r=>r[1]);
-  return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(23,21,15,0.45)",zIndex:50,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
-      <div onClick={(e)=>e.stopPropagation()} style={{background:PAPER,width:"100%",maxWidth:480,borderRadius:"14px 14px 0 0",padding:"18px 20px 26px",maxHeight:"82vh",overflowY:"auto",animation:"sheetup .28s ease"}}>
-        <div style={{width:34,height:4,borderRadius:999,background:LINE,margin:"0 auto 16px"}}/>
-        <div style={{display:"flex",gap:16}}>
-          <div style={{width:120,flexShrink:0}}><Package bean={bean}/></div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{display:"flex",alignItems:"center",gap:5}}>
-              <span style={{width:7,height:7,borderRadius:999,background:s.dot}}/>
-              <span style={{fontFamily:"var(--mono)",fontSize:10,color:s.dot}}>{s.label} — {s.jp}</span>
-            </div>
-            <div style={{fontSize:17,fontWeight:700,color:INK,marginTop:6,lineHeight:1.25}}>{bean.name}</div>
-            <button onClick={()=>{onClose();onRoaster(bean.r);}} style={{fontSize:12,color:GRAY,marginTop:3,background:"none",border:"none",padding:0,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:2}}>
-              {bean.roasterName}{bean.country?` — ${bean.country}`:""}
-            </button>
-            <table style={{marginTop:12,fontSize:12,color:INK,borderCollapse:"collapse",width:"100%"}}>
-              <tbody>
-                {rows.map(([k,v])=>(
-                  <tr key={k} style={{borderTop:`1px solid ${LINE}`}}>
-                    <td style={{padding:"6px 0",color:GRAY,fontSize:11,width:74}}>{k}</td>
-                    <td style={{padding:"6px 0",fontFamily:"var(--mono)",fontSize:11.5}}>{v}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+  const s=STATUS[bean.status];
+  const p100=per100JPY(bean);
+  const rows=[["国",bean.country],["産地",bean.origin],["精製",bean.process],
+    ["現地価格",bean.amount?`${fmtLocal(bean)}${bean.grams?` / ${bean.grams}g`:""}`:"—"],
+    [disp==="USD"?"ドル換算":"円換算",bean.amount?fmtDisp(bean,disp==="local"?"JPY":disp):"—"],
+    ["100gあたり",p100!=null?(disp==="USD"?`$${(p100/RATES_TO_JPY.USD).toFixed(2)}`:`¥${Math.round(p100).toLocaleString()}`):"—"]].filter(r=>r[1]);
+  return (<div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(23,21,15,0.45)",zIndex:50,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:PAPER,width:"100%",maxWidth:480,borderRadius:"14px 14px 0 0",padding:"18px 20px 26px",maxHeight:"82vh",overflowY:"auto",animation:"btSheetUp .3s cubic-bezier(0.2,0.7,0.3,1)"}}>
+      <div style={{width:34,height:4,borderRadius:999,background:LINE,margin:"0 auto 16px"}}/>
+      <div style={{display:"flex",gap:16}}>
+        <div style={{width:120,flexShrink:0}}><Package bean={bean}/></div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:5}}>
+            <span style={{width:7,height:7,borderRadius:999,background:s.dot}}/>
+            <span style={{fontFamily:"ui-monospace,monospace",fontSize:10,color:s.dot}}>{s.label} — {s.jp}</span>
           </div>
-        </div>
-        <div style={{marginTop:18}}>
-          {bean.url && bean.status==="now" &&
-            <a href={bean.url} target="_blank" rel="noopener" style={{display:"block",width:"100%",padding:"13px 0",background:INK,color:PAPER,borderRadius:8,fontSize:14,fontWeight:700,textAlign:"center",textDecoration:"none"}}>
-              ロースターのECで見る →
-            </a>}
-          {bean.url && bean.status==="sold" &&
-            <a href={bean.url} target="_blank" rel="noopener" style={{display:"block",width:"100%",padding:"13px 0",background:PAPER,color:INK,border:`1.5px solid ${INK}`,borderRadius:8,fontSize:14,fontWeight:700,textAlign:"center",textDecoration:"none"}}>
-              現在は売り切れ — 商品ページを見る
-            </a>}
+          <div style={{fontSize:17,fontWeight:700,color:INK,marginTop:6,lineHeight:1.25}}>{bean.name}</div>
+          <button onClick={()=>{onClose();onRoaster(bean.r);}} style={{fontSize:12,color:GRAY,marginTop:3,background:"none",border:"none",padding:0,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:2}}>{bean.roasterName}{bean.country?` — ${bean.country}`:""}</button>
+          <table style={{marginTop:12,fontSize:12,color:INK,borderCollapse:"collapse",width:"100%"}}><tbody>
+            {rows.map(([k,v])=>(<tr key={k} style={{borderTop:`1px solid ${LINE}`}}>
+              <td style={{padding:"6px 0",color:GRAY,fontSize:11,width:74}}>{k}</td>
+              <td style={{padding:"6px 0",fontFamily:"ui-monospace,monospace",fontSize:11.5}}>{v}</td></tr>))}
+          </tbody></table>
         </div>
       </div>
+      <div style={{marginTop:18}}>
+        {bean.url && bean.status==="now" && <a href={bean.url} target="_blank" rel="noopener" style={{display:"block",width:"100%",padding:"13px 0",background:INK,color:PAPER,borderRadius:8,fontSize:14,fontWeight:700,textAlign:"center",textDecoration:"none"}}>ロースターのECで見る →</a>}
+        {bean.url && bean.status==="sold" && <a href={bean.url} target="_blank" rel="noopener" style={{display:"block",width:"100%",padding:"13px 0",background:PAPER,color:INK,border:`1.5px solid ${INK}`,borderRadius:8,fontSize:14,fontWeight:700,textAlign:"center",textDecoration:"none"}}>現在は売り切れ — 商品ページを見る</a>}
+      </div>
     </div>
-  );
+  </div>);
 }
 
-/* ============ アプリ本体 ============ */
+/* ============ ロースターページ ============ */
+function RoasterPage({ roaster, beans, onOpen, onBack, onRoaster, initialTab, disp }){
+  const [tab,setTab]=useState(initialTab||"now");
+  const mine=beans.filter(b=>b.r===roaster.id);
+  const by=st=>mine.filter(b=>b.status===st);
+  const tabs=[{k:"now",label:"NOW",n:by("now").length},{k:"sold",label:"SOLD OUT",n:by("sold").length}];
+  const cc=COUNTRY[roaster.country];
+  return (<div>
+    <button onClick={onBack} style={{background:"none",border:"none",color:GRAY,fontSize:12,padding:"2px 0 12px",cursor:"pointer"}}>← 図鑑にもどる</button>
+    <div style={{borderTop:`2px solid ${INK}`,paddingTop:14}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+        <h2 style={{fontSize:22,fontWeight:700,margin:0}}>{roaster.name}</h2>
+        <span style={{fontFamily:"ui-monospace,monospace",fontSize:10,color:GRAY}}>{cc?cc.n:roaster.country}</span>
+      </div>
+      <div style={{fontSize:12,color:GRAY,marginTop:4}}>在庫 {roaster.live} / 全 {roaster.count} 銘柄{roaster.url && <> ・ <a href={roaster.url} target="_blank" rel="noopener" style={{color:GREEN,textDecoration:"underline"}}>EC →</a></>}</div>
+    </div>
+    <div style={{display:"flex",marginTop:18,borderBottom:`1px solid ${LINE}`}}>
+      {tabs.map(t=>(<button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,padding:"9px 0",background:"none",border:"none",cursor:"pointer",fontFamily:"ui-monospace,monospace",fontSize:11,letterSpacing:"0.05em",color:tab===t.k?INK:GRAY,fontWeight:tab===t.k?700:400,borderBottom:tab===t.k?`2px solid ${INK}`:"2px solid transparent"}}>{t.label} <span style={{opacity:0.6}}>{t.n}</span></button>))}
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(140px, 1fr))",gap:16,marginTop:18}}>
+      {by(tab).slice(0,120).map(b=><BeanCard key={b.id} bean={b} onOpen={onOpen} onRoaster={onRoaster} disp={disp}/>)}
+    </div>
+    {by(tab).length===0 && <div style={{textAlign:"center",color:GRAY,fontSize:12,padding:"40px 0"}}>このカテゴリの豆はまだありません。</div>}
+    <div style={{marginTop:20,fontSize:10.5,color:GRAY,borderTop:`1px solid ${LINE}`,paddingTop:12,lineHeight:1.7}}>ロースターの経歴データは今後追加予定です。現在は巡回で取得した在庫のみ表示しています。</div>
+  </div>);
+}
+
+/* ============ 地球儀 ============ */
+function GlobeView({ roasters, onRoaster }){
+  const svgRef=useRef(null), wrapRef=useRef(null);
+  const [sel,setSel]=useState(null);
+  // 国ごとに代表座標＋その国のロースター群
+  const points=useMemo(()=>{
+    const byC={};
+    Object.values(roasters).forEach(r=>{ if(!COUNTRY[r.country])return; (byC[r.country]=byC[r.country]||[]).push(r); });
+    return Object.entries(byC).map(([cc,rs])=>({cc,coord:COUNTRY[cc].c,name:COUNTRY[cc].n,roasters:rs.sort((a,b)=>b.count-a.count)}));
+  },[roasters]);
+
+  useEffect(()=>{
+    const wrap=wrapRef.current; const size=Math.min(wrap.clientWidth,360);
+    const svg=d3.select(svgRef.current).attr("width",size).attr("height",size); svg.selectAll("*").remove();
+    const proj=d3.geoOrthographic().translate([size/2,size/2]).scale(size/2-8).clipAngle(90).rotate([-139,-32]);
+    svg.append("circle").attr("cx",size/2).attr("cy",size/2).attr("r",size/2-8).attr("fill","#F2F0E9").attr("stroke",INK).attr("stroke-width",1.4);
+    const path=d3.geoPath(proj);
+    const grat=svg.append("path").datum(d3.geoGraticule10()).attr("fill","none").attr("stroke","#CFCBBE").attr("stroke-width",0.5);
+    const markers=svg.append("g");
+    function render(){
+      grat.attr("d",path);
+      markers.selectAll("*").remove();
+      const center=proj.invert([size/2,size/2]);
+      points.forEach(pt=>{
+        if(d3.geoDistance(pt.coord,center)>Math.PI/2-0.05) return;
+        const [x,y]=proj(pt.coord);
+        const g=markers.append("g").style("cursor","pointer").on("click",()=>setSel(pt.cc));
+        g.append("circle").attr("cx",x).attr("cy",y).attr("r",11).attr("fill","transparent");
+        g.append("circle").attr("cx",x).attr("cy",y).attr("r",Math.min(3+pt.roasters.length*0.5,7)).attr("fill",GREEN).attr("stroke",PAPER).attr("stroke-width",1.4);
+      });
+    }
+    render();
+    let dragging=false,last=null;
+    const drag=d3.drag().on("start",e=>{dragging=true;last=[e.x,e.y];})
+      .on("drag",e=>{const [lx,ly]=last;const rot=proj.rotate();proj.rotate([rot[0]+(e.x-lx)*0.4,Math.max(-80,Math.min(80,rot[1]-(e.y-ly)*0.4))]);last=[e.x,e.y];render();})
+      .on("end",()=>{dragging=false;});
+    svg.call(drag);
+    const timer=d3.timer(()=>{ if(dragging)return; const rot=proj.rotate(); proj.rotate([rot[0]+0.05,rot[1]]); render(); });
+    return ()=>timer.stop();
+  },[points]);
+
+  const selPt = sel ? points.find(p=>p.cc===sel) : null;
+  return (<div>
+    <div style={{fontSize:11,color:GRAY,marginBottom:6}}>地球を回して、ロースターのいる国を探す。●の大きさはその国のロースター数です。</div>
+    <div ref={wrapRef} style={{display:"flex",justifyContent:"center",touchAction:"none"}}><svg ref={svgRef}/></div>
+    {selPt ? (
+      <div style={{borderTop:`2px solid ${INK}`,marginTop:14,paddingTop:12}}>
+        <div style={{fontSize:16,fontWeight:700}}>{selPt.name} <span style={{fontFamily:"ui-monospace,monospace",fontSize:11,color:GRAY}}>{selPt.roasters.length} ロースター</span></div>
+        <div style={{marginTop:8}}>
+          {selPt.roasters.slice(0,12).map(r=>(<button key={r.id} onClick={()=>onRoaster(r.id)} style={{display:"flex",justifyContent:"space-between",width:"100%",alignItems:"center",background:"none",border:"none",borderTop:`1px solid ${LINE}`,padding:"10px 2px",cursor:"pointer",textAlign:"left"}}>
+            <span style={{fontSize:13,fontWeight:700}}>{r.name}</span>
+            <span style={{fontFamily:"ui-monospace,monospace",fontSize:10,color:GRAY}}>在庫 {r.live} →</span>
+          </button>))}
+        </div>
+      </div>
+    ) : <div style={{textAlign:"center",fontSize:11,color:GRAY,marginTop:12}}>● をタップするとその国のロースターが出ます</div>}
+  </div>);
+}
+
+/* ============ 好み診断 ============ */
+const QUESTIONS = [
+  { q:"どんな味わいが好きですか?", opts:[
+    { label:"すっきり明るい酸味", origins:["Ethiopia","Kenya"], proc:["Washed"] },
+    { label:"フルーティで甘やか", origins:["Colombia","Ethiopia"], proc:["Natural"] },
+    { label:"バランスよく飲みやすい", origins:["Colombia","Guatemala","Brazil"], proc:["Washed"] },
+    { label:"未知の味に出会いたい", origins:[], proc:["Anaerobic","Carbonic"] },
+  ]},
+  { q:"精製方式への冒険度は?", opts:[
+    { label:"クリーンな Washed が基本", origins:[], proc:["Washed"] },
+    { label:"Natural や Honey も好き", origins:[], proc:["Natural","Honey"] },
+    { label:"Anaerobic など実験系も試したい", origins:[], proc:["Anaerobic","Carbonic","Thermal"] },
+  ]},
+  { q:"産地の好みは?", opts:[
+    { label:"アフリカの華やかさ", origins:["Ethiopia","Kenya","Rwanda","Burundi"], proc:[] },
+    { label:"中南米の甘さ・バランス", origins:["Colombia","Guatemala","Costa Rica","Panama","Brazil"], proc:[] },
+    { label:"こだわらない・全部見たい", origins:[], proc:[] },
+  ]},
+];
+
+function DiagnosisView({ roasters, beans, onRoaster }){
+  const [step,setStep]=useState(0);
+  const [pref,setPref]=useState({origins:[],proc:[]});
+  const answer=o=>{ setPref(p=>({origins:[...p.origins,...o.origins],proc:[...p.proc,...o.proc]})); setStep(step+1); };
+  const reset=()=>{ setStep(0); setPref({origins:[],proc:[]}); };
+
+  if(step>=QUESTIONS.length){
+    // 実データからスコアリング：在庫豆が好みの産地/精製にどれだけ合致するか
+    const oset=pref.origins.map(s=>s.toLowerCase()), pset=pref.proc.map(s=>s.toLowerCase());
+    const score={};
+    beans.forEach(b=>{ if(b.status!=="now")return;
+      const o=(b.origin||"").toLowerCase(), p=(b.process||"").toLowerCase();
+      let s=0;
+      if(oset.length && oset.some(x=>o.includes(x))) s+=2;
+      if(pset.length && pset.some(x=>p.includes(x))) s+=1;
+      if(!oset.length && !pset.length) s+=0.2; // こだわらない
+      if(s>0) score[b.r]=(score[b.r]||0)+s;
+    });
+    const ranked=Object.entries(score).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([rid])=>roasters[rid]).filter(Boolean);
+    return (<div>
+      <div style={{fontFamily:"ui-monospace,monospace",fontSize:10,color:GRAY,letterSpacing:"0.1em"}}>RESULT</div>
+      <div style={{fontSize:20,fontWeight:800,marginTop:6}}>あなたの好みに近いロースター</div>
+      <div style={{fontSize:12,color:GRAY,marginTop:4}}>選んだ好み: {[...new Set([...pref.origins,...pref.proc])].join(" / ")||"すべて"}</div>
+      <div style={{marginTop:14}}>
+        {ranked.length? ranked.map((r,i)=>(<button key={r.id} onClick={()=>onRoaster(r.id)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",background:i===0?"#F2F0E9":"none",border:"none",borderTop:`1px solid ${LINE}`,borderRadius:i===0?8:0,padding:"13px 10px",cursor:"pointer",textAlign:"left"}}>
+          <div><span style={{fontSize:i===0?15:13,fontWeight:700}}>{r.name}</span> <span style={{fontSize:10.5,color:GRAY,marginLeft:6}}>{COUNTRY[r.country]?COUNTRY[r.country].n:r.country} ・ 在庫{r.live}</span></div>
+          <span style={{color:GRAY}}>→</span>
+        </button>)) : <div style={{color:GRAY,fontSize:12,padding:"20px 0"}}>合致する在庫が見つかりませんでした。</div>}
+      </div>
+      <button onClick={reset} style={{marginTop:16,background:"none",border:`1px solid ${LINE}`,borderRadius:999,padding:"7px 16px",fontSize:11,color:GRAY,cursor:"pointer"}}>もう一度診断する</button>
+      <div style={{marginTop:12,fontSize:10,color:GRAY,lineHeight:1.7}}>優劣ではなく、あなたの好みと在庫の相性です。産地・精製の合致で実データから算出しています。</div>
+    </div>);
+  }
+  const q=QUESTIONS[step];
+  return (<div key={step}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div style={{fontFamily:"ui-monospace,monospace",fontSize:10,color:GRAY,letterSpacing:"0.1em"}}>Q{step+1} / {QUESTIONS.length}</div>
+      <div style={{display:"flex",gap:4}}>{QUESTIONS.map((_,i)=><span key={i} style={{width:14,height:3,borderRadius:2,background:i<=step?INK:LINE}}/>)}</div>
+    </div>
+    <div style={{fontSize:17,fontWeight:700,marginTop:14,lineHeight:1.5}}>{q.q}</div>
+    <div style={{marginTop:16}}>
+      {q.opts.map(o=>(<button key={o.label} onClick={()=>answer(o)} style={{display:"block",width:"100%",textAlign:"left",padding:"13px 14px",marginTop:8,background:PAPER,border:`1px solid ${LINE}`,borderRadius:8,fontSize:13,cursor:"pointer"}}>{o.label}</button>))}
+    </div>
+    {step>0 && <button onClick={reset} style={{marginTop:14,background:"none",border:"none",fontSize:11,color:GRAY,cursor:"pointer",padding:0}}>← 最初からやり直す</button>}
+  </div>);
+}
+
+/* ============ 味わいマップ ============ */
+function FlavorMapView({ beans, onOpen, disp }){
+  const [famF,setFamF]=useState(null); const [selId,setSelId]=useState(null);
+  const pts=useMemo(()=>{
+    const live=beans.filter(b=>b.status==="now"&&b.origin);
+    // 産地の多様性を確保しつつ最大80件
+    return live.slice(0,80).map(b=>({b,...flavorCoords(b)}));
+  },[beans]);
+  const sel=pts.find(p=>p.b.id===selId);
+  return (<div>
+    <div style={{fontSize:11,color:GRAY,marginBottom:10}}>いま買える豆を味わいの座標で（精製・産地からの推定です）。●をタップで詳細。</div>
+    <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:8}}>
+      {Object.entries(FLAVORS).map(([k,f])=>(<button key={k} onClick={()=>setFamF(famF===k?null:k)} style={{flexShrink:0,display:"flex",alignItems:"center",gap:5,padding:"5px 11px",borderRadius:999,fontSize:11,cursor:"pointer",border:`1px solid ${famF===k?f.color:LINE}`,background:famF===k?f.color:"transparent",color:famF===k?"#fff":INK}}>
+        <span style={{width:8,height:8,borderRadius:999,background:famF===k?"#fff":f.color}}/>{f.label}</button>))}
+    </div>
+    <div style={{position:"relative",width:"100%",aspectRatio:"1 / 1",marginTop:6,borderRadius:12,border:`1.4px solid ${INK}`,overflow:"hidden",background:"radial-gradient(at 15% 12%,rgba(217,180,65,0.13),transparent 55%),radial-gradient(at 85% 12%,rgba(217,140,166,0.14),transparent 55%),radial-gradient(at 85% 88%,rgba(124,77,143,0.12),transparent 55%),radial-gradient(at 15% 88%,rgba(122,82,50,0.13),transparent 55%),#FCFBF8"}}>
+      <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:1,background:LINE}}/>
+      <div style={{position:"absolute",top:"50%",left:0,right:0,height:1,background:LINE}}/>
+      <span style={{position:"absolute",top:6,left:"50%",transform:"translateX(-50%)",fontSize:9,color:GRAY,letterSpacing:"0.15em"}}>明るい・すっきり</span>
+      <span style={{position:"absolute",bottom:6,left:"50%",transform:"translateX(-50%)",fontSize:9,color:GRAY,letterSpacing:"0.15em"}}>深い・コク</span>
+      <span style={{position:"absolute",left:8,top:"50%",transform:"translate(-30%,-50%) rotate(-90deg)",fontSize:9,color:GRAY,letterSpacing:"0.15em"}}>クリーン</span>
+      <span style={{position:"absolute",right:8,top:"50%",transform:"translate(30%,-50%) rotate(90deg)",fontSize:9,color:GRAY,letterSpacing:"0.15em"}}>個性派</span>
+      {pts.map((pt,i)=>{ const f=FLAVORS[pt.fam],dim=famF&&famF!==pt.fam,isS=selId===pt.b.id;
+        return (<button key={pt.b.id} onClick={()=>setSelId(isS?null:pt.b.id)} style={{position:"absolute",left:`${pt.fx}%`,top:`${pt.fy}%`,width:28,height:28,marginLeft:-14,marginTop:-14,background:"transparent",border:"none",cursor:"pointer",padding:0,opacity:dim?0.15:1,zIndex:isS?5:1}}>
+          <span style={{display:"block",width:13,height:13,margin:"7px auto",borderRadius:999,background:pt.b.status==="sold"?"transparent":f.color,border:`3px solid ${f.color}`,boxShadow:isS?`0 0 0 5px ${f.color}33`:"0 1px 3px rgba(23,21,15,0.2)"}}/>
+        </button>);
+      })}
+    </div>
+    <div style={{fontSize:9.5,color:GRAY,marginTop:6,textAlign:"right"}}>座標は精製・産地からの推定（優劣ではありません）</div>
+    {sel && (<div key={sel.b.id} style={{display:"flex",gap:14,borderTop:`2px solid ${INK}`,marginTop:12,paddingTop:14}}>
+      <div style={{width:84,flexShrink:0}}><Package bean={sel.b} small/></div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{width:9,height:9,borderRadius:999,background:FLAVORS[sel.fam].color}}/><span style={{fontSize:10.5,color:GRAY}}>{FLAVORS[sel.fam].label} ・ {sel.b.origin}</span></div>
+        <div style={{fontSize:14.5,fontWeight:700,marginTop:4}}>{sel.b.name}</div>
+        <div style={{fontSize:11,color:GRAY,marginTop:2}}>{sel.b.roasterName} ・ {fmtDisp(sel.b,disp)}{sel.b.grams?`/${sel.b.grams}g`:""}</div>
+        <button onClick={()=>onOpen(sel.b)} style={{marginTop:10,padding:"9px 18px",background:INK,color:PAPER,border:"none",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer"}}>詳しく見る →</button>
+      </div>
+    </div>)}
+  </div>);
+}
+
+/* ============ レアロット ============ */
+function VarietySection({ beans, vt, title, sub, onOpen, disp }){
+  const all=beans.filter(b=>b.vt===vt);
+  const live=all.filter(b=>b.status==="now"), sold=all.filter(b=>b.status==="sold");
+  const p100=b=>per100JPY(b)||0;
+  const fmt100=b=>{ const v=per100JPY(b); if(v==null)return "—"; return disp==="USD"?`$${(v/RATES_TO_JPY.USD).toFixed(0)}`:`¥${Math.round(v).toLocaleString()}`; };
+  const ladder=[...live,...sold].filter(b=>per100JPY(b)!=null).sort((a,b)=>p100(a)-p100(b)).slice(0,24);
+  const maxP=Math.max(1,...ladder.map(p100));
+  return (<div style={{marginTop:26}}>
+    <div style={{display:"flex",alignItems:"baseline",gap:8}}><span style={{fontSize:16,fontWeight:800,letterSpacing:"0.08em"}}>{title}</span><span style={{fontSize:10,color:GRAY}}>{sub}</span></div>
+    <div style={{borderTop:`2px solid ${INK}`,borderBottom:`1px solid ${LINE}`,padding:"12px 0",marginTop:8}}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{width:8,height:8,borderRadius:999,background:GREEN}}/><span style={{fontFamily:"ui-monospace,monospace",fontSize:10,letterSpacing:"0.15em",color:GRAY}}>LIVE</span></div>
+      <div style={{fontSize:19,fontWeight:800,marginTop:5}}>いま世界で買える <span style={{fontFamily:"ui-monospace,monospace"}}>{live.length}</span> 銘柄</div>
+    </div>
+    <div style={{marginTop:14}}>
+      <div style={{fontFamily:"ui-monospace,monospace",fontSize:10,letterSpacing:"0.12em",color:GRAY}}>PRICE / 100g</div>
+      {ladder.map(b=>(<button key={b.id} onClick={()=>onOpen(b)} style={{display:"block",width:"100%",background:"none",border:"none",padding:"10px 0 0",cursor:"pointer",textAlign:"left"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+          <span style={{fontSize:12,fontWeight:700}}>{b.status==="sold"&&<span style={{color:AMBER,fontSize:9,fontFamily:"ui-monospace,monospace",marginRight:6}}>SOLD OUT</span>}{b.name}</span>
+          <span style={{fontFamily:"ui-monospace,monospace",fontSize:11}}>{fmt100(b)}</span>
+        </div>
+        <div style={{fontSize:10,color:GRAY,marginTop:1}}>{b.roasterName} ・ {b.origin||"—"} ・ {b.process||"—"}</div>
+        <div style={{height:6,background:"#F0EDE4",borderRadius:3,marginTop:5,overflow:"hidden"}}><div style={{height:"100%",borderRadius:3,width:`${(p100(b)/maxP)*100}%`,background:b.status==="sold"?LINE:`linear-gradient(90deg,${GREEN},#6B8F3C)`}}/></div>
+      </button>))}
+      {ladder.length===0 && <div style={{color:GRAY,fontSize:12,padding:"16px 0"}}>いまは該当ロットがありません。次の巡回をお待ちください。</div>}
+    </div>
+  </div>);
+}
+function GeishaView({ beans, onOpen, disp }){
+  return (<div>
+    <div><div style={{fontFamily:"ui-monospace,monospace",fontSize:10,letterSpacing:"0.2em",color:GRAY}}>RARE LOT</div>
+    <div style={{fontSize:12,color:GRAY,marginTop:4,lineHeight:1.7}}>少量で消えていく希少品種だけを追いかけるトラッカー。豆名から自動抽出しています。</div></div>
+    <VarietySection beans={beans} vt="geisha" title="GEISHA" sub="ゲイシャ品種" onOpen={onOpen} disp={disp}/>
+    <VarietySection beans={beans} vt="sidra" title="SIDRA" sub="シドラ品種" onOpen={onOpen} disp={disp}/>
+  </div>);
+}
+
+/* ============ スプラッシュ ============ */
+function Splash({ done }){
+  return (<div style={{position:"fixed",inset:0,zIndex:100,background:PAPER,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",pointerEvents:done?"none":"auto",animation:done?"btFadeOut .6s ease both":"none"}}>
+    <div style={{fontWeight:800,fontSize:24,letterSpacing:"0.35em",paddingLeft:"0.35em",animation:"btTrackIn .9s cubic-bezier(0.2,0.7,0.3,1) both"}}>BEAN&nbsp;TRACKER</div>
+    <div style={{height:2,background:INK,marginTop:14,animation:"btLineGrow .7s .5s cubic-bezier(0.2,0.7,0.3,1) both"}}/>
+    <div style={{fontSize:11,color:GRAY,marginTop:12,letterSpacing:"0.1em",animation:"btFadeUp .6s .9s ease both"}}>世界中のコーヒー豆に辿り着くためのインフラ</div>
+  </div>);
+}
+
+/* ============ メイン ============ */
 function App({ data }){
   const { roasters, beans, newKeys, stats, generated } = data;
-  const [tab, setTab] = useState("new");        // new | now | sold
-  const [roasterF, setRoasterF] = useState("all");
-  const [originF, setOriginF] = useState("all");
-  const [term, setTerm] = useState("");
-  const [mode, setMode] = useState("local");    // local | JPY | USD
-  const [open, setOpen] = useState(null);
-  const [limit, setLimit] = useState(240);
+  const [view,setView]=useState("zukan"); // zukan|map|shindan|flavor|geisha|roaster
+  const [roasterId,setRoasterId]=useState(null);
+  const [roasterTab,setRoasterTab]=useState("now");
+  const [origin,setOrigin]=useState("すべて");
+  const [statusF,setStatusF]=useState("now");
+  const [processF,setProcessF]=useState("すべて");
+  const [open,setOpen]=useState(null);
+  const [disp,setDisp]=useState("local");
+  const [limit,setLimit]=useState(120);
+  const [splashDone,setSplashDone]=useState(false);
+  const [splashGone,setSplashGone]=useState(false);
 
-  const origins = useMemo(()=>[...new Set(beans.map(b=>b.origin).filter(Boolean))].sort(), [beans]);
-  const roasterList = useMemo(()=>Object.values(roasters).sort((a,b)=>a.name.localeCompare(b.name)), [roasters]);
+  useEffect(()=>{ const t1=setTimeout(()=>setSplashDone(true),1500), t2=setTimeout(()=>setSplashGone(true),2200); return ()=>{clearTimeout(t1);clearTimeout(t2);}; },[]);
+  const goRoaster=(rid,tab)=>{ setRoasterId(rid); setRoasterTab(tab||"now"); setView("roaster"); window.scrollTo(0,0); };
 
-  const base = useMemo(()=>{
-    if(tab==="new") return beans.filter(b=>newKeys.has(b.id));
-    if(tab==="now") return beans.filter(b=>b.status==="now");
-    return beans.filter(b=>b.status==="sold");
-  }, [tab, beans, newKeys]);
+  const origins=useMemo(()=>{ const c={}; beans.forEach(b=>{if(b.origin)c[b.origin]=(c[b.origin]||0)+1;}); return ["すべて",...Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,14).map(x=>x[0])]; },[beans]);
+  const PROCESSES=["すべて","Washed","Natural","Honey","Anaerobic"];
 
-  const filtered = useMemo(()=>{
-    const t = term.trim().toLowerCase();
-    return base.filter(b=>
-      (roasterF==="all"||b.r===roasterF) &&
-      (originF==="all"||b.origin===originF) &&
-      (!t || `${b.name} ${b.roasterName} ${b.origin} ${b.process}`.toLowerCase().includes(t))
-    );
-  }, [base, roasterF, originF, term]);
+  const base=useMemo(()=>{
+    if(statusF==="new") return beans.filter(b=>newKeys.has(b.id));
+    if(statusF==="all") return beans;
+    return beans.filter(b=>b.status===statusF);
+  },[statusF,beans,newKeys]);
+  const filtered=useMemo(()=>base.filter(b=>
+    (origin==="すべて"||b.origin===origin) && (processF==="すべて"||(b.process||"").includes(processF))
+  ),[base,origin,processF]);
+  useEffect(()=>{ setLimit(120); },[statusF,origin,processF]);
 
-  useEffect(()=>{ setLimit(240); }, [tab, roasterF, originF, term]);
+  const roaster = roasterId ? roasters[roasterId] : null;
+  const failed = stats.failed_roasters||[];
+  const chip=(active,color)=>({flexShrink:0,padding:"6px 12px",borderRadius:999,fontSize:11.5,cursor:"pointer",border:`1px solid ${active?(color||INK):LINE}`,background:active?(color||INK):"transparent",color:active?PAPER:(color?GRAY:INK)});
 
-  const tabs = [
-    { k:"new",  label:"新着 NEW",   dot:GREEN },
-    { k:"now",  label:"在庫あり NOW", dot:GREEN },
-    { k:"sold", label:"売切 SOLD OUT", dot:AMBER },
-  ];
-  const roaster = roasterF!=="all" ? roasters[roasterF] : null;
-  const failed = stats.failed_roasters || [];
+  return (<div>
+    <style>{`
+      @keyframes btTrackIn{from{letter-spacing:.8em;opacity:0}to{letter-spacing:.35em;opacity:1}}
+      @keyframes btLineGrow{from{width:0}to{width:180px}}
+      @keyframes btFadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+      @keyframes btFadeOut{from{opacity:1}to{opacity:0}}
+      @keyframes btSheetUp{from{transform:translateY(100%)}to{transform:none}}
+      @keyframes btGridIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+      .bt-card{animation:btGridIn .4s ease backwards;transition:transform .15s cubic-bezier(0.2,0.7,0.3,1)}
+      .bt-card:active{transform:scale(0.955)}
+    `}</style>
+    {!splashGone && <Splash done={splashDone}/>}
 
-  return (
-    <div style={{padding:"0 20px 60px"}}>
-      {/* ヘッダ */}
-      <header style={{padding:"22px 0 8px"}}>
-        <div style={{fontFamily:"var(--mono)",fontWeight:700,fontSize:16,letterSpacing:"0.02em"}}>
-          BEAN TRACKER <span style={{color:GREEN}}>◜◞</span> 図鑑
-        </div>
-        <div style={{fontFamily:"var(--mono)",fontSize:11.5,color:GRAY,marginTop:8,display:"flex",gap:16,flexWrap:"wrap"}}>
-          <span><b style={{color:INK}}>{stats.products??beans.length}</b> 銘柄</span>
-          <span>在庫 <b style={{color:INK}}>{stats.in_stock??"—"}</b></span>
-          <span><b style={{color:INK}}>{stats.roasters??roasterList.length}</b> ロースター</span>
-          <span>更新 {generated}</span>
-        </div>
-      </header>
-
-      {/* 検索・通貨 */}
-      <div style={{display:"flex",gap:8,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
-        <input value={term} onChange={e=>setTerm(e.target.value)} placeholder="豆名・ロースター・産地で検索"
-          style={{flex:1,minWidth:180,padding:"9px 12px",border:`1px solid ${LINE}`,borderRadius:8,fontSize:13,background:"#fff",fontFamily:"var(--sans)"}}/>
-        <div style={{display:"flex",border:`1px solid ${LINE}`,borderRadius:8,overflow:"hidden"}}>
-          {[["local","現地"],["JPY","¥"],["USD","$"]].map(([m,l])=>(
-            <button key={m} onClick={()=>setMode(m)}
-              style={{padding:"9px 12px",border:"none",cursor:"pointer",fontSize:12,fontFamily:"var(--mono)",
-                background: mode===m?INK:"#fff", color: mode===m?PAPER:GRAY}}>{l}</button>
-          ))}
-        </div>
-      </div>
-
-      {/* フィルタ */}
-      <div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
-        <select value={roasterF} onChange={e=>setRoasterF(e.target.value)} style={selStyle}>
-          <option value="all">全ロースター</option>
-          {roasterList.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}
-        </select>
-        <select value={originF} onChange={e=>setOriginF(e.target.value)} style={selStyle}>
-          <option value="all">全産地</option>
-          {origins.map(o=><option key={o} value={o}>{o}</option>)}
-        </select>
-      </div>
-
-      {/* ロースター見出し（絞り込み時） */}
-      {roaster &&
-        <div style={{marginTop:16,padding:"12px 14px",background:"#F2F0E9",borderRadius:8,display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:10}}>
-          <div>
-            <div style={{fontSize:16,fontWeight:700}}>{roaster.name}</div>
-            <div style={{fontFamily:"var(--mono)",fontSize:10.5,color:GRAY,marginTop:2}}>{roaster.country} / {roaster.count} 銘柄</div>
+    <header style={{position:"sticky",top:0,zIndex:40,background:PAPER,borderBottom:`2px solid ${INK}`}}>
+      <div style={{maxWidth:640,margin:"0 auto",padding:"14px 16px 10px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+          <div style={{fontWeight:800,fontSize:17,letterSpacing:"0.12em"}}>BEAN&nbsp;TRACKER</div>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{display:"flex",border:`1px solid ${INK}`,borderRadius:6,overflow:"hidden"}}>
+              {[["local","現地"],["JPY","¥"],["USD","$"]].map(([k,s])=>(<button key={k} onClick={()=>setDisp(k)} style={{padding:"3px 9px",border:"none",cursor:"pointer",fontFamily:"ui-monospace,monospace",fontSize:11,fontWeight:700,background:disp===k?INK:"transparent",color:disp===k?PAPER:INK}}>{s}</button>))}
+            </div>
+            <div style={{fontFamily:"ui-monospace,monospace",fontSize:9,color:GRAY}}>v0.2</div>
           </div>
-          {roaster.url && <a href={roaster.url} target="_blank" rel="noopener" style={{fontSize:12,color:GREEN,textDecoration:"underline"}}>EC →</a>}
-          <button onClick={()=>setRoasterF("all")} style={{background:"none",border:"none",color:GRAY,fontSize:12,cursor:"pointer"}}>解除 ✕</button>
-        </div>}
-
-      {/* タブ */}
-      <div style={{display:"flex",gap:0,marginTop:16,borderBottom:`1px solid ${LINE}`}}>
-        {tabs.map(t=>(
-          <button key={t.k} onClick={()=>setTab(t.k)}
-            style={{flex:"0 0 auto",padding:"9px 16px",background:"none",border:"none",cursor:"pointer",
-              fontFamily:"var(--mono)",fontSize:11.5,letterSpacing:"0.04em",
-              color: tab===t.k?INK:GRAY, fontWeight: tab===t.k?700:400,
-              borderBottom: tab===t.k?`2px solid ${INK}`:"2px solid transparent"}}>
-            {t.label}
-          </button>
-        ))}
-        <div style={{marginLeft:"auto",fontFamily:"var(--mono)",fontSize:10.5,color:GRAY,alignSelf:"center"}}>{filtered.length} 銘柄</div>
+        </div>
+        <div style={{fontFamily:"ui-monospace,monospace",fontSize:10,color:GRAY,marginTop:3}}>{stats.products??beans.length} 銘柄 ・ 在庫 {stats.in_stock??"—"} ・ {stats.roasters??Object.keys(roasters).length} ロースター ・ {generated}</div>
+        <div style={{display:"flex",gap:16,marginTop:10,overflowX:"auto"}}>
+          {[["zukan","図鑑"],["map","地球"],["shindan","診断"],["flavor","味わい"],["geisha","レアロット"]].map(([k,l])=>{
+            const on = view===k || (k==="zukan"&&view==="roaster");
+            return (<button key={k} onClick={()=>setView(k)} style={{background:"none",border:"none",padding:"0 0 6px",cursor:"pointer",fontSize:12.5,letterSpacing:"0.12em",whiteSpace:"nowrap",flexShrink:0,color:on?INK:GRAY,fontWeight:on?700:400,borderBottom:on?`2px solid ${INK}`:"2px solid transparent"}}>{l}</button>);
+          })}
+        </div>
       </div>
+    </header>
 
-      {/* グリッド図鑑 */}
-      {filtered.length===0 ? (
-        <div style={{textAlign:"center",color:GRAY,fontSize:12,padding:"56px 0"}}>該当する豆がありません。フィルタを変えるか、次の巡回をお待ちください。</div>
-      ) : (
-        <>
+    <main style={{maxWidth:640,margin:"0 auto",padding:"16px 16px 60px"}}>
+      {view==="roaster" && roaster ? (
+        <RoasterPage key={roasterId+roasterTab} roaster={roaster} beans={beans} initialTab={roasterTab} onOpen={setOpen} onBack={()=>setView("zukan")} onRoaster={goRoaster} disp={disp}/>
+      ) : view==="map" ? (
+        <GlobeView roasters={roasters} onRoaster={goRoaster}/>
+      ) : view==="shindan" ? (
+        <DiagnosisView roasters={roasters} beans={beans} onRoaster={goRoaster}/>
+      ) : view==="flavor" ? (
+        <FlavorMapView beans={beans} onOpen={setOpen} disp={disp}/>
+      ) : view==="geisha" ? (
+        <GeishaView beans={beans} onOpen={setOpen} disp={disp}/>
+      ) : (<>
+        <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4}}>
+          {origins.map(o=><button key={o} onClick={()=>setOrigin(o)} style={chip(origin===o)}>{o}</button>)}
+        </div>
+        <div style={{display:"flex",gap:6,overflowX:"auto",paddingTop:8,paddingBottom:4}}>
+          {PROCESSES.map(p=><button key={p} onClick={()=>setProcessF(p)} style={chip(processF===p,GREEN)}>{p==="すべて"?"全精製":p}</button>)}
+        </div>
+        <div style={{display:"flex",gap:14,marginTop:12,borderBottom:`1px solid ${LINE}`,paddingBottom:8}}>
+          {[["new","新着"],["now","NOW"],["sold","SOLD OUT"],["all","すべて"]].map(([k,l])=>(<button key={k} onClick={()=>setStatusF(k)} style={{background:"none",border:"none",padding:"0 0 6px",cursor:"pointer",fontFamily:"ui-monospace,monospace",fontSize:10.5,letterSpacing:"0.05em",color:statusF===k?INK:GRAY,fontWeight:statusF===k?700:400,borderBottom:statusF===k?`2px solid ${INK}`:"2px solid transparent"}}>{l}</button>))}
+          <div style={{marginLeft:"auto",fontFamily:"ui-monospace,monospace",fontSize:10,color:GRAY,alignSelf:"center"}}>{filtered.length} 銘柄</div>
+        </div>
+        {filtered.length===0 ? (
+          <div style={{textAlign:"center",color:GRAY,fontSize:12,padding:"50px 0"}}>該当する豆がありません。フィルタを変えるか、次の巡回をお待ちください。</div>
+        ) : (<>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(140px, 1fr))",gap:16,marginTop:18}}>
-            {filtered.slice(0,limit).map(b=><BeanCard key={b.id} bean={b} onOpen={setOpen} onRoaster={setRoasterF} mode={mode}/>)}
+            {filtered.slice(0,limit).map(b=><BeanCard key={b.id} bean={b} onOpen={setOpen} onRoaster={goRoaster} disp={disp}/>)}
           </div>
-          {filtered.length>limit &&
-            <div style={{textAlign:"center",marginTop:24}}>
-              <button onClick={()=>setLimit(l=>l+240)} style={{padding:"10px 22px",border:`1px solid ${INK}`,borderRadius:8,background:PAPER,cursor:"pointer",fontSize:13,fontWeight:700}}>
-                もっと見る（残り {filtered.length-limit}）
-              </button>
-            </div>}
-        </>
-      )}
+          {filtered.length>limit && <div style={{textAlign:"center",marginTop:24}}><button onClick={()=>setLimit(l=>l+120)} style={{padding:"10px 22px",border:`1px solid ${INK}`,borderRadius:8,background:PAPER,cursor:"pointer",fontSize:13,fontWeight:700}}>もっと見る（残り {filtered.length-limit}）</button></div>}
+        </>)}
+        <div style={{marginTop:36,borderTop:`1px solid ${LINE}`,paddingTop:14,fontSize:10.5,color:GRAY,lineHeight:1.7}}>
+          パッケージは各ロースターのEC画像です（無い豆は生成した標本表示）。評価はありません — 探して辿り着くための図鑑です。為替は試作用の固定レート。地球・味わい・診断は実データからの推定を含みます。
+          {failed.length>0 && <div style={{marginTop:8}}>取得できなかった店（要調整・{failed.length}店）: {failed.slice(0,30).join(", ")}{failed.length>30?" …":""}</div>}
+        </div>
+      </>)}
+    </main>
 
-      {/* フッタ */}
-      <div style={{marginTop:40,borderTop:`1px solid ${LINE}`,paddingTop:14,fontSize:10.5,color:GRAY,lineHeight:1.8}}>
-        パッケージ画像は各ロースターのECから取得したものです（無い豆は生成した標本表示）。評価機能はありません — 探して辿り着くための図鑑です。為替は試作用の固定レートです。
-        {failed.length>0 &&
-          <div style={{marginTop:8}}>取得できなかった店（要調整・{failed.length}店）: {failed.slice(0,40).join(", ")}{failed.length>40?" …":""}</div>}
-      </div>
-
-      <DetailSheet bean={open} onClose={()=>setOpen(null)} onRoaster={(r)=>{setRoasterF(r);}} mode={mode}/>
-    </div>
-  );
+    <DetailSheet bean={open} onClose={()=>setOpen(null)} onRoaster={goRoaster} disp={disp}/>
+  </div>);
 }
-const selStyle = {padding:"8px 10px",border:`1px solid ${LINE}`,borderRadius:8,fontSize:12,background:"#fff",fontFamily:"var(--sans)",color:INK,maxWidth:200};
 
-/* ---- 起動 ---- */
-fetch("data.json")
-  .then(r=>r.json())
-  .then(payload=>{
-    const data = adapt(payload);
-    ReactDOM.createRoot(document.getElementById("root")).render(<App data={data}/>);
-  })
-  .catch(err=>{
-    document.getElementById("root").innerHTML =
-      '<div class="loading">データを読み込めませんでした。巡回後に再度お試しください。<br>'+String(err)+'</div>';
-  });
+fetch("data.json").then(r=>r.json()).then(payload=>{
+  ReactDOM.createRoot(document.getElementById("root")).render(<App data={adapt(payload)}/>);
+}).catch(err=>{
+  document.getElementById("root").innerHTML='<div class="boot">データを読み込めませんでした。巡回後に再度お試しください。<br>'+String(err)+'</div>';
+});
 </script>
 </body>
 </html>
