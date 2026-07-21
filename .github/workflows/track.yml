@@ -35,5 +35,21 @@ jobs:
           git config user.name "bean-tracker-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data/ docs/
-          git diff --cached --quiet || git commit -m "crawl: $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push
+          if git diff --cached --quiet; then
+            echo "変更なし。コミットをスキップ"
+            exit 0
+          fi
+          git commit -m "crawl: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          # 巡回中にブランチが更新されると push が rejected される。
+          # 生成物(data/・docs/)は再生成できるので衝突は自分側(-X ours)を採用してリトライ。
+          for i in 1 2 3 4 5; do
+            if git push; then
+              echo "push 成功"
+              exit 0
+            fi
+            echo "push が rejected。rebase して再試行 ($i/5)"
+            git pull --rebase --autostash -X ours origin "${GITHUB_REF_NAME}" || git rebase --abort || true
+            sleep 3
+          done
+          echo "リトライ上限。push に失敗しました" >&2
+          exit 1
