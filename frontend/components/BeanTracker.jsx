@@ -29,6 +29,21 @@ const ROASTERS = {
   cc: { name: "Coffee Collective", city: "København", country: "DK", platform: "Shopify", note: "ダイレクトトレードの先駆", coord: [12.57, 55.68],
     founded: "2007", style: "浅煎り・ダイレクトトレード", ship: "海外発送(1〜2週間)", focus: "ケニア・エチオピア",
     bio: "コペンハーゲンで創業。相場を大きく上回る対価を生産者に直接支払うダイレクトトレードをいち早く実践し、その取引価格を公開してきた。デンマークのコーヒー文化を象徴するロースター。" },
+  april: { name: "April Coffee", city: "København", country: "DK", platform: "Shopify", note: "焙煎を突き詰める探究者", coord: [12.55, 55.67],
+    founded: "2018", style: "浅煎り・精密焙煎", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
+    bio: "パトリック・ローデンバーグがコペンハーゲンで立ち上げた焙煎所。「焙煎の進歩」を掲げ、一杯ごとの再現性とレシピの透明性を徹底追求する。カヨンマウンテンやビクトル・バレラら生産者との継続的な関係を軸に、澄んだ甘さの浅煎りを届ける。" },
+  glitch: { name: "GLITCH COFFEE", city: "東京 / 神田", country: "JP", platform: "Shopify", note: "都心の極浅シングルオリジン", coord: [139.76, 35.69],
+    founded: "2015", style: "極浅煎り・シングルオリジン", ship: "国内発送(2〜4日)", focus: "エチオピア・ゲイシャ",
+    bio: "鈴木清和が神田錦町に開いた焙煎所兼ハンドドリップ専門店。Qグレーダーの目で選び抜いた最上級ロットを、素材の輪郭が際立つ極浅で焼く。ゲイシャなど希少品種を惜しみなく並べ、東京の浅煎りシーンを象徴する一軒。" },
+  sey: { name: "Sey Coffee", city: "Brooklyn", country: "US", platform: "Shopify", note: "生産者名で選ぶ透明性", coord: [-73.93, 40.71],
+    founded: "2016", style: "極浅煎り・シングルロット", ship: "海外発送(1〜2週間)", focus: "エチオピア・ケニア",
+    bio: "ブルックリン・ブッシュウィックの焙煎所。ロットごとに生産者・農園・精製を明記する徹底した透明性と、風味を最大限に引き出す極浅焙煎で知られる。季節ごとに世界の銘品を入れ替える、NYスペシャルティの旗手。" },
+  barn: { name: "The Barn", city: "Berlin", country: "DE", platform: "Shopify", note: "欧州を牽引する老舗", coord: [13.40, 52.52],
+    founded: "2010", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "ケニア・エチオピア",
+    bio: "ベルリンで創業し、ヨーロッパのスペシャルティを牽引してきた焙煎所。ケニアやエチオピアの果実味あふれるロットを中心に、ゲイシャ・ヴィレッジなどの希少豆も扱う。品質基準の高さで欧州各地のカフェから信頼を集める。" },
+  pm: { name: "Proud Mary", city: "Melbourne", country: "AU", platform: "Shopify", note: "豪州の華やかロースター", coord: [144.96, -37.81],
+    founded: "2009", style: "浅〜中浅煎り・果実系", ship: "海外発送(1〜2週間)", focus: "コロンビア・エチオピア",
+    bio: "メルボルンを拠点に、鮮やかな果実味とエネルギッシュな味づくりで知られるオーストラリアの人気ロースター。COE入賞ロットやコロンビアのゲイシャ・シドラなど、攻めた希少品種のラインナップにも定評がある。" },
 };
 
 const BEANS = [
@@ -55,11 +70,44 @@ const BEANS = [
   { id: 21, r: "tw", name: "La Palma Sidra", origin: "コロンビア", process: "Washed", amount: 280, cur: "NOK", per: "100g", status: "now", color: "#F4F1E8", accent: "#4A5A3A", year: "2026", vt: "sidra" },
   { id: 22, r: "bibi", name: "Sidra Anaerobic", origin: "コロンビア", process: "Anaerobic", amount: 2800, cur: "JPY", per: "100g", status: "sold", color: "#2E2A24", accent: "#C8A96A", year: "2026", vt: "sidra" },
   { id: 23, r: "cc", name: "Finca Deveaux Sidra", origin: "エクアドル", process: "Washed", amount: 260, cur: "DKK", per: "100g", status: "archive", color: "#EDE7D6", accent: "#8A3B2E", year: "2025", vt: "sidra" },
+
+  /* --- April Coffee (København) --- */
+  { id: 24, r: "april", name: "Kayon Mountain", origin: "エチオピア", process: "Natural", amount: 145, cur: "DKK", per: "250g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
+  { id: 25, r: "april", name: "Bombe Bensa", origin: "エチオピア", process: "Natural", amount: 155, cur: "DKK", per: "250g", status: "now", color: "#7C2D3C", accent: "#F2E9DC", year: "2026" },
+  { id: 26, r: "april", name: "El Tesoro Tabi", origin: "コロンビア", process: "Washed", amount: 160, cur: "DKK", per: "250g", status: "sold", color: "#EFE9DA", accent: "#8A3B2E", year: "2026" },
+  { id: 27, r: "april", name: "Decaf de Caña", origin: "コロンビア", process: "Washed", amount: 130, cur: "DKK", per: "250g", status: "archive", color: "#E2DBC8", accent: "#5A4632", year: "2025" },
+
+  /* --- GLITCH COFFEE (東京) --- */
+  { id: 28, r: "glitch", name: "Hambela Alaka", origin: "エチオピア", process: "Natural", amount: 2400, cur: "JPY", per: "100g", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
+  { id: 29, r: "glitch", name: "Kirinyaga AA", origin: "ケニア", process: "Washed", amount: 2200, cur: "JPY", per: "100g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+  { id: 30, r: "glitch", name: "El Diviso Geisha", origin: "コロンビア", process: "Washed", amount: 3800, cur: "JPY", per: "100g", status: "now", color: "#F2EFE6", accent: "#2F5233", year: "2026", vt: "geisha" },
+  { id: 31, r: "glitch", name: "Gera Geisha", origin: "エチオピア", process: "Washed", amount: 4200, cur: "JPY", per: "100g", status: "sold", color: "#E8E2D2", accent: "#3A2E4F", year: "2026", vt: "geisha" },
+  { id: 32, r: "glitch", name: "Elida Geisha", origin: "パナマ", process: "Natural", amount: 5000, cur: "JPY", per: "100g", status: "archive", color: "#2E2A24", accent: "#C8A96A", year: "2025", vt: "geisha" },
+
+  /* --- Sey Coffee (Brooklyn) --- */
+  { id: 33, r: "sey", name: "Nginda Estate", origin: "ケニア", process: "Washed", amount: 26, cur: "USD", per: "250g", status: "now", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
+  { id: 34, r: "sey", name: "El Diamante Chiroso", origin: "コロンビア", process: "Washed", amount: 25, cur: "USD", per: "250g", status: "now", color: "#F4F1E8", accent: "#8A3B2E", year: "2026" },
+  { id: 35, r: "sey", name: "Buku Sayisa", origin: "エチオピア", process: "Washed", amount: 24, cur: "USD", per: "250g", status: "sold", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
+  { id: 36, r: "sey", name: "Guji Natural", origin: "エチオピア", process: "Natural", amount: 23, cur: "USD", per: "250g", status: "archive", color: "#3A2E4F", accent: "#D9B44A", year: "2025" },
+
+  /* --- The Barn (Berlin) --- */
+  { id: 37, r: "barn", name: "Kiangoi AA", origin: "ケニア", process: "Washed", amount: 16, cur: "EUR", per: "250g", status: "now", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
+  { id: 38, r: "barn", name: "Kabingara AB", origin: "ケニア", process: "Washed", amount: 15, cur: "EUR", per: "250g", status: "sold", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+  { id: 39, r: "barn", name: "Sidama Natural", origin: "エチオピア", process: "Natural", amount: 15, cur: "EUR", per: "250g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
+  { id: 40, r: "barn", name: "Gesha Village", origin: "エチオピア", process: "Washed", amount: 45, cur: "EUR", per: "100g", status: "now", color: "#F2EFE6", accent: "#2F5233", year: "2026", vt: "geisha" },
+  { id: 41, r: "barn", name: "El Vergel Washed", origin: "コロンビア", process: "Washed", amount: 17, cur: "EUR", per: "250g", status: "archive", color: "#E2DBC8", accent: "#5A4632", year: "2024" },
+
+  /* --- Proud Mary (Melbourne) --- */
+  { id: 42, r: "pm", name: "Guji Uraga", origin: "エチオピア", process: "Natural", amount: 24, cur: "AUD", per: "250g", status: "now", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
+  { id: 43, r: "pm", name: "La Cereza", origin: "コロンビア", process: "Washed", amount: 22, cur: "AUD", per: "250g", status: "now", color: "#EFE9DA", accent: "#6B2D3C", year: "2026" },
+  { id: 44, r: "pm", name: "La Miel Geisha", origin: "コロンビア", process: "Natural", amount: 50, cur: "AUD", per: "100g", status: "sold", color: "#1C1B19", accent: "#D9B44A", year: "2026", vt: "geisha" },
+  { id: 45, r: "pm", name: "El Tejar Sidra", origin: "コロンビア", process: "Washed", amount: 45, cur: "AUD", per: "100g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026", vt: "sidra" },
+  { id: 46, r: "pm", name: "El Naranjo", origin: "グアテマラ", process: "Washed", amount: 23, cur: "AUD", per: "250g", status: "archive", color: "#E2DBC8", accent: "#5A4632", year: "2025" },
 ];
 
 /* 為替レート（試作用の固定値 — 実装ではAPIで日次取得） */
-const RATES_TO_JPY = { JPY: 1, USD: 150, NOK: 14.5, DKK: 22 };
-const CUR_SYMBOL = { JPY: "¥", USD: "$", NOK: "kr ", DKK: "kr " };
+const RATES_TO_JPY = { JPY: 1, USD: 150, NOK: 14.5, DKK: 22, EUR: 165, AUD: 100 };
+const CUR_SYMBOL = { JPY: "¥", USD: "$", NOK: "kr ", DKK: "kr ", EUR: "€", AUD: "A$" };
 
 function toJPY(bean) { return bean.amount * RATES_TO_JPY[bean.cur]; }
 function fmtPrice(bean, disp) {
@@ -81,7 +129,7 @@ const STATUS = {
   archive: { label: "ARCHIVE", jp: "記録", dot: GRAY },
 };
 
-const ORIGINS = ["すべて", "エチオピア", "ケニア", "コロンビア", "パナマ", "グアテマラ", "ブレンド"];
+const ORIGINS = ["すべて", "エチオピア", "ケニア", "コロンビア", "パナマ", "グアテマラ", "エクアドル", "ブレンド"];
 
 /* ---------- パッケージ(標本)描画 ---------- */
 function Package({ bean, small }) {
@@ -441,24 +489,24 @@ function Splash({ done }) {
 /* ---------- 好み診断 ---------- */
 const QUESTIONS = [
   { q: "どんな味わいが好きですか?", options: [
-    { label: "すっきり明るい酸味", pts: { tw: 3, cc: 1 } },
-    { label: "フルーティで甘やか", pts: { onyx: 3, bibi: 1 } },
-    { label: "バランスよく飲みやすい", pts: { cc: 3, bibi: 1 } },
-    { label: "飲んだことのない味に出会いたい", pts: { onyx: 2, tw: 1, bibi: 1 } },
+    { label: "すっきり明るい酸味", pts: { tw: 3, cc: 1, sey: 2, barn: 1 } },
+    { label: "フルーティで甘やか", pts: { onyx: 3, bibi: 1, pm: 2, april: 1 } },
+    { label: "バランスよく飲みやすい", pts: { cc: 3, bibi: 1, april: 1 } },
+    { label: "飲んだことのない味に出会いたい", pts: { onyx: 2, tw: 1, bibi: 1, glitch: 2, pm: 1 } },
   ]},
   { q: "焙煎度の好みは?", options: [
-    { label: "浅煎り一筋", pts: { tw: 3, cc: 1 } },
-    { label: "浅〜中浅で幅広く", pts: { cc: 2, onyx: 2 } },
-    { label: "おまかせで楽しみたい", pts: { bibi: 2, onyx: 1 } },
+    { label: "浅煎り一筋", pts: { tw: 3, cc: 1, sey: 2, glitch: 2 } },
+    { label: "浅〜中浅で幅広く", pts: { cc: 2, onyx: 2, barn: 2, april: 1 } },
+    { label: "おまかせで楽しみたい", pts: { bibi: 2, onyx: 1, pm: 1 } },
   ]},
   { q: "精製方式への冒険度は?", options: [
-    { label: "クリーンな Washed が基本", pts: { tw: 3, cc: 2 } },
-    { label: "Natural や Honey も好き", pts: { onyx: 2, bibi: 2 } },
-    { label: "Anaerobic など実験系も試したい", pts: { onyx: 3, bibi: 1 } },
+    { label: "クリーンな Washed が基本", pts: { tw: 3, cc: 2, sey: 2, april: 1 } },
+    { label: "Natural や Honey も好き", pts: { onyx: 2, bibi: 2, barn: 1, pm: 1 } },
+    { label: "Anaerobic など実験系も試したい", pts: { onyx: 3, bibi: 1, pm: 2, glitch: 1 } },
   ]},
   { q: "豆の買い方は?", options: [
-    { label: "国内でさっと届いてほしい", pts: { bibi: 3 } },
-    { label: "海外からの取り寄せも楽しい", pts: { tw: 2, onyx: 2, cc: 2 } },
+    { label: "国内でさっと届いてほしい", pts: { bibi: 3, glitch: 3 } },
+    { label: "海外からの取り寄せも楽しい", pts: { tw: 2, onyx: 2, cc: 2, april: 2, sey: 2, barn: 2, pm: 2 } },
   ]},
 ];
 
@@ -467,11 +515,19 @@ const TYPE_LABEL = {
   onyx: { type: "モダン・エクスペリメンタル型", desc: "新しい精製や華やかな甘さに心が動くタイプ。" },
   cc: { type: "クラシック・バランス型", desc: "毎日の一杯の完成度を大切にするタイプ。" },
   bibi: { type: "下町デイリー型", desc: "身近な店と、日々の暮らしに寄り添う豆を好むタイプ。" },
+  april: { type: "精密レシピ型", desc: "再現性と甘さの設計に惹かれる、探究派のタイプ。" },
+  glitch: { type: "極浅ハンター型", desc: "都心で希少品種や極浅の輪郭を追いかけるタイプ。" },
+  sey: { type: "生産者トレース型", desc: "誰が作った豆かを知り、澄んだ果実味を好むタイプ。" },
+  barn: { type: "ヨーロピアン果実型", desc: "ケニアの果実味など、王道の華やかさを好むタイプ。" },
+  pm: { type: "サウス・エナジェティック型", desc: "鮮烈で攻めた味づくりにワクワクするタイプ。" },
 };
+
+/* 全ロースター分のスコアを 0 で初期化 */
+const initScores = () => Object.fromEntries(Object.keys(ROASTERS).map((k) => [k, 0]));
 
 function DiagnosisView({ onRoaster }) {
   const [step, setStep] = useState(0);
-  const [scores, setScores] = useState({ bibi: 0, tw: 0, onyx: 0, cc: 0 });
+  const [scores, setScores] = useState(initScores);
 
   const answer = (pts) => {
     const next = { ...scores };
@@ -479,7 +535,7 @@ function DiagnosisView({ onRoaster }) {
     setScores(next);
     setStep(step + 1);
   };
-  const reset = () => { setStep(0); setScores({ bibi: 0, tw: 0, onyx: 0, cc: 0 }); };
+  const reset = () => { setStep(0); setScores(initScores()); };
 
   if (step >= QUESTIONS.length) {
     const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
@@ -583,6 +639,18 @@ const FLAVOR_MAP = {
   10: { fx: 60, fy: 60, fam: "choco", notes: "黒糖・プラム" },
   12: { fx: 46, fy: 24, fam: "berry", notes: "カシス・オレンジ" },
   13: { fx: 74, fy: 30, fam: "berry", notes: "ストロベリー・ハニー" },
+  24: { fx: 68, fy: 34, fam: "tropical", notes: "マンゴー・ドライアプリコット" },
+  25: { fx: 78, fy: 42, fam: "berry", notes: "ラズベリー・完熟プラム" },
+  26: { fx: 24, fy: 50, fam: "choco", notes: "プラム・赤リンゴ・黒糖" },
+  28: { fx: 82, fy: 38, fam: "berry", notes: "ブルーベリー・カカオニブ" },
+  29: { fx: 40, fy: 18, fam: "citrus", notes: "ブラックカラント・トマト" },
+  33: { fx: 44, fy: 20, fam: "berry", notes: "ブラッドオレンジ・カシス" },
+  34: { fx: 58, fy: 12, fam: "floral", notes: "ジャスミン・白桃・柑橘" },
+  35: { fx: 50, fy: 16, fam: "floral", notes: "紅茶・ベルガモット" },
+  37: { fx: 48, fy: 22, fam: "berry", notes: "ブラッドオレンジ・プラム" },
+  39: { fx: 76, fy: 40, fam: "berry", notes: "ストロベリー・ドライアプリコット" },
+  42: { fx: 80, fy: 46, fam: "tropical", notes: "パイナップル・ライチ" },
+  43: { fx: 30, fy: 56, fam: "choco", notes: "キャラメル・カカオ・オレンジ" },
 };
 
 function FlavorMapView({ onOpen, cur }) {
