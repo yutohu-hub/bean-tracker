@@ -56,6 +56,18 @@ const ROASTERS = {
   kurasu: { name: "Kurasu", city: "京都", country: "JP", platform: "Shopify", note: "京都発・世界へ届ける", coord: [135.77, 35.00],
     founded: "2016", style: "浅〜中浅煎り・季節替わり", ship: "国内発送(2〜4日)", focus: "エチオピア・コロンビア",
     bio: "京都を拠点に、器具からコーヒーまでを世界へ届けるロースター＆ショップ。飲みやすく澄んだ浅〜中浅を軸に、季節ごとに世界の生産地からロットを迎える。国内からも手に取りやすい一軒。" },
+  sqmile: { name: "Square Mile", city: "London", country: "GB", platform: "Shopify", note: "英国王道の名門", coord: [-0.06, 51.53],
+    founded: "2008", style: "浅〜中浅煎り・王道", ship: "海外発送(1〜2週間)", focus: "ケニア・エチオピア",
+    bio: "2007年ワールド・バリスタ・チャンピオンのジェームズ・ホフマンとアネッテ・モルドヴァがロンドン東部に構えた名門。看板ブレンド Red Brick と、産地の個性を素直に映すシングルオリジンで英国スペシャルティの基準を作ってきた。" },
+  gardelli: { name: "Gardelli", city: "Forlì", country: "IT", platform: "Shopify", note: "伊のマイクロロースター", coord: [12.04, 44.22],
+    founded: "2010", style: "浅煎り・コンペティション級", ship: "海外発送(1〜2週間)", focus: "ゲイシャ・希少ロット",
+    bio: "2017年ワールド・コーヒー・ロースティング・チャンピオンのルーベンス・ガルデッリが率いる、イタリア屈指のマイクロロースター。パナマやコロンビアの最高級ゲイシャを中心に、香りの設計に振り切ったロットで世界の愛好家を唸らせる。" },
+  onibus: { name: "Onibus Coffee", city: "東京 / 中目黒", country: "JP", platform: "Shopify", note: "産地と直につながる", coord: [139.70, 35.64],
+    founded: "2012", style: "浅〜中浅煎り・直接取引", ship: "国内発送(2〜4日)", focus: "ケニア・エチオピア",
+    bio: "坂尾篤史が中目黒で始めた焙煎所兼カフェ。生産者との直接的な関係とトレーサビリティを軸に、少量ずつ丁寧に焼く。明るい酸のケニアやエチオピアが看板で、東京の日常に根づいたロースター。" },
+  ona: { name: "ONA Coffee", city: "Canberra", country: "AU", platform: "Shopify", note: "豪州の競技王者", coord: [149.13, -35.28],
+    founded: "2009", style: "浅〜中浅煎り・競技志向", ship: "海外発送(1〜2週間)", focus: "ゲイシャ・コロンビア",
+    bio: "サーサ・セスティックを擁し、数々のバリスタ／ブリューワーズ選手権を制してきたオーストラリアの強豪。ゲイシャやシドラなど希少品種の目利きと、緻密な精製へのこだわりで知られる。" },
 };
 
 const BEANS = [
@@ -138,14 +150,38 @@ const BEANS = [
   { id: 59, r: "kurasu", name: "El Paraíso Lychee", origin: "コロンビア", process: "Anaerobic", amount: 2400, cur: "JPY", per: "100g", status: "now", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
   { id: 60, r: "kurasu", name: "Cachoeira", origin: "ブラジル", process: "Natural", amount: 1500, cur: "JPY", per: "100g", status: "now", color: "#4A3826", accent: "#E8C8A0", year: "2026" },
   { id: 61, r: "kurasu", name: "Gatomboya AA", origin: "ケニア", process: "Washed", amount: 1900, cur: "JPY", per: "100g", status: "sold", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+
+  /* --- Square Mile (London) --- */
+  { id: 62, r: "sqmile", name: "Nano Challa", origin: "エチオピア", process: "Washed", amount: 13, cur: "GBP", per: "350g", status: "now", color: "#F2EFE6", accent: "#8A3B2E", year: "2026" },
+  { id: 63, r: "sqmile", name: "Gatugi AA", origin: "ケニア", process: "Washed", amount: 14, cur: "GBP", per: "350g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+  { id: 64, r: "sqmile", name: "Red Brick", origin: "ブレンド", process: "Washed / Natural", amount: 12, cur: "GBP", per: "350g", status: "now", color: "#7C2D3C", accent: "#E8C8A0", year: "2026" },
+  { id: 65, r: "sqmile", name: "La Bendición", origin: "コロンビア", process: "Washed", amount: 13, cur: "GBP", per: "350g", status: "sold", color: "#EFE9DA", accent: "#5A4632", year: "2026" },
+
+  /* --- Gardelli (Forlì) --- */
+  { id: 66, r: "gardelli", name: "Konga Amederaro", origin: "エチオピア", process: "Natural", amount: 22, cur: "EUR", per: "250g", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
+  { id: 67, r: "gardelli", name: "La Argentina Geisha", origin: "コロンビア", process: "Washed", amount: 38, cur: "EUR", per: "100g", status: "now", color: "#F2EFE6", accent: "#2F5233", year: "2026", vt: "geisha" },
+  { id: 68, r: "gardelli", name: "El Velo Geisha", origin: "パナマ", process: "Washed", amount: 55, cur: "EUR", per: "100g", status: "sold", color: "#E8E2D2", accent: "#3A2E4F", year: "2026", vt: "geisha" },
+  { id: 69, r: "gardelli", name: "La Siria Geisha", origin: "コロンビア", process: "Honey", amount: 42, cur: "EUR", per: "100g", status: "archive", color: "#D97E3A", accent: "#2E2A24", year: "2025", vt: "geisha" },
+
+  /* --- Onibus Coffee (東京) --- */
+  { id: 70, r: "onibus", name: "Gakuyuini AA", origin: "ケニア", process: "Washed", amount: 1900, cur: "JPY", per: "150g", status: "now", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
+  { id: 71, r: "onibus", name: "La Bolsa Cipresales", origin: "グアテマラ", process: "Washed", amount: 1700, cur: "JPY", per: "150g", status: "now", color: "#EFE9DA", accent: "#5A4632", year: "2026" },
+  { id: 72, r: "onibus", name: "Onibus Blend", origin: "ブレンド", process: "Natural", amount: 1400, cur: "JPY", per: "150g", status: "now", color: "#4A3826", accent: "#E8C8A0", year: "2026" },
+  { id: 73, r: "onibus", name: "Konga", origin: "エチオピア", process: "Natural", amount: 1800, cur: "JPY", per: "150g", status: "sold", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
+
+  /* --- ONA Coffee (Canberra) --- */
+  { id: 74, r: "ona", name: "Uraga", origin: "エチオピア", process: "Natural", amount: 26, cur: "AUD", per: "250g", status: "now", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
+  { id: 75, r: "ona", name: "El Diviso Geisha", origin: "コロンビア", process: "Natural", amount: 48, cur: "AUD", per: "100g", status: "now", color: "#1C1B19", accent: "#D9B44A", year: "2026", vt: "geisha" },
+  { id: 76, r: "ona", name: "Ombligón", origin: "コロンビア", process: "Anaerobic", amount: 44, cur: "AUD", per: "100g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026", vt: "sidra" },
+  { id: 77, r: "ona", name: "Elida Geisha", origin: "パナマ", process: "Washed", amount: 60, cur: "AUD", per: "100g", status: "archive", color: "#2E2A24", accent: "#C8A96A", year: "2025", vt: "geisha" },
 ];
 
 /* 為替（対円）— 既定は固定値。起動時にライブ値を取得して上書きし、
    一定間隔＋タブ復帰時に再取得して変動を自動反映する。 */
-const FX_CURRENCIES = ["USD", "NOK", "DKK", "EUR", "AUD"];
-const FX_DEFAULT = { JPY: 1, USD: 150, NOK: 14.5, DKK: 22, EUR: 165, AUD: 100 };
+const FX_CURRENCIES = ["USD", "NOK", "DKK", "EUR", "AUD", "GBP"];
+const FX_DEFAULT = { JPY: 1, USD: 150, NOK: 14.5, DKK: 22, EUR: 165, AUD: 100, GBP: 195 };
 const RATES_TO_JPY = { ...FX_DEFAULT };
-const CUR_SYMBOL = { JPY: "¥", USD: "$", NOK: "kr ", DKK: "kr ", EUR: "€", AUD: "A$" };
+const CUR_SYMBOL = { JPY: "¥", USD: "$", NOK: "kr ", DKK: "kr ", EUR: "€", AUD: "A$", GBP: "£" };
 
 /* ライブ為替の取得（キー不要・CORS対応の無料APIを順に試す）。
    返り値は「1通貨あたり何円か」= 対円レート。失敗時は例外。 */
@@ -562,24 +598,24 @@ function Splash({ done }) {
 /* ---------- 好み診断 ---------- */
 const QUESTIONS = [
   { q: "どんな味わいが好きですか?", options: [
-    { label: "すっきり明るい酸味", pts: { tw: 3, cc: 1, sey: 2, barn: 1, lacabra: 2, fuglen: 1 } },
-    { label: "フルーティで甘やか", pts: { onyx: 3, bibi: 1, pm: 2, april: 1, manhattan: 2 } },
-    { label: "バランスよく飲みやすい", pts: { cc: 3, bibi: 1, april: 1, kurasu: 2, fuglen: 1 } },
-    { label: "飲んだことのない味に出会いたい", pts: { onyx: 2, tw: 1, bibi: 1, glitch: 2, pm: 1, manhattan: 1 } },
+    { label: "すっきり明るい酸味", pts: { tw: 3, cc: 1, sey: 2, barn: 1, lacabra: 2, fuglen: 1, sqmile: 2, onibus: 2 } },
+    { label: "フルーティで甘やか", pts: { onyx: 3, bibi: 1, pm: 2, april: 1, manhattan: 2, gardelli: 1, ona: 1 } },
+    { label: "バランスよく飲みやすい", pts: { cc: 3, bibi: 1, april: 1, kurasu: 2, fuglen: 1, sqmile: 2, onibus: 1 } },
+    { label: "飲んだことのない味に出会いたい", pts: { onyx: 2, tw: 1, bibi: 1, glitch: 2, pm: 1, manhattan: 1, gardelli: 3, ona: 2 } },
   ]},
   { q: "焙煎度の好みは?", options: [
-    { label: "浅煎り一筋", pts: { tw: 3, cc: 1, sey: 2, glitch: 2, lacabra: 2, manhattan: 1, fuglen: 1 } },
-    { label: "浅〜中浅で幅広く", pts: { cc: 2, onyx: 2, barn: 2, april: 1, kurasu: 2 } },
-    { label: "おまかせで楽しみたい", pts: { bibi: 2, onyx: 1, pm: 1, kurasu: 1 } },
+    { label: "浅煎り一筋", pts: { tw: 3, cc: 1, sey: 2, glitch: 2, lacabra: 2, manhattan: 1, fuglen: 1, gardelli: 2 } },
+    { label: "浅〜中浅で幅広く", pts: { cc: 2, onyx: 2, barn: 2, april: 1, kurasu: 2, sqmile: 2, onibus: 2, ona: 1 } },
+    { label: "おまかせで楽しみたい", pts: { bibi: 2, onyx: 1, pm: 1, kurasu: 1, onibus: 1 } },
   ]},
   { q: "精製方式への冒険度は?", options: [
-    { label: "クリーンな Washed が基本", pts: { tw: 3, cc: 2, sey: 2, april: 1, lacabra: 2, fuglen: 1 } },
-    { label: "Natural や Honey も好き", pts: { onyx: 2, bibi: 2, barn: 1, pm: 1, manhattan: 1 } },
-    { label: "Anaerobic など実験系も試したい", pts: { onyx: 3, bibi: 1, pm: 2, glitch: 1, kurasu: 1 } },
+    { label: "クリーンな Washed が基本", pts: { tw: 3, cc: 2, sey: 2, april: 1, lacabra: 2, fuglen: 1, sqmile: 2, onibus: 1 } },
+    { label: "Natural や Honey も好き", pts: { onyx: 2, bibi: 2, barn: 1, pm: 1, manhattan: 1, gardelli: 1, ona: 1 } },
+    { label: "Anaerobic など実験系も試したい", pts: { onyx: 3, bibi: 1, pm: 2, glitch: 1, kurasu: 1, ona: 3, gardelli: 1 } },
   ]},
   { q: "豆の買い方は?", options: [
-    { label: "国内でさっと届いてほしい", pts: { bibi: 3, glitch: 3, kurasu: 3 } },
-    { label: "海外からの取り寄せも楽しい", pts: { tw: 2, onyx: 2, cc: 2, april: 2, sey: 2, barn: 2, pm: 2, lacabra: 2, manhattan: 2, fuglen: 2 } },
+    { label: "国内でさっと届いてほしい", pts: { bibi: 3, glitch: 3, kurasu: 3, onibus: 3 } },
+    { label: "海外からの取り寄せも楽しい", pts: { tw: 2, onyx: 2, cc: 2, april: 2, sey: 2, barn: 2, pm: 2, lacabra: 2, manhattan: 2, fuglen: 2, sqmile: 2, gardelli: 2, ona: 2 } },
   ]},
 ];
 
@@ -597,6 +633,10 @@ const TYPE_LABEL = {
   manhattan: { type: "ヨーロピアン華やか型", desc: "甘く華やかな浅煎りと希少ロットに惹かれるタイプ。" },
   fuglen: { type: "北欧トラベラー型", desc: "北欧の澄んだ浅煎りを気軽に楽しみたいタイプ。" },
   kurasu: { type: "京都デイリー型", desc: "飲みやすさと季節感を大切にする、国内志向のタイプ。" },
+  sqmile: { type: "ブリティッシュ王道型", desc: "産地の個性を素直に映す、王道の一杯を好むタイプ。" },
+  gardelli: { type: "ゲイシャ探究型", desc: "香りの設計に振り切った最高級ロットに惹かれるタイプ。" },
+  onibus: { type: "東京ダイレクト型", desc: "生産者との距離が近い、明るい酸の日常豆を好むタイプ。" },
+  ona: { type: "コンペティション型", desc: "競技志向の緻密な精製と希少品種にワクワクするタイプ。" },
 };
 
 /* 全ロースター分のスコアを 0 で初期化 */
@@ -737,6 +777,15 @@ const FLAVOR_MAP = {
   58: { fx: 74, fy: 34, fam: "berry", notes: "ブルーベリー・ハニー" },
   59: { fx: 90, fy: 44, fam: "tropical", notes: "ライチ・パイナップル" },
   60: { fx: 22, fy: 64, fam: "choco", notes: "ナッツ・ミルクチョコ" },
+  62: { fx: 40, fy: 20, fam: "floral", notes: "レモン・ジャスミン・蜂蜜" },
+  63: { fx: 46, fy: 18, fam: "berry", notes: "ブラックカラント・トマト" },
+  66: { fx: 78, fy: 36, fam: "berry", notes: "ブルーベリー・ぶどう・桃" },
+  67: { fx: 60, fy: 10, fam: "floral", notes: "ジャスミン・ラベンダー・杏" },
+  70: { fx: 48, fy: 22, fam: "berry", notes: "カシス・ブラッドオレンジ" },
+  71: { fx: 26, fy: 50, fam: "choco", notes: "カカオ・オレンジ・黒糖" },
+  74: { fx: 80, fy: 44, fam: "tropical", notes: "ストロベリー・トロピカル" },
+  75: { fx: 62, fy: 12, fam: "floral", notes: "ジャスミン・ライチ・ローズ" },
+  76: { fx: 92, fy: 40, fam: "tropical", notes: "パイナップル・発酵果実" },
 };
 
 function FlavorMapView({ onOpen, cur }) {
