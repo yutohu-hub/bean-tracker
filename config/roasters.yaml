@@ -168,6 +168,78 @@ roasters:
     currency: ISK
 
   # ---- 欧州 ----
+  - name: Bugan Coffee Lab
+    country: "IT"
+    url: https://bugancoffeelab.com
+    currency: EUR
+  - name: Cafezal
+    country: "IT"
+    url: https://cafezal.it
+    currency: EUR
+  - name: Forno Brisa
+    country: "IT"
+    url: https://fornobrisa.it
+    currency: EUR
+  - name: Garage Coffee Bros
+    country: "IT"
+    url: https://www.garagecoffeebros.com
+    currency: EUR
+  - name: Vannelli Coffee
+    country: "IT"
+    url: https://vannelli.coffee
+    currency: EUR
+  - name: Gearbox Coffee
+    country: "IT"
+    url: https://www.gearboxcoffeeroasters.com
+    currency: EUR
+  - name: Bocono Specialty Coffee
+    country: "ES"
+    url: https://www.boconospecialtycoffee.com
+    currency: EUR
+  - name: Cafe de Finca
+    country: "ES"
+    url: https://cafedefinca.com
+    currency: EUR
+  - name: Morrow Coffee
+    country: "ES"
+    url: https://morrowcoffee.com
+    currency: EUR
+  - name: Salvatge Coffee
+    country: "ES"
+    url: https://salvatgecoffee.com
+    currency: EUR
+  - name: Slowmov
+    country: "ES"
+    url: https://slowmov.com
+    currency: EUR
+  - name: Three Marks Coffee
+    country: "ES"
+    url: https://threemarkscoffee.com
+    currency: EUR
+  - name: Tusell Tostadores
+    country: "ES"
+    url: https://tuselltostadores.com
+    currency: EUR
+  - name: Corica Coffee
+    country: "BE"
+    url: https://www.corica.be
+    currency: EUR
+  - name: KB CoffeeRoasters
+    country: "FR"
+    url: https://www.kbcoffeeroasters.com
+    currency: EUR
+  - name: Ten Belles
+    country: "FR"
+    url: https://tenbelles.com
+    currency: EUR
+  - name: La Cafeotheque
+    country: "FR"
+    url: https://www.lacafeotheque.com
+    currency: EUR
+  - name: Flor da Selva
+    country: "PT"
+    url: https://www.flordaselva.com
+    currency: EUR
   - name: Kiss the Hippo
     country: "UK"
     url: https://kissthehippo.com
@@ -662,6 +734,34 @@ roasters:
     currency: GEL
 
   # ---- 北米 ----
+  - name: Drink Coffee Do Stuff
+    country: "US"
+    url: https://drinkcoffeedostuff.com
+    currency: USD
+  - name: Alma Coffee
+    country: "US"
+    url: https://myalmacoffee.com
+    currency: USD
+  - name: Atomic Coffee Roasters
+    country: "US"
+    url: https://atomicroastery.com
+    currency: USD
+  - name: Irving Farm
+    country: "US"
+    url: https://irvingfarm.com
+    currency: USD
+  - name: Perc Coffee
+    country: "US"
+    url: https://perccoffee.com
+    currency: USD
+  - name: Mr Espresso
+    country: "US"
+    url: https://mrespresso.com
+    currency: USD
+  - name: Dragonfly Coffee
+    country: "US"
+    url: https://dragonflycoffeeroasters.com
+    currency: USD
   - name: Corvus Coffee
     country: "US"
     url: https://www.corvuscoffee.com
@@ -1928,6 +2028,10 @@ roasters:
     currency: ZAR
 
   # ---- 中南米 ----
+  - name: Azahar Coffee
+    country: "CO"
+    url: https://azaharcoffee.com
+    currency: USD
   - name: Cafe con Jiribilla
     country: MX
     url: https://cafeconjiribilla.com
@@ -1938,6 +2042,14 @@ roasters:
     currency: USD
 
   # ---- アフリカ ----
+  - name: Quaffee
+    country: "ZA"
+    url: https://www.quaffee.co.za
+    currency: ZAR
+  - name: Bean There
+    country: "ZA"
+    url: https://beanthere.co.za
+    currency: ZAR
   - name: Garden of Coffee
     country: "ET"
     url: https://gardenofcoffee.com
@@ -1952,6 +2064,14 @@ roasters:
     currency: USD
 
   # ---- 中東 ----
+  - name: Boxx Coffee
+    country: "TR"
+    url: https://boxxcoffee.com
+    currency: TRY
+  - name: Coffee Manifesto
+    country: "TR"
+    url: https://www.coffeemanifesto.com
+    currency: TRY
   - name: RAW Coffee Company
     country: AE
     url: https://rawcoffeecompany.com
