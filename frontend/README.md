@@ -60,7 +60,7 @@ npm run dev
 
 ## この先の育て方（メモ）
 
-- **実データ化**: `components/data/roasters.js`（`ROASTERS`）と `components/data/beans.js`（`BEANS`）のサンプルデータを、巡回で取得した本物のデータに差し替える
+- **実データ化**: `components/data/roasters/`（地域別 `ROASTERS`）と `components/data/beans.js`（`BEANS`）のサンプルデータを、巡回で取得した本物のデータに差し替える
 - **自動巡回**: GitHub Actions（毎朝1回）で各ロースターのECを巡回 → データ更新 → 自動で反映
   - Shopify は `/products.json` で取得、BASE / STORES は専用パーサー
   - 消えた豆は削除せず「アーカイブ」保存（初日から貯めるのが大事）
@@ -75,7 +75,8 @@ npm run dev
 - 状態はすべてメモリ内。外部DB・APIキーは現時点で不要
 - ファイル構成（データとUIを分離）:
   - `components/BeanTracker.jsx` — UI本体（各画面のコンポーネント）
-  - `components/data/roasters.js` — `ROASTERS`（ロースター定義・EC URL）
+  - `components/data/roasters.js` — 地域別ファイルを統合するインデックス（`ROASTERS` / `ROASTER_GROUPS`）
+  - `components/data/roasters/` — 地域別のロースター定義（`nordic` / `uk` / `europe` / `northAmerica` / `oceania` / `eastAsia` / `seAsiaIndia` / `latinAmerica` / `africaMideast`）。各社に `region` フィールド付き。追加時はここを編集
   - `components/data/beans.js` — `BEANS`（豆データ）
   - `components/data/flavors.js` — `FLAVORS` / `FLAVOR_MAP`（味わいマップ）
   - `components/data/diagnosis.js` — `QUESTIONS` / `TYPE_LABEL`（好み診断）
