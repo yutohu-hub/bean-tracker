@@ -73,11 +73,19 @@ npm run dev
 
 - Next.js 14（App Router）/ React 18 / d3（地球儀）
 - 状態はすべてメモリ内。外部DB・APIキーは現時点で不要
-- ファイル構成（データとUIを分離）:
-  - `components/BeanTracker.jsx` — UI本体（各画面のコンポーネント）
-  - `components/data/roasters.js` — 地域別ファイルを統合するインデックス（`ROASTERS` / `ROASTER_GROUPS`）
-  - `components/data/roasters/` — 地域別のロースター定義（`nordic` / `uk` / `europe` / `northAmerica` / `oceania` / `eastAsia` / `seAsiaIndia` / `latinAmerica` / `africaMideast`）。各社に `region` フィールド付き。追加時はここを編集
-  - `components/data/beans.js` — `BEANS`（豆データ）
-  - `components/data/flavors.js` — `FLAVORS` / `FLAVOR_MAP`（味わいマップ）
-  - `components/data/diagnosis.js` — `QUESTIONS` / `TYPE_LABEL`（好み診断）
-  - `components/lib/currency.js` — 為替レート・価格フォーマッタ・ライブレート取得
+- ファイル構成（データ / UI / ロジックを分離）:
+  - `components/BeanTracker.jsx` — アプリ本体（各画面を組み立てるメイン）
+  - **画面コンポーネント**
+    - `components/ui/` — 共通パーツ（`Package` / `BeanCard` / `DetailSheet` / `Splash`）
+    - `components/views/` — 各画面（`RoasterPage` / `GlobeView` / `DiagnosisView` / `FlavorMapView` / `GeishaView`）
+  - **データ**（地域別に分割 → インデックスで統合）
+    - `components/data/roasters.js` + `components/data/roasters/<地域>.js` — `ROASTERS` / `ROASTER_GROUPS`。各社に `region` 付き。追加はここを編集
+    - `components/data/beans.js` + `components/data/beans/<地域>.js` — `BEANS`
+    - 地域キー: `nordic` / `uk` / `europe` / `northAmerica` / `oceania` / `eastAsia` / `seAsiaIndia` / `latinAmerica` / `africaMideast`
+    - `components/data/flavors.js` — `FLAVORS` / `FLAVOR_MAP`（味わいマップ）
+    - `components/data/diagnosis.js` — `QUESTIONS` / `TYPE_LABEL`（好み診断）
+  - **ロジック / 定数**
+    - `components/lib/currency.js` — 為替レート・価格フォーマッタ・ライブレート取得
+    - `components/lib/theme.js` — 配色・ステータス表示（`STATUS`）
+    - `components/lib/constants.js` — 原産地リスト（`ORIGINS`）
+    - `components/lib/utils.js` — 送客リンク生成（`shopHref`）
