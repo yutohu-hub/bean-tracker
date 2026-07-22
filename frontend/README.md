@@ -60,7 +60,7 @@ npm run dev
 
 ## この先の育て方（メモ）
 
-- **実データ化**: `components/BeanTracker.jsx` の中の `BEANS` と `ROASTERS`（サンプルデータ）を、巡回で取得した本物のデータに差し替える
+- **実データ化**: `components/data/roasters.js`（`ROASTERS`）と `components/data/beans.js`（`BEANS`）のサンプルデータを、巡回で取得した本物のデータに差し替える
 - **自動巡回**: GitHub Actions（毎朝1回）で各ロースターのECを巡回 → データ更新 → 自動で反映
   - Shopify は `/products.json` で取得、BASE / STORES は専用パーサー
   - 消えた豆は削除せず「アーカイブ」保存（初日から貯めるのが大事）
@@ -73,4 +73,10 @@ npm run dev
 
 - Next.js 14（App Router）/ React 18 / d3（地球儀）
 - 状態はすべてメモリ内。外部DB・APIキーは現時点で不要
-- `components/BeanTracker.jsx` がアプリ本体（ここを編集すればほぼ全部変わる）
+- ファイル構成（データとUIを分離）:
+  - `components/BeanTracker.jsx` — UI本体（各画面のコンポーネント）
+  - `components/data/roasters.js` — `ROASTERS`（ロースター定義・EC URL）
+  - `components/data/beans.js` — `BEANS`（豆データ）
+  - `components/data/flavors.js` — `FLAVORS` / `FLAVOR_MAP`（味わいマップ）
+  - `components/data/diagnosis.js` — `QUESTIONS` / `TYPE_LABEL`（好み診断）
+  - `components/lib/currency.js` — 為替レート・価格フォーマッタ・ライブレート取得
