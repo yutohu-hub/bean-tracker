@@ -17,31 +17,28 @@
 
 ---
 
-## 公開するまで（3ステップ）
+## 公開するまで（GitHub Pages・自動デプロイ）
 
-パソコンにこのフォルダがある前提です。難しい設定はありません。
+このリポジトリには公開の自動化が同梱されています（`.github/workflows/deploy-frontend.yml`）。
+`frontend/` を静的サイトとして書き出し、GitHub Pages に自動でデプロイします。**外部サービスの登録は不要**です。
 
-### ステップ1 — GitHub に置く
+### 手順（初回だけ）
 
-1. [github.com](https://github.com) でアカウントを作る（無料）
-2. 右上の「＋」→「New repository」でリポジトリを作る
-   - 名前は `bean-tracker` など。Public のままでOK
-3. 作成後の画面に出るコマンドを使うか、GitHub Desktop アプリを使ってこのフォルダを丸ごとアップロードする
-   - いちばん簡単なのは [GitHub Desktop](https://desktop.github.com/) を入れて、このフォルダを「Add existing repository」で選び、「Publish」を押す方法
+1. この内容を **`main` ブランチにマージ**（Pull Request を作ってマージ）。
+2. リポジトリの **Settings → Pages → Build and deployment → Source** を **「GitHub Actions」** にする。
+   - ワークフローが `enablement: true` で自動有効化を試みますが、反映されない場合はここを手動で選択。
+3. **Actions** タブ →「フロント公開 (GitHub Pages)」→ **Run workflow**（または `frontend/` を変更して main に push）。
+4. 1〜2分で `https://<あなたのID>.github.io/bean-tracker/` に公開されます 🎉
 
-### ステップ2 — Vercel に繋ぐ
+### 以後は自動
 
-1. [vercel.com](https://vercel.com) に GitHub アカウントでログイン（無料）
-2. 「Add New...」→「Project」
-3. さっき作った `bean-tracker` リポジトリを選んで「Import」
-4. 設定は何も変えずに「Deploy」を押す
+`frontend/` を編集して `main` に push するたびに、ビルド→公開まで**全自動**で走ります。
+（配信先のサブパス `/bean-tracker` は `next.config.mjs` の `basePath` を CI が自動設定します。）
 
-数十秒待つと、`https://bean-tracker-xxxx.vercel.app` のような URL が発行されます。これで世界に公開されました。
+### Vercel を使いたい場合（任意）
 
-### ステップ3 — 以後は自動
-
-コードを直して GitHub に上げる（push する）たびに、Vercel が自動でサイトを更新します。
-あなたがやることは「コードを直して上げる」だけです。
+Vercel でも公開できます。その場合は Import 時に **Root Directory を `frontend`** に指定してください
+（`next.config.mjs` の `output: "export"` があっても Vercel は Next.js として最適配信します）。
 
 ---
 
