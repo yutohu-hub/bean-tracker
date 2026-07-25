@@ -195,4 +195,7 @@ export const northAmericaBeans = [
   { id: 1361, r: "analog", name: "コロンビア Lot", origin: "コロンビア", process: "Natural", amount: 22, cur: "USD", per: "12oz", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
   { id: 1362, r: "analog", name: "ブラジル Lot", origin: "ブラジル", process: "Honey", amount: 19, cur: "USD", per: "12oz", status: "now", color: "#22303A", accent: "#C8792E", year: "2026" },
   { id: 1363, r: "analog", name: "グアテマラ Lot", origin: "グアテマラ", process: "Anaerobic", amount: 20, cur: "USD", per: "12oz", status: "sold", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
+  { id: 1403, r: "detourcoffee", name: "コスタリカ Lot", origin: "コスタリカ", process: "Washed", amount: 23, cur: "CAD", per: "340g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+  { id: 1404, r: "detourcoffee", name: "Detour Blend", origin: "ブレンド", process: "Washed", amount: 23, cur: "CAD", per: "340g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
+  { id: 1405, r: "detourcoffee", name: "エチオピア Lot", origin: "エチオピア", process: "Natural", amount: 26, cur: "CAD", per: "340g", status: "sold", color: "#F4F1E8", accent: "#1A1815", year: "2026" },
 ];

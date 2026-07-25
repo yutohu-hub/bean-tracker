@@ -267,4 +267,7 @@ export const northAmerica = {
   analog: { name: "Analog Coffee", city: "シアトル", country: "US", region: "northAmerica", platform: "Shopify", note: "中南米を軸にした自家焙煎", coord: [-122.3, 47.64],
     founded: "2019", style: "浅〜中煎り・少量焙煎", ship: "国内・国際発送", focus: "中南米・エチオピア",
     bio: "シアトルを拠点とするスペシャルティコーヒーロースター。中南米・エチオピアを軸に、浅〜中煎り・少量焙煎で素材の個性を引き出す。日々の一杯として、また贈り物としても親しまれている。" },
+  detourcoffee: { name: "Detour Coffee Roasters", city: "ハミルトン", country: "CA", region: "northAmerica", platform: "Shopify", note: "中南米を軸にした自家焙煎", coord: [-79.85, 43.27], url: "detour.coffee",
+    founded: "2020", style: "中煎りバランス", ship: "北米・国際発送", focus: "中南米・エチオピア",
+    bio: "ハミルトンを拠点とするスペシャルティコーヒーロースター。中南米・エチオピアを軸に、中煎りバランスで素材の個性を引き出す。国際的にも評価される一軒。" },
 };
