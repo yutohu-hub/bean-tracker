@@ -8,6 +8,7 @@ import { BEANS } from "./data/beans";
 import { RATES_TO_JPY, toJPY, perGrams, fetchLiveRates } from "./lib/currency";
 import { INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGINS } from "./lib/constants";
+import { syncArchive, getArchivedBeans } from "./lib/store";
 
 /* ============================================================
    BEAN TRACKER — プロトタイプ v0.1
@@ -44,6 +45,17 @@ export default function BeanTracker() {
   const [splashGone, setSplashGone] = useState(false);
   const [fx, setFx] = useState({ live: false, loading: true, error: false, at: null, date: null, source: null });
   const [fxVersion, setFxVersion] = useState(0);
+  const [archiveBeans, setArchiveBeans] = useState([]);
+
+  // アーカイブを端末に永続化（更新してもカタログから消えず残る）
+  useEffect(() => {
+    setArchiveBeans(syncArchive(BEANS.filter((b) => b.status === "archive")));
+  }, []);
+  const archiveByRoaster = useMemo(() => {
+    const m = {};
+    for (const b of archiveBeans) { if (!ROASTERS[b.r]) continue; (m[b.r] = m[b.r] || []).push(b); }
+    return m;
+  }, [archiveBeans]);
 
   useEffect(() => {
     const t1 = setTimeout(() => setSplashDone(true), 1700);   // 表示を終えてフェード開始
@@ -241,9 +253,9 @@ export default function BeanTracker() {
                 <div style={{ fontSize: 11, color: GRAY, marginBottom: 12 }}>
                   ロースターを選ぶと、その店の歴代ポートフォリオが開きます。
                 </div>
-                {Object.entries(ROASTERS).map(([rid, r]) => {
-                  const arc = BEANS.filter((b) => b.r === rid && b.status === "archive");
-                  if (arc.length === 0) return null;
+                {Object.entries(archiveByRoaster).map(([rid, arc]) => {
+                  const r = ROASTERS[rid];
+                  if (!r || arc.length === 0) return null;
                   const years = arc.map((b) => Number(b.year));
                   return (
                     <button key={rid} onClick={() => goRoaster(rid, "archive")}
@@ -282,7 +294,7 @@ export default function BeanTracker() {
             )}
             {/* フッター注記 */}
             <div style={{ marginTop: 36, borderTop: `1px solid ${LINE}`, paddingTop: 14, fontSize: 10.5, color: GRAY, lineHeight: 1.7 }}>
-              パッケージは実画像の代わりの試作表示です。実装では巡回システムが取得した実際のパッケージ画像が入ります。
+              カードは各ロースターの実ロゴを表示します。巡回システムが商品画像URL（bean.img）を取得すると、その豆の実際のECパッケージ写真に自動で切り替わります（未取得・読み込み失敗時は標本カードにフォールバック）。
               評価機能はありません — この図鑑は探して辿り着くためのインフラです。 円⇄ドル換算はライブ為替（対応時）を用い、変動を自動反映します。取得できない環境では固定値にフォールバックします。
             </div>
           </>
