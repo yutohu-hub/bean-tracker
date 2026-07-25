@@ -70,6 +70,9 @@ def main() -> None:
 
     site_data = export_for_site(con)
     build(site_data, failed)
+    # フロント連携用に機械可読な巡回結果も書き出す（→ scripts/build_frontend_data.py が変換）
+    (ROOT / "data" / "site.json").write_text(
+        json.dumps(site_data, ensure_ascii=False), encoding="utf-8")
 
     fresh = [e for e in site_data["events"]
              if e["ts"] > t0 and e["type"] in ("new", "restock")]

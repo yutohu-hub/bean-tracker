@@ -10,4 +10,10 @@ import { seAsiaIndiaBeans } from "./beans/seAsiaIndia";
 import { latinAmericaBeans } from "./beans/latinAmerica";
 import { africaMideastBeans } from "./beans/africaMideast";
 
-export const BEANS = [...nordicBeans, ...ukBeans, ...europeBeans, ...northAmericaBeans, ...oceaniaBeans, ...eastAsiaBeans, ...seAsiaIndiaBeans, ...latinAmericaBeans, ...africaMideastBeans];
+import { LIVE_BEANS } from "./live";
+
+const seedBeans = [...nordicBeans, ...ukBeans, ...europeBeans, ...northAmericaBeans, ...oceaniaBeans, ...eastAsiaBeans, ...seAsiaIndiaBeans, ...latinAmericaBeans, ...africaMideastBeans];
+
+// 巡回実データがあるロースターは、そのロースターの種の豆を実データで置き換える
+const liveKeys = new Set(LIVE_BEANS.map((b) => b.r));
+export const BEANS = [...seedBeans.filter((b) => !liveKeys.has(b.r)), ...LIVE_BEANS];
