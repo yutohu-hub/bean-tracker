@@ -10,7 +10,8 @@ import { Package } from "../ui/Package";
 export function FlavorMapView({ onOpen, cur }) {
   const [famF, setFamF] = useState(null);     // 系統ハイライト
   const [selId, setSelId] = useState(null);   // 選択中の豆
-  const beans = BEANS.filter((b) => FLAVOR_MAP[b.id]);
+  // 味わいマップは「いま買える(now)」豆だけを表示
+  const beans = BEANS.filter((b) => FLAVOR_MAP[b.id] && b.status === "now");
   const sel = beans.find((b) => b.id === selId);
 
   return (

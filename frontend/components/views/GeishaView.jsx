@@ -6,15 +6,12 @@ import { BEANS } from "../data/beans";
 import { Package } from "../ui/Package";
 
 function VarietySection({ vt, title, sub, onOpen, cur }) {
-  const all = BEANS.filter((b) => b.vt === vt);
-  const live = all.filter((b) => b.status === "now");
-  const soldNow = all.filter((b) => b.status === "sold");
-  const arc = all.filter((b) => b.status === "archive");
+  // いま買える(now)豆のみ・100gあたり価格の安い順・最大30銘柄
+  const live = BEANS.filter((b) => b.vt === vt && b.status === "now");
   const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
   const fmt100 = (b) => cur === "JPY" ? `¥${Math.round(per100(b)).toLocaleString()}` : `$${(per100(b) / RATES_TO_JPY.USD).toFixed(0)}`;
-  const ladder = [...live, ...soldNow].sort((a, b) => per100(a) - per100(b));
-  const maxP = Math.max(...ladder.map(per100));
-  const years = [...new Set(arc.map((b) => b.year))].sort((a, b) => b - a);
+  const ladder = live.slice().sort((a, b) => per100(a) - per100(b)).slice(0, 30);
+  const maxP = ladder.length ? Math.max(...ladder.map(per100)) : 1;
 
   return (
     <div style={{ marginTop: 26 }}>
@@ -43,10 +40,7 @@ function VarietySection({ vt, title, sub, onOpen, cur }) {
           <button key={b.id} onClick={() => onOpen(b)}
             style={{ display: "block", width: "100%", background: "none", border: "none", padding: "10px 0 0", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>
-                {b.status === "sold" && <span style={{ color: AMBER, fontSize: 9, fontFamily: "ui-monospace, monospace", marginRight: 6 }}>SOLD OUT</span>}
-                {b.name}
-              </span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{b.name}</span>
               <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: INK }}>{fmt100(b)}</span>
             </div>
             <div style={{ fontSize: 10, color: GRAY, marginTop: 1 }}>{ROASTERS[b.r].name} ・ {b.origin} ・ {b.process}</div>
@@ -54,39 +48,16 @@ function VarietySection({ vt, title, sub, onOpen, cur }) {
               <div className="bt-bar" style={{
                 height: "100%", borderRadius: 3,
                 width: `${(per100(b) / maxP) * 100}%`,
-                background: b.status === "sold" ? LINE : `linear-gradient(90deg, ${GREEN}, #6B8F3C)`,
+                background: `linear-gradient(90deg, ${GREEN}, #6B8F3C)`,
                 animationDelay: `${0.15 + i * 0.09}s`,
               }} />
             </div>
           </button>
         ))}
+        {ladder.length === 0 && (
+          <div style={{ fontSize: 11, color: GRAY, padding: "14px 0" }}>いま買える{title}はありません。</div>
+        )}
       </div>
-
-      {/* アーカイブ年表 */}
-      {arc.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.12em", color: GRAY, borderBottom: `1px solid ${LINE}`, paddingBottom: 6 }}>
-            {title} ARCHIVE — 消えたロットの記録
-          </div>
-          {years.map((yr) => (
-            <div key={yr} style={{ display: "flex", gap: 14, marginTop: 12 }}>
-              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 13, fontWeight: 700, color: GRAY, width: 42, flexShrink: 0, paddingTop: 2 }}>{yr}</div>
-              <div style={{ flex: 1 }}>
-                {arc.filter((b) => b.year === yr).map((b) => (
-                  <button key={b.id} onClick={() => onOpen(b)}
-                    style={{ display: "flex", gap: 10, width: "100%", background: "none", border: "none", padding: "0 0 12px", cursor: "pointer", textAlign: "left", alignItems: "center" }}>
-                    <div style={{ width: 34, flexShrink: 0 }}><Package bean={b} small /></div>
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: INK }}>{b.name}</div>
-                      <div style={{ fontSize: 10, color: GRAY }}>{ROASTERS[b.r].name} ・ {b.origin} ・ {b.process}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

@@ -81,11 +81,30 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
     return stats
 
 
-def export_for_site(con: sqlite3.Connection, event_days: int = 14) -> dict:
-    """サイト生成用にDBの中身をJSON化。"""
-    cutoff = time.time() - event_days * 86400
+def derive_status(product: dict, now: float | None = None,
+                  archive_days: int = 14) -> str:
+    """在庫状態から表示ステータスを決める。
+    now    = いまECで買える（products.json で available=true）
+    sold   = 欠品したが archive_days 未満（＝売り切れ表示）
+    archive= 売り切れが archive_days（既定14日=2週間）以上続いたもの
+    """
+    if now is None:
+        now = time.time()
+    if product["available"]:
+        return "now"
+    age_days = (now - (product["last_status_change"] or now)) / 86400
+    return "archive" if age_days >= archive_days else "sold"
+
+
+def export_for_site(con: sqlite3.Connection, event_days: int = 14,
+                    archive_days: int = 14) -> dict:
+    """サイト生成用にDBの中身をJSON化。各商品に status を付与する。"""
+    now = time.time()
+    cutoff = now - event_days * 86400
     products = [dict(r) for r in con.execute(
         "SELECT * FROM products ORDER BY last_seen DESC").fetchall()]
+    for p in products:
+        p["status"] = derive_status(p, now, archive_days)
     events = [dict(r) for r in con.execute(
         "SELECT e.*, p.title, p.roaster, p.country, p.url, p.image, p.price, p.currency, "
         "p.grams, p.per100, p.available, p.origin, p.process "
