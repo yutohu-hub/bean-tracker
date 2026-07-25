@@ -1,7 +1,7 @@
 // アフリカ・中東のロースターの豆
 export const africaMideastBeans = [
-  { id: 659, r: "rosetta", name: "Ethiopia Sidama", origin: "エチオピア", process: "Natural", amount: 140, cur: "ZAR", per: "250g", status: "now", color: "#F2EFE6", accent: "#8A3B2E", year: "2026" },
-  { id: 660, r: "rosetta", name: "Colombia Huila", origin: "コロンビア", process: "Washed", amount: 140, cur: "ZAR", per: "250g", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
+  { id: 659, r: "rosetta", name: "Ethiopia Sidama", origin: "エチオピア", process: "Natural", amount: 140, cur: "ZAR", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#F2EFE6", accent: "#8A3B2E", year: "2026" },
+  { id: 660, r: "rosetta", name: "Colombia Huila", origin: "コロンビア", process: "Washed", amount: 140, cur: "ZAR", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
   { id: 661, r: "truth", name: "Ethiopia Hambela", origin: "エチオピア", process: "Washed", amount: 140, cur: "ZAR", per: "250g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
   { id: 662, r: "truth", name: "Kenya Kirinyaga", origin: "ケニア", process: "Washed", amount: 140, cur: "ZAR", per: "250g", status: "sold", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
   { id: 663, r: "father", name: "Ethiopia Chelchele", origin: "エチオピア", process: "Natural", amount: 140, cur: "ZAR", per: "250g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },

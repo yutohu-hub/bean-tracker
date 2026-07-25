@@ -1,7 +1,7 @@
 // オセアニアのロースターの豆
 export const oceaniaBeans = [
-  { id: 42, r: "pm", name: "Guji Uraga", origin: "エチオピア", process: "Natural", amount: 24, cur: "AUD", per: "250g", status: "now", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
-  { id: 43, r: "pm", name: "La Cereza", origin: "コロンビア", process: "Washed", amount: 22, cur: "AUD", per: "250g", status: "now", color: "#EFE9DA", accent: "#6B2D3C", year: "2026" },
+  { id: 42, r: "pm", name: "Guji Uraga", origin: "エチオピア", process: "Natural", amount: 24, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
+  { id: 43, r: "pm", name: "La Cereza", origin: "コロンビア", process: "Washed", amount: 22, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#EFE9DA", accent: "#6B2D3C", year: "2026" },
   { id: 44, r: "pm", name: "La Miel Geisha", origin: "コロンビア", process: "Natural", amount: 50, cur: "AUD", per: "100g", status: "sold", color: "#1C1B19", accent: "#D9B44A", year: "2026", vt: "geisha" },
   { id: 45, r: "pm", name: "El Tejar Sidra", origin: "コロンビア", process: "Washed", amount: 45, cur: "AUD", per: "100g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026", vt: "sidra" },
   { id: 46, r: "pm", name: "El Naranjo", origin: "グアテマラ", process: "Washed", amount: 23, cur: "AUD", per: "250g", status: "archive", color: "#E2DBC8", accent: "#5A4632", year: "2025" },

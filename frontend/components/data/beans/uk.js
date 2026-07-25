@@ -1,7 +1,7 @@
 // イギリス・アイルランドのロースターの豆
 export const ukBeans = [
-  { id: 62, r: "sqmile", name: "Nano Challa", origin: "エチオピア", process: "Washed", amount: 13, cur: "GBP", per: "350g", status: "now", color: "#F2EFE6", accent: "#8A3B2E", year: "2026" },
-  { id: 63, r: "sqmile", name: "Gatugi AA", origin: "ケニア", process: "Washed", amount: 14, cur: "GBP", per: "350g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+  { id: 62, r: "sqmile", name: "Nano Challa", origin: "エチオピア", process: "Washed", amount: 13, cur: "GBP", per: "350g", status: "now", updatedAt: "2026-07-25", color: "#F2EFE6", accent: "#8A3B2E", year: "2026" },
+  { id: 63, r: "sqmile", name: "Gatugi AA", origin: "ケニア", process: "Washed", amount: 14, cur: "GBP", per: "350g", status: "now", updatedAt: "2026-07-25", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
   { id: 64, r: "sqmile", name: "Red Brick", origin: "ブレンド", process: "Washed / Natural", amount: 12, cur: "GBP", per: "350g", status: "now", color: "#7C2D3C", accent: "#E8C8A0", year: "2026" },
   { id: 65, r: "sqmile", name: "La Bendición", origin: "コロンビア", process: "Washed", amount: 13, cur: "GBP", per: "350g", status: "sold", color: "#EFE9DA", accent: "#5A4632", year: "2026" },
   { id: 101, r: "assembly", name: "Rumudamo Natural", origin: "エチオピア", process: "Natural", amount: 13, cur: "GBP", per: "250g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },

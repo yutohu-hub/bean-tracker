@@ -1,7 +1,7 @@
 // 北欧のロースターの豆
 export const nordicBeans = [
-  { id: 4, r: "tw", name: "Karogoto AA", origin: "ケニア", process: "Washed", amount: 165, cur: "NOK", per: "250g", status: "now", color: "#F4F1E8", accent: "#1A1815", year: "2026" },
-  { id: 5, r: "tw", name: "Finca Tamana", origin: "コロンビア", process: "Washed", amount: 145, cur: "NOK", per: "250g", status: "now", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
+  { id: 4, r: "tw", name: "Karogoto AA", origin: "ケニア", process: "Washed", amount: 165, cur: "NOK", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#F4F1E8", accent: "#1A1815", year: "2026" },
+  { id: 5, r: "tw", name: "Finca Tamana", origin: "コロンビア", process: "Washed", amount: 145, cur: "NOK", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
   { id: 6, r: "tw", name: "Hunkute", origin: "エチオピア", process: "Washed", amount: 155, cur: "NOK", per: "250g", status: "sold", color: "#E8E2D2", accent: "#A87B2E", year: "2026" },
   { id: 7, r: "tw", name: "La Palma Geisha", origin: "コロンビア", process: "Natural", amount: 320, cur: "NOK", per: "100g", status: "archive", color: "#D9D2C0", accent: "#8A3B2E", year: "2024", vt: "geisha" },
   { id: 12, r: "cc", name: "Kieni", origin: "ケニア", process: "Washed", amount: 120, cur: "DKK", per: "250g", status: "now", color: "#F2EFE6", accent: "#B8433A", year: "2026" },

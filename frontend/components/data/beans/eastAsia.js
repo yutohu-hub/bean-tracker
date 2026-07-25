@@ -1,9 +1,9 @@
 // 東アジアのロースターの豆
 export const eastAsiaBeans = [
-  { id: 1, r: "bibi", name: "Ethiopia Chelbesa", origin: "エチオピア", process: "Washed", amount: 1800, cur: "JPY", per: "150g", status: "now", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
+  { id: 1, r: "bibi", name: "Ethiopia Chelbesa", origin: "エチオピア", process: "Washed", amount: 1800, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-25", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
   { id: 2, r: "bibi", name: "Colombia El Paraíso", origin: "コロンビア", process: "Anaerobic", amount: 2200, cur: "JPY", per: "150g", status: "sold", color: "#2E2A24", accent: "#C8A96A", year: "2026" },
   { id: 3, r: "bibi", name: "Kenya Karimikui", origin: "ケニア", process: "Washed", amount: 2000, cur: "JPY", per: "150g", status: "archive", color: "#B8433A", accent: "#F2E9DC", year: "2025" },
-  { id: 16, r: "bibi", name: "Monteblanco Geisha", origin: "コロンビア", process: "Washed", amount: 3200, cur: "JPY", per: "100g", status: "now", color: "#F2EFE6", accent: "#2F5233", year: "2026", vt: "geisha" },
+  { id: 16, r: "bibi", name: "Monteblanco Geisha", origin: "コロンビア", process: "Washed", amount: 3200, cur: "JPY", per: "100g", status: "now", updatedAt: "2026-07-25", color: "#F2EFE6", accent: "#2F5233", year: "2026", vt: "geisha" },
   { id: 19, r: "bibi", name: "Panama Geisha Lot 24", origin: "パナマ", process: "Natural", amount: 4500, cur: "JPY", per: "100g", status: "archive", color: "#B8433A", accent: "#F2E9DC", year: "2025", vt: "geisha" },
   { id: 22, r: "bibi", name: "Sidra Anaerobic", origin: "コロンビア", process: "Anaerobic", amount: 2800, cur: "JPY", per: "100g", status: "sold", color: "#2E2A24", accent: "#C8A96A", year: "2026", vt: "sidra" },
   { id: 28, r: "glitch", name: "Hambela Alaka", origin: "エチオピア", process: "Natural", amount: 2400, cur: "JPY", per: "100g", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
