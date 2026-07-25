@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { BEANS } from "../data/beans";
-import { getUser, setUser, logout, getTastings, removeTasting, mergeTastings, getPlan, setPlan } from "../lib/store";
+import { ROASTERS } from "../data/roasters";
+import { getUser, setUser, logout, getTastings, removeTasting, mergeTastings, getPlan, setPlan, getDiagHistory, removeDiagResult } from "../lib/store";
 import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings, cloudGetPlan } from "../lib/account";
 
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
@@ -18,8 +19,9 @@ export function MyLogView({ onOpen, onRoaster }) {
   const [loginMsg, setLoginMsg] = useState("");
   const [syncMsg, setSyncMsg] = useState("");
   const [plan, setPlanState] = useState({ id: "free" });
+  const [diags, setDiags] = useState([]);
 
-  const refresh = () => { setU(getUser()); setList(getTastings()); setSession(getSession()); setPlanState(getPlan()); };
+  const refresh = () => { setU(getUser()); setList(getTastings()); setSession(getSession()); setPlanState(getPlan()); setDiags(getDiagHistory()); };
 
   const syncNow = async () => {
     if (!isCloud() || !isSignedIn()) return;
@@ -129,6 +131,34 @@ export function MyLogView({ onOpen, onRoaster }) {
         <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{list.length}</div><div style={{ fontSize: 10, color: GRAY }}>記録した豆</div></div>
         <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{avg}</div><div style={{ fontSize: 10, color: GRAY }}>平均評価</div></div>
       </div>
+
+      {/* 診断の記録 */}
+      {diags.length > 0 && (
+        <div style={{ marginTop: 18 }}>
+          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.12em", color: GRAY }}>🧭 診断の記録</div>
+          {diags.map((d) => (
+            <div key={d.at} style={{ borderBottom: `1px solid ${LINE}`, padding: "10px 0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                <span style={{ fontSize: 13.5, fontWeight: 700, color: INK }}>{d.type}</span>
+                <button onClick={() => { removeDiagResult(d.at); refresh(); }} style={{ background: "none", border: "none", fontSize: 10.5, color: GRAY, cursor: "pointer" }}>削除</button>
+              </div>
+              {d.tags && d.tags.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 5 }}>
+                  {d.tags.map((t) => <span key={t} style={{ fontSize: 9.5, color: GRAY, border: `1px solid ${LINE}`, borderRadius: 999, padding: "2px 8px" }}>{t}</span>)}
+                </div>
+              )}
+              {d.top && d.top.filter((k) => ROASTERS[k]).length > 0 && (
+                <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", gap: 10 }}>
+                  {d.top.filter((k) => ROASTERS[k]).map((k) => (
+                    <button key={k} onClick={() => onRoaster(k)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 11, color: INK, textDecoration: "underline", textUnderlineOffset: 2 }}>{ROASTERS[k].name}</button>
+                  ))}
+                </div>
+              )}
+              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY, marginTop: 6 }}>{new Date(d.at).toLocaleDateString("ja-JP")}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {list.length === 0 ? (
         <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "40px 0", lineHeight: 1.8 }}>

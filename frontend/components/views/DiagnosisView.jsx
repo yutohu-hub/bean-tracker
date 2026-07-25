@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
-import { getTastings } from "../lib/store";
+import { getTastings, addDiagResult } from "../lib/store";
 import { FLAVOR_MAP, FLAVORS } from "../data/flavors";
 
 /* ============================================================
@@ -115,6 +115,7 @@ export function DiagnosisView({ onRoaster }) {
   const [answers, setAnswers] = useState([]);
   const [profile, setProfile] = useState({ attr: {}, aff: {}, runs: 0 });
   const [tan, setTan] = useState(null); // 味の記録の分析結果
+  const [diagSaved, setDiagSaved] = useState(false);
 
   // 特徴量とライブ在庫（now がある店だけ推薦対象に）は1回だけ計算
   const { feats, liveKeys } = useMemo(() => {
@@ -137,7 +138,7 @@ export function DiagnosisView({ onRoaster }) {
   };
 
   const answer = (w) => { setAnswers([...answers, w]); setStep(step + 1); };
-  const reset = () => { setStep(0); setAnswers([]); };
+  const reset = () => { setStep(0); setAnswers([]); setDiagSaved(false); };
   const resetLearning = () => { const p = { attr: {}, aff: {}, runs: 0 }; saveProfile(p); setProfile(p); };
 
   // 回答が出そろったらスコア計算・学習保存
@@ -256,6 +257,19 @@ export function DiagnosisView({ onRoaster }) {
             );
           })}
         </div>
+
+        {/* 診断結果を味の記録に残す */}
+        <button
+          onClick={() => {
+            const tags = [tan && tan.topGroup && GROUP_LABEL[tan.topGroup], tan && tan.topProc, tan && tan.topFam && FLAVORS[tan.topFam] && FLAVORS[tan.topFam].label].filter(Boolean);
+            addDiagResult({ type: result.type, top: result.list.slice(0, 3), tags });
+            setDiagSaved(true);
+          }}
+          disabled={diagSaved}
+          style={{ width: "100%", marginTop: 16, padding: "12px 0", background: diagSaved ? "#EDEAE1" : INK, color: diagSaved ? GRAY : PAPER, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: diagSaved ? "default" : "pointer" }}>
+          {diagSaved ? "✓ 味の記録に保存しました" : "🧭 この診断結果を味の記録に残す"}
+        </button>
+        {diagSaved && <div style={{ fontSize: 10.5, color: GREEN, marginTop: 6, textAlign: "center" }}>「味の記録」タブの診断履歴から見返せます。</div>}
 
         <div style={{ marginTop: 16, fontSize: 10, color: GRAY, lineHeight: 1.7, borderTop: `1px solid ${LINE}`, paddingTop: 10 }}>
           相性はロースターの優劣ではなく、あなたの好みとの近さです。診断を重ねるほど学習が進みます。
