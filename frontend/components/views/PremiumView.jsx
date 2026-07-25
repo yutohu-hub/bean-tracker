@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN, AMBER } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { getPlan, setPlan, getNotify, setNotify, getRestocks } from "../lib/store";
+import { paymentLinkFor } from "../lib/billing";
 
 // プラン定義（課金の受け皿）
 const PLANS = [
@@ -115,14 +116,18 @@ export function PremiumView({ onOpen }) {
         })}
       </div>
 
-      {/* 決済の受け皿 */}
+      {/* 決済（Stripe Payment Links） */}
       {isPremium && (
         <div style={{ ...card, marginTop: 12, background: "#F2F0E9", border: "none" }}>
           <div style={{ fontSize: 13, fontWeight: 700 }}>お支払い</div>
           <div style={{ fontSize: 11, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
-            クレジットカード決済は Stripe Checkout、アプリ版は App Store / Google Play の課金に対応予定です。
+            クレジットカード決済は Stripe。アプリ版は App Store / Google Play の課金に対応予定です。
           </div>
-          <button onClick={() => setPayMsg("決済連携（Stripe Checkout）は準備中です。お申し込み情報はこの端末に保存されています。")}
+          <button onClick={() => {
+              const link = paymentLinkFor(plan.id, { email: notify.email });
+              if (link) { window.open(link, "_blank", "noopener,noreferrer"); setPayMsg("Stripe の決済ページを開きました。"); }
+              else { setPayMsg("Stripe Payment Link が未設定です。lib/billing.js に buy.stripe.com の URL を貼ると、このボタンから本番決済できます。お申し込み内容はこの端末に保存済みです。"); }
+            }}
             style={{ width: "100%", marginTop: 10, padding: "11px 0", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
             クレジットカードで申し込む
           </button>
