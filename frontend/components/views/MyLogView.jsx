@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
-import { getUser, setUser, logout, getTastings, removeTasting, mergeTastings, getPlan, setPlan, getDiagHistory, removeDiagResult } from "../lib/store";
+import { getUser, setUser, logout, getTastings, removeTasting, mergeTastings, getPlan, setPlan, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis } from "../lib/store";
 import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings, cloudGetPlan } from "../lib/account";
 
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
@@ -20,8 +20,9 @@ export function MyLogView({ onOpen, onRoaster }) {
   const [syncMsg, setSyncMsg] = useState("");
   const [plan, setPlanState] = useState({ id: "free" });
   const [diags, setDiags] = useState([]);
+  const [anas, setAnas] = useState([]);
 
-  const refresh = () => { setU(getUser()); setList(getTastings()); setSession(getSession()); setPlanState(getPlan()); setDiags(getDiagHistory()); };
+  const refresh = () => { setU(getUser()); setList(getTastings()); setSession(getSession()); setPlanState(getPlan()); setDiags(getDiagHistory()); setAnas(getAnalysisHistory()); };
 
   const syncNow = async () => {
     if (!isCloud() || !isSignedIn()) return;
@@ -131,6 +132,27 @@ export function MyLogView({ onOpen, onRoaster }) {
         <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{list.length}</div><div style={{ fontSize: 10, color: GRAY }}>記録した豆</div></div>
         <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{avg}</div><div style={{ fontSize: 10, color: GRAY }}>平均評価</div></div>
       </div>
+
+      {/* 記録のAI分析 */}
+      {anas.length > 0 && (
+        <div style={{ marginTop: 18 }}>
+          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.12em", color: GRAY }}>🧠 記録のAI分析</div>
+          {anas.map((a) => (
+            <div key={a.at} style={{ borderBottom: `1px solid ${LINE}`, padding: "10px 0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: INK }}>{a.rated}件の記録を分析</span>
+                <button onClick={() => { removeAnalysis(a.at); refresh(); }} style={{ background: "none", border: "none", fontSize: 10.5, color: GRAY, cursor: "pointer" }}>削除</button>
+              </div>
+              {a.tags && a.tags.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 5 }}>
+                  {a.tags.map((t) => <span key={t} style={{ fontSize: 9.5, fontWeight: 700, color: INK, background: "#F2F0E9", borderRadius: 999, padding: "2px 9px" }}>高評価: {t}</span>)}
+                </div>
+              )}
+              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY, marginTop: 6 }}>{new Date(a.at).toLocaleDateString("ja-JP")}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 診断の記録 */}
       {diags.length > 0 && (

@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
-import { getTastings, addDiagResult } from "../lib/store";
+import { getTastings, addDiagResult, addAnalysis } from "../lib/store";
 import { FLAVOR_MAP, FLAVORS } from "../data/flavors";
 
 /* ============================================================
@@ -116,6 +116,7 @@ export function DiagnosisView({ onRoaster }) {
   const [profile, setProfile] = useState({ attr: {}, aff: {}, runs: 0 });
   const [tan, setTan] = useState(null); // 味の記録の分析結果
   const [diagSaved, setDiagSaved] = useState(false);
+  const [anaSaved, setAnaSaved] = useState(false);
 
   // 特徴量とライブ在庫（now がある店だけ推薦対象に）は1回だけ計算
   const { feats, liveKeys } = useMemo(() => {
@@ -138,7 +139,7 @@ export function DiagnosisView({ onRoaster }) {
   };
 
   const answer = (w) => { setAnswers([...answers, w]); setStep(step + 1); };
-  const reset = () => { setStep(0); setAnswers([]); setDiagSaved(false); };
+  const reset = () => { setStep(0); setAnswers([]); setDiagSaved(false); setAnaSaved(false); };
   const resetLearning = () => { const p = { attr: {}, aff: {}, runs: 0 }; saveProfile(p); setProfile(p); };
 
   // 回答が出そろったらスコア計算・学習保存
@@ -217,6 +218,12 @@ export function DiagnosisView({ onRoaster }) {
         <div style={{ fontSize: 9.5, color: GRAY, marginTop: 8, lineHeight: 1.6 }}>
           この分析はこの端末上で行われ、記録は外部に送信されません。結果とおすすめに反映済みです。
         </div>
+        <button
+          onClick={() => { addAnalysis({ rated: tan.rated, tags }); setAnaSaved(true); }}
+          disabled={anaSaved}
+          style={{ width: "100%", marginTop: 10, padding: "9px 0", background: anaSaved ? "transparent" : PAPER, color: anaSaved ? GREEN : INK, border: `1.5px solid ${anaSaved ? LINE : INK}`, borderRadius: 8, fontSize: 11.5, fontWeight: 700, cursor: anaSaved ? "default" : "pointer" }}>
+          {anaSaved ? "✓ 味の記録に保存しました" : "この分析を味の記録に保存"}
+        </button>
       </div>
     );
   };
