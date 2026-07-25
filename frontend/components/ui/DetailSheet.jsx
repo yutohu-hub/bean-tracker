@@ -1,14 +1,26 @@
 "use client";
-import { INK, PAPER, GRAY, LINE, STATUS } from "../lib/theme";
+import { useState, useEffect } from "react";
+import { INK, PAPER, GRAY, LINE, GREEN, STATUS } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, fmtPrice, perGrams, fmtLocal } from "../lib/currency";
 import { shopHref } from "../lib/utils";
+import { getTasting, upsertTasting, removeTasting } from "../lib/store";
 import { ROASTERS } from "../data/roasters";
 import { Package } from "./Package";
 
 export function DetailSheet({ bean, onClose, onRoaster, cur }) {
+  const [rating, setRating] = useState(0);
+  const [notes, setNotes] = useState("");
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    if (!bean) return;
+    const t = getTasting(bean.id);
+    setRating(t ? t.rating : 0); setNotes(t ? t.notes : ""); setSaved(!!t);
+  }, [bean ? bean.id : null]);
   if (!bean) return null;
   const s = STATUS[bean.status];
   const roaster = ROASTERS[bean.r];
+  const saveTasting = () => { if (!rating) return; upsertTasting({ beanId: bean.id, r: bean.r, name: bean.name, roaster: roaster.name, origin: bean.origin, rating, notes }); setSaved(true); };
+  const delTasting = () => { removeTasting(bean.id); setRating(0); setNotes(""); setSaved(false); };
   const rows = [
     ["産地", bean.origin],
     ["精製", bean.process],
@@ -72,6 +84,29 @@ export function DetailSheet({ bean, onClose, onRoaster, cur }) {
               ↗ {roaster.url} へ送客（/go/{String(bean.id).padStart(4, "0")}・utm付き）
             </div>
           )}
+        </div>
+
+        {/* 飲んだ味を記録（ローカル保存） */}
+        <div style={{ marginTop: 18, borderTop: `1px solid ${LINE}`, paddingTop: 14 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700 }}>
+            ☕ 飲んだ味を記録{saved && <span style={{ fontSize: 10, color: GREEN, marginLeft: 8 }}>保存済み</span>}
+          </div>
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button key={n} onClick={() => setRating(n)} aria-label={`${n}点`}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 24, lineHeight: 1, padding: 0, color: n <= rating ? "#E4A11B" : LINE }}>★</button>
+            ))}
+          </div>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="香り・酸味・甘み・余韻など、感じた味をメモ"
+            style={{ width: "100%", boxSizing: "border-box", marginTop: 8, minHeight: 60, padding: "8px 10px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12.5, resize: "vertical", background: PAPER, color: INK, fontFamily: "inherit" }} />
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <button onClick={saveTasting} disabled={!rating}
+              style={{ flex: 1, padding: "10px 0", background: rating ? INK : "#EDEAE1", color: rating ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: rating ? "pointer" : "default" }}>
+              {saved ? "記録を更新" : "記録する"}
+            </button>
+            {saved && <button onClick={delTasting} style={{ padding: "10px 14px", background: "none", color: GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 12, cursor: "pointer" }}>削除</button>}
+          </div>
+          <div style={{ fontSize: 9.5, color: GRAY, marginTop: 6 }}>記録はこの端末に保存されます（「記録」タブで一覧）。</div>
         </div>
       </div>
     </div>

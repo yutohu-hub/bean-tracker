@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from "react";
 // ---- データ / ロジック（分離済みモジュール） ----
 import { ROASTERS } from "./data/roasters";
 import { BEANS } from "./data/beans";
-import { RATES_TO_JPY, toJPY, fetchLiveRates } from "./lib/currency";
+import { RATES_TO_JPY, toJPY, perGrams, fetchLiveRates } from "./lib/currency";
 import { INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGINS } from "./lib/constants";
 
@@ -24,6 +24,7 @@ import { GlobeView } from "./views/GlobeView";
 import { DiagnosisView } from "./views/DiagnosisView";
 import { FlavorMapView } from "./views/FlavorMapView";
 import { GeishaView } from "./views/GeishaView";
+import { MyLogView } from "./views/MyLogView";
 
 /* ---------- メイン ---------- */
 export default function BeanTracker() {
@@ -36,6 +37,9 @@ export default function BeanTracker() {
   const [displayCur, setDisplayCur] = useState("JPY");
   const [priceF, setPriceF] = useState("all");
   const [processF, setProcessF] = useState("すべて");
+  const [query, setQuery] = useState("");
+  const [country, setCountry] = useState("all");
+  const [sortBy, setSortBy] = useState("default"); // default | p100asc | p100desc
   const [splashDone, setSplashDone] = useState(false);
   const [splashGone, setSplashGone] = useState(false);
   const [fx, setFx] = useState({ live: false, loading: true, error: false, at: null, date: null, source: null });
@@ -92,13 +96,25 @@ export default function BeanTracker() {
   };
 
   const PROCESSES = ["すべて", "Washed", "Natural", "Honey", "Anaerobic"];
+  const COUNTRIES = useMemo(() => ["all", ...Array.from(new Set(Object.values(ROASTERS).map((r) => r.country))).sort()], []);
+  const per100JPY = (b) => (toJPY(b) / perGrams(b)) * 100;
+  const selStyle = { flex: 1, minWidth: 0, padding: "7px 8px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, background: PAPER, color: INK };
 
-  const filtered = useMemo(() => BEANS.filter((b) =>
-    (origin === "すべて" || b.origin === origin) &&
-    (statusF === "all" || b.status === statusF) &&
-    (processF === "すべて" || b.process.includes(processF)) &&
-    PRICE_BANDS[priceF].test(toJPY(b))
-  ), [origin, statusF, priceF, processF, displayCur, fxVersion]);
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = BEANS.filter((b) => {
+      const r = ROASTERS[b.r];
+      return (origin === "すべて" || b.origin === origin) &&
+        (statusF === "all" || b.status === statusF) &&
+        (processF === "すべて" || b.process.includes(processF)) &&
+        (country === "all" || r.country === country) &&
+        PRICE_BANDS[priceF].test(toJPY(b)) &&
+        (!q || b.name.toLowerCase().includes(q) || r.name.toLowerCase().includes(q) || (b.origin || "").toLowerCase().includes(q));
+    });
+    if (sortBy === "p100asc") list = list.slice().sort((a, b) => per100JPY(a) - per100JPY(b));
+    else if (sortBy === "p100desc") list = list.slice().sort((a, b) => per100JPY(b) - per100JPY(a));
+    return list;
+  }, [origin, statusF, priceF, processF, country, query, sortBy, displayCur, fxVersion]);
 
   return (
     <div style={{ minHeight: "100vh", background: PAPER, fontFamily: `"Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif`, color: INK }}>
@@ -158,7 +174,7 @@ export default function BeanTracker() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 16, marginTop: 10, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"]].map(([k, l]) => (
+            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["mylog", "記録"]].map(([k, l]) => (
               <button key={k} onClick={() => setView(k)}
                 style={{
                   background: "none", border: "none", padding: "0 0 6px", cursor: "pointer",
@@ -183,8 +199,24 @@ export default function BeanTracker() {
           <FlavorMapView onOpen={setOpen} cur={displayCur} />
         ) : view === "geisha" ? (
           <GeishaView onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} />
+        ) : view === "mylog" ? (
+          <MyLogView onOpen={setOpen} onRoaster={goRoaster} />
         ) : (
           <>
+            {/* フリーワード検索 */}
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ロースター名・農園名・豆名で検索"
+              style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 13, marginBottom: 8, background: PAPER, color: INK }} />
+            {/* 国 & 並び替え（価格は /100g に正規化して比較） */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+              <select value={country} onChange={(e) => setCountry(e.target.value)} style={selStyle}>
+                {COUNTRIES.map((c) => <option key={c} value={c}>{c === "all" ? "すべての国" : c}</option>)}
+              </select>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={selStyle}>
+                <option value="default">並び: おすすめ順</option>
+                <option value="p100asc">価格/100g 安い順</option>
+                <option value="p100desc">価格/100g 高い順</option>
+              </select>
+            </div>
             {/* フィルタ */}
             <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
               {ORIGINS.map((o) => (

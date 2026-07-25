@@ -6,17 +6,22 @@ import worldTopo from "world-atlas/countries-110m.json";
 import { INK, PAPER, GRAY, GREEN, AMBER } from "../lib/theme";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
+import { shopHref } from "../lib/utils";
 
 // 世界地図（大陸・国境）は起動時に一度だけ生成
 const LAND = feature(worldTopo, worldTopo.objects.land);
 const BORDERS = mesh(worldTopo, worldTopo.objects.countries, (a, b) => a !== b);
 const SPHERE = { type: "Sphere" };
 
-// 配色（紙×インクの世界観に馴染む地球）
-const OCEAN = "#D9E4E3";
-const LANDF = "#CDBE9C";
-const BORDER = "#AB9C7C";
-const GRAT = "#B9C4C3";
+// 配色（鮮やかな地球）
+const OCEAN = "#1E86C9";   // 鮮やかな海
+const LANDF = "#5FB457";   // 鮮やかな陸
+const BORDER = "#3B8C39";  // 国境（濃い緑）
+const GRAT = "rgba(255,255,255,0.32)"; // 白い経緯線
+const EQ = "rgba(255,255,255,0.55)";   // 赤道
+const DOT = "#FF5A3C";     // マーカー（コーラル）
+const DOTSEL = "#FFC53D";  // 選択中（ゴールド）
+const MIN_DOT_GAP = 13;    // マーカー同士の最小ピクセル間隔（重なり防止）
 
 const ZOOM_MIN = 1;
 const ZOOM_MAX = 6;
@@ -65,7 +70,7 @@ export function GlobeView({ onRoaster }) {
     // 赤道を少し濃く
     const equator = svg.append("path")
       .datum({ type: "LineString", coordinates: d3.range(-180, 181, 2).map((l) => [l, 0]) })
-      .attr("fill", "none").attr("stroke", "#9FB0AE").attr("stroke-width", 0.7);
+      .attr("fill", "none").attr("stroke", EQ).attr("stroke-width", 0.8);
     // 陰影
     const shade = svg.append("path").datum(SPHERE).attr("fill", "url(#bt-globe-shade)").attr("pointer-events", "none");
 
@@ -76,7 +81,7 @@ export function GlobeView({ onRoaster }) {
       .style("cursor", "pointer")
       .on("click", (e, d) => { e.stopPropagation(); setSelected(d[0]); });
     mk.append("circle").attr("class", "hit").attr("r", 9).attr("fill", "transparent"); // タップ領域
-    mk.append("circle").attr("class", "dot").attr("r", 3.2).attr("stroke", PAPER).attr("stroke-width", 1.2);
+    mk.append("circle").attr("class", "dot").attr("r", 3.4).attr("stroke", "#ffffff").attr("stroke-width", 1.2);
     const label = svg.append("text").attr("font-size", 10.5).attr("font-weight", 700)
       .attr("fill", INK).attr("font-family", "ui-monospace, monospace").attr("pointer-events", "none");
 
@@ -91,11 +96,39 @@ export function GlobeView({ onRoaster }) {
 
       const center = projection.invert([cx, cy]);
       const sel = selectedRef.current;
-      mk.attr("display", (d) => (d3.geoDistance(d[1].coord, center) > Math.PI / 2 - 0.02 ? "none" : null))
-        .attr("transform", (d) => { const p = projection(d[1].coord); return p ? `translate(${p[0]},${p[1]})` : null; });
+
+      // 表側の点を投影し、近すぎる点は間引く（ズームするほど分離して表示数が増える）
+      const cell = MIN_DOT_GAP;
+      const grid = new Map();
+      const pos = {};      // key -> [x,y]
+      const shown = new Set();
+      const order = sel && ROASTERS[sel] ? [sel, ...entries.map((e) => e[0]).filter((k) => k !== sel)] : entries.map((e) => e[0]);
+      for (const key of order) {
+        const coord = ROASTERS[key].coord;
+        if (d3.geoDistance(coord, center) > Math.PI / 2 - 0.02) continue; // 裏側は描かない
+        const p = projection(coord);
+        if (!p) continue;
+        const gx = Math.floor(p[0] / cell), gy = Math.floor(p[1] / cell);
+        let collide = false;
+        for (let dx = -1; dx <= 1 && !collide; dx++) {
+          for (let dy = -1; dy <= 1 && !collide; dy++) {
+            const arr = grid.get((gx + dx) + "," + (gy + dy));
+            if (arr) for (const q of arr) { if (Math.hypot(q[0] - p[0], q[1] - p[1]) < MIN_DOT_GAP) { collide = true; break; } }
+          }
+        }
+        if (collide) continue;
+        const gk = gx + "," + gy;
+        if (!grid.has(gk)) grid.set(gk, []);
+        grid.get(gk).push(p);
+        pos[key] = p;
+        shown.add(key);
+      }
+
+      mk.attr("display", (d) => (shown.has(d[0]) ? null : "none"))
+        .attr("transform", (d) => (pos[d[0]] ? `translate(${pos[d[0]][0]},${pos[d[0]][1]})` : null));
       mk.select(".dot")
-        .attr("r", (d) => (d[0] === sel ? 5 : 3.2))
-        .attr("fill", (d) => (d[0] === sel ? AMBER : GREEN));
+        .attr("r", (d) => (d[0] === sel ? 5.5 : 3.4))
+        .attr("fill", (d) => (d[0] === sel ? DOTSEL : DOT));
 
       // 選択中のロースター名だけラベル表示
       if (sel && ROASTERS[sel] && d3.geoDistance(ROASTERS[sel].coord, center) <= Math.PI / 2 - 0.02) {
@@ -201,8 +234,16 @@ export function GlobeView({ onRoaster }) {
             <span style={{ color: AMBER }}>SOLD OUT {selBeans.filter((b) => b.status === "sold").length}</span>
             <span style={{ color: GRAY }}>ARCHIVE {selBeans.filter((b) => b.status === "archive").length}</span>
           </div>
+          {sel.url ? (
+            <a href={shopHref(sel)} target="_blank" rel="noopener noreferrer"
+              style={{ display: "block", textAlign: "center", textDecoration: "none", width: "100%", marginTop: 12, padding: "12px 0", background: INK, color: PAPER, borderRadius: 8, fontSize: 13, fontWeight: 700 }}>
+              {sel.name} のECサイトへ ↗
+            </a>
+          ) : (
+            <div style={{ textAlign: "center", marginTop: 12, padding: "12px 0", background: "#EDEAE1", color: GRAY, borderRadius: 8, fontSize: 12, fontWeight: 700 }}>ECサイト準備中</div>
+          )}
           <button onClick={() => onRoaster(selected)}
-            style={{ width: "100%", marginTop: 12, padding: "11px 0", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            style={{ width: "100%", marginTop: 8, padding: "10px 0", background: "none", color: INK, border: `1px solid ${INK}`, borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
             このロースターの豆を見る →
           </button>
         </div>
