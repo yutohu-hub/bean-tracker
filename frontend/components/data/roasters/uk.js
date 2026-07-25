@@ -105,7 +105,4 @@ export const uk = {
   cloudpickeruk: { name: "Roasted Brown", city: "Dublin", country: "IE", region: "uk", platform: "Shopify", note: "エチオピアの名店", coord: [-8, 53.4],
     founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Dublinを拠点とするアイルランドのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
-  girlsdelight: { name: "Girls Who Grind Coffee", city: "ロンドン", country: "GB", region: "uk", platform: "Shopify", note: "国内外の生産者と直接取引を軸にした自家焙煎", coord: [-0.11, 51.53],
-    founded: "2023", style: "浅〜中煎り・少量焙煎", ship: "英国内・国際発送", focus: "国内外の生産者と直接取引",
-    bio: "ロンドンを拠点とするスペシャルティコーヒーロースター。国内外の生産者と直接取引を軸に、浅〜中煎り・少量焙煎で素材の個性を引き出す。日々の一杯として、また贈り物としても親しまれている。" },
 };
