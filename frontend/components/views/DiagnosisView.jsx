@@ -3,6 +3,8 @@ import { useState, useMemo, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
+import { getTastings } from "../lib/store";
+import { FLAVOR_MAP, FLAVORS } from "../data/flavors";
 
 /* ============================================================
    好み診断 v2 — 全ロースターをメタデータでスコアリングして推薦。
@@ -23,6 +25,48 @@ function featureOf(r) {
   const experimental = geisha ? 1 : /実験|アナエロビック|anaerobic/i.test(s + f) ? 1 : 0;
   const domestic = /国内/.test(r.ship || "") ? 1 : 0;
   return { light, medium, africa, latam, asia, geisha, experimental, domestic, natural: geisha ? 0.6 : 0.4, clean: 0.6 };
+}
+
+// ---- 味の記録の分析（オンデバイス）----
+const ORIGIN_GROUP = (o = "") => {
+  if (/エチオピア|ケニア|ルワンダ|ブルンジ/.test(o)) return "africa";
+  if (/コロンビア|ブラジル|グアテマラ|コスタリカ|メキシコ|ペルー|パナマ|エルサルバドル|ホンジュラス|ボリビア|ニカラグア|エクアドル/.test(o)) return "latam";
+  if (/インドネシア|ベトナム|インド|中国|タイ|東ティモール|パプア/.test(o)) return "asia";
+  return null;
+};
+const GROUP_LABEL = { africa: "アフリカ系", latam: "中南米系", asia: "アジア系" };
+
+// 高評価ほど正、低評価ほど負の重みで、記録から好み特徴量・ロースター親和・要約を作る
+function analyzeTastings(tastings) {
+  const attr = {}, aff = {}, proc = {}, fam = {}, grp = {};
+  const add = (o, k, v) => { o[k] = (o[k] || 0) + v; };
+  let rated = 0;
+  for (const t of tastings) {
+    if (!t.rating) continue;
+    rated++;
+    const bean = BEANS.find((b) => b.id === t.beanId);
+    const w = (t.rating - 2.5) * 0.8;               // 4-5★→正 / 1-2★→負
+    if (Math.abs(w) < 0.01) continue;
+    const og = ORIGIN_GROUP(t.origin || (bean && bean.origin) || "");
+    if (og) { add(attr, og, w * 1.2); if (w > 0) add(grp, og, 1); }
+    const p = bean ? bean.process : "";
+    if (/Natural|Honey/i.test(p)) { add(attr, "natural", w); if (w > 0) add(proc, "Natural/Honey", 1); }
+    else if (/Washed/i.test(p)) { add(attr, "clean", w * 0.8); if (w > 0) add(proc, "Washed", 1); }
+    if (/Anaerobic/i.test(p)) add(attr, "experimental", w);
+    if (bean && (bean.vt === "geisha" || bean.vt === "sidra")) add(attr, "geisha", w);
+    const r = t.r && ROASTERS[t.r];
+    if (r) {
+      if (/国内/.test(r.ship || "")) add(attr, "domestic", w * 0.6);
+      if (r.region === "eastAsia" || r.region === "seAsiaIndia") add(attr, "asia", w * 0.5);
+      const rf = featureOf(r);
+      if (rf.light > 0.7) add(attr, "light", w * 0.6); else if (rf.medium > 0.7) add(attr, "medium", w * 0.5);
+      if (w > 0) add(aff, t.r, w * 0.8);
+    }
+    const fm = FLAVOR_MAP[t.beanId];
+    if (fm && w > 0) add(fam, fm.fam, w);
+  }
+  const top = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+  return { attr, aff, rated, topGroup: top(grp), topProc: top(proc), topFam: top(fam) };
 }
 
 const QUESTIONS = [
@@ -70,6 +114,7 @@ export function DiagnosisView({ onRoaster }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [profile, setProfile] = useState({ attr: {}, aff: {}, runs: 0 });
+  const [tan, setTan] = useState(null); // 味の記録の分析結果
 
   // 特徴量とライブ在庫（now がある店だけ推薦対象に）は1回だけ計算
   const { feats, liveKeys } = useMemo(() => {
@@ -78,7 +123,18 @@ export function DiagnosisView({ onRoaster }) {
     return { feats, liveKeys };
   }, []);
 
-  useEffect(() => { setProfile(loadProfile()); }, []);
+  useEffect(() => { setProfile(loadProfile()); setTan(analyzeTastings(getTastings())); }, []);
+
+  // 設問の中で「記録から最も相性の良い」選択肢を提案（質問に学習を反映）
+  const recIdx = (q) => {
+    if (!tan || !tan.rated) return -1;
+    let best = -1, bestS = 0.5;
+    q.options.forEach((o, i) => {
+      let s = 0; for (const [f, v] of Object.entries(o.w)) s += v * (tan.attr[f] || 0);
+      if (s > bestS) { bestS = s; best = i; }
+    });
+    return best;
+  };
 
   const answer = (w) => { setAnswers([...answers, w]); setStep(step + 1); };
   const reset = () => { setStep(0); setAnswers([]); };
@@ -90,10 +146,11 @@ export function DiagnosisView({ onRoaster }) {
     // 今回の回答を特徴量重みに集約
     const aw = {};
     for (const w of answers) for (const [f, v] of Object.entries(w)) aw[f] = (aw[f] || 0) + v;
-    // 学習プロフィールを混ぜる（過去の好みを alpha 分だけ反映）
-    const alpha = 0.5;
+    // 学習プロフィール(過去診断) + 味の記録の分析を混ぜる
+    const alpha = 0.5, beta = 0.9;
     const blended = { ...aw };
     for (const [f, v] of Object.entries(profile.attr)) blended[f] = (blended[f] || 0) + v * alpha;
+    if (tan) for (const [f, v] of Object.entries(tan.attr)) blended[f] = (blended[f] || 0) + v * beta;
 
     const scored = Object.keys(ROASTERS)
       .filter((k) => liveKeys.has(k)) // いま買える店のみ
@@ -101,14 +158,15 @@ export function DiagnosisView({ onRoaster }) {
         const rf = feats[k];
         let s = 0;
         for (const [f, v] of Object.entries(blended)) s += v * (rf[f] || 0);
-        s += (profile.aff[k] || 0) * 0.8; // 過去にクリックした店を後押し
+        s += (profile.aff[k] || 0) * 0.8;                 // 過去にクリックした店を後押し
+        s += (tan && tan.aff[k] ? tan.aff[k] : 0) * 1.0;  // 高評価を付けた店を後押し
         return [k, s];
       })
       .sort((a, b) => b[1] - a[1]);
 
     const topFeature = Object.entries(aw).sort((a, b) => b[1] - a[1])[0]?.[0] || "medium";
     return { list: scored.slice(0, 5).map((x) => x[0]), type: TYPE_OF[topFeature] || "オールラウンド型", aw };
-  }, [step, answers, profile, feats, liveKeys]);
+  }, [step, answers, profile, tan, feats, liveKeys]);
 
   // 結果が出た瞬間に学習（今回の好みを蓄積）— 1度だけ
   useEffect(() => {
@@ -130,6 +188,38 @@ export function DiagnosisView({ onRoaster }) {
     ? <span style={{ fontSize: 10, color: GREEN, fontWeight: 700 }}>🧠 学習中 · {profile.runs}回分の好みを反映</span>
     : <span style={{ fontSize: 10, color: GRAY }}>🧠 診断するほどおすすめが賢くなります</span>;
 
+  // 味の記録のAI分析パネル（記録から学習して診断に反映）
+  const AnalysisPanel = () => {
+    if (!tan) return null;
+    if (!tan.rated) {
+      return (
+        <div style={{ marginTop: 12, padding: "10px 12px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 10.5, color: GRAY, lineHeight: 1.7 }}>
+          🧠 味の記録がまだありません。豆に☆評価を付けると、その傾向をAIが分析して診断に反映します。
+        </div>
+      );
+    }
+    const tags = [
+      tan.topGroup && GROUP_LABEL[tan.topGroup],
+      tan.topProc,
+      tan.topFam && FLAVORS[tan.topFam] && FLAVORS[tan.topFam].label,
+    ].filter(Boolean);
+    return (
+      <div style={{ marginTop: 12, padding: "12px 14px", background: "#F2F0E9", borderRadius: 10 }}>
+        <div style={{ fontSize: 12, fontWeight: 800 }}>🧠 記録のAI分析 <span style={{ fontWeight: 400, color: GRAY }}>· {tan.rated}件を学習</span></div>
+        {tags.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+            {tags.map((t) => (
+              <span key={t} style={{ fontSize: 10.5, fontWeight: 700, color: INK, background: PAPER, border: `1px solid ${LINE}`, borderRadius: 999, padding: "3px 10px" }}>高評価: {t}</span>
+            ))}
+          </div>
+        )}
+        <div style={{ fontSize: 9.5, color: GRAY, marginTop: 8, lineHeight: 1.6 }}>
+          この分析はこの端末上で行われ、記録は外部に送信されません。結果とおすすめに反映済みです。
+        </div>
+      </div>
+    );
+  };
+
   // ---- 結果画面 ----
   if (result) {
     const beansOf = (k) => BEANS.filter((b) => b.r === k && b.status === "now").length;
@@ -141,8 +231,9 @@ export function DiagnosisView({ onRoaster }) {
         </div>
         <div style={{ fontSize: 21, fontWeight: 800, marginTop: 6 }}>{result.type}</div>
         <div style={{ fontSize: 12.5, color: GRAY, marginTop: 6, lineHeight: 1.7 }}>
-          あなたの回答と、これまでの好みの学習をもとに、<b>いま買える</b>ロースターを相性順に選びました。
+          あなたの回答・これまでの学習・<b>味の記録の分析</b>をもとに、<b>いま買える</b>ロースターを相性順に選びました。
         </div>
+        <AnalysisPanel />
 
         <div style={{ borderTop: `2px solid ${INK}`, marginTop: 16, paddingTop: 12 }}>
           {result.list.map((k, i) => {
@@ -190,14 +281,19 @@ export function DiagnosisView({ onRoaster }) {
           <span key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= step ? INK : LINE }} />
         ))}
       </div>
+      <AnalysisPanel />
       <div style={{ fontSize: 17, fontWeight: 700, marginTop: 14, lineHeight: 1.5 }}>{cq.q}</div>
       <div style={{ marginTop: 14 }}>
-        {cq.options.map((o) => (
-          <button key={o.label} onClick={() => answer(o.w)}
-            style={{ display: "block", width: "100%", textAlign: "left", padding: "13px 14px", marginTop: 8, background: PAPER, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 13, color: INK, cursor: "pointer" }}>
-            {o.label}
-          </button>
-        ))}
+        {(() => {
+          const rec = recIdx(cq);
+          return cq.options.map((o, i) => (
+            <button key={o.label} onClick={() => answer(o.w)}
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%", textAlign: "left", padding: "13px 14px", marginTop: 8, background: i === rec ? "#F5F2E8" : PAPER, border: `1px solid ${i === rec ? INK : LINE}`, borderRadius: 8, fontSize: 13, color: INK, cursor: "pointer" }}>
+              <span>{o.label}</span>
+              {i === rec && <span style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 800, color: GREEN, letterSpacing: "0.04em" }}>記録から ★</span>}
+            </button>
+          ));
+        })()}
       </div>
       {step > 0 && (
         <button onClick={reset} style={{ marginTop: 14, background: "none", border: "none", fontSize: 11, color: GRAY, cursor: "pointer", padding: 0 }}>← 最初からやり直す</button>
