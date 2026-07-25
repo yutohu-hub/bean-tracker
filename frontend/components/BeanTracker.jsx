@@ -19,6 +19,7 @@ import { syncArchive, getArchivedBeans } from "./lib/store";
 
 // ---- 画面コンポーネント（分離済み） ----
 import { BeanCard } from "./ui/BeanCard";
+import { RoasterLogo } from "./ui/RoasterLogo";
 import { DetailSheet } from "./ui/DetailSheet";
 import { Splash } from "./ui/Splash";
 import { RoasterPage } from "./views/RoasterPage";
@@ -138,16 +139,19 @@ export default function BeanTracker() {
         @keyframes btFadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
         @keyframes btFadeOut { from { opacity: 1; } to { opacity: 0; } }
         @keyframes btSheetUp { from { transform: translateY(100%); } to { transform: none; } }
-        @keyframes btGridIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-        .bt-mark { animation: btTrackIn 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
-        .bt-line { animation: btLineGrow 0.7s 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+        @keyframes btOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes btGridIn { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+        .bt-mark { animation: btTrackIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .bt-line { animation: btLineGrow 0.7s 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .bt-tag { animation: btFadeUp 0.6s 0.9s ease both; }
         .bt-splash-out { animation: btFadeOut 0.6s ease both; }
-        .bt-sheet { animation: btSheetUp 0.32s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
-        .bt-card { animation: btGridIn 0.45s ease backwards; transition: transform 0.15s cubic-bezier(0.2, 0.7, 0.3, 1); }
-        .bt-card:active { transform: scale(0.955); }
-        @keyframes btCardTap { 0% { transform: scale(1); } 35% { transform: scale(0.9); } 70% { transform: scale(1.03); } 100% { transform: scale(1); } }
-        .bt-card-tap { animation: btCardTap 0.32s cubic-bezier(0.2, 0.7, 0.3, 1); }
+        .bt-overlay { animation: btOverlayIn 0.32s ease both; }
+        .bt-sheet { animation: btSheetUp 0.44s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .bt-card { animation: btGridIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards; transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 1px 2px rgba(23,21,15,0.04); }
+        .bt-card:hover { box-shadow: 0 8px 24px rgba(23,21,15,0.10); }
+        .bt-card:active { transform: scale(0.98); }
+        @keyframes btCardTap { 0% { transform: scale(1); } 42% { transform: scale(0.972); } 100% { transform: scale(1); } }
+        .bt-card-tap { animation: btCardTap 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
         @keyframes btPkgIn { from { opacity: 0; transform: scale(0.9) translateY(4px); } to { opacity: 1; transform: none; } }
         .bt-detail-pkg { animation: btPkgIn 0.4s 0.08s cubic-bezier(0.2, 0.7, 0.3, 1) backwards; }
         .bt-detail-info { animation: btFadeUp 0.4s 0.16s ease backwards; }
@@ -271,6 +275,10 @@ export default function BeanTracker() {
                           background: PAPER, border: `1px solid ${LINE}`, borderRadius: 10,
                           padding: "12px 12px", cursor: "pointer", textAlign: "left",
                         }}>
+                        {/* ロースターの実ロゴ */}
+                        <div style={{ height: 22, display: "flex", alignItems: "center" }}>
+                          <RoasterLogo roaster={r} size={20} />
+                        </div>
                         {/* ミニ標本プレビュー */}
                         <div style={{ display: "flex", gap: 4 }}>
                           {arc.slice(0, 3).map((b) => (
@@ -278,7 +286,7 @@ export default function BeanTracker() {
                           ))}
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
                           <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY, marginTop: 3 }}>
                             {Math.min(...years)}–{Math.max(...years)} / {arc.length}銘柄
                           </div>
