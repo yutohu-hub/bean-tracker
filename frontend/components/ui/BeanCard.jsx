@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { INK, GRAY, STATUS } from "../lib/theme";
 import { fmtPrice, perGrams, toJPY, RATES_TO_JPY } from "../lib/currency";
 import { ROASTERS } from "../data/roasters";
@@ -6,10 +7,12 @@ import { Package } from "./Package";
 
 export function BeanCard({ bean, onOpen, onRoaster, cur }) {
   const s = STATUS[bean.status];
+  const [tap, setTap] = useState(false);
   const per100 = (toJPY(bean) / perGrams(bean)) * 100;
   const per100Str = cur === "JPY" ? `¥${Math.round(per100).toLocaleString()}` : `$${(per100 / RATES_TO_JPY.USD).toFixed(2)}`;
+  const handleTap = () => { setTap(true); setTimeout(() => { setTap(false); onOpen(bean); }, 150); };
   return (
-    <div className="bt-card" style={{ cursor: "pointer" }} onClick={() => onOpen(bean)}>
+    <div className={`bt-card${tap ? " bt-card-tap" : ""}`} style={{ cursor: "pointer" }} onClick={handleTap}>
       <Package bean={bean} small />
       <div style={{ padding: "8px 2px 0" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
