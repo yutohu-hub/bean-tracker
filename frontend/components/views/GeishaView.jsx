@@ -1,16 +1,21 @@
 "use client";
+import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN, AMBER } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, perGrams } from "../lib/currency";
+import { getPlan } from "../lib/store";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
 import { Package } from "../ui/Package";
 
-function VarietySection({ match, title, sub, onOpen, cur }) {
-  // いま買える(now)豆のみ・100gあたり価格の安い順・最大30銘柄
+function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPremium }) {
+  // いま買える(now)豆のみ・100gあたり価格の安い順
+  // 無料は最大10銘柄、プレミアムは最大50銘柄まで表示
   const live = BEANS.filter((b) => b.status === "now" && match(b));
   const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
   const fmt100 = (b) => cur === "JPY" ? `¥${Math.round(per100(b)).toLocaleString()}` : `$${(per100(b) / RATES_TO_JPY.USD).toFixed(0)}`;
-  const ladder = live.slice().sort((a, b) => per100(a) - per100(b)).slice(0, 30);
+  const sorted = live.slice().sort((a, b) => per100(a) - per100(b));
+  const ladder = sorted.slice(0, limit);
+  const locked = Math.max(0, sorted.length - ladder.length);
   const maxP = ladder.length ? Math.max(...ladder.map(per100)) : 1;
 
   return (
@@ -57,12 +62,25 @@ function VarietySection({ match, title, sub, onOpen, cur }) {
         {ladder.length === 0 && (
           <div style={{ fontSize: 11, color: GRAY, padding: "14px 0" }}>いま買える{title}はありません。</div>
         )}
+        {!premium && locked > 0 && (
+          <button onClick={onPremium}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", marginTop: 12, padding: "12px 0", background: "#F2F0E9", color: INK, border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+            🔒 さらに {locked} 銘柄。プレミアムで最大50銘柄まで表示 ↗
+          </button>
+        )}
+        {premium && locked > 0 && (
+          <div style={{ fontSize: 10.5, color: GRAY, marginTop: 10, textAlign: "center" }}>上位50銘柄を表示中（ほか {locked} 銘柄）</div>
+        )}
       </div>
     </div>
   );
 }
 
 export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
+  const [premium, setPremium] = useState(false);
+  useEffect(() => { setPremium(getPlan().id.startsWith("premium")); }, []);
+  const limit = premium ? 50 : 10;
+  const secProps = { onOpen, cur, limit, premium, onPremium };
   return (
     <div>
       {/* ページヘッダー */}
@@ -71,11 +89,14 @@ export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
         <div style={{ fontSize: 12, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
           少量で消えていく希少な豆だけを追いかけるトラッカー。
         </div>
+        <div style={{ marginTop: 8, fontSize: 11, color: premium ? GREEN : GRAY }}>
+          {premium ? "プレミアム：各カテゴリ最大50銘柄まで表示中" : "無料プランは各カテゴリ10銘柄まで。プレミアムで50銘柄まで表示"}
+        </div>
       </div>
 
-      <VarietySection match={(b) => b.vt === "geisha"} title="GEISHA" sub="ゲイシャ品種" onOpen={onOpen} cur={cur} />
-      <VarietySection match={(b) => b.vt === "sidra"} title="SIDRA" sub="シドラ品種" onOpen={onOpen} cur={cur} />
-      <VarietySection match={(b) => { const m = b.name.match(/COE\s*(\d+)位/); return !!m && Number(m[1]) <= 10 && b.origin !== "エチオピア"; }} title="COE" sub="カップ・オブ・エクセレンス入賞ロット（10位以内・エチオピア以外）" onOpen={onOpen} cur={cur} />
+      <VarietySection match={(b) => b.vt === "geisha"} title="GEISHA" sub="ゲイシャ品種" {...secProps} />
+      <VarietySection match={(b) => b.vt === "sidra"} title="SIDRA" sub="シドラ品種" {...secProps} />
+      <VarietySection match={(b) => { const m = b.name.match(/COE\s*(\d+)位/); return !!m && Number(m[1]) <= 10 && b.origin !== "エチオピア"; }} title="COE" sub="カップ・オブ・エクセレンス入賞ロット（10位以内・エチオピア以外）" {...secProps} />
 
       {/* 新着通知CTA */}
       <div style={{ marginTop: 24, padding: "14px 16px", background: "#F2F0E9", borderRadius: 10 }}>
