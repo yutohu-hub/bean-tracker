@@ -228,4 +228,7 @@ export const europe = {
   rocketbean2: { name: "Riga Coffee", city: "Riga", country: "LV", region: "europe", platform: "Shopify", note: "エチオピアの名店", coord: [24.11, 56.95],
     founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Rigaを拠点とするラトビアのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
+  orsonik: { name: "Orso Nero Coffee", city: "ミラノ", country: "IT", region: "europe", platform: "Shopify", note: "中南米を軸にした自家焙煎", coord: [9.21, 45.48],
+    founded: "2022", style: "中煎りバランス", ship: "EU・国際発送", focus: "中南米・エチオピア",
+    bio: "ミラノを拠点とするスペシャルティコーヒーロースター。中南米・エチオピアを軸に、中煎りバランスで素材の個性を引き出す。日々の一杯として、また贈り物としても親しまれている。" },
 };

@@ -19,7 +19,6 @@ import { syncArchive, getArchivedBeans } from "./lib/store";
 
 // ---- 画面コンポーネント（分離済み） ----
 import { BeanCard } from "./ui/BeanCard";
-import { RoasterLogo } from "./ui/RoasterLogo";
 import { DetailSheet } from "./ui/DetailSheet";
 import { Splash } from "./ui/Splash";
 import { RoasterPage } from "./views/RoasterPage";
@@ -263,7 +262,7 @@ export default function BeanTracker() {
                 <div style={{ fontSize: 11, color: GRAY, marginBottom: 14 }}>
                   ロースターを選ぶと、その店の歴代ポートフォリオが開きます。
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
                   {Object.entries(archiveByRoaster).map(([rid, arc]) => {
                     const r = ROASTERS[rid];
                     if (!r || arc.length === 0) return null;
@@ -271,24 +270,20 @@ export default function BeanTracker() {
                     return (
                       <button key={rid} onClick={() => goRoaster(rid, "archive")} className="bt-card"
                         style={{
-                          display: "flex", flexDirection: "column", gap: 9,
-                          background: PAPER, border: `1px solid ${LINE}`, borderRadius: 10,
-                          padding: "12px 12px", cursor: "pointer", textAlign: "left",
+                          display: "flex", flexDirection: "column", gap: 7,
+                          background: PAPER, border: `1px solid ${LINE}`, borderRadius: 8,
+                          padding: "8px 8px", cursor: "pointer", textAlign: "left",
                         }}>
-                        {/* ロースターの実ロゴ */}
-                        <div style={{ height: 22, display: "flex", alignItems: "center" }}>
-                          <RoasterLogo roaster={r} size={20} />
-                        </div>
                         {/* ミニ標本プレビュー */}
-                        <div style={{ display: "flex", gap: 4 }}>
+                        <div style={{ display: "flex", gap: 3 }}>
                           {arc.slice(0, 3).map((b) => (
-                            <div key={b.id} style={{ flex: 1, aspectRatio: "3 / 4", borderRadius: 3, background: b.color }} />
+                            <div key={b.id} style={{ flex: 1, aspectRatio: "3 / 4", borderRadius: 2, background: b.color }} />
                           ))}
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 12.5, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
-                          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY, marginTop: 3 }}>
-                            {Math.min(...years)}–{Math.max(...years)} / {arc.length}銘柄
+                          <div style={{ fontSize: 11, fontWeight: 700, color: INK, lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 8.5, color: GRAY, marginTop: 2 }}>
+                            {Math.min(...years)}–{Math.max(...years)}
                           </div>
                         </div>
                       </button>

@@ -108,4 +108,13 @@ export const oceania = {
   switchnz: { name: "Switch Espresso", city: "Christchurch", country: "NZ", region: "oceania", platform: "Shopify", note: "エチオピアの名店", coord: [172.64, -43.53],
     founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Christchurchを拠点とするニュージーランドのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
+  proudmaryau: { name: "Market Lane Coffee", city: "メルボルン", country: "AU", region: "oceania", platform: "Shopify", note: "中南米を軸にした自家焙煎", coord: [144.94, -37.84],
+    founded: "2017", style: "浅〜中煎り・少量焙煎", ship: "豪州内・国際発送", focus: "中南米・エチオピア",
+    bio: "メルボルンを拠点とするスペシャルティコーヒーロースター。中南米・エチオピアを軸に、浅〜中煎り・少量焙煎で素材の個性を引き出す。日々の一杯として、また贈り物としても親しまれている。" },
+  singleorigin: { name: "Single Origin Roasters", city: "シドニー", country: "AU", region: "oceania", platform: "Shopify", note: "中南米を軸にした自家焙煎", coord: [151.19, -33.87],
+    founded: "2018", style: "中煎りバランス", ship: "豪州内・国際発送", focus: "中南米・エチオピア",
+    bio: "シドニーを拠点とするスペシャルティコーヒーロースター。中南米・エチオピアを軸に、中煎りバランスで素材の個性を引き出す。日々の一杯として、また贈り物としても親しまれている。" },
+  allpressnz: { name: "Allpress Espresso NZ", city: "オークランド", country: "NZ", region: "oceania", platform: "Shopify", note: "中南米を軸にした自家焙煎", coord: [174.74, -36.85],
+    founded: "2019", style: "中煎りバランス", ship: "NZ・国際発送", focus: "中南米・エチオピア",
+    bio: "オークランドを拠点とするスペシャルティコーヒーロースター。中南米・エチオピアを軸に、中煎りバランスで素材の個性を引き出す。日々の一杯として、また贈り物としても親しまれている。" },
 };
