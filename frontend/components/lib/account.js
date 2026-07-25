@@ -12,8 +12,9 @@
 // 未設定の間は、これらは何もせず（isCloud()=false）、従来どおり端末内保存で動きます。
 
 export const SUPABASE = {
-  url: "",      // 例: "https://xxxxxxxxxxxx.supabase.co"
-  anonKey: "",  // 例: "eyJhbGciOi..."（anon public キー）
+  url: "https://ilfkriwfvdpdxgadyvbs.supabase.co",
+  // publishable（公開）キー。クライアントに置く前提の鍵。secret キーは絶対に置かない。
+  anonKey: "sb_publishable_L4OplpABJOp4o5RjcdwKAg_bfvszElO",
 };
 
 const SESSION_KEY = "bt_session";
