@@ -1,7 +1,7 @@
 // 東南アジア・インドのロースターの豆
 export const seAsiaIndiaBeans = [
-  { id: 157, r: "nylon", name: "Kamiro", origin: "ルワンダ", process: "Washed", amount: 24, cur: "SGD", per: "250g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },
-  { id: 158, r: "nylon", name: "Alejandro Ahumada", origin: "コロンビア", process: "Washed", amount: 25, cur: "SGD", per: "250g", status: "now", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
+  { id: 157, r: "nylon", name: "Kamiro", origin: "ルワンダ", process: "Washed", amount: 24, cur: "SGD", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },
+  { id: 158, r: "nylon", name: "Alejandro Ahumada", origin: "コロンビア", process: "Washed", amount: 25, cur: "SGD", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
   { id: 159, r: "nylon", name: "Four Chairs", origin: "ブレンド", process: "Washed", amount: 22, cur: "SGD", per: "250g", status: "now", color: "#2E2A24", accent: "#C8A96A", year: "2026" },
   { id: 259, r: "ppp", name: "Terra Espresso", origin: "ブレンド", process: "Washed", amount: 24, cur: "SGD", per: "250g", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
   { id: 260, r: "ppp", name: "Ethiopia Yirga", origin: "エチオピア", process: "Washed", amount: 24, cur: "SGD", per: "250g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },

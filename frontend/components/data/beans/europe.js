@@ -1,8 +1,8 @@
 // ヨーロッパ（大陸）のロースターの豆
 export const europeBeans = [
-  { id: 37, r: "barn", name: "Kiangoi AA", origin: "ケニア", process: "Washed", amount: 16, cur: "EUR", per: "250g", status: "now", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
+  { id: 37, r: "barn", name: "Kiangoi AA", origin: "ケニア", process: "Washed", amount: 16, cur: "EUR", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
   { id: 38, r: "barn", name: "Kabingara AB", origin: "ケニア", process: "Washed", amount: 15, cur: "EUR", per: "250g", status: "sold", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
-  { id: 39, r: "barn", name: "Sidama Natural", origin: "エチオピア", process: "Natural", amount: 15, cur: "EUR", per: "250g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
+  { id: 39, r: "barn", name: "Sidama Natural", origin: "エチオピア", process: "Natural", amount: 15, cur: "EUR", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
   { id: 40, r: "barn", name: "Gesha Village", origin: "エチオピア", process: "Washed", amount: 45, cur: "EUR", per: "100g", status: "now", color: "#F2EFE6", accent: "#2F5233", year: "2026", vt: "geisha" },
   { id: 41, r: "barn", name: "El Vergel Washed", origin: "コロンビア", process: "Washed", amount: 17, cur: "EUR", per: "250g", status: "archive", color: "#E2DBC8", accent: "#5A4632", year: "2024" },
   { id: 51, r: "manhattan", name: "Shoondhisa", origin: "エチオピア", process: "Natural", amount: 17, cur: "EUR", per: "250g", status: "now", color: "#7C2D3C", accent: "#F2E9DC", year: "2026" },

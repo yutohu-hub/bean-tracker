@@ -1,8 +1,8 @@
 // 中南米のロースターの豆
 export const latinAmericaBeans = [
-  { id: 631, r: "amorperfecto", name: "Ethiopia Guji", origin: "エチオピア", process: "Natural", amount: 38000, cur: "COP", per: "250g", status: "now", color: "#F2EFE6", accent: "#8A3B2E", year: "2026" },
+  { id: 631, r: "amorperfecto", name: "Ethiopia Guji", origin: "エチオピア", process: "Natural", amount: 38000, cur: "COP", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#F2EFE6", accent: "#8A3B2E", year: "2026" },
   { id: 632, r: "amorperfecto", name: "Huila", origin: "コロンビア", process: "Washed", amount: 38000, cur: "COP", per: "250g", status: "sold", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
-  { id: 633, r: "azahar", name: "Ethiopia Yirgacheffe", origin: "エチオピア", process: "Washed", amount: 38000, cur: "COP", per: "250g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+  { id: 633, r: "azahar", name: "Ethiopia Yirgacheffe", origin: "エチオピア", process: "Washed", amount: 38000, cur: "COP", per: "250g", status: "now", updatedAt: "2026-07-25", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
   { id: 634, r: "azahar", name: "Nariño COE 1位", origin: "コロンビア", process: "Washed", amount: 38000, cur: "COP", per: "250g", status: "now", coe: true, color: "#EFE9DA", accent: "#2F5233", year: "2026" },
   { id: 635, r: "pergamino", name: "Ethiopia Sidama", origin: "エチオピア", process: "Natural", amount: 38000, cur: "COP", per: "250g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
   { id: 636, r: "pergamino", name: "Tolima COE 2位", origin: "コロンビア", process: "Washed", amount: 38000, cur: "COP", per: "250g", status: "now", coe: true, color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },

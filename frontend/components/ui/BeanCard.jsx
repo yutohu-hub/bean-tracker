@@ -3,6 +3,7 @@ import { useState } from "react";
 import { INK, GRAY, STATUS } from "../lib/theme";
 import { fmtPrice, perGrams, toJPY, RATES_TO_JPY } from "../lib/currency";
 import { ROASTERS } from "../data/roasters";
+import { isNew } from "../lib/utils";
 import { Package } from "./Package";
 
 export function BeanCard({ bean, onOpen, onRoaster, cur }) {
@@ -12,7 +13,10 @@ export function BeanCard({ bean, onOpen, onRoaster, cur }) {
   const per100Str = cur === "JPY" ? `¥${Math.round(per100).toLocaleString()}` : `$${(per100 / RATES_TO_JPY.USD).toFixed(2)}`;
   const handleTap = () => { setTap(true); setTimeout(() => { setTap(false); onOpen(bean); }, 200); };
   return (
-    <div className={`bt-card${tap ? " bt-card-tap" : ""}`} style={{ cursor: "pointer" }} onClick={handleTap}>
+    <div className={`bt-card${tap ? " bt-card-tap" : ""}`} style={{ cursor: "pointer", position: "relative" }} onClick={handleTap}>
+      {isNew(bean) && (
+        <span style={{ position: "absolute", top: 6, left: 6, zIndex: 2, fontFamily: "ui-monospace, monospace", fontSize: 8.5, fontWeight: 800, letterSpacing: "0.08em", color: "#fff", background: "#B8433A", borderRadius: 4, padding: "2px 6px", boxShadow: "0 1px 3px rgba(23,21,15,0.25)" }}>NEW</span>
+      )}
       <Package bean={bean} small />
       <div style={{ padding: "8px 2px 0" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>

@@ -14,7 +14,7 @@ export function Splash({ done }) {
       </div>
       <div className="bt-line" style={{ height: 2, background: INK, marginTop: 14 }} />
       <div className="bt-tag" style={{ fontSize: 11, color: GRAY, marginTop: 12, letterSpacing: "0.1em" }}>
-        世界中のコーヒー豆に辿り着くためのインフラ
+        Find any bean, anywhere.
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 // 北米のロースターの豆
 export const northAmericaBeans = [
-  { id: 8, r: "onyx", name: "Geometry", origin: "ブレンド", process: "Washed / Natural", amount: 19, cur: "USD", per: "10oz", status: "now", color: "#1C1B19", accent: "#E8E2D2", year: "2026" },
-  { id: 9, r: "onyx", name: "Ethiopia Hambela", origin: "エチオピア", process: "Natural", amount: 24, cur: "USD", per: "10oz", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
+  { id: 8, r: "onyx", name: "Geometry", origin: "ブレンド", process: "Washed / Natural", amount: 19, cur: "USD", per: "10oz", status: "now", updatedAt: "2026-07-25", color: "#1C1B19", accent: "#E8E2D2", year: "2026" },
+  { id: 9, r: "onyx", name: "Ethiopia Hambela", origin: "エチオピア", process: "Natural", amount: 24, cur: "USD", per: "10oz", status: "now", updatedAt: "2026-07-25", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
   { id: 10, r: "onyx", name: "Colombia Aponte", origin: "コロンビア", process: "Honey", amount: 22, cur: "USD", per: "10oz", status: "sold", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
   { id: 11, r: "onyx", name: "Monarch", origin: "ブレンド", process: "Natural", amount: 18, cur: "USD", per: "10oz", status: "archive", color: "#22303A", accent: "#C8792E", year: "2023" },
   { id: 15, r: "onyx", name: "Hacienda La Esmeralda Geisha", origin: "パナマ", process: "Washed", amount: 62, cur: "USD", per: "100g", status: "now", color: "#EFE9DA", accent: "#3A2E4F", year: "2026", vt: "geisha" },
