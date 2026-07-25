@@ -22,27 +22,39 @@ export function FlavorMapView({ onOpen, cur }) {
   // いま買える(now)豆だけを表示
   const beans = BEANS.filter((b) => FLAVOR_MAP[b.id] && b.status === "now");
 
-  const reset = () => { setScale(1); setTx(0); setTy(0); };
-  const zoomBy = (f) => setScale((s) => {
-    const ns = clamp(s * f, MIN, MAX);
-    if (ns === 1) { setTx(0); setTy(0); }
-    return ns;
-  });
+  // 目標スケールへ rAF でイージング（毎フレーム寄せて滑らかに）
+  const scaleRef = useRef(1);
+  const targetRef = useRef(1);
+  const rafRef = useRef(null);
+  const animate = () => {
+    const t = targetRef.current, cur = scaleRef.current, diff = t - cur;
+    if (Math.abs(diff) < 0.002) {
+      scaleRef.current = t; setScale(t); rafRef.current = null;
+      if (t <= 1.001) { setTx(0); setTy(0); }
+      return;
+    }
+    const ns = cur + diff * 0.25;
+    scaleRef.current = ns; setScale(ns);
+    rafRef.current = requestAnimationFrame(animate);
+  };
+  const setTargetScale = (t) => {
+    targetRef.current = clamp(t, MIN, MAX);
+    if (!rafRef.current) rafRef.current = requestAnimationFrame(animate);
+  };
+  const reset = () => {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    scaleRef.current = 1; targetRef.current = 1; setScale(1); setTx(0); setTy(0);
+  };
+  const zoomBy = (f) => setTargetScale(targetRef.current * f);
 
-  // ホイール/トラックパッドでズーム（ページスクロールを止めるため passive:false で登録）
+  // ホイール/トラックパッドでズーム（passive:false）
   useEffect(() => {
     const el = boxRef.current;
     if (!el) return;
-    const onWheel = (e) => {
-      e.preventDefault();
-      setScale((s) => {
-        const ns = clamp(s * (e.deltaY < 0 ? 1.12 : 0.89), MIN, MAX);
-        if (ns === 1) { setTx(0); setTy(0); }
-        return ns;
-      });
-    };
+    const onWheel = (e) => { e.preventDefault(); setTargetScale(targetRef.current * (e.deltaY < 0 ? 1.1 : 1 / 1.1)); };
     el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
+    return () => { el.removeEventListener("wheel", onWheel); if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onPointerDown = (e) => {
@@ -50,7 +62,7 @@ export function FlavorMapView({ onOpen, cur }) {
     moved.current = false;
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
-      pinch.current = { d: dist(a, b) || 1, scale };
+      pinch.current = { d: dist(a, b) || 1 };
       pan.current = null;
     } else if (pointers.current.size === 1) {
       pan.current = { x: e.clientX, y: e.clientY, tx, ty };
@@ -61,10 +73,11 @@ export function FlavorMapView({ onOpen, cur }) {
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch.current && pointers.current.size >= 2) {
       const [a, b] = [...pointers.current.values()];
-      const ns = clamp(pinch.current.scale * (dist(a, b) / pinch.current.d), MIN, MAX);
+      const d = dist(a, b);
+      const ratio = clamp(d / pinch.current.d, 0.5, 2);   // 1移動あたりの比率
+      pinch.current.d = d;
       moved.current = true;
-      setScale(ns);
-      if (ns === 1) { setTx(0); setTy(0); }
+      setTargetScale(targetRef.current * ratio);
     } else if (pan.current && pointers.current.size === 1 && scale > 1) {
       const dx = e.clientX - pan.current.x, dy = e.clientY - pan.current.y;
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved.current = true;

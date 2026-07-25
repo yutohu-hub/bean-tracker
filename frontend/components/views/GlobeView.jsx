@@ -3,10 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { feature, mesh } from "topojson-client";
 import worldTopo from "world-atlas/countries-110m.json";
-import { INK, PAPER, GRAY, GREEN, AMBER } from "../lib/theme";
+import { INK, PAPER, GRAY, GREEN, AMBER, LINE } from "../lib/theme";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
-import { shopHref } from "../lib/utils";
+import { shopHref, mapHref } from "../lib/utils";
 
 // 世界地図（大陸・国境）は起動時に一度だけ生成
 const LAND = feature(worldTopo, worldTopo.objects.land);
@@ -14,7 +14,7 @@ const BORDERS = mesh(worldTopo, worldTopo.objects.countries, (a, b) => a !== b);
 const SPHERE = { type: "Sphere" };
 
 // 配色（やわらかめの地球）
-const OCEAN = "#A9D0E4";   // 淡い海
+const OCEAN = "#A6DCEF";   // 淡い水色の海
 const LANDF = "#BBD8AC";   // 淡い陸
 const BORDER = "#93B786";  // 国境（やわらかい緑）
 const GRAT = "rgba(255,255,255,0.45)"; // 白い経緯線
@@ -264,10 +264,16 @@ export function GlobeView({ onRoaster }) {
           ) : (
             <div style={{ textAlign: "center", marginTop: 12, padding: "12px 0", background: "#EDEAE1", color: GRAY, borderRadius: 8, fontSize: 12, fontWeight: 700 }}>ECサイト準備中</div>
           )}
-          <button onClick={() => onRoaster(selected)}
-            style={{ width: "100%", marginTop: 8, padding: "10px 0", background: "none", color: INK, border: `1px solid ${INK}`, borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
-            このロースターの豆を見る →
-          </button>
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <button onClick={() => onRoaster(selected)}
+              style={{ flex: 1, padding: "10px 0", background: "none", color: INK, border: `1px solid ${INK}`, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+              豆を見る →
+            </button>
+            <a href={mapHref(sel)} target="_blank" rel="noopener noreferrer"
+              style={{ flex: 1, textAlign: "center", textDecoration: "none", padding: "10px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 12, fontWeight: 700 }}>
+              🗺 Google Map ↗
+            </a>
+          </div>
         </div>
       ) : (
         <div style={{ textAlign: "center", fontSize: 11, color: GRAY, marginTop: 12 }}>
