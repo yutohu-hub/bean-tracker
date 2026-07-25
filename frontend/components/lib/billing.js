@@ -12,8 +12,9 @@
 //    「決済は取れる／解放は手動 or 後でWebhook追加」になります。
 
 export const PAYMENT_LINKS = {
-  premium_monthly: "", // 例: "https://buy.stripe.com/xxxxxxxxxxxxxxxx"
-  premium_yearly: "",  // 例: "https://buy.stripe.com/yyyyyyyyyyyyyyyy"
+  // ↓ Stripe テストモードの Payment Link（本番切替時は test_ なしの URL に差し替え）
+  premium_monthly: "https://buy.stripe.com/test_eVqcN66AA0kY97h5tgbAs00",
+  premium_yearly: "https://buy.stripe.com/test_14A9AU4ssgjWdnx1d0bAs01",
 };
 
 export function isBillingConfigured() {
