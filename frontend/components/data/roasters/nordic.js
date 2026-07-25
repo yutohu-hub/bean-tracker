@@ -198,7 +198,4 @@ export const nordic = {
   mokkamestarit2: { name: "Robert Paulig", city: "Helsinki", country: "FI", region: "nordic", platform: "Shopify", note: "エチオピアの名店", coord: [26, 64],
     founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Helsinkiを拠点とするフィンランドのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
-  stockholmroast2: { name: "Anima Kaffe", city: "Malmö", country: "SE", region: "nordic", platform: "Shopify", note: "エチオピアの名店", coord: [15, 62],
-    founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
-    bio: "Malmöを拠点とするスウェーデンのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
 };

@@ -147,6 +147,4 @@ export const nordicBeans = [
   { id: 870, r: "reykjavikkaffi", name: "Kenya Kirinyaga", origin: "ケニア", process: "Washed", amount: 2400, cur: "ISK", per: "250g", status: "now", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
   { id: 871, r: "mokkamestarit2", name: "Ethiopia Sidama", origin: "エチオピア", process: "Natural", amount: 16, cur: "EUR", per: "250g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
   { id: 872, r: "mokkamestarit2", name: "Ethiopia Guji", origin: "エチオピア", process: "Washed", amount: 16, cur: "EUR", per: "250g", status: "sold", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
-  { id: 873, r: "stockholmroast2", name: "Ethiopia Hambela", origin: "エチオピア", process: "Washed", amount: 175, cur: "SEK", per: "250g", status: "now", color: "#22303A", accent: "#C8792E", year: "2026" },
-  { id: 874, r: "stockholmroast2", name: "Brazil Cerrado", origin: "ブラジル", process: "Natural", amount: 175, cur: "SEK", per: "250g", status: "now", color: "#E2DBC8", accent: "#5A4632", year: "2026" },
 ];
