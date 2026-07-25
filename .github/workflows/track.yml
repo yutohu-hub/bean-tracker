@@ -30,10 +30,13 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python main.py
 
-      - name: 結果をコミット
+      - name: フロント用データに変換（巡回結果→図鑑オーバーレイ）
+        run: python scripts/build_frontend_data.py
+
+      - name: 結果をコミット（frontendの更新でPages再デプロイがトリガー）
         run: |
           git config user.name "bean-tracker-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/ docs/
+          git add data/ docs/ frontend/components/data/live.generated.json
           git diff --cached --quiet || git commit -m "crawl: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push

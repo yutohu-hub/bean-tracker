@@ -13,5 +13,7 @@ import { africaMideast } from "./roasters/africaMideast";
 // 地域ごとのまとまり（地図・地域フィルタ等で利用可能）
 export const ROASTER_GROUPS = { nordic, uk, europe, northAmerica, oceania, eastAsia, seAsiaIndia, latinAmerica, africaMideast };
 
-// 全ロースターを統合（キー衝突がないことが前提）
-export const ROASTERS = { ...nordic, ...uk, ...europe, ...northAmerica, ...oceania, ...eastAsia, ...seAsiaIndia, ...latinAmerica, ...africaMideast };
+import { LIVE_ROASTERS } from "./live";
+
+// 全ロースターを統合（末尾に巡回実データを重ねてキー一致で上書き）
+export const ROASTERS = { ...nordic, ...uk, ...europe, ...northAmerica, ...oceania, ...eastAsia, ...seAsiaIndia, ...latinAmerica, ...africaMideast, ...LIVE_ROASTERS };
