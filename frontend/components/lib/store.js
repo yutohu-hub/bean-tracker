@@ -29,6 +29,18 @@ export function removeTasting(beanId) {
   write(TASTE_KEY, list);
   return list;
 }
+// クラウド取得分を端末内にマージ（at が新しい方を採用・タイムスタンプ保持）
+export function mergeTastings(incoming) {
+  const map = new Map(getTastings().map((t) => [t.beanId, t]));
+  for (const t of incoming || []) {
+    if (t.beanId == null) continue;
+    const cur = map.get(t.beanId);
+    if (!cur || (t.at || 0) >= (cur.at || 0)) map.set(t.beanId, { ...cur, ...t });
+  }
+  const list = [...map.values()].sort((a, b) => (b.at || 0) - (a.at || 0));
+  write(TASTE_KEY, list);
+  return list;
+}
 
 // アーカイブの端末内永続化
 // 一度アーカイブになった豆のスナップショットを保存し、データ更新（再デプロイ）で
