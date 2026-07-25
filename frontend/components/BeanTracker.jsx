@@ -146,6 +146,8 @@ export default function BeanTracker() {
         .bt-sheet { animation: btSheetUp 0.32s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
         .bt-card { animation: btGridIn 0.45s ease backwards; transition: transform 0.15s cubic-bezier(0.2, 0.7, 0.3, 1); }
         .bt-card:active { transform: scale(0.955); }
+        @keyframes btCardTap { 0% { transform: scale(1); } 35% { transform: scale(0.9); } 70% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        .bt-card-tap { animation: btCardTap 0.32s cubic-bezier(0.2, 0.7, 0.3, 1); }
         @keyframes btPkgIn { from { opacity: 0; transform: scale(0.9) translateY(4px); } to { opacity: 1; transform: none; } }
         .bt-detail-pkg { animation: btPkgIn 0.4s 0.08s cubic-bezier(0.2, 0.7, 0.3, 1) backwards; }
         .bt-detail-info { animation: btFadeUp 0.4s 0.16s ease backwards; }
@@ -254,36 +256,37 @@ export default function BeanTracker() {
             {statusF === "archive" ? (
               /* ARCHIVE: ロースターを選んで歴代ポートフォリオへ */
               <div style={{ marginTop: 18 }}>
-                <div style={{ fontSize: 11, color: GRAY, marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: GRAY, marginBottom: 14 }}>
                   ロースターを選ぶと、その店の歴代ポートフォリオが開きます。
                 </div>
-                {Object.entries(archiveByRoaster).map(([rid, arc]) => {
-                  const r = ROASTERS[rid];
-                  if (!r || arc.length === 0) return null;
-                  const years = arc.map((b) => Number(b.year));
-                  return (
-                    <button key={rid} onClick={() => goRoaster(rid, "archive")}
-                      style={{
-                        display: "flex", alignItems: "center", width: "100%", gap: 12,
-                        background: "none", border: "none", borderTop: `1px solid ${LINE}`,
-                        padding: "14px 2px", cursor: "pointer", textAlign: "left",
-                      }}>
-                      {/* ミニ標本プレビュー */}
-                      <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
-                        {arc.slice(0, 3).map((b) => (
-                          <div key={b.id} style={{ width: 20, height: 27, borderRadius: 2, background: b.color, filter: "grayscale(0.55)", opacity: 0.85 }} />
-                        ))}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: INK }}>{r.name}</div>
-                        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, marginTop: 2 }}>
-                          {Math.min(...years)}–{Math.max(...years)} / {arc.length} 銘柄
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 14 }}>
+                  {Object.entries(archiveByRoaster).map(([rid, arc]) => {
+                    const r = ROASTERS[rid];
+                    if (!r || arc.length === 0) return null;
+                    const years = arc.map((b) => Number(b.year));
+                    return (
+                      <button key={rid} onClick={() => goRoaster(rid, "archive")} className="bt-card"
+                        style={{
+                          display: "flex", flexDirection: "column", gap: 9,
+                          background: PAPER, border: `1px solid ${LINE}`, borderRadius: 10,
+                          padding: "12px 12px", cursor: "pointer", textAlign: "left",
+                        }}>
+                        {/* ミニ標本プレビュー */}
+                        <div style={{ display: "flex", gap: 4 }}>
+                          {arc.slice(0, 3).map((b) => (
+                            <div key={b.id} style={{ flex: 1, aspectRatio: "3 / 4", borderRadius: 3, background: b.color }} />
+                          ))}
                         </div>
-                      </div>
-                      <span style={{ color: GRAY, fontSize: 14 }}>→</span>
-                    </button>
-                  );
-                })}
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY, marginTop: 3 }}>
+                            {Math.min(...years)}–{Math.max(...years)} / {arc.length}銘柄
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <>
