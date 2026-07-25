@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
 
 // ---- データ / ロジック（分離済みモジュール） ----
 import { ROASTERS } from "./data/roasters";
@@ -303,6 +304,20 @@ export default function BeanTracker() {
           </>
         )}
       </main>
+
+      {/* サイト共通フッター（全タブの一番下・法務リンク） */}
+      <footer style={{ borderTop: `1px solid ${LINE}`, background: PAPER }}>
+        <div style={{ maxWidth: 640, margin: "0 auto", padding: "18px 16px 30px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 16px", justifyContent: "center" }}>
+            <Link href="/legal/tokushoho/" style={{ fontSize: 11, color: GRAY, textDecoration: "none" }}>特定商取引法に基づく表記</Link>
+            <Link href="/legal/terms/" style={{ fontSize: 11, color: GRAY, textDecoration: "none" }}>利用規約</Link>
+            <Link href="/legal/privacy/" style={{ fontSize: 11, color: GRAY, textDecoration: "none" }}>プライバシーポリシー</Link>
+          </div>
+          <div style={{ textAlign: "center", fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY, marginTop: 12 }}>
+            © 2026 BEAN TRACKER
+          </div>
+        </div>
+      </footer>
 
       <DetailSheet bean={open} onClose={() => setOpen(null)} onRoaster={goRoaster} cur={displayCur} />
     </div>
