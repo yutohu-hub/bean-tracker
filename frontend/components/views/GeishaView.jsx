@@ -65,11 +65,11 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
         {!premium && locked > 0 && (
           <button onClick={onPremium}
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", marginTop: 12, padding: "12px 0", background: "#F2F0E9", color: INK, border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-            🔒 さらに {locked} 銘柄。プレミアムで最大50銘柄まで表示 ↗
+            🔒 さらに {locked} 銘柄。プレミアムで最大30銘柄まで表示 ↗
           </button>
         )}
         {premium && locked > 0 && (
-          <div style={{ fontSize: 10.5, color: GRAY, marginTop: 10, textAlign: "center" }}>上位50銘柄を表示中（ほか {locked} 銘柄）</div>
+          <div style={{ fontSize: 10.5, color: GRAY, marginTop: 10, textAlign: "center" }}>上位30銘柄を表示中（ほか {locked} 銘柄）</div>
         )}
       </div>
     </div>
@@ -79,7 +79,7 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
 export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
   const [premium, setPremium] = useState(false);
   useEffect(() => { setPremium(getPlan().id.startsWith("premium")); }, []);
-  const limit = premium ? 50 : 10;
+  const limit = premium ? 30 : 10;
   const secProps = { onOpen, cur, limit, premium, onPremium };
   return (
     <div>
@@ -90,13 +90,13 @@ export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
           少量で消えていく希少な豆だけを追いかけるトラッカー。
         </div>
         <div style={{ marginTop: 8, fontSize: 11, color: premium ? GREEN : GRAY }}>
-          {premium ? "プレミアム：各カテゴリ最大50銘柄まで表示中" : "無料プランは各カテゴリ10銘柄まで。プレミアムで50銘柄まで表示"}
+          {premium ? "プレミアム：各カテゴリ最大30銘柄まで表示中" : "無料プランは各カテゴリ10銘柄まで。プレミアムで30銘柄まで表示"}
         </div>
       </div>
 
       <VarietySection match={(b) => b.vt === "geisha"} title="GEISHA" sub="ゲイシャ品種" {...secProps} />
       <VarietySection match={(b) => b.vt === "sidra"} title="SIDRA" sub="シドラ品種" {...secProps} />
-      <VarietySection match={(b) => { const m = b.name.match(/COE\s*(\d+)位/); return !!m && Number(m[1]) <= 10 && b.origin !== "エチオピア"; }} title="COE" sub="カップ・オブ・エクセレンス入賞ロット（10位以内・エチオピア以外）" {...secProps} />
+      <VarietySection match={(b) => { const m = b.name.match(/COE\s*(\d+)位/); return !!m && Number(m[1]) <= 20 && b.origin !== "エチオピア"; }} title="COE" sub="カップ・オブ・エクセレンス入賞ロット（20位以内・エチオピア以外）" {...secProps} />
 
       {/* 新着通知CTA */}
       <div style={{ marginTop: 24, padding: "14px 16px", background: "#F2F0E9", borderRadius: 10 }}>
