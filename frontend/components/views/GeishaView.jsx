@@ -5,9 +5,9 @@ import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
 import { Package } from "../ui/Package";
 
-function VarietySection({ vt, title, sub, onOpen, cur }) {
+function VarietySection({ match, title, sub, onOpen, cur }) {
   // いま買える(now)豆のみ・100gあたり価格の安い順・最大30銘柄
-  const live = BEANS.filter((b) => b.vt === vt && b.status === "now");
+  const live = BEANS.filter((b) => b.status === "now" && match(b));
   const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
   const fmt100 = (b) => cur === "JPY" ? `¥${Math.round(per100(b)).toLocaleString()}` : `$${(per100(b) / RATES_TO_JPY.USD).toFixed(0)}`;
   const ladder = live.slice().sort((a, b) => per100(a) - per100(b)).slice(0, 30);
@@ -73,8 +73,9 @@ export function GeishaView({ onOpen, onRoaster, cur }) {
         </div>
       </div>
 
-      <VarietySection vt="geisha" title="GEISHA" sub="ゲイシャ品種" onOpen={onOpen} cur={cur} />
-      <VarietySection vt="sidra" title="SIDRA" sub="シドラ品種" onOpen={onOpen} cur={cur} />
+      <VarietySection match={(b) => b.vt === "geisha"} title="GEISHA" sub="ゲイシャ品種" onOpen={onOpen} cur={cur} />
+      <VarietySection match={(b) => b.vt === "sidra"} title="SIDRA" sub="シドラ品種" onOpen={onOpen} cur={cur} />
+      <VarietySection match={(b) => b.coe} title="COE" sub="カップ・オブ・エクセレンス入賞ロット" onOpen={onOpen} cur={cur} />
 
       {/* 新着通知CTA */}
       <div style={{ marginTop: 24, padding: "14px 16px", background: "#F2F0E9", borderRadius: 10 }}>
@@ -89,7 +90,7 @@ export function GeishaView({ onOpen, onRoaster, cur }) {
 
       {/* 今後のセクション予告 */}
       <div style={{ marginTop: 20, padding: "12px 14px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 11, color: GRAY, lineHeight: 1.8 }}>
-        このタブは今後、AUCTION LOT(オークションロット)や COE(カップ・オブ・エクセレンス)入賞ロットなど、セクションを増やして育っていきます。
+        このタブは今後、AUCTION LOT(オークションロット)など、セクションを増やして育っていきます。
       </div>
     </div>
   );

@@ -98,7 +98,7 @@ export default function BeanTracker() {
   const PROCESSES = ["すべて", "Washed", "Natural", "Honey", "Anaerobic"];
   const COUNTRIES = useMemo(() => ["all", ...Array.from(new Set(Object.values(ROASTERS).map((r) => r.country))).sort()], []);
   const per100JPY = (b) => (toJPY(b) / perGrams(b)) * 100;
-  const selStyle = { flex: 1, minWidth: 0, padding: "7px 8px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, background: PAPER, color: INK };
+  const minSel = { width: "100%", boxSizing: "border-box", padding: "8px 9px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, background: PAPER, color: INK };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -206,53 +206,25 @@ export default function BeanTracker() {
             {/* フリーワード検索 */}
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ロースター名・農園名・豆名で検索"
               style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 13, marginBottom: 8, background: PAPER, color: INK }} />
-            {/* 国 & 並び替え（価格は /100g に正規化して比較） */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-              <select value={country} onChange={(e) => setCountry(e.target.value)} style={selStyle}>
-                {COUNTRIES.map((c) => <option key={c} value={c}>{c === "all" ? "すべての国" : c}</option>)}
+            {/* フィルタ（ミニマル：産地・価格・精製・国をセレクトに集約） */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+              <select value={origin} onChange={(e) => setOrigin(e.target.value)} style={minSel} aria-label="産地">
+                {ORIGINS.map((o) => <option key={o} value={o}>{o === "すべて" ? "産地：すべて" : o}</option>)}
               </select>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={selStyle}>
-                <option value="default">並び: おすすめ順</option>
+              <select value={processF} onChange={(e) => setProcessF(e.target.value)} style={minSel} aria-label="精製">
+                {PROCESSES.map((p) => <option key={p} value={p}>{p === "すべて" ? "精製：すべて" : p}</option>)}
+              </select>
+              <select value={priceF} onChange={(e) => setPriceF(e.target.value)} style={minSel} aria-label="価格帯">
+                {Object.entries(PRICE_BANDS).map(([k, band]) => <option key={k} value={k}>{band.label}</option>)}
+              </select>
+              <select value={country} onChange={(e) => setCountry(e.target.value)} style={minSel} aria-label="国">
+                {COUNTRIES.map((c) => <option key={c} value={c}>{c === "all" ? "国：すべて" : c}</option>)}
+              </select>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ ...minSel, gridColumn: "1 / -1" }} aria-label="並び替え">
+                <option value="default">並び：おすすめ順</option>
                 <option value="p100asc">価格/100g 安い順</option>
                 <option value="p100desc">価格/100g 高い順</option>
               </select>
-            </div>
-            {/* フィルタ */}
-            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
-              {ORIGINS.map((o) => (
-                <button key={o} onClick={() => setOrigin(o)}
-                  style={{
-                    flexShrink: 0, padding: "6px 12px", borderRadius: 999, fontSize: 11.5, cursor: "pointer",
-                    border: `1px solid ${origin === o ? INK : LINE}`,
-                    background: origin === o ? INK : "transparent",
-                    color: origin === o ? PAPER : INK,
-                  }}>{o}</button>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingTop: 8, paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
-              {Object.entries(PRICE_BANDS).map(([k, band]) => (
-                <button key={k} onClick={() => setPriceF(k)}
-                  style={{
-                    flexShrink: 0, padding: "5px 11px", borderRadius: 999, fontSize: 11, cursor: "pointer",
-                    fontFamily: "ui-monospace, monospace",
-                    border: `1px solid ${priceF === k ? INK : LINE}`,
-                    background: priceF === k ? INK : "transparent",
-                    color: priceF === k ? PAPER : GRAY,
-                  }}>{band.label}</button>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingTop: 6, paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
-              {PROCESSES.map((p) => (
-                <button key={p} onClick={() => setProcessF(p)}
-                  style={{
-                    flexShrink: 0, padding: "5px 11px", borderRadius: 999, fontSize: 11, cursor: "pointer",
-                    fontFamily: p === "すべて" ? "inherit" : "ui-monospace, monospace",
-                    letterSpacing: p === "すべて" ? 0 : "0.04em",
-                    border: `1px solid ${processF === p ? GREEN : LINE}`,
-                    background: processF === p ? GREEN : "transparent",
-                    color: processF === p ? PAPER : GRAY,
-                  }}>{p === "すべて" ? "全精製" : p}</button>
-              ))}
             </div>
             <div style={{ display: "flex", gap: 14, marginTop: 12, borderBottom: `1px solid ${LINE}`, paddingBottom: 8 }}>
               {[["all", "すべて"], ["now", "NOW"], ["sold", "SOLD OUT"], ["archive", "ARCHIVE"]].map(([k, l]) => (
