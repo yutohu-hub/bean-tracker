@@ -119,7 +119,7 @@ export default function BeanTracker() {
     let list = BEANS.filter((b) => {
       const r = ROASTERS[b.r];
       return (origin === "すべて" || b.origin === origin) &&
-        (statusF === "all" || b.status === statusF) &&
+        (statusF === "all" ? b.status !== "sold" : b.status === statusF) &&
         (processF === "すべて" || b.process.includes(processF)) &&
         (country === "all" || r.country === country) &&
         PRICE_BANDS[priceF].test(toJPY(b)) &&

@@ -117,4 +117,10 @@ export const oceania = {
   allpressnz: { name: "Allpress Espresso NZ", city: "オークランド", country: "NZ", region: "oceania", platform: "Shopify", note: "中南米を軸にした自家焙煎", coord: [174.74, -36.85],
     founded: "2019", style: "中煎りバランス", ship: "NZ・国際発送", focus: "中南米・エチオピア",
     bio: "オークランドを拠点とするスペシャルティコーヒーロースター。中南米・エチオピアを軸に、中煎りバランスで素材の個性を引き出す。日々の一杯として、また贈り物としても親しまれている。" },
+  tobysestate: { name: "Toby's Estate Coffee Roasters", city: "シドニー", country: "AU", region: "oceania", platform: "Shopify", note: "中南米を軸にした自家焙煎", coord: [151.23, -33.87], url: "tobysestate.com.au",
+    founded: "2013", style: "中煎りバランス", ship: "豪州内・国際発送", focus: "中南米・エチオピア",
+    bio: "シドニーを拠点とするスペシャルティコーヒーロースター。中南米・エチオピアを軸に、中煎りバランスで素材の個性を引き出す。国際的にも評価される一軒。" },
+  fivesenses: { name: "Five Senses Coffee", city: "メルボルン", country: "AU", region: "oceania", platform: "Shopify", note: "中南米を軸にした自家焙煎", coord: [144.97, -37.81], url: "fivesenses.com.au",
+    founded: "2015", style: "中煎りバランス", ship: "豪州内・国際発送", focus: "中南米・エチオピア",
+    bio: "メルボルンを拠点とするスペシャルティコーヒーロースター。中南米・エチオピアを軸に、中煎りバランスで素材の個性を引き出す。国際的にも評価される一軒。" },
 };
