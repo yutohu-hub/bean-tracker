@@ -13,7 +13,8 @@
 
 export const SUPABASE = {
   url: "https://ilfkriwfvdpdxgadyvbs.supabase.co",
-  anonKey: "",  // ← anon public キーを貼ると有効化（例: "eyJhbGciOi..."）
+  // publishable（公開）キー。クライアントに置く前提の鍵。secret キーは絶対に置かない。
+  anonKey: "sb_publishable_L4OplpABJOp4o5RjcdwKAg_bfvszElO",
 };
 
 const SESSION_KEY = "bt_session";
