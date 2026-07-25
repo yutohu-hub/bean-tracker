@@ -3,7 +3,7 @@ import { ROASTERS } from "../data/roasters";
 
 export function Package({ bean, small }) {
   const roaster = ROASTERS[bean.r];
-  const faded = bean.status === "archive";
+  // アーカイブも「EC から消える前のカードのまま」表示（グレーアウトしない）
   return (
     <div
       style={{
@@ -12,8 +12,6 @@ export function Package({ bean, small }) {
         aspectRatio: "3 / 4",
         position: "relative",
         overflow: "hidden",
-        filter: faded ? "grayscale(0.55) contrast(0.92)" : "none",
-        opacity: faded ? 0.85 : 1,
         boxShadow: "0 1px 2px rgba(23,21,15,0.10)",
       }}
     >

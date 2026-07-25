@@ -13,14 +13,14 @@ const LAND = feature(worldTopo, worldTopo.objects.land);
 const BORDERS = mesh(worldTopo, worldTopo.objects.countries, (a, b) => a !== b);
 const SPHERE = { type: "Sphere" };
 
-// 配色（鮮やかな地球）
-const OCEAN = "#1E86C9";   // 鮮やかな海
-const LANDF = "#5FB457";   // 鮮やかな陸
-const BORDER = "#3B8C39";  // 国境（濃い緑）
-const GRAT = "rgba(255,255,255,0.32)"; // 白い経緯線
-const EQ = "rgba(255,255,255,0.55)";   // 赤道
-const DOT = "#FF5A3C";     // マーカー（コーラル）
-const DOTSEL = "#FFC53D";  // 選択中（ゴールド）
+// 配色（やわらかめの地球）
+const OCEAN = "#A9D0E4";   // 淡い海
+const LANDF = "#BBD8AC";   // 淡い陸
+const BORDER = "#93B786";  // 国境（やわらかい緑）
+const GRAT = "rgba(255,255,255,0.45)"; // 白い経緯線
+const EQ = "rgba(255,255,255,0.6)";    // 赤道
+const DOT = "#F0603F";     // マーカー（コーラル・視認性確保）
+const DOTSEL = "#E8A400";  // 選択中（ゴールド）
 const MIN_DOT_GAP = 13;    // マーカー同士の最小ピクセル間隔（重なり防止）
 
 const ZOOM_MIN = 1;
