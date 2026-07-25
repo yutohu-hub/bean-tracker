@@ -2,18 +2,28 @@
 import { useState } from "react";
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { shopHref } from "../lib/utils";
+import { getArchivedBeans } from "../lib/store";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
+import { BeanCard } from "../ui/BeanCard";
 
 export function RoasterPage({ rid, onOpen, onBack, onRoaster, initialTab, cur }) {
   const roaster = ROASTERS[rid];
   const [tab, setTab] = useState(initialTab || "now");
   const beans = BEANS.filter((b) => b.r === rid);
   const byStatus = (st) => beans.filter((b) => b.status === st);
+  // アーカイブは端末に永続化したスナップショットとマージ（更新で消えても残す）
+  const archiveMerged = (() => {
+    const m = new Map();
+    for (const b of byStatus("archive")) m.set(b.id, b);
+    for (const b of getArchivedBeans()) if (b.r === rid && !m.has(b.id)) m.set(b.id, b);
+    return Array.from(m.values());
+  })();
+  const listFor = (st) => (st === "archive" ? archiveMerged : byStatus(st));
   const tabs = [
     { key: "now", label: "NOW", n: byStatus("now").length },
     { key: "sold", label: "SOLD OUT", n: byStatus("sold").length },
-    { key: "archive", label: "ARCHIVE", n: byStatus("archive").length },
+    { key: "archive", label: "ARCHIVE", n: archiveMerged.length },
   ];
   return (
     <div>
@@ -58,7 +68,7 @@ export function RoasterPage({ rid, onOpen, onBack, onRoaster, initialTab, cur })
       {tab === "archive" ? (
         /* 年別の歴代ポートフォリオ */
         (() => {
-          const arc = byStatus("archive");
+          const arc = archiveMerged;
           const years = [...new Set(arc.map((b) => b.year))].sort((a, b) => b - a);
           return years.map((yr) => (
             <div key={yr} style={{ marginTop: 20 }}>
@@ -74,13 +84,13 @@ export function RoasterPage({ rid, onOpen, onBack, onRoaster, initialTab, cur })
         })()
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 16, marginTop: 18 }}>
-          {byStatus(tab).map((b) => <BeanCard key={b.id} bean={b} onOpen={onOpen} onRoaster={onRoaster} cur={cur} />)}
+          {listFor(tab).map((b) => <BeanCard key={b.id} bean={b} onOpen={onOpen} onRoaster={onRoaster} cur={cur} />)}
         </div>
       )}
-      {byStatus(tab).length === 0 && (
+      {listFor(tab).length === 0 && (
         <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "40px 0" }}>このカテゴリの豆はまだありません。</div>
       )}
-      {tab === "archive" && byStatus("archive").length > 0 && (
+      {tab === "archive" && archiveMerged.length > 0 && (
         <div style={{ marginTop: 20, fontSize: 11, color: GRAY, borderTop: `1px solid ${LINE}`, paddingTop: 12 }}>
           ARCHIVEは巡回で「ページが消えた」豆を自動保存した記録です。{roaster.name}の歴代ラインナップとして残ります。
         </div>
