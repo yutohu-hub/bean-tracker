@@ -62,7 +62,7 @@ function VarietySection({ match, title, sub, onOpen, cur }) {
   );
 }
 
-export function GeishaView({ onOpen, onRoaster, cur }) {
+export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
   return (
     <div>
       {/* ページヘッダー */}
@@ -83,8 +83,8 @@ export function GeishaView({ onOpen, onRoaster, cur }) {
         <div style={{ fontSize: 11, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
           巡回が新しいゲイシャやシドラを見つけた瞬間に通知します。少量ロットの売り切れ前に。
         </div>
-        <button style={{ marginTop: 10, padding: "10px 18px", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-          新着レアロット通知を受け取る<span style={{ fontSize: 9.5, fontWeight: 400, marginLeft: 8, opacity: 0.7 }}>プレミアム(v2)</span>
+        <button onClick={onPremium} style={{ marginTop: 10, padding: "10px 18px", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+          新着レアロット通知を受け取る<span style={{ fontSize: 9.5, fontWeight: 400, marginLeft: 8, opacity: 0.7 }}>プレミアム ↗</span>
         </button>
       </div>
 

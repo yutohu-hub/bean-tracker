@@ -26,6 +26,7 @@ import { DiagnosisView } from "./views/DiagnosisView";
 import { FlavorMapView } from "./views/FlavorMapView";
 import { GeishaView } from "./views/GeishaView";
 import { MyLogView } from "./views/MyLogView";
+import { PremiumView } from "./views/PremiumView";
 
 /* ---------- メイン ---------- */
 export default function BeanTracker() {
@@ -186,7 +187,7 @@ export default function BeanTracker() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 16, marginTop: 10, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["mylog", "味の記録"]].map(([k, l]) => (
+            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["mylog", "味の記録"], ["premium", "プレミアム"]].map(([k, l]) => (
               <button key={k} onClick={() => setView(k)}
                 style={{
                   background: "none", border: "none", padding: "0 0 6px", cursor: "pointer",
@@ -210,7 +211,9 @@ export default function BeanTracker() {
         ) : view === "flavor" ? (
           <FlavorMapView onOpen={setOpen} cur={displayCur} />
         ) : view === "geisha" ? (
-          <GeishaView onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} />
+          <GeishaView onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} onPremium={() => { setView("premium"); window.scrollTo(0, 0); }} />
+        ) : view === "premium" ? (
+          <PremiumView onOpen={setOpen} />
         ) : view === "mylog" ? (
           <MyLogView onOpen={setOpen} onRoaster={goRoaster} />
         ) : (

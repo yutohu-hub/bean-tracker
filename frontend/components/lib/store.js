@@ -3,6 +3,9 @@
 const USER_KEY = "bt_user";
 const TASTE_KEY = "bt_tastings";
 const ARCHIVE_KEY = "bt_archive";
+const PLAN_KEY = "bt_plan";
+const NOTIFY_KEY = "bt_notify";
+const RESTOCK_KEY = "bt_restocks";
 
 function read(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -41,4 +44,29 @@ export function syncArchive(currentArchive) {
   }
   if (changed) write(ARCHIVE_KEY, stored);
   return stored;
+}
+
+// ---- プラン（課金の受け皿・端末内プロトタイプ） ----
+// 実際の決済は Stripe Checkout / IAP 連携後に有効化。ここでは申込意思をローカル保持。
+export function getPlan() { const p = read(PLAN_KEY, null); return p && p.id ? p : { id: "free", at: null }; }
+export function setPlan(id) { const p = { id, at: Date.now() }; write(PLAN_KEY, p); return p; }
+
+// ---- 新着レアロット通知の購読設定（端末内プロトタイプ） ----
+const NOTIFY_DEFAULT = { email: "", mail: true, push: false, cats: { geisha: true, sidra: true, coe: true, restock: true }, at: null };
+export function getNotify() {
+  const n = read(NOTIFY_KEY, null);
+  if (!n || typeof n !== "object") return { ...NOTIFY_DEFAULT };
+  return { ...NOTIFY_DEFAULT, ...n, cats: { ...NOTIFY_DEFAULT.cats, ...(n.cats || {}) } };
+}
+export function setNotify(prefs) { const n = { ...getNotify(), ...prefs, at: Date.now() }; write(NOTIFY_KEY, n); return n; }
+
+// ---- 再入荷ウォッチ（SOLD OUT の豆の再入荷アラート・端末内プロトタイプ） ----
+export function getRestocks() { const l = read(RESTOCK_KEY, []); return Array.isArray(l) ? l : []; }
+export function isRestock(beanId) { return getRestocks().some((x) => x.beanId === beanId); }
+export function toggleRestock(rec) {
+  const list = getRestocks();
+  const i = list.findIndex((x) => x.beanId === rec.beanId);
+  if (i >= 0) list.splice(i, 1); else list.unshift({ ...rec, at: Date.now() });
+  write(RESTOCK_KEY, list);
+  return list;
 }

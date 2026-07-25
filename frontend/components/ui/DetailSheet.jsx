@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN, STATUS } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, fmtPrice, perGrams, fmtLocal } from "../lib/currency";
 import { beanHref } from "../lib/utils";
-import { getTasting, upsertTasting, removeTasting } from "../lib/store";
+import { getTasting, upsertTasting, removeTasting, isRestock, toggleRestock } from "../lib/store";
 import { ROASTERS } from "../data/roasters";
 import { Package } from "./Package";
 
@@ -11,10 +11,12 @@ export function DetailSheet({ bean, onClose, onRoaster, cur }) {
   const [rating, setRating] = useState(0);
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
+  const [watching, setWatching] = useState(false);
   useEffect(() => {
     if (!bean) return;
     const t = getTasting(bean.id);
     setRating(t ? t.rating : 0); setNotes(t ? t.notes : ""); setSaved(!!t);
+    setWatching(isRestock(bean.id));
   }, [bean ? bean.id : null]);
   if (!bean) return null;
   const s = STATUS[bean.status];
@@ -70,9 +72,15 @@ export function DetailSheet({ bean, onClose, onRoaster, cur }) {
             )
           )}
           {bean.status === "sold" && (
-            <button style={{ width: "100%", padding: "13px 0", background: PAPER, color: INK, border: `1.5px solid ${INK}`, borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-              🔔 再入荷を待つ<span style={{ fontSize: 10, color: GRAY, fontWeight: 400, marginLeft: 8 }}>プレミアム機能(v2)</span>
-            </button>
+            <>
+              <button onClick={() => { toggleRestock({ beanId: bean.id, r: bean.r, name: bean.name, roaster: roaster.name }); setWatching(isRestock(bean.id)); }}
+                style={{ width: "100%", padding: "13px 0", background: watching ? INK : PAPER, color: watching ? PAPER : INK, border: `1.5px solid ${INK}`, borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                {watching ? "✓ 再入荷ウォッチ中" : "🔔 再入荷を待つ"}
+              </button>
+              <div style={{ textAlign: "center", fontSize: 10, color: GRAY, marginTop: 8, lineHeight: 1.6 }}>
+                {watching ? "再入荷したら通知します。ウォッチリストは「プレミアム」タブで確認できます。" : "この端末のウォッチリストに追加します（通知はプレミアムで有効化）。"}
+              </div>
+            </>
           )}
           {bean.status === "archive" && (
             <div style={{ textAlign: "center", fontSize: 11.5, color: GRAY, padding: "10px 0", borderTop: `1px solid ${LINE}` }}>
