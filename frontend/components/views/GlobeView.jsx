@@ -155,30 +155,48 @@ export function GlobeView({ onRoaster }) {
       .on("end", () => { dragging = false; svg.style("cursor", "grab"); });
     svg.call(drag);
 
-    // --- ズーム（ホイール / ピンチ / ボタン）---
-    function applyZoom(factor) {
-      zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom * factor));
+    // --- ズーム（ホイール / ピンチ / ボタン）--- 目標値へイージングして滑らかに ---
+    const clampZoom = (z) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+    let targetZoom = zoom;
+    let zoomRAF = null;
+    function animateZoom() {
+      const diff = targetZoom - zoom;
+      if (Math.abs(diff) < 0.0012) { zoom = targetZoom; render(); zoomRAF = null; return; }
+      zoom += diff * 0.28;               // フレームごとに目標へ寄せる
       render();
+      zoomRAF = requestAnimationFrame(animateZoom);
     }
-    function resetView() { zoom = 1; projection.rotate([-139, -32]); render(); }
-    zoomApiRef.current = { zoomIn: () => applyZoom(1.3), zoomOut: () => applyZoom(1 / 1.3), reset: resetView };
+    function setZoom(target) {
+      targetZoom = clampZoom(target);
+      if (!zoomRAF) zoomRAF = requestAnimationFrame(animateZoom);
+    }
+    function applyZoom(factor) { setZoom(targetZoom * factor); }
+    function resetView() {
+      if (zoomRAF) { cancelAnimationFrame(zoomRAF); zoomRAF = null; }
+      zoom = 1; targetZoom = 1; projection.rotate([-139, -32]); render();
+    }
+    zoomApiRef.current = { zoomIn: () => applyZoom(1.35), zoomOut: () => applyZoom(1 / 1.35), reset: resetView };
 
     const svgNode = svgRef.current;
-    const onWheel = (e) => { e.preventDefault(); applyZoom(e.deltaY < 0 ? 1.12 : 1 / 1.12); };
+    const onWheel = (e) => { e.preventDefault(); applyZoom(e.deltaY < 0 ? 1.1 : 1 / 1.1); };
     svgNode.addEventListener("wheel", onWheel, { passive: false });
 
-    // ピンチ
+    // ピンチ（生の距離比を平滑化してから目標ズームへ反映）
     let pinchDist = null;
     const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
     const onTouchMove = (e) => {
       if (e.touches.length === 2) {
         e.preventDefault();
         const d = dist(e.touches);
-        if (pinchDist != null && pinchDist > 0) applyZoom(d / pinchDist);
+        if (pinchDist != null && pinchDist > 0) {
+          let ratio = d / pinchDist;
+          ratio = Math.max(0.85, Math.min(1.18, ratio));   // 極端な跳ねを抑制
+          setZoom(targetZoom * ratio);
+        }
         pinchDist = d;
       }
     };
-    const onTouchEnd = () => { pinchDist = null; };
+    const onTouchEnd = (e) => { if (!e.touches || e.touches.length < 2) pinchDist = null; };
     svgNode.addEventListener("touchmove", onTouchMove, { passive: false });
     svgNode.addEventListener("touchend", onTouchEnd);
 
@@ -190,11 +208,15 @@ export function GlobeView({ onRoaster }) {
       render();
     });
 
+    svgNode.addEventListener("touchcancel", onTouchEnd);
+
     return () => {
       timer.stop();
+      if (zoomRAF) cancelAnimationFrame(zoomRAF);
       svgNode.removeEventListener("wheel", onWheel);
       svgNode.removeEventListener("touchmove", onTouchMove);
       svgNode.removeEventListener("touchend", onTouchEnd);
+      svgNode.removeEventListener("touchcancel", onTouchEnd);
     };
   }, []);
 

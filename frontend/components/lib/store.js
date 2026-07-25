@@ -6,6 +6,7 @@ const ARCHIVE_KEY = "bt_archive";
 const PLAN_KEY = "bt_plan";
 const NOTIFY_KEY = "bt_notify";
 const RESTOCK_KEY = "bt_restocks";
+const DIAG_KEY = "bt_diag_history";
 
 function read(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -29,6 +30,20 @@ export function removeTasting(beanId) {
   write(TASTE_KEY, list);
   return list;
 }
+// 診断結果の履歴（味の記録に残す）
+export function getDiagHistory() { const l = read(DIAG_KEY, []); return Array.isArray(l) ? l : []; }
+export function addDiagResult(rec) {
+  const list = getDiagHistory();
+  list.unshift({ ...rec, at: Date.now() });
+  write(DIAG_KEY, list.slice(0, 50));
+  return list;
+}
+export function removeDiagResult(at) {
+  const list = getDiagHistory().filter((d) => d.at !== at);
+  write(DIAG_KEY, list);
+  return list;
+}
+
 // クラウド取得分を端末内にマージ（at が新しい方を採用・タイムスタンプ保持）
 export function mergeTastings(incoming) {
   const map = new Map(getTastings().map((t) => [t.beanId, t]));
