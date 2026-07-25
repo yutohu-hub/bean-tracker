@@ -217,10 +217,7 @@ export default function BeanTracker() {
               <select value={priceF} onChange={(e) => setPriceF(e.target.value)} style={minSel} aria-label="価格帯">
                 {Object.entries(PRICE_BANDS).map(([k, band]) => <option key={k} value={k}>{band.label}</option>)}
               </select>
-              <select value={country} onChange={(e) => setCountry(e.target.value)} style={minSel} aria-label="国">
-                {COUNTRIES.map((c) => <option key={c} value={c}>{c === "all" ? "国：すべて" : c}</option>)}
-              </select>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ ...minSel, gridColumn: "1 / -1" }} aria-label="並び替え">
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={minSel} aria-label="並び替え">
                 <option value="default">並び：おすすめ順</option>
                 <option value="p100asc">価格/100g 安い順</option>
                 <option value="p100desc">価格/100g 高い順</option>

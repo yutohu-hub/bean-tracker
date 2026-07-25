@@ -75,7 +75,7 @@ export function GeishaView({ onOpen, onRoaster, cur }) {
 
       <VarietySection match={(b) => b.vt === "geisha"} title="GEISHA" sub="ゲイシャ品種" onOpen={onOpen} cur={cur} />
       <VarietySection match={(b) => b.vt === "sidra"} title="SIDRA" sub="シドラ品種" onOpen={onOpen} cur={cur} />
-      <VarietySection match={(b) => b.coe} title="COE" sub="カップ・オブ・エクセレンス入賞ロット" onOpen={onOpen} cur={cur} />
+      <VarietySection match={(b) => /COE\s*\d+位/.test(b.name)} title="COE" sub="カップ・オブ・エクセレンス入賞ロット" onOpen={onOpen} cur={cur} />
 
       {/* 新着通知CTA */}
       <div style={{ marginTop: 24, padding: "14px 16px", background: "#F2F0E9", borderRadius: 10 }}>
