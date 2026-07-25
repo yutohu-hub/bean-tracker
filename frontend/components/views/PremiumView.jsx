@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { INK, PAPER, GRAY, LINE, GREEN, AMBER } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { getPlan, setPlan, getNotify, setNotify, getRestocks } from "../lib/store";
@@ -202,6 +203,13 @@ export function PremiumView({ onOpen }) {
         プロトタイプ：プラン・通知設定・ウォッチリストはこの端末に保存されます。実際のメール／ブラウザプッシュ配信と決済（Stripe）は、
         巡回システムが新着・在庫変化を検知して通知するバックエンド連携で有効化します。設計は docs/notifications-and-billing.md を参照。
         複数端末で同期する本ログイン（メール／パスワード等）も今後のバックエンド連携で追加予定です。
+      </div>
+
+      {/* 法務リンク */}
+      <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center" }}>
+        <Link href="/legal/tokushoho/" style={{ fontSize: 11, color: GRAY }}>特定商取引法に基づく表記</Link>
+        <Link href="/legal/terms/" style={{ fontSize: 11, color: GRAY }}>利用規約</Link>
+        <Link href="/legal/privacy/" style={{ fontSize: 11, color: GRAY }}>プライバシーポリシー</Link>
       </div>
     </div>
   );
