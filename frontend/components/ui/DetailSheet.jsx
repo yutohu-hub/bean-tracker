@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN, STATUS } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, fmtPrice, perGrams, fmtLocal } from "../lib/currency";
-import { shopHref } from "../lib/utils";
+import { beanHref } from "../lib/utils";
 import { getTasting, upsertTasting, removeTasting } from "../lib/store";
 import { ROASTERS } from "../data/roasters";
 import { Package } from "./Package";
@@ -62,8 +62,8 @@ export function DetailSheet({ bean, onClose, onRoaster, cur }) {
         <div style={{ marginTop: 18 }}>
           {bean.status === "now" && (
             roaster.url ? (
-              <a href={shopHref(roaster)} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", textDecoration: "none", width: "100%", padding: "13px 0", background: INK, color: PAPER, borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                {roaster.name} のECで見る ↗
+              <a href={beanHref(roaster, bean)} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", textDecoration: "none", width: "100%", padding: "13px 0", background: INK, color: PAPER, borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                この豆をECで見る ↗
               </a>
             ) : (
               <div style={{ width: "100%", padding: "13px 0", background: "#EDEAE1", color: GRAY, borderRadius: 8, fontSize: 13, fontWeight: 700, textAlign: "center" }}>ECサイト準備中</div>
