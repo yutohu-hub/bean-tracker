@@ -7,6 +7,7 @@ const PLAN_KEY = "bt_plan";
 const NOTIFY_KEY = "bt_notify";
 const RESTOCK_KEY = "bt_restocks";
 const DIAG_KEY = "bt_diag_history";
+const ANALYSIS_KEY = "bt_analysis_history";
 
 function read(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -41,6 +42,20 @@ export function addDiagResult(rec) {
 export function removeDiagResult(at) {
   const list = getDiagHistory().filter((d) => d.at !== at);
   write(DIAG_KEY, list);
+  return list;
+}
+
+// 記録のAI分析スナップショット
+export function getAnalysisHistory() { const l = read(ANALYSIS_KEY, []); return Array.isArray(l) ? l : []; }
+export function addAnalysis(rec) {
+  const list = getAnalysisHistory();
+  list.unshift({ ...rec, at: Date.now() });
+  write(ANALYSIS_KEY, list.slice(0, 50));
+  return list;
+}
+export function removeAnalysis(at) {
+  const list = getAnalysisHistory().filter((a) => a.at !== at);
+  write(ANALYSIS_KEY, list);
   return list;
 }
 
