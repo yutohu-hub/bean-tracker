@@ -80,4 +80,13 @@ export const oceaniaBeans = [
   { id: 976, r: "cameraman", name: "Guatemala Antigua", origin: "グアテマラ", process: "Washed", amount: 24, cur: "NZD", per: "250g", status: "now", color: "#2E2A24", accent: "#C8A96A", year: "2026" },
   { id: 977, r: "switchnz", name: "Ethiopia Reko", origin: "エチオピア", process: "Washed", amount: 24, cur: "NZD", per: "250g", status: "now", color: "#F4F1E8", accent: "#1A1815", year: "2026" },
   { id: 978, r: "switchnz", name: "Colombia Nariño", origin: "コロンビア", process: "Washed", amount: 24, cur: "NZD", per: "250g", status: "now", color: "#1C1B19", accent: "#E8E2D2", year: "2026" },
+  { id: 1370, r: "proudmaryau", name: "インドネシア Lot", origin: "インドネシア", process: "Washed", amount: 28, cur: "AUD", per: "250g", status: "now", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
+  { id: 1371, r: "proudmaryau", name: "Market Blend", origin: "ブレンド", process: "Washed", amount: 27, cur: "AUD", per: "250g", status: "now", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
+  { id: 1372, r: "proudmaryau", name: "エチオピア Lot", origin: "エチオピア", process: "Natural", amount: 26, cur: "AUD", per: "250g", status: "sold", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
+  { id: 1373, r: "singleorigin", name: "Single Blend", origin: "ブレンド", process: "Natural", amount: 24, cur: "AUD", per: "250g", status: "now", color: "#F4F1E8", accent: "#1A1815", year: "2026" },
+  { id: 1374, r: "singleorigin", name: "エチオピア Lot", origin: "エチオピア", process: "Honey", amount: 24, cur: "AUD", per: "250g", status: "now", color: "#2E2A24", accent: "#C8A96A", year: "2026" },
+  { id: 1375, r: "singleorigin", name: "ケニア Lot", origin: "ケニア", process: "Anaerobic", amount: 24, cur: "AUD", per: "250g", status: "sold", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
+  { id: 1376, r: "allpressnz", name: "エチオピア Lot", origin: "エチオピア", process: "Anaerobic", amount: 22, cur: "NZD", per: "250g", status: "now", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
+  { id: 1377, r: "allpressnz", name: "ケニア Lot", origin: "ケニア", process: "Washed", amount: 27, cur: "NZD", per: "250g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+  { id: 1378, r: "allpressnz", name: "コロンビア Lot", origin: "コロンビア", process: "Washed", amount: 26, cur: "NZD", per: "250g", status: "sold", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
 ];

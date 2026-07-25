@@ -73,4 +73,7 @@ export const ukBeans = [
   { id: 848, r: "allpressuk", name: "Colombia Huila", origin: "コロンビア", process: "Washed", amount: 13, cur: "GBP", per: "250g", status: "sold", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },
   { id: 849, r: "cloudpickeruk", name: "Ethiopia Wolde", origin: "エチオピア", process: "Washed", amount: 16, cur: "EUR", per: "250g", status: "now", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
   { id: 850, r: "cloudpickeruk", name: "Kenya Kirinyaga", origin: "ケニア", process: "Washed", amount: 16, cur: "EUR", per: "250g", status: "now", color: "#2E2A24", accent: "#C8A96A", year: "2026" },
+  { id: 1367, r: "girlsdelight", name: "ルワンダ Lot", origin: "ルワンダ", process: "Washed", amount: 14, cur: "GBP", per: "250g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
+  { id: 1368, r: "girlsdelight", name: "コスタリカ Lot", origin: "コスタリカ", process: "Natural", amount: 16, cur: "GBP", per: "250g", status: "now", color: "#F4F1E8", accent: "#1A1815", year: "2026" },
+  { id: 1369, r: "girlsdelight", name: "インドネシア Lot", origin: "インドネシア", process: "Honey", amount: 12, cur: "GBP", per: "250g", status: "sold", color: "#2E2A24", accent: "#C8A96A", year: "2026" },
 ];

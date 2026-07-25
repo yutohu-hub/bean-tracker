@@ -161,4 +161,7 @@ export const europeBeans = [
   { id: 940, r: "backstage", name: "Kenya Nyeri", origin: "ケニア", process: "Washed", amount: 16, cur: "EUR", per: "250g", status: "now", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
   { id: 941, r: "rocketbean2", name: "Ethiopia Sidama", origin: "エチオピア", process: "Washed", amount: 16, cur: "EUR", per: "250g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
   { id: 942, r: "rocketbean2", name: "Ethiopia Sidama", origin: "エチオピア", process: "Washed", amount: 16, cur: "EUR", per: "250g", status: "now", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
+  { id: 1364, r: "orsonik", name: "ルワンダ Lot", origin: "ルワンダ", process: "Honey", amount: 12, cur: "EUR", per: "250g", status: "now", color: "#22303A", accent: "#C8792E", year: "2026" },
+  { id: 1365, r: "orsonik", name: "コスタリカ Lot", origin: "コスタリカ", process: "Anaerobic", amount: 16, cur: "EUR", per: "250g", status: "now", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
+  { id: 1366, r: "orsonik", name: "インドネシア Lot", origin: "インドネシア", process: "Washed", amount: 13, cur: "EUR", per: "250g", status: "sold", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
 ];
