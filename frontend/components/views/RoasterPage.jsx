@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
-import { shopHref } from "../lib/utils";
+import { shopHref, mapHref } from "../lib/utils";
 import { getArchivedBeans } from "../lib/store";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
@@ -52,6 +52,10 @@ export function RoasterPage({ rid, onOpen, onBack, onRoaster, initialTab, cur })
       {roaster.url && (
         <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY, marginTop: 6, textAlign: "center" }}>{roaster.url} へ送客（utm付き）</div>
       )}
+      <a href={mapHref(roaster)} target="_blank" rel="noopener noreferrer"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", marginTop: 8, padding: "10px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 12.5, fontWeight: 700, textDecoration: "none" }}>
+        🗺 Google マップで場所を見る ↗
+      </a>
       <div style={{ display: "flex", gap: 0, marginTop: 18, borderBottom: `1px solid ${LINE}` }}>
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}

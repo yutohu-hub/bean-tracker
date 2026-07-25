@@ -6,6 +6,13 @@ export function shopHref(roaster) {
   return base + sep + "utm_source=beantracker&utm_medium=referral&utm_campaign=go";
 }
 
+// Google マップで店を開く（店名＋都市で検索。座標は都市レベルのため名称検索が正確）
+export function mapHref(roaster) {
+  if (!roaster) return null;
+  const q = [roaster.name, (roaster.city || "").replace(/\s*\/\s*/g, " ")].filter(Boolean).join(" ");
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+
 // 更新から24時間以内なら NEW（巡回システムが bean.updatedAt を ISO/epoch で設定）
 export function isNew(bean, now = Date.now()) {
   if (!bean || !bean.updatedAt) return false;
