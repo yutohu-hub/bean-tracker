@@ -10,7 +10,7 @@ import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
 const rowToTasting = (r) => ({ beanId: r.bean_id, r: r.r, name: r.name, roaster: r.roaster, origin: r.origin, rating: r.rating, notes: r.notes, at: Number(r.at) || Date.now() });
 
-export function MyLogView({ onOpen, onRoaster, onNavigate }) {
+export function MyLogView({ onOpen, onRoaster }) {
   const [user, setU] = useState(null);
   const [session, setSession] = useState(null);
   const [list, setList] = useState([]);
@@ -141,18 +141,6 @@ export function MyLogView({ onOpen, onRoaster, onNavigate }) {
         <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{list.length}</div><div style={{ fontSize: 10, color: GRAY }}>記録した豆</div></div>
         <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{avg}</div><div style={{ fontSize: 10, color: GRAY }}>平均評価</div></div>
       </div>
-
-      {/* レアロット新着通知 */}
-      <button onClick={() => onNavigate && onNavigate("geisha")}
-        style={{ display: "block", width: "100%", textAlign: "left", marginTop: 16, padding: "14px 16px", background: "#F2F0E9", border: `1px solid ${LINE}`, borderRadius: 10, cursor: "pointer" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: INK }}>🔔 世界のどこかでレアロットが出たら、すぐ知る</span>
-          <span style={{ color: GRAY, fontSize: 15, flexShrink: 0 }}>›</span>
-        </div>
-        <div style={{ fontSize: 11, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
-          巡回が新しいゲイシャやシドラを見つけた瞬間に通知します。少量ロットの売り切れ前に。
-        </div>
-      </button>
 
       {/* 記録のライブAI分析（トップ）＋おすすめロースター3件 */}
       {tan.rated > 0 && (

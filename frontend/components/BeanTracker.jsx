@@ -328,7 +328,7 @@ export default function BeanTracker() {
             </div>
             {meTab === "premium"
               ? <PremiumView onOpen={setOpen} />
-              : <MyLogView onOpen={setOpen} onRoaster={goRoaster} onNavigate={(v) => { setView(v); window.scrollTo(0, 0); }} />}
+              : <MyLogView onOpen={setOpen} onRoaster={goRoaster} />}
           </>
         ) : view === "about" ? (
           <AboutView />
