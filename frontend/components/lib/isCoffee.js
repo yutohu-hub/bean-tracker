@@ -44,6 +44,8 @@ const NON_COFFEE = [
   /\bsyrup\b|シロップ|\bposter\b|\bjournal\b|\bpuzzles?\b|repair ?kit|kintsugi|gift ?wrap|wrapping ?paper|\bbrush\b|ブラシ|\blid\b|\bstraw\b|shoelace|\bkinto\b|\bceado\b|\bfetco\b|p[äa]llo/,
   // まだ残っていたコーヒー器具・パーツ（"| Filter |" 等の焙煎表記は除外しない）
   /coffee ?mill|\bcutter\b|stainless ?steel|deodorizer|消臭|\bflannel\b|ネル|\bsibarist\b|\borea\b|flo ?screen|cera ?filter|wave ?filters?|dripkit|key ?holder|\bholder\b|\breplacement\b|zebrang/,
+  // 日本語の非コーヒー（ギフト/セット/焼き菓子など。"ブレンド"はコーヒーなので除外しない）
+  /ギフト|詰め合わせ|飲み比べ|アソート|福袋|セット|バナナブレッド|ブレッド|焼き菓子|洋菓子|和菓子|クッキー|マフィン|スコーン|ドーナツ|プリン|ビスケット|グラノーラ|カヌレ|マドレーヌ|フィナンシェ/,
 ];
 
 // コーヒー豆（＝図鑑に載せる）なら true
