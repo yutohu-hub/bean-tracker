@@ -5,7 +5,7 @@ const NON_COFFEE = [
   /subscription|サブスク|定期便|頒布会/,
   /gift ?card|ギフトカード|ギフト券|商品券|\bvoucher\b|e-?gift|gift ?set|ギフトセット/,
   /t-?shirt|\btee\b|tシャツ|hoodie|パーカー|sweatshirt|crewneck|beanie|\bsocks\b|靴下|\btote\b|トートバッグ|エコバッグ|apron|エプロン|enamel pin|keychain|キーホルダー|\bsticker\b|ステッカー|\bcap\b|\bbeanie\b/,
-  /\bmug\b|マグカップ|tumbler|タンブラー|\bglass(es)?\b|グラス|\bbottle\b|ボトル|flask|thermos|水筒|carafe|カラフェ|decanter|デカンタ|demitasse|\bcup\b|カップ|\bglassware\b/,
+  /\bmugs?\b|マグカップ|tumbler|タンブラー|\bglass(es)?\b|グラス|\bbottle\b|ボトル|flask|thermos|水筒|carafe|カラフェ|decanter|デカンタ|demitasse|\bcup\b|カップ|\bglassware\b/,
   /grinder|グラインダー|コーヒーミル|dripper|ドリッパー|\bv-?60\b|kalita|カリタ|chemex|ケメックス|\bkono\b|hario|ハリオ|aeropress|エアロプレス|french ?press|フレンチプレス|moka ?pot|マキネッタ|kettle|ケトル|gooseneck|\bscale\b|スケール|はかり|server\b|サーバー|ドリップポット|\bbrewer\b|ブリューワー|paper ?filter|filter ?paper|ペーパーフィルター|フィルターペーパー|ネルフィルター|canister|キャニスター|tamper|タンパー|portafilter|\bspoon\b|スプーン|\bscoop\b/,
   // 器具ブランド・パーツ（コーヒー品種/生産者と紛らわしい語は製品名まで限定）
   // 例: "Acaia"は焙煎品種アカイア、"Fellow Farms"は生産者名なので、器具モデル名がある時だけ除外
@@ -42,6 +42,8 @@ const NON_COFFEE = [
   /drinking ?chocolate|chocolate ?bar|ground ?chocolate|chocolate ?(product|strudel|waffle|bark)|板チョコ|specialty ?chocolate|\braaka\b|cocoa ?(bar|powder|nibs)|cacao ?(bar|nibs|powder)|cupcakes?|strudel|waffle ?cone|soft ?bar|croissant/,
   // シロップ・雑貨・パーツ・食器/器具ブランド
   /\bsyrup\b|シロップ|\bposter\b|\bjournal\b|\bpuzzles?\b|repair ?kit|kintsugi|gift ?wrap|wrapping ?paper|\bbrush\b|ブラシ|\blid\b|\bstraw\b|shoelace|\bkinto\b|\bceado\b|\bfetco\b|p[äa]llo/,
+  // まだ残っていたコーヒー器具・パーツ（"| Filter |" 等の焙煎表記は除外しない）
+  /coffee ?mill|\bcutter\b|stainless ?steel|deodorizer|消臭|\bflannel\b|ネル|\bsibarist\b|\borea\b|flo ?screen|cera ?filter|wave ?filters?|dripkit|key ?holder|\bholder\b|\breplacement\b|zebrang/,
 ];
 
 // コーヒー豆（＝図鑑に載せる）なら true
