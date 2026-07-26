@@ -297,7 +297,10 @@ export default function BeanTracker() {
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 2 }}>
-            <div style={{ fontSize: 10, color: GRAY }}>Find any bean, anywhere.</div>
+            <div>
+              <div style={{ fontSize: 10, color: GRAY }}>Find any bean, anywhere.</div>
+              <div style={{ fontSize: 10, color: GRAY, marginTop: 1 }}>Log your coffees, find your perfect cup.</div>
+            </div>
             <div title={fxTitle} style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontFamily: "ui-monospace, monospace", fontSize: 9, color: GRAY, whiteSpace: "nowrap" }}>
               <span className={fx.live ? "bt-live" : ""} style={{ width: 6, height: 6, borderRadius: 999, background: fx.live ? GREEN : (fx.error ? "#B8433A" : "#C8B36A") }} />
               {fx.live ? `為替LIVE · ${fxTime}更新` : fx.loading ? "為替 取得中…" : "為替 固定値"}
