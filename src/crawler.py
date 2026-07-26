@@ -8,7 +8,14 @@ from dataclasses import dataclass, asdict
 
 import httpx
 
-UA = "BeanTrackerBot/1.0 (personal hobby project; contact via repo)"
+# 一部のShopify店はボットUAの /products.json をブロックするため、実ブラウザ相当のUAで取得する。
+UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+REQ_HEADERS = {
+    "User-Agent": UA,
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+}
 
 ORIGIN_WORDS = [
     "Ethiopia", "Kenya", "Colombia", "Panama", "Peru", "Brazil", "Bolivia",
@@ -203,7 +210,7 @@ async def crawl_all(config: dict) -> tuple[list[Product], list[str]]:
     max_pages = int(s.get("max_pages", 4))
     failed: list[str] = []
     all_products: list[Product] = []
-    async with httpx.AsyncClient(headers={"User-Agent": UA}, timeout=timeout,
+    async with httpx.AsyncClient(headers=REQ_HEADERS, timeout=timeout,
                                  follow_redirects=True) as client:
         tasks = [crawl_roaster(client, r, max_pages, sem) for r in config["roasters"]]
         for coro in asyncio.as_completed(tasks):
