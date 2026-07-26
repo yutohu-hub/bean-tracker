@@ -31,7 +31,17 @@ const NON_COFFEE = [
   // インスタント・フリーズドライ
   /\binstant\b|インスタント|freeze ?dried|フリーズドライ/,
   // アパレル・雑貨・パーツ・お香・ミネラル等（豆ではない物販）
-  /\bshirts?\b|\bpants\b|\btrousers\b|\bjacket\b|\bsweater\b|\bbandana\b|\bshoes\b|incen[cs]e|お香|\bhat\b|\bbags?\b|\bbasket\b|\bjug\b|\bbooster\b|\bmineral\b|ミネラル/,
+  /\bshirts?\b|\bpants\b|\btrousers\b|\bjacket\b|\bsweater\b|\bbandana\b|\bshoes\b|incen[cs]e|お香|\bhat\b|\bcaps?\b|\bbags?\b|\bsack\b|\bbasket\b|\bjug\b|\bbooster\b|\bmineral\b|ミネラル/,
+  // 書籍・教室・サービス・時計・雑貨など明確な非コーヒー
+  /the business of specialty|barista hustle|de nieuwe barista|\bby [A-Z][a-z]+ [A-Z][a-z]+$/,
+  /\btraining\b|latte ?art|ラテアート|\bworkshop\b|\bclass(es)?\b/,
+  /ceramics?|セラミック|陶器|handmade|\bstrap\b|orbitkey|key ?organizer|キーオーガナイザー|organiser/,
+  /g-?shock|\btimex\b|\bcasio\b|\bseiko\b|腕時計|\bwatch\b(?!\s*(list|ing))/,
+  /invoice|overdue|payment ?arrangement|請求|お支払い|voucher/,
+  // チョコレート・焼き菓子等の食品（"Milky Cake"等の豆名やコーヒーの風味表記は除外しない）
+  /drinking ?chocolate|chocolate ?bar|ground ?chocolate|chocolate ?(product|strudel|waffle|bark)|板チョコ|specialty ?chocolate|\braaka\b|cocoa ?(bar|powder|nibs)|cacao ?(bar|nibs|powder)|cupcakes?|strudel|waffle ?cone|soft ?bar|croissant/,
+  // シロップ・雑貨・パーツ・食器/器具ブランド
+  /\bsyrup\b|シロップ|\bposter\b|\bjournal\b|\bpuzzles?\b|repair ?kit|kintsugi|gift ?wrap|wrapping ?paper|\bbrush\b|ブラシ|\blid\b|\bstraw\b|shoelace|\bkinto\b|\bceado\b|\bfetco\b|p[äa]llo/,
 ];
 
 // コーヒー豆（＝図鑑に載せる）なら true
