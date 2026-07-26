@@ -77,7 +77,7 @@ export default function BeanTracker() {
   // 自動列数：画面幅（最大640・左右16pxパディング）から最小カード幅で割って算出
   useEffect(() => {
     const calc = () => {
-      const w = Math.min(window.innerWidth, 640) - 32;
+      const w = Math.min(window.innerWidth, 1120) - 32; // カタログの実効幅
       setAutoCols(Math.max(2, Math.min(8, Math.floor((w + 10) / (132 + 10)))));
     };
     calc();
@@ -301,7 +301,7 @@ export default function BeanTracker() {
         </div>
       </header>
 
-      <main style={{ maxWidth: 640, margin: "0 auto", padding: "16px 16px 60px" }}>
+      <main style={{ maxWidth: view === "zukan" ? 1120 : 640, margin: "0 auto", padding: "16px 16px 60px" }}>
         {view === "roaster" && roasterId ? (
           <RoasterPage key={roasterId + roasterTab} rid={roasterId} initialTab={roasterTab} onOpen={setOpen} onBack={() => setView("zukan")} onRoaster={goRoaster} cur={displayCur} />
         ) : view === "map" ? (
@@ -318,6 +318,8 @@ export default function BeanTracker() {
           <MyLogView onOpen={setOpen} onRoaster={goRoaster} />
         ) : (
           <>
+            {/* 操作系は640pxに集約（グリッドはワイド） */}
+            <div style={{ maxWidth: 640, margin: "0 auto" }}>
             {/* 表示切替：豆 / ロースター */}
             <div style={{ display: "inline-flex", border: `1px solid ${INK}`, borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
               {[["beans", "豆"], ["roasters", "ロースター"]].map(([k, l]) => (
@@ -359,6 +361,7 @@ export default function BeanTracker() {
               <div style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, alignSelf: "center" }}>{filtered.length} 銘柄</div>
             </div>
             </>)}
+            </div>{/* /640集約 */}
             {zukanMode === "roasters" ? (
               <>
                 {colSelectorEl}
@@ -429,7 +432,7 @@ export default function BeanTracker() {
               </>
             )}
             {/* フッター注記 */}
-            <div style={{ marginTop: 36, borderTop: `1px solid ${LINE}`, paddingTop: 14, fontSize: 10.5, color: GRAY, lineHeight: 1.7 }}>
+            <div style={{ maxWidth: 640, margin: "0 auto", marginTop: 36, borderTop: `1px solid ${LINE}`, paddingTop: 14, fontSize: 10.5, color: GRAY, lineHeight: 1.7 }}>
               カードは各ロースターの実ロゴを表示します。巡回システムが商品画像URL（bean.img）を取得すると、その豆の実際のECパッケージ写真に自動で切り替わります（未取得・読み込み失敗時は標本カードにフォールバック）。
               評価機能はありません — この図鑑は探して辿り着くためのインフラです。 円⇄ドル換算はライブ為替（対応時）を用い、変動を自動反映します。取得できない環境では固定値にフォールバックします。
             </div>
