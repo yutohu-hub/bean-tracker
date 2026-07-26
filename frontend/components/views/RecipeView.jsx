@@ -22,7 +22,7 @@ const RECIPES = [
     comp: "World Brewers Cup", year: "2023", flag: "🇨🇱", winner: "Carlos Medina",
     dripper: "Origami Dripper",
     bean: [["生産国", "コロンビア"], ["農園", "Café Granja La Esperanza"], ["標高", ""], ["品種", "Sidra（シドラ）"], ["精製", "ナチュラル"], ["焙煎", "浅煎り"], ["ロースター", ""]],
-    recipe: [["☕", "Coffee", "16g"], ["💧", "Water", "250g"], ["🌡", "Temperature", "91℃"], ["⚙", "Grind", ""]],
+    recipe: [["☕", "Coffee", "16g"], ["💧", "Water", "250g"], ["🌡", "Temperature", "91℃"], ["⚙", "Grind", "中挽き（コニカル）"]],
     pours: [["0:00", "50g 注湯"], ["0:30", "50g 追加"], ["1:00", "50g 追加"], ["1:30", "50g 追加"], ["2:00", "50g 追加"]], total: "3:00",
   },
   {
@@ -35,23 +35,23 @@ const RECIPES = [
   {
     comp: "World Brewers Cup", year: "2021", flag: "🇨🇭", winner: "Matt Winton",
     dripper: "Hario V60（Five-Pour）",
-    bean: [["生産国", ""], ["農園", ""], ["標高", ""], ["品種", "Catucai × Eugenioides（ブレンド）"], ["精製", ""], ["焙煎", "浅煎り"], ["ロースター", ""]],
-    recipe: [["☕", "Coffee", ""], ["💧", "Water", ""], ["🌡", "Temperature", "93℃ / 88℃（2ケトル）"], ["⚙", "Grind", ""]],
-    pours: [], total: "",
+    bean: [["生産国", "ブラジル"], ["農園", ""], ["標高", ""], ["品種", "Catucai × Eugenioides（ブレンド）"], ["精製", ""], ["焙煎", "浅煎り"], ["ロースター", ""]],
+    recipe: [["☕", "Coffee", "20g"], ["💧", "Water", "300g"], ["🌡", "Temperature", "93℃ / 88℃（2ケトル）"], ["⚙", "Grind", ""]],
+    pours: [["0:00", "60g 蒸らし"], ["0:45", "60g 追加"], ["1:30", "60g 追加"], ["2:15", "60g 追加"], ["3:00", "60g 追加"]], total: "3:30",
   },
   {
     comp: "World Brewers Cup", year: "2019", flag: "🇨🇳", winner: "Jia Ning Du（杜嘉宁）",
-    dripper: "",
-    bean: [["生産国", ""], ["農園", ""], ["標高", ""], ["品種", ""], ["精製", ""], ["焙煎", ""], ["ロースター", ""]],
-    recipe: [["☕", "Coffee", ""], ["💧", "Water", ""], ["🌡", "Temperature", ""], ["⚙", "Grind", ""]],
-    pours: [], total: "",
+    dripper: "Origami Dripper",
+    bean: [["生産国", "エチオピア"], ["農園", "Ninety Plus Gesha Estate"], ["標高", ""], ["品種", "Gesha"], ["精製", ""], ["焙煎", "浅煎り"], ["ロースター", "Ninety Plus Coffee"]],
+    recipe: [["☕", "Coffee", "16g"], ["💧", "Water", "240g"], ["🌡", "Temperature", "94℃"], ["⚙", "Grind", "粗挽き→細挽き（2段階）"]],
+    pours: [], total: "1:40",
   },
   {
     comp: "World Brewers Cup", year: "2018", flag: "🇨🇭", winner: "Emi Fukahori",
-    dripper: "GINA（V60 + イマージョン）",
+    dripper: "GINA（浸漬 + ドリップ）",
     bean: [["生産国", "ブラジル"], ["農園", "Daterra（Cerrado）"], ["標高", ""], ["品種", "Laurina（ブルボン変異種）"], ["精製", "セミ・カーボニックマセレーション"], ["焙煎", "浅煎り"], ["ロースター", "MAME Coffee"]],
-    recipe: [["☕", "Coffee", "17g"], ["💧", "Water", "220g"], ["🌡", "Temperature", ""], ["⚙", "Grind", "粗挽き"]],
-    pours: [], total: "",
+    recipe: [["☕", "Coffee", "17g"], ["💧", "Water", "220g"], ["🌡", "Temperature", "80℃ / 95℃ / 80℃"], ["⚙", "Grind", "粗挽き"]],
+    pours: [["0:00", "50g 浸漬 80℃（45秒）"], ["0:45", "100g ドリップ 95℃"], ["1:45", "70g 80℃"]], total: "2:55",
   },
   {
     comp: "World Brewers Cup", year: "2017", flag: "🇹🇼", winner: "Chad Wang",
@@ -127,7 +127,9 @@ function Recipe({ r }) {
         {/* 注湯タイムライン */}
         <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY, marginTop: 20 }}>POUR</div>
         {r.pours.length === 0 ? (
-          <div style={{ fontSize: 12, color: GRAY, marginTop: 8 }}>注湯スケジュールは情報準備中です。</div>
+          <div style={{ fontSize: 12, color: GRAY, marginTop: 8 }}>
+            注湯スケジュールは情報準備中です。{r.total && <span style={{ fontFamily: "ui-monospace, monospace", color: INK, fontWeight: 700 }}> 総抽出 {r.total}</span>}
+          </div>
         ) : (
           <div style={{ marginTop: 8, position: "relative", paddingLeft: 18 }}>
             <div style={{ position: "absolute", left: 4, top: 6, bottom: r.total ? 22 : 6, width: 2, background: LINE }} />
