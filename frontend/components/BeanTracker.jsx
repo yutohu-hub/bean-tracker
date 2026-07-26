@@ -64,11 +64,26 @@ export default function BeanTracker() {
   const [fxVersion, setFxVersion] = useState(0);
   const [archiveBeans, setArchiveBeans] = useState([]);
   const [page, setPage] = useState(0);
-  const [cols, setCols] = useState(4); // 図鑑の列数（可変）
+  const [cols, setCols] = useState("auto"); // "auto" | 2..6（列数）
+  const [autoCols, setAutoCols] = useState(4); // 自動時の実効列数（画面幅から算出）
   const [zukanMode, setZukanMode] = useState("beans"); // beans | roasters
   // 列数を端末に保存・復元
-  useEffect(() => { const c = Number(localStorage.getItem("bt_cols")); if (c >= 2 && c <= 6) setCols(c); }, []);
+  useEffect(() => {
+    const s = localStorage.getItem("bt_cols");
+    if (s === "auto") setCols("auto");
+    else { const c = Number(s); if (c >= 2 && c <= 6) setCols(c); }
+  }, []);
   useEffect(() => { try { localStorage.setItem("bt_cols", String(cols)); } catch {} }, [cols]);
+  // 自動列数：画面幅（最大640・左右16pxパディング）から最小カード幅で割って算出
+  useEffect(() => {
+    const calc = () => {
+      const w = Math.min(window.innerWidth, 640) - 32;
+      setAutoCols(Math.max(2, Math.min(8, Math.floor((w + 10) / (132 + 10)))));
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, []);
   // フィルタ・列数・モード変更時は1ページ目に戻す
   useEffect(() => { setPage(0); }, [origin, statusF, priceF, processF, country, query, sortBy, cols, zukanMode]);
 
@@ -168,8 +183,10 @@ export default function BeanTracker() {
       .sort((a, b) => (nowCountByRoaster[b[0]] || 0) - (nowCountByRoaster[a[0]] || 0) || a[1].name.localeCompare(b[1].name));
   }, [query, country, nowCountByRoaster]);
 
-  // ページング（列数 × 10行 = 1ページの件数）— モードで対象リストを切替
-  const perPage = cols * ROWS_PER_PAGE;
+  // ページング（実効列数 × 10行 = 1ページの件数）— モードで対象リストを切替
+  const effCols = cols === "auto" ? autoCols : cols;
+  const perPage = effCols * ROWS_PER_PAGE;
+  const gridStyle = { display: "grid", gridTemplateColumns: cols === "auto" ? "repeat(auto-fill, minmax(132px, 1fr))" : `repeat(${cols}, 1fr)`, gap: effCols >= 5 ? 8 : 10, marginTop: 12 };
   const activeList = zukanMode === "roasters" ? filteredRoasters : filtered;
   const pageCount = Math.max(1, Math.ceil(activeList.length / perPage));
   const curPage = Math.min(page, pageCount - 1);
@@ -180,6 +197,8 @@ export default function BeanTracker() {
   const colSelectorEl = (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 16 }}>
       <span style={{ fontSize: 10.5, color: GRAY }}>列数</span>
+      <button onClick={() => setCols("auto")}
+        style={{ height: 26, padding: "0 9px", borderRadius: 7, border: `1px solid ${cols === "auto" ? INK : LINE}`, background: cols === "auto" ? INK : PAPER, color: cols === "auto" ? PAPER : INK, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>自動{cols === "auto" ? `(${autoCols})` : ""}</button>
       {COL_OPTIONS.map((c) => (
         <button key={c} onClick={() => setCols(c)}
           style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${cols === c ? INK : LINE}`, background: cols === c ? INK : PAPER, color: cols === c ? PAPER : INK, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "ui-monospace, monospace" }}>{c}</button>
@@ -344,7 +363,7 @@ export default function BeanTracker() {
               <>
                 {colSelectorEl}
                 {/* ロースター図鑑 */}
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: cols >= 5 ? 8 : 10, marginTop: 12 }}>
+                <div style={gridStyle}>
                   {pageItems.map(([rid, r]) => (
                     <button key={rid} onClick={() => goRoaster(rid, "now")} className="bt-card"
                       style={{ display: "flex", flexDirection: "column", gap: 5, background: PAPER, border: `1px solid ${LINE}`, borderRadius: 10, padding: "11px 11px", cursor: "pointer", textAlign: "left" }}>
@@ -400,7 +419,7 @@ export default function BeanTracker() {
               <>
                 {colSelectorEl}
                 {/* グリッド図鑑（列数 × 10行 / ページ） */}
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: cols >= 5 ? 8 : 10, marginTop: 12 }}>
+                <div style={gridStyle}>
                   {pageItems.map((b) => <BeanCard key={b.id} bean={b} onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} />)}
                 </div>
                 {filtered.length === 0 && (
