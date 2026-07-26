@@ -1,5 +1,8 @@
 // 東アジアのロースターの豆
 export const eastAsiaBeans = [
+  { id: 1415, r: "goodman", name: "Ethiopia Guji", origin: "エチオピア", process: "Washed", amount: 1500, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-26", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
+  { id: 1416, r: "goodman", name: "Colombia El Paraiso", origin: "コロンビア", process: "Natural", amount: 1700, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-26", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+  { id: 1417, r: "goodman", name: "Guatemala Antigua", origin: "グアテマラ", process: "Washed", amount: 1500, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-26", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
   { id: 1, r: "bibi", name: "Ethiopia Chelbesa", origin: "エチオピア", process: "Washed", amount: 1800, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-25", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
   { id: 2, r: "bibi", name: "Colombia El Paraíso", origin: "コロンビア", process: "Anaerobic Washed", amount: 2200, cur: "JPY", per: "150g", status: "sold", color: "#2E2A24", accent: "#C8A96A", year: "2026" },
   { id: 3, r: "bibi", name: "Kenya Karimikui", origin: "ケニア", process: "Washed", amount: 2000, cur: "JPY", per: "150g", status: "archive", color: "#B8433A", accent: "#F2E9DC", year: "2025" },

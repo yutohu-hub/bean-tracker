@@ -1,5 +1,8 @@
 // 東アジアのスペシャルティロースター
 export const eastAsia = {
+  goodman: { name: "Goodman Roaster", city: "京都 / 下京区", country: "JP", region: "eastAsia", platform: "Shopify", note: "京都と台北の2拠点・浅煎り主体", coord: [135.758, 34.997], url: "goodmanroaster.com",
+    founded: "2018", style: "浅〜中煎り・シングルオリジン", ship: "国内発送(2〜4日)", focus: "エチオピア・中南米",
+    bio: "京都・下京区と台北の2拠点をもつロースター。Diedrich焙煎機とCropsterを用い、素材の個性・独創性を引き出す浅煎りを中心に、フィルター向けのシングルオリジンを届ける。" },
   bibi: { name: "bibi", city: "東京 / 亀戸", country: "JP", region: "eastAsia", platform: "STORES", note: "下町のファントムロースター", coord: [139.83, 35.7],
     founded: "2024", style: "浅〜中煎り・少量焙煎", ship: "国内発送(2〜3日)", focus: "エチオピア・中南米",
     bio: "東京・亀戸の下町で少量ずつ焙煎するファントムロースター。店舗を持たず、映像と写真で豆の背景を伝えながら、日々の一杯に寄り添う豆を届けている。" },

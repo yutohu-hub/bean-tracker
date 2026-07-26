@@ -20,6 +20,14 @@ roasters:
     country: JP
     url: https://coffeecounty.cc
     currency: JPY
+  - name: Goodman Roaster
+    country: JP
+    url: https://goodmanroaster.com
+    currency: JPY
+  - name: Leaves Coffee
+    country: JP
+    url: https://leavescoffee.jp
+    currency: JPY
   - name: Onibus Coffee
     country: JP
     url: https://onibuscoffee.com

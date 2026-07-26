@@ -23,6 +23,46 @@ STOP = re.compile(r"\b(coffee|roasters?|roastery|roasting|company|co|the|special
 def norm(s: str) -> str: return re.sub(r"[^a-z0-9]", "", STOP.sub("", (s or "").lower()))
 def slug(s: str) -> str: return (re.sub(r"[^a-z0-9]", "", (s or "").lower())[:24] or "roaster")
 
+# --- 豆以外（器具/グッズ/ミルク/ティー/RTD/ドリップバッグ/インスタント/業務用 等）を巡回結果から除外して整理整頓 ---
+# フロントの components/lib/isCoffee.js と同じ方針。焙煎/精製の表記や "Cup of Excellence" は残す。
+_NONCOFFEE = re.compile("|".join([
+    r"subscription", r"定期便", r"頒布会",
+    r"gift\s?card", r"ギフトカード", r"\bvoucher\b", r"gift\s?set", r"e-?gift",
+    r"t-?shirt", r"\btee\b", r"tシャツ", r"hoodie", r"パーカー", r"sweatshirt", r"crewneck", r"\bbeanie\b", r"\bsocks\b", r"\btote\b", r"apron", r"エプロン", r"keychain", r"\bsticker\b", r"ステッカー", r"\bcaps?\b", r"\bhat\b", r"\bshirts?\b", r"\bpants\b", r"\btrousers\b", r"\bjacket\b", r"\bsweater\b", r"\bbandana\b", r"\bshoes\b", r"incen[cs]e", r"お香",
+    r"\bmugs?\b", r"マグカップ", r"tumbler", r"タンブラー", r"\bglass(es)?\b", r"グラス", r"\bbottle\b", r"ボトル", r"flask", r"thermos", r"carafe", r"カラフェ", r"decanter", r"demitasse", r"\bcup\b", r"カップ",
+    r"grinder", r"グラインダー", r"coffee\s?mill", r"dripper", r"ドリッパー", r"\bv-?60\b", r"kalita", r"カリタ", r"chemex", r"\bkono\b", r"hario", r"ハリオ", r"aeropress", r"french\s?press", r"moka\s?pot", r"kettle", r"ケトル", r"gooseneck", r"\bscale\b", r"スケール", r"\bserver\b", r"サーバー", r"\bbrewer\b", r"paper\s?filter", r"filter\s?paper", r"ペーパーフィルター", r"canister", r"tamper", r"portafilter", r"\bspoon\b", r"\bscoop\b", r"\bbasket\b", r"\bjug\b", r"\bbrush\b", r"\blid\b", r"\bstraw\b", r"\bholder\b", r"\breplacement\b", r"flannel", r"ネル", r"sibarist", r"\borea\b", r"flo\s?screen", r"cera\s?filter", r"wave\s?filters?", r"deodorizer", r"消臭", r"\bcutter\b", r"stainless\s?steel", r"zebrang",
+    r"fellow\s?(aiden|tally|atmos|stagg|ode|opus|clara|carter|prismo)", r"acaia\s?(pearl|lunar|pyxis)", r"comandante", r"timemore", r"1zpresso", r"moccamaster", r"wilfa", r"baratza", r"wacaco", r"picopresso", r"breville", r"gaggia", r"xbloom", r"la\s?marzocco", r"coffee\s?maker", r"espresso\s?machine", r"\bkinto\b", r"\bceado\b", r"\bfetco\b",
+    r"\bbrew(ing)?\s?kit", r"starter\s?kit", r"repair\s?kit", r"kintsugi", r"descal", r"cafiza", r"cleaning", r"\bwhisk\b", r"matcha", r"抹茶",
+    r"\btea\b", r"ティー", r"紅茶", r"\bchai\b", r"rooibos", r"oolong", r"\bsencha\b", r"hojicha", r"kombucha",
+    r"gift\s?box", r"tasting\s?box", r"sample\s?box", r"discovery\s?box", r"assort", r"box\s?set", r"box\sof\s\d+", r"advent",
+    r"\bcanned\b", r"mini\s?can\b", r"can\s?chiller", r"\bchiller\b", r"\bmiir\b", r"iced\s?latte", r"\brtd\b",
+    r"drip\s?bags?", r"ドリップバッグ", r"drip\s?pack", r"dripkit",
+    r"cold\s?brew", r"コールドブリュー", r"水出し", r"\binstant\b", r"インスタント", r"freeze\s?dried",
+    r"drinking\s?chocolate", r"chocolate\s?bar", r"\braaka\b", r"cupcakes?", r"strudel", r"waffle\s?cone", r"soft\s?bar", r"croissant",
+    r"\bsyrup\b", r"シロップ", r"\bposter\b", r"\bjournal\b", r"\bpuzzles?\b", r"\bmineral\b", r"\bstrap\b", r"orbitkey", r"key\s?organi[sz]er",
+    r"\bbook\b", r"書籍", r"写真集", r"magazine", r"\bzine\b", r"invoice", r"overdue", r"\btraining\b", r"latte\s?art", r"ceramics?", r"handmade", r"g-?shock", r"\btimex\b",
+    r"the\sbusiness\sof\sspecialty", r"barista\shustle",
+    r"\bwholesale\b", r"卸", r"業務用", r"バルク", r"\bbulk\b", r"coffee\s?sacks?", r"\bsack\b",
+]), re.I)
+_COE = re.compile(r"cup of excellence|\bcoe\b", re.I)
+_KG = re.compile(r"(\d+(?:\.\d+)?)\s?kg\b", re.I)
+_LB = re.compile(r"(\d+(?:\.\d+)?)\s?lbs?\b", re.I)
+
+
+def is_coffee(title: str, grams: int) -> bool:
+    t = (title or "").replace("&#8211;", "-").replace("&#038;", "&").replace("&amp;", "&")
+    if not _COE.search(t) and _NONCOFFEE.search(t):
+        return False
+    if grams and grams >= 1000:  # 業務用/卸(1kg以上)
+        return False
+    kg = _KG.search(t)
+    if kg and float(kg.group(1)) >= 1:
+        return False
+    lb = _LB.search(t)
+    if lb and float(lb.group(1)) >= 2:
+        return False
+    return True
+
 C2REGION = {"JP": "eastAsia", "KR": "eastAsia", "TW": "eastAsia", "CN": "eastAsia", "HK": "eastAsia",
             "US": "northAmerica", "CA": "northAmerica", "NO": "nordic", "SE": "nordic", "DK": "nordic",
             "FI": "nordic", "IS": "nordic", "UK": "uk", "GB": "uk", "AU": "oceania", "NZ": "oceania",
@@ -73,6 +113,10 @@ def main() -> None:
     today = datetime.date.today().isoformat()
     year = today[:4]
     for rname, prods in by_roaster.items():
+        # 豆以外（器具・グッズ・ティー・RTD・業務用 等）を除外して整理整頓
+        prods = [p for p in prods if is_coffee(p.get("title"), int(p.get("grams") or 0))]
+        if not prods:  # コーヒー豆が無くなった店は追加しない
+            continue
         key = seed.get(norm(rname)) or slug(rname)
         country = (prods[0].get("country") or "JP").upper()
         if key not in seed:  # 新規ロースターはメタ情報も生成
