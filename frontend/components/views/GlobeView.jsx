@@ -97,9 +97,7 @@ export function GlobeView({ onRoaster }) {
       const center = projection.invert([cx, cy]);
       const sel = selectedRef.current;
 
-      // 表側の点を投影し、近すぎる点は間引く（ズームするほど分離して表示数が増える）
-      const cell = MIN_DOT_GAP;
-      const grid = new Map();
+      // 表側のロースターをすべて描画（座標はジッター済みで重なりにくい・ズームで分離）
       const pos = {};      // key -> [x,y]
       const shown = new Set();
       const order = sel && ROASTERS[sel] ? [sel, ...entries.map((e) => e[0]).filter((k) => k !== sel)] : entries.map((e) => e[0]);
@@ -108,18 +106,6 @@ export function GlobeView({ onRoaster }) {
         if (d3.geoDistance(coord, center) > Math.PI / 2 - 0.02) continue; // 裏側は描かない
         const p = projection(coord);
         if (!p) continue;
-        const gx = Math.floor(p[0] / cell), gy = Math.floor(p[1] / cell);
-        let collide = false;
-        for (let dx = -1; dx <= 1 && !collide; dx++) {
-          for (let dy = -1; dy <= 1 && !collide; dy++) {
-            const arr = grid.get((gx + dx) + "," + (gy + dy));
-            if (arr) for (const q of arr) { if (Math.hypot(q[0] - p[0], q[1] - p[1]) < MIN_DOT_GAP) { collide = true; break; } }
-          }
-        }
-        if (collide) continue;
-        const gk = gx + "," + gy;
-        if (!grid.has(gk)) grid.set(gk, []);
-        grid.get(gk).push(p);
         pos[key] = p;
         shown.add(key);
       }

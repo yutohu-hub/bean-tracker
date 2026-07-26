@@ -566,3 +566,29 @@ export const FLAVOR_MAP = {
   1129: { fx: 52, fy: 14, fam: "floral", notes: "ジャスミン・柑橘" },
   1131: { fx: 50, fy: 22, fam: "berry", notes: "ベリー・カシス" },
 };
+
+/* FLAVOR_MAP に手動座標が無い豆のために、産地・精製から味わい座標を推定する。
+   fx: 0=クリーン ←→ 100=個性派 / fy: 0=明るい ←→ 100=深い。id基準の決定論ジッターで分散。 */
+export function computeFlavor(b) {
+  const proc = b.process || "", o = b.origin || "";
+  let fx = 30;
+  if (/Anaerobic/i.test(proc)) fx = 84;
+  else if (/Natural/i.test(proc)) fx = 66;
+  else if (/Honey/i.test(proc)) fx = 54;
+  else if (/Washed/i.test(proc)) fx = 30;
+  let fy = 48;
+  if (/エチオピア|ケニア|ルワンダ|ブルンジ/.test(o)) fy = 24;
+  else if (/コロンビア|グアテマラ|コスタリカ|パナマ/.test(o)) fy = 42;
+  else if (/ペルー|メキシコ/.test(o)) fy = 55;
+  else if (/ブラジル|インドネシア|インド|ベトナム|中国/.test(o)) fy = 72;
+  else if (/ブレンド/.test(o)) fy = 62;
+  let fam;
+  if (/エチオピア/.test(o)) fam = /Natural|Anaerobic/i.test(proc) ? "berry" : "floral";
+  else if (/ケニア/.test(o)) fam = "berry";
+  else if (/コロンビア|グアテマラ|コスタリカ|パナマ|ペルー/.test(o)) fam = "citrus";
+  else if (/ブラジル|メキシコ|インドネシア|インド|ベトナム|中国/.test(o)) fam = "choco";
+  else if (/Natural|Anaerobic/i.test(proc)) fam = "tropical";
+  else fam = "citrus";
+  const jx = ((b.id * 53) % 21) - 10, jy = ((b.id * 97) % 21) - 10; // -10..10
+  return { fx: Math.max(4, Math.min(96, fx + jx * 0.9)), fy: Math.max(4, Math.min(96, fy + jy * 0.9)), fam };
+}

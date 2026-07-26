@@ -1,10 +1,13 @@
 "use client";
 import { useState } from "react";
 import { ROASTERS } from "../data/roasters";
+import { beanStyle } from "../lib/palette";
 
 export function Package({ bean, small }) {
   const roaster = ROASTERS[bean.r];
   const [imgErr, setImgErr] = useState(false);
+  const st = beanStyle(bean); // 精製方法/レアで統一した色
+  const bg = st.bg, accent = st.accent;
 
   // ① EC サイトの実際の商品画像があれば最優先で表示（巡回システムが bean.img に格納）
   if (bean.img && !imgErr) {
@@ -20,7 +23,7 @@ export function Package({ bean, small }) {
   return (
     <div
       style={{
-        background: bean.color,
+        background: bg,
         borderRadius: 6,
         aspectRatio: "3 / 4",
         position: "relative",
@@ -31,19 +34,19 @@ export function Package({ bean, small }) {
       {/* 袋の折り返し */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "12%", background: "rgba(23,21,15,0.10)", borderBottom: "1px solid rgba(23,21,15,0.12)" }} />
       {/* ロースターマーク */}
-      <div style={{ position: "absolute", top: "18%", left: 0, right: 0, textAlign: "center", color: bean.accent, fontSize: small ? 8 : 9, letterSpacing: "0.18em", fontWeight: 700 }}>
+      <div style={{ position: "absolute", top: "18%", left: 0, right: 0, textAlign: "center", color: accent, fontSize: small ? 8 : 9, letterSpacing: "0.18em", fontWeight: 700 }}>
         {roaster.name.toUpperCase()}
       </div>
       {/* 豆名ラベル */}
       <div style={{ position: "absolute", top: "38%", left: "10%", right: "10%", textAlign: "center" }}>
-        <div style={{ color: bean.accent, fontWeight: 700, fontSize: small ? 11 : 13, lineHeight: 1.25 }}>{bean.name}</div>
-        <div style={{ marginTop: 6, height: 1, background: bean.accent, opacity: 0.5 }} />
-        <div style={{ marginTop: 6, color: bean.accent, fontSize: small ? 8 : 9, letterSpacing: "0.08em", opacity: 0.9 }}>
+        <div style={{ color: accent, fontWeight: 700, fontSize: small ? 11 : 13, lineHeight: 1.25 }}>{bean.name}</div>
+        <div style={{ marginTop: 6, height: 1, background: accent, opacity: 0.5 }} />
+        <div style={{ marginTop: 6, color: accent, fontSize: small ? 8 : 9, letterSpacing: "0.08em", opacity: 0.9 }}>
           {bean.process.toUpperCase()}
         </div>
       </div>
       {/* 標本番号 */}
-      <div style={{ position: "absolute", bottom: 6, right: 8, fontFamily: "ui-monospace, monospace", fontSize: 8, color: bean.accent, opacity: 0.7 }}>
+      <div style={{ position: "absolute", bottom: 6, right: 8, fontFamily: "ui-monospace, monospace", fontSize: 8, color: accent, opacity: 0.7 }}>
         No.{String(bean.id).padStart(4, "0")}
       </div>
     </div>

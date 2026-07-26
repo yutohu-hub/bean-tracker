@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { BEANS } from "../data/beans";
-import { FLAVORS, FLAVOR_MAP } from "../data/flavors";
+import { FLAVORS, FLAVOR_MAP, computeFlavor } from "../data/flavors";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -19,8 +19,8 @@ export function FlavorMapView({ onOpen, cur }) {
   const pan = useRef(null);
   const moved = useRef(false);
 
-  // いま買える(now)豆だけを表示
-  const beans = BEANS.filter((b) => FLAVOR_MAP[b.id] && b.status === "now");
+  // いま買える(now)豆をすべて表示（座標は手動優先・無ければ産地/精製から推定）
+  const beans = BEANS.filter((b) => b.status === "now");
 
   // 目標スケールへ rAF でイージング（毎フレーム寄せて滑らかに）
   const scaleRef = useRef(1);
@@ -138,27 +138,26 @@ export function FlavorMapView({ onOpen, cur }) {
           <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: LINE }} />
           {/* 豆のドット */}
           {beans.map((b, i) => {
-            const m = FLAVOR_MAP[b.id];
-            const f = FLAVORS[m.fam];
+            const m = FLAVOR_MAP[b.id] || computeFlavor(b);
+            const f = FLAVORS[m.fam] || FLAVORS.citrus;
             const dimmed = famF && famF !== m.fam;
-            const r = 14 / Math.sqrt(scale); // 拡大時はドットが大きくなりすぎないよう調整
+            const r = 11 / Math.sqrt(scale); // 拡大時はドットが大きくなりすぎないよう調整
             return (
               <button key={b.id} onClick={() => { if (moved.current) return; onOpen(b); }} title={b.name}
                 className="bt-dot"
                 style={{
                   position: "absolute", left: `${m.fx}%`, top: `${m.fy}%`,
-                  width: 30, height: 30, marginLeft: -15, marginTop: -15,
+                  width: 26, height: 26, marginLeft: -13, marginTop: -13,
                   background: "transparent", border: "none", cursor: "pointer", padding: 0,
-                  animationDelay: `${0.35 + i * 0.06}s`,
-                  opacity: dimmed ? 0.15 : 1,
+                  animationDelay: `${0.2 + (i % 40) * 0.02}s`,
+                  opacity: dimmed ? 0.12 : 0.92,
                   transition: "opacity 0.25s ease", zIndex: 1,
                 }}>
-                <span className="bt-dot-core"
+                <span
                   style={{
-                    display: "block", width: r, height: r, margin: `${(30 - r) / 2}px auto`,
-                    borderRadius: 999, background: f.color, border: `${3 / Math.sqrt(scale)}px solid ${f.color}`,
-                    boxShadow: "0 1px 3px rgba(23,21,15,0.2)",
-                    animationDelay: `${i * 0.4}s`,
+                    display: "block", width: r, height: r, margin: `${(26 - r) / 2}px auto`,
+                    borderRadius: 999, background: f.color, border: `${2 / Math.sqrt(scale)}px solid ${f.color}`,
+                    boxShadow: "0 1px 2px rgba(23,21,15,0.18)",
                   }} />
               </button>
             );
