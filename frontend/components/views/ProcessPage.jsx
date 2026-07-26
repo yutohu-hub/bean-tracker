@@ -3,6 +3,7 @@ import { useState } from "react";
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, perGrams } from "../lib/currency";
 import { BEANS } from "../data/beans";
+import { ROASTERS } from "../data/roasters";
 import { PROC, processKey } from "../lib/palette";
 import { BeanCard } from "../ui/BeanCard";
 import { FlavorMapView } from "./FlavorMapView";
@@ -22,7 +23,7 @@ const DESC = {
 export function ProcessPage({ pkey = "washed", onOpen, onRoaster, onBack, onProcess, cur = "JPY" }) {
   const [sort, setSort] = useState("price");
   const [mode, setMode] = useState("list");  // list | map
-  const now = BEANS.filter((b) => b.status === "now");
+  const now = BEANS.filter((b) => b.status === "now" && ROASTERS[b.r] && ROASTERS[b.r].url);
   const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
   const fmt = (jpy) => cur === "JPY" ? `¥${Math.round(jpy).toLocaleString()}` : `$${(jpy / RATES_TO_JPY.USD).toFixed(0)}`;
 
