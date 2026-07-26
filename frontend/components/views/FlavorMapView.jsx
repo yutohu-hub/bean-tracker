@@ -10,7 +10,7 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const MIN = 1, MAX = 5;
 const PROC_ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"];
 
-export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null }) {
+export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null, procOnly = null, embedded = false }) {
   const [famF, setFamF] = useState(initialFam);  // 系統ハイライト
   const [procF, setProcF] = useState(null);       // 精製ハイライト
   const [scale, setScale] = useState(1);
@@ -22,8 +22,8 @@ export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null }
   const pan = useRef(null);
   const moved = useRef(false);
 
-  // いま買える(now)豆をすべて表示（座標は手動優先・無ければ産地/精製から推定）
-  const beans = BEANS.filter((b) => b.status === "now");
+  // いま買える(now)豆を表示。procOnly 指定時はその精製方法だけに絞る（精製ごとのマップ）
+  const beans = BEANS.filter((b) => b.status === "now" && (!procOnly || processKey(b.process) === procOnly));
   // 図鑑からの遷移時は、その豆の系統をハイライト
   useEffect(() => { if (initialFam) setFamF(initialFam); }, [initialFam, focusId]);
   // now豆に存在する精製方法だけ（柑橘などの系統の上に提示するチップ用）
@@ -104,26 +104,32 @@ export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null }
   return (
     <div>
       <div style={{ fontSize: 11, color: GRAY, marginBottom: 10 }}>
-        いま買える豆を、味わいの座標で。ピンチ／ホイールで拡大、ドラッグで移動。●をタップするとその豆の詳細へ移動します。
+        {procOnly
+          ? `${PROC[procOnly] ? PROC[procOnly].label : ""}の豆だけを味わいの座標で。●をタップで詳細、系統でさらに絞り込めます。`
+          : "いま買える豆を、味わいの座標で。ピンチ／ホイールで拡大、ドラッグで移動。●をタップするとその豆の詳細へ移動します。"}
       </div>
 
-      {/* 精製方法（柑橘などの系統の「上」に提示・タップでハイライト） */}
-      <div style={{ fontSize: 9.5, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>精製方法</div>
-      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch" }}>
-        {presentProc.map((k) => (
-          <button key={k} onClick={() => setProcF(procF === k ? null : k)}
-            style={{
-              flexShrink: 0, display: "flex", alignItems: "center", gap: 5,
-              padding: "5px 11px", borderRadius: 999, fontSize: 11, cursor: "pointer",
-              border: `1px solid ${procF === k ? PROC[k].bg : LINE}`,
-              background: procF === k ? PROC[k].bg : "transparent",
-              color: procF === k ? "#fff" : INK, transition: "all 0.2s ease",
-            }}>
-            <span style={{ width: 8, height: 8, borderRadius: 3, background: procF === k ? "#fff" : PROC[k].bg }} />
-            {PROC[k].label}
-          </button>
-        ))}
-      </div>
+      {/* 精製方法（柑橘などの系統の「上」に提示・タップでハイライト）。精製ごとのマップでは非表示 */}
+      {!procOnly && (
+        <>
+          <div style={{ fontSize: 9.5, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>精製方法</div>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch" }}>
+            {presentProc.map((k) => (
+              <button key={k} onClick={() => setProcF(procF === k ? null : k)}
+                style={{
+                  flexShrink: 0, display: "flex", alignItems: "center", gap: 5,
+                  padding: "5px 11px", borderRadius: 999, fontSize: 11, cursor: "pointer",
+                  border: `1px solid ${procF === k ? PROC[k].bg : LINE}`,
+                  background: procF === k ? PROC[k].bg : "transparent",
+                  color: procF === k ? "#fff" : INK, transition: "all 0.2s ease",
+                }}>
+                <span style={{ width: 8, height: 8, borderRadius: 3, background: procF === k ? "#fff" : PROC[k].bg }} />
+                {PROC[k].label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* 系統の凡例（タップでハイライト） */}
       <div style={{ fontSize: 9.5, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>系統</div>
