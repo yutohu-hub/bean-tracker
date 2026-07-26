@@ -2,6 +2,7 @@
 import { toJPY, perGrams } from "./currency";
 
 export const PREMIUM = { key: "premium", bg: "#2A2018", accent: "#E4B84A", label: "¥5,000+/100g" };
+export const MIDHIGH = { key: "midhigh", bg: "#6E4356", accent: "#F3E7EC", label: "¥3,000–5,000/100g" };
 const PROC = {
   washed: { key: "washed", bg: "#3E6E7A", accent: "#EAF2F1", label: "Washed" },
   natural: { key: "natural", bg: "#8A3B2E", accent: "#F5EBE0", label: "Natural" },
@@ -20,11 +21,13 @@ export function processKey(proc = "") {
   return "other";
 }
 
-// 豆の表示色（¥5,000/100g以上はレア色、それ以外は精製方法の色）
+// 豆の表示色（¥5,000+はレア、¥3,000–5,000は上位価格帯、それ以外は精製方法の色）
 export function beanStyle(b) {
-  if (per100JPY(b) >= 5000) return PREMIUM;
+  const p = per100JPY(b);
+  if (p >= 5000) return PREMIUM;
+  if (p >= 3000) return MIDHIGH;
   return PROC[processKey(b.process)];
 }
 
-// 凡例（Washed / Natural / Honey / Anaerobic / レア）
-export const LEGEND = [PROC.washed, PROC.natural, PROC.honey, PROC.anaerobic, { ...PREMIUM, label: "レア(¥5,000+/100g)" }];
+// 凡例（Washed / Natural / Honey / Anaerobic / 価格帯2種）
+export const LEGEND = [PROC.washed, PROC.natural, PROC.honey, PROC.anaerobic, { ...MIDHIGH, label: "¥3,000–5,000" }, { ...PREMIUM, label: "レア(¥5,000+)" }];
