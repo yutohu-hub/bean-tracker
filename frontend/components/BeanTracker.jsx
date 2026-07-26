@@ -29,7 +29,8 @@ import { GeishaView } from "./views/GeishaView";
 import { MyLogView } from "./views/MyLogView";
 import { PremiumView } from "./views/PremiumView";
 
-const PER_PAGE = 40; // 4列 × 10行
+const ROWS_PER_PAGE = 10; // 1ページの行数（列数は可変）
+const COL_OPTIONS = [2, 3, 4, 5, 6];
 
 // ページャの表示（先頭・末尾・現在周辺＋省略）
 function pageWindow(cur, total) {
@@ -63,8 +64,12 @@ export default function BeanTracker() {
   const [fxVersion, setFxVersion] = useState(0);
   const [archiveBeans, setArchiveBeans] = useState([]);
   const [page, setPage] = useState(0);
-  // フィルタ変更時は1ページ目に戻す
-  useEffect(() => { setPage(0); }, [origin, statusF, priceF, processF, country, query, sortBy]);
+  const [cols, setCols] = useState(4); // 図鑑の列数（可変）
+  // 列数を端末に保存・復元
+  useEffect(() => { const c = Number(localStorage.getItem("bt_cols")); if (c >= 2 && c <= 6) setCols(c); }, []);
+  useEffect(() => { try { localStorage.setItem("bt_cols", String(cols)); } catch {} }, [cols]);
+  // フィルタ・列数変更時は1ページ目に戻す
+  useEffect(() => { setPage(0); }, [origin, statusF, priceF, processF, country, query, sortBy, cols]);
 
   // アーカイブを端末に永続化（更新してもカタログから消えず残る）
   useEffect(() => {
@@ -147,10 +152,11 @@ export default function BeanTracker() {
     return list;
   }, [origin, statusF, priceF, processF, country, query, sortBy, displayCur, fxVersion]);
 
-  // ページング（4×10=40件/ページ）
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  // ページング（列数 × 10行 = 1ページの件数）
+  const perPage = cols * ROWS_PER_PAGE;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / perPage));
   const curPage = Math.min(page, pageCount - 1);
-  const pageItems = filtered.slice(curPage * PER_PAGE, curPage * PER_PAGE + PER_PAGE);
+  const pageItems = filtered.slice(curPage * perPage, curPage * perPage + perPage);
   const goPage = (p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const pgStyle = (active, disabled) => ({ minWidth: 30, height: 30, padding: "0 8px", borderRadius: 8, border: `1px solid ${active ? INK : LINE}`, background: active ? INK : PAPER, color: active ? PAPER : INK, fontSize: 12, fontWeight: 700, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center" });
 
@@ -317,8 +323,16 @@ export default function BeanTracker() {
               </div>
             ) : (
               <>
-                {/* グリッド図鑑（4×10=40件/ページ） */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 18 }}>
+                {/* 列数セレクタ */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 16 }}>
+                  <span style={{ fontSize: 10.5, color: GRAY }}>列数</span>
+                  {COL_OPTIONS.map((c) => (
+                    <button key={c} onClick={() => setCols(c)}
+                      style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${cols === c ? INK : LINE}`, background: cols === c ? INK : PAPER, color: cols === c ? PAPER : INK, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "ui-monospace, monospace" }}>{c}</button>
+                  ))}
+                </div>
+                {/* グリッド図鑑（列数 × 10行 / ページ） */}
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: cols >= 5 ? 8 : 10, marginTop: 12 }}>
                   {pageItems.map((b) => <BeanCard key={b.id} bean={b} onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} />)}
                 </div>
                 {filtered.length === 0 && (
@@ -336,7 +350,7 @@ export default function BeanTracker() {
                 )}
                 {filtered.length > 0 && (
                   <div style={{ textAlign: "center", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, marginTop: 10 }}>
-                    {curPage * PER_PAGE + 1}–{Math.min((curPage + 1) * PER_PAGE, filtered.length)} / {filtered.length}銘柄（{pageCount}ページ）
+                    {curPage * perPage + 1}–{Math.min((curPage + 1) * perPage, filtered.length)} / {filtered.length}銘柄（{pageCount}ページ）
                   </div>
                 )}
               </>
