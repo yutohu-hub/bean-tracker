@@ -29,6 +29,7 @@ import { FlavorMapView } from "./views/FlavorMapView";
 import { GeishaView } from "./views/GeishaView";
 import { MyLogView } from "./views/MyLogView";
 import { PremiumView } from "./views/PremiumView";
+import { AboutView } from "./views/AboutView";
 
 const ROWS_PER_PAGE = 10; // 1ページの行数（列数は可変）
 const COL_OPTIONS = [2, 3, 4, 5, 6];
@@ -149,7 +150,7 @@ export default function BeanTracker() {
     high: { label: displayCur === "JPY" ? "¥3,000〜" : "$20〜", test: (jpy) => jpy >= 3000 },
   };
 
-  const PROCESSES = ["すべて", "Washed", "Natural", "Honey", "Anaerobic", "Anaerobic Natural", "Anaerobic Washed"];
+  const PROCESSES = ["すべて", "Washed", "Natural", "Honey", "Anaerobic Natural", "Anaerobic Washed"];
   const COUNTRIES = useMemo(() => ["all", ...Array.from(new Set(Object.values(ROASTERS).map((r) => r.country))).sort()], []);
   const per100JPY = (b) => (toJPY(b) / perGrams(b)) * 100;
   const minSel = { width: "100%", boxSizing: "border-box", padding: "8px 9px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, background: PAPER, color: INK };
@@ -291,7 +292,7 @@ export default function BeanTracker() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 16, marginTop: 10, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["me", "マイページ"]].map(([k, l]) => (
+            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["me", "マイページ"], ["about", "About"]].map(([k, l]) => (
               <button key={k} onClick={() => setView(k)}
                 style={{
                   background: "none", border: "none", padding: "0 0 6px", cursor: "pointer",
@@ -329,6 +330,8 @@ export default function BeanTracker() {
               ? <PremiumView onOpen={setOpen} />
               : <MyLogView onOpen={setOpen} onRoaster={goRoaster} />}
           </>
+        ) : view === "about" ? (
+          <AboutView />
         ) : (
           <>
             {/* 操作系は640pxに集約（グリッドはワイド） */}

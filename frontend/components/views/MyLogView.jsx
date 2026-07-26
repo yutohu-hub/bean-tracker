@@ -5,6 +5,7 @@ import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
 import { getUser, setUser, logout, getTastings, removeTasting, mergeTastings, getPlan, setPlan, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis } from "../lib/store";
 import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings, cloudGetPlan } from "../lib/account";
+import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis";
 
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
 const rowToTasting = (r) => ({ beanId: r.bean_id, r: r.r, name: r.name, roaster: r.roaster, origin: r.origin, rating: r.rating, notes: r.notes, at: Number(r.at) || Date.now() });
@@ -107,6 +108,14 @@ export function MyLogView({ onOpen, onRoaster }) {
   const doLogout = async () => { if (signed) { await signOut(); } else { logout(); } refresh(); };
   const premium = plan.id && plan.id.startsWith("premium");
 
+  // 記録のライブAI分析（保存不要・記録から即時算出）＋相性の良いロースター3件
+  const tan = analyzeTastings(list);
+  const liveTags = [];
+  if (tan.topGroup) liveTags.push(GROUP_LABEL[tan.topGroup] || tan.topGroup);
+  if (tan.topProc) liveTags.push(tan.topProc);
+  if (tan.topFam) liveTags.push(tan.topFam);
+  const recs = recommendRoasters(tan, 3).filter((k) => ROASTERS[k]);
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -133,10 +142,52 @@ export function MyLogView({ onOpen, onRoaster }) {
         <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{avg}</div><div style={{ fontSize: 10, color: GRAY }}>平均評価</div></div>
       </div>
 
-      {/* 記録のAI分析 */}
+      {/* 記録のライブAI分析（トップ）＋おすすめロースター3件 */}
+      {tan.rated > 0 && (
+        <div style={{ marginTop: 18, padding: "16px 16px 14px", background: "#141210", color: PAPER, borderRadius: 14 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+            <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: "#B8AE9E" }}>🧠 記録のAI分析</div>
+            <div style={{ fontSize: 10, color: "#B8AE9E" }}>{tan.rated}件を分析</div>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 800, marginTop: 8, lineHeight: 1.5 }}>
+            あなたの好みは{liveTags.length ? `「${liveTags[0]}」` : "分析中"}
+          </div>
+          {liveTags.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+              {liveTags.map((t) => (
+                <span key={t} style={{ fontSize: 10.5, fontWeight: 700, color: "#141210", background: "#E4B84A", borderRadius: 999, padding: "3px 11px" }}>高評価: {t}</span>
+              ))}
+            </div>
+          )}
+          {recs.length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 10.5, color: "#B8AE9E", letterSpacing: "0.06em" }}>あなたにおすすめのロースター</div>
+              <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+                {recs.map((k, i) => {
+                  const r = ROASTERS[k];
+                  return (
+                    <button key={k} onClick={() => onRoaster(k)}
+                      style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", textAlign: "left", background: "#211E1A", border: "1px solid #3A352E", borderRadius: 10, padding: "10px 12px", cursor: "pointer", color: PAPER }}>
+                      <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, fontWeight: 800, color: "#E4B84A", width: 16, flexShrink: 0 }}>{i + 1}</span>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ display: "block", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</span>
+                        <span style={{ display: "block", fontSize: 10.5, color: "#B8AE9E", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{[r.city, r.style].filter(Boolean).join(" ・ ")}</span>
+                      </span>
+                      <span style={{ color: "#B8AE9E", fontSize: 15, flexShrink: 0 }}>›</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: 9.5, color: "#7C7365", marginTop: 8, lineHeight: 1.6 }}>※ 高評価の記録の傾向から、いま買える豆のあるロースターを相性順に表示しています。</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 保存した分析 */}
       {anas.length > 0 && (
         <div style={{ marginTop: 18 }}>
-          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.12em", color: GRAY }}>🧠 記録のAI分析</div>
+          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.12em", color: GRAY }}>💾 保存した分析</div>
           {anas.map((a) => (
             <div key={a.at} style={{ borderBottom: `1px solid ${LINE}`, padding: "10px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>

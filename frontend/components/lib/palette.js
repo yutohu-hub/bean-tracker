@@ -7,14 +7,17 @@ const PROC = {
   washed: { key: "washed", bg: "#3E6E7A", accent: "#EAF2F1", label: "Washed" },
   natural: { key: "natural", bg: "#8A3B2E", accent: "#F5EBE0", label: "Natural" },
   honey: { key: "honey", bg: "#C89A3A", accent: "#2E2A20", label: "Honey" },
-  anaerobic: { key: "anaerobic", bg: "#6B4A82", accent: "#F2E9DC", label: "Anaerobic" },
+  anatural: { key: "anatural", bg: "#7A2E6B", accent: "#F6E7F2", label: "Anaerobic Natural" },
+  awashed: { key: "awashed", bg: "#4A4A9E", accent: "#E9E9F6", label: "Anaerobic Washed" },
   other: { key: "other", bg: "#6E655A", accent: "#F2ECE2", label: "その他" },
 };
 
 export function per100JPY(b) { return (toJPY(b) / perGrams(b)) * 100; }
 
 export function processKey(proc = "") {
-  if (/Anaerobic/i.test(proc)) return "anaerobic";
+  if (/Anaerobic\s*Natural/i.test(proc)) return "anatural";
+  if (/Anaerobic\s*Washed/i.test(proc)) return "awashed";
+  if (/Anaerobic/i.test(proc)) return "anatural";
   if (/Honey/i.test(proc)) return "honey";
   if (/Natural/i.test(proc)) return "natural";
   if (/Washed/i.test(proc)) return "washed";
@@ -29,5 +32,5 @@ export function beanStyle(b) {
   return PROC[processKey(b.process)];
 }
 
-// 凡例（Washed / Natural / Honey / Anaerobic / 価格帯2種）
-export const LEGEND = [PROC.washed, PROC.natural, PROC.honey, PROC.anaerobic, { ...MIDHIGH, label: "¥3,000–5,000" }, { ...PREMIUM, label: "レア(¥5,000+)" }];
+// 凡例（Washed / Natural / Honey / Anaerobic Natural / Anaerobic Washed / 価格帯2種）
+export const LEGEND = [PROC.washed, PROC.natural, PROC.honey, PROC.anatural, PROC.awashed, { ...MIDHIGH, label: "¥3,000–5,000" }, { ...PREMIUM, label: "レア(¥5,000+)" }];
