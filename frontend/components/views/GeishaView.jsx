@@ -9,8 +9,9 @@ import { Package } from "../ui/Package";
 
 function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPremium }) {
   // いま買える(now)豆のみ・100gあたり価格の安い順
+  // 送客先ECのあるロースターに限定（「ECサイト準備中」はレアロットに出さない）
   // 無料は最大10銘柄、プレミアムは最大50銘柄まで表示
-  const live = BEANS.filter((b) => b.status === "now" && match(b));
+  const live = BEANS.filter((b) => b.status === "now" && match(b) && ROASTERS[b.r] && ROASTERS[b.r].url);
   const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
   const fmt100 = (b) => cur === "JPY" ? `¥${Math.round(per100(b)).toLocaleString()}` : `$${(per100(b) / RATES_TO_JPY.USD).toFixed(0)}`;
   const sorted = live.slice().sort((a, b) => per100(a) - per100(b));
@@ -48,7 +49,10 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
               <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{b.name}</span>
               <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: INK }}>{fmt100(b)}</span>
             </div>
-            <div style={{ fontSize: 10, color: GRAY, marginTop: 1 }}>{ROASTERS[b.r].name} ・ {b.origin} ・ {b.process}</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginTop: 1 }}>
+              <span style={{ fontSize: 10, color: GRAY }}>{ROASTERS[b.r].name} ・ {b.origin} ・ {b.process}</span>
+              <span style={{ fontSize: 10, color: GREEN, fontWeight: 700, flexShrink: 0 }}>豆の詳細 ›</span>
+            </div>
             <div style={{ height: 6, background: "#F0EDE4", borderRadius: 3, marginTop: 5, overflow: "hidden" }}>
               <div className="bt-bar" style={{
                 height: "100%", borderRadius: 3,
