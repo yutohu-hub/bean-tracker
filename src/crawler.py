@@ -79,9 +79,10 @@ def _grams_from_text(text: str) -> int:
 LAST_REASON: dict[str, str] = {}
 
 
-# Cloudflare等のレート制限で一時的に5xxを返す店が多いため、リトライで拾う。
+# Shopifyは短時間に多数アクセスすると 429(Too Many Requests) を返す。
+# 429は「今は多すぎる」という一時的な合図なので、Retry-After に従って十分待ってから再試行する。
 async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
-                          retries: int = 3) -> httpx.Response | None:
+                          retries: int = 4) -> httpx.Response | None:
     resp = None
     for attempt in range(retries):
         try:
@@ -89,23 +90,35 @@ async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
         except httpx.HTTPError as e:
             LAST_REASON["_"] = f"{type(e).__name__}"
             resp = None
+            wait = 3.0 * (2 ** attempt)
         else:
-            if resp.status_code == 200 or resp.status_code == 404:
+            if resp.status_code in (200, 404):
                 return resp
             LAST_REASON["_"] = f"HTTP {resp.status_code}"
+            if resp.status_code == 429:
+                # サーバー指定があれば従う（無ければ 15s → 30s → 60s と大きく待つ）
+                try:
+                    wait = float(resp.headers.get("retry-after", ""))
+                except ValueError:
+                    wait = 0.0
+                wait = wait or 15.0 * (2 ** attempt)
+            else:
+                wait = 3.0 * (2 ** attempt)
         if attempt < retries - 1:
-            await asyncio.sleep(1.5 * (2 ** attempt) + random.uniform(0, 0.5))
+            await asyncio.sleep(min(wait, 90.0) + random.uniform(0, 1.0))
     return resp
 
 
 # ---------------- Shopify ----------------
 
 async def _fetch_shopify(client: httpx.AsyncClient, r: dict, max_pages: int) -> list[Product] | None:
-    # 店によっては /products.json が塞がれていても /collections/all/products.json は開いている
-    for path in ("/products.json", "/collections/all/products.json"):
-        res = await _fetch_shopify_path(client, r, max_pages, path)
-        if res:
-            return res
+    res = await _fetch_shopify_path(client, r, max_pages, "/products.json")
+    if res:
+        return res
+    # 404（この経路が無い店）のときだけ別経路を試す。
+    # 429はレート制限なので、ここで追撃すると悪化させるだけ＝再試行しない。
+    if "404" in LAST_REASON.get(r["name"], ""):
+        return await _fetch_shopify_path(client, r, max_pages, "/collections/all/products.json")
     return None
 
 
@@ -117,7 +130,8 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
         resp = await _get_with_retry(client, f"{base}{path}", {"limit": 250, "page": page})
         if resp is None or resp.status_code != 200:
             if page == 1:
-                LAST_REASON[r["name"]] = f"{path} → {LAST_REASON.get('_', 'error')}"
+                why = f"HTTP {resp.status_code}" if resp is not None else LAST_REASON.get("_", "接続失敗")
+                LAST_REASON[r["name"]] = f"{path} → {why}"
                 return None
             return products
         try:
@@ -214,6 +228,7 @@ async def _fetch_woo(client: httpx.AsyncClient, r: dict, max_pages: int) -> list
 
 async def crawl_roaster(client, r, max_pages, sem) -> tuple[dict, list[Product] | None]:
     async with sem:
+        await asyncio.sleep(random.uniform(0.3, 1.2))  # 一斉アクセスを避けて間隔をあける
         platform = r.get("platform", "auto")
         if platform in ("auto", "shopify"):
             res = await _fetch_shopify(client, r, max_pages)
