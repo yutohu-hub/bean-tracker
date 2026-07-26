@@ -65,11 +65,12 @@ export default function BeanTracker() {
   const [archiveBeans, setArchiveBeans] = useState([]);
   const [page, setPage] = useState(0);
   const [cols, setCols] = useState(4); // 図鑑の列数（可変）
+  const [zukanMode, setZukanMode] = useState("beans"); // beans | roasters
   // 列数を端末に保存・復元
   useEffect(() => { const c = Number(localStorage.getItem("bt_cols")); if (c >= 2 && c <= 6) setCols(c); }, []);
   useEffect(() => { try { localStorage.setItem("bt_cols", String(cols)); } catch {} }, [cols]);
-  // フィルタ・列数変更時は1ページ目に戻す
-  useEffect(() => { setPage(0); }, [origin, statusF, priceF, processF, country, query, sortBy, cols]);
+  // フィルタ・列数・モード変更時は1ページ目に戻す
+  useEffect(() => { setPage(0); }, [origin, statusF, priceF, processF, country, query, sortBy, cols, zukanMode]);
 
   // アーカイブを端末に永続化（更新してもカタログから消えず残る）
   useEffect(() => {
@@ -152,13 +153,57 @@ export default function BeanTracker() {
     return list;
   }, [origin, statusF, priceF, processF, country, query, sortBy, displayCur, fxVersion]);
 
-  // ページング（列数 × 10行 = 1ページの件数）
+  // ロースター一覧（NOW在庫数つき・検索と国で絞り込み、在庫の多い順→名前順）
+  const nowCountByRoaster = useMemo(() => {
+    const m = {};
+    for (const b of BEANS) if (b.status === "now") m[b.r] = (m[b.r] || 0) + 1;
+    return m;
+  }, []);
+  const filteredRoasters = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return Object.entries(ROASTERS)
+      .filter(([, r]) =>
+        (country === "all" || r.country === country) &&
+        (!q || r.name.toLowerCase().includes(q) || (r.city || "").toLowerCase().includes(q)))
+      .sort((a, b) => (nowCountByRoaster[b[0]] || 0) - (nowCountByRoaster[a[0]] || 0) || a[1].name.localeCompare(b[1].name));
+  }, [query, country, nowCountByRoaster]);
+
+  // ページング（列数 × 10行 = 1ページの件数）— モードで対象リストを切替
   const perPage = cols * ROWS_PER_PAGE;
-  const pageCount = Math.max(1, Math.ceil(filtered.length / perPage));
+  const activeList = zukanMode === "roasters" ? filteredRoasters : filtered;
+  const pageCount = Math.max(1, Math.ceil(activeList.length / perPage));
   const curPage = Math.min(page, pageCount - 1);
-  const pageItems = filtered.slice(curPage * perPage, curPage * perPage + perPage);
+  const pageItems = activeList.slice(curPage * perPage, curPage * perPage + perPage);
   const goPage = (p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const pgStyle = (active, disabled) => ({ minWidth: 30, height: 30, padding: "0 8px", borderRadius: 8, border: `1px solid ${active ? INK : LINE}`, background: active ? INK : PAPER, color: active ? PAPER : INK, fontSize: 12, fontWeight: 700, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center" });
+  const unit = zukanMode === "roasters" ? "店" : "銘柄";
+  const colSelectorEl = (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 16 }}>
+      <span style={{ fontSize: 10.5, color: GRAY }}>列数</span>
+      {COL_OPTIONS.map((c) => (
+        <button key={c} onClick={() => setCols(c)}
+          style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${cols === c ? INK : LINE}`, background: cols === c ? INK : PAPER, color: cols === c ? PAPER : INK, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "ui-monospace, monospace" }}>{c}</button>
+      ))}
+    </div>
+  );
+  const pagerEl = (
+    <>
+      {pageCount > 1 && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 22, flexWrap: "wrap" }}>
+          <button disabled={curPage === 0} onClick={() => goPage(curPage - 1)} style={pgStyle(false, curPage === 0)}>‹</button>
+          {pageWindow(curPage, pageCount).map((p, i) => p === "…"
+            ? <span key={"e" + i} style={{ color: GRAY, fontSize: 12, padding: "0 2px" }}>…</span>
+            : <button key={p} onClick={() => goPage(p)} style={pgStyle(p === curPage, false)}>{p + 1}</button>)}
+          <button disabled={curPage === pageCount - 1} onClick={() => goPage(curPage + 1)} style={pgStyle(false, curPage === pageCount - 1)}>›</button>
+        </div>
+      )}
+      {activeList.length > 0 && (
+        <div style={{ textAlign: "center", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, marginTop: 10 }}>
+          {curPage * perPage + 1}–{Math.min((curPage + 1) * perPage, activeList.length)} / {activeList.length}{unit}（{pageCount}ページ）
+        </div>
+      )}
+    </>
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: PAPER, fontFamily: `"Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif`, color: INK }}>
@@ -254,9 +299,17 @@ export default function BeanTracker() {
           <MyLogView onOpen={setOpen} onRoaster={goRoaster} />
         ) : (
           <>
+            {/* 表示切替：豆 / ロースター */}
+            <div style={{ display: "inline-flex", border: `1px solid ${INK}`, borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
+              {[["beans", "豆"], ["roasters", "ロースター"]].map(([k, l]) => (
+                <button key={k} onClick={() => setZukanMode(k)}
+                  style={{ padding: "6px 16px", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, background: zukanMode === k ? INK : PAPER, color: zukanMode === k ? PAPER : INK }}>{l}</button>
+              ))}
+            </div>
             {/* フリーワード検索 */}
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ロースター名・農園名・豆名で検索"
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={zukanMode === "roasters" ? "ロースター名・都市で検索" : "ロースター名・農園名・豆名で検索"}
               style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 13, marginBottom: 8, background: PAPER, color: INK }} />
+            {zukanMode === "beans" && (<>
             {/* フィルタ（ミニマル：産地・価格・精製・国をセレクトに集約） */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
               <select value={origin} onChange={(e) => setOrigin(e.target.value)} style={minSel} aria-label="産地">
@@ -286,7 +339,29 @@ export default function BeanTracker() {
               ))}
               <div style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, alignSelf: "center" }}>{filtered.length} 銘柄</div>
             </div>
-            {statusF === "archive" ? (
+            </>)}
+            {zukanMode === "roasters" ? (
+              <>
+                {colSelectorEl}
+                {/* ロースター図鑑 */}
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: cols >= 5 ? 8 : 10, marginTop: 12 }}>
+                  {pageItems.map(([rid, r]) => (
+                    <button key={rid} onClick={() => goRoaster(rid, "now")} className="bt-card"
+                      style={{ display: "flex", flexDirection: "column", gap: 5, background: PAPER, border: `1px solid ${LINE}`, borderRadius: 10, padding: "11px 11px", cursor: "pointer", textAlign: "left" }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                      <div style={{ fontSize: 9.5, color: GRAY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.city} · {r.country}</div>
+                      <div style={{ marginTop: 2, fontFamily: "ui-monospace, monospace", fontSize: 9.5 }}>
+                        <span style={{ color: (nowCountByRoaster[rid] || 0) ? GREEN : GRAY }}>NOW {nowCountByRoaster[rid] || 0}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {activeList.length === 0 && (
+                  <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "50px 0" }}>該当するロースターがありません。</div>
+                )}
+                {pagerEl}
+              </>
+            ) : statusF === "archive" ? (
               /* ARCHIVE: ロースターを選んで歴代ポートフォリオへ */
               <div style={{ marginTop: 18 }}>
                 <div style={{ fontSize: 11, color: GRAY, marginBottom: 14 }}>
@@ -323,14 +398,7 @@ export default function BeanTracker() {
               </div>
             ) : (
               <>
-                {/* 列数セレクタ */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 16 }}>
-                  <span style={{ fontSize: 10.5, color: GRAY }}>列数</span>
-                  {COL_OPTIONS.map((c) => (
-                    <button key={c} onClick={() => setCols(c)}
-                      style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${cols === c ? INK : LINE}`, background: cols === c ? INK : PAPER, color: cols === c ? PAPER : INK, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "ui-monospace, monospace" }}>{c}</button>
-                  ))}
-                </div>
+                {colSelectorEl}
                 {/* グリッド図鑑（列数 × 10行 / ページ） */}
                 <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: cols >= 5 ? 8 : 10, marginTop: 12 }}>
                   {pageItems.map((b) => <BeanCard key={b.id} bean={b} onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} />)}
@@ -338,21 +406,7 @@ export default function BeanTracker() {
                 {filtered.length === 0 && (
                   <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "50px 0" }}>該当する豆がありません。フィルタを変えてみてください。</div>
                 )}
-                {/* ページャ */}
-                {pageCount > 1 && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 22, flexWrap: "wrap" }}>
-                    <button disabled={curPage === 0} onClick={() => goPage(curPage - 1)} style={pgStyle(false, curPage === 0)}>‹</button>
-                    {pageWindow(curPage, pageCount).map((p, i) => p === "…"
-                      ? <span key={"e" + i} style={{ color: GRAY, fontSize: 12, padding: "0 2px" }}>…</span>
-                      : <button key={p} onClick={() => goPage(p)} style={pgStyle(p === curPage, false)}>{p + 1}</button>)}
-                    <button disabled={curPage === pageCount - 1} onClick={() => goPage(curPage + 1)} style={pgStyle(false, curPage === pageCount - 1)}>›</button>
-                  </div>
-                )}
-                {filtered.length > 0 && (
-                  <div style={{ textAlign: "center", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, marginTop: 10 }}>
-                    {curPage * perPage + 1}–{Math.min((curPage + 1) * perPage, filtered.length)} / {filtered.length}銘柄（{pageCount}ページ）
-                  </div>
-                )}
+                {pagerEl}
               </>
             )}
             {/* フッター注記 */}
