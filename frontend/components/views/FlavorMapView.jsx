@@ -185,7 +185,7 @@ export function FlavorMapView({ onOpen, cur }) {
 
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: GRAY, marginTop: 6 }}>
         <span>● いま買える豆（タップで詳細へ）</span>
-        <span>座標は精製・焙煎からの位置づけ（優劣ではありません）</span>
+        <span>系統は豆ごとの風味（無ければ産地・精製）で分類</span>
       </div>
 
       <div style={{ textAlign: "center", fontSize: 10.5, color: GRAY, marginTop: 14 }}>
