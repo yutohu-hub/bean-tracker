@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
-import { getUser, setUser, logout, getTastings, removeTasting, mergeTastings, getPlan, setPlan, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis } from "../lib/store";
+import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getPlan, setPlan, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis } from "../lib/store";
 import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings, cloudGetPlan } from "../lib/account";
 import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis";
 
@@ -22,6 +22,16 @@ export function MyLogView({ onOpen, onRoaster }) {
   const [plan, setPlanState] = useState({ id: "free" });
   const [diags, setDiags] = useState([]);
   const [anas, setAnas] = useState([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ name: "", roaster: "", origin: "", rating: 0, notes: "" });
+
+  const saveManual = () => {
+    if (!form.name.trim() || !form.rating) return;
+    upsertTasting({ beanId: -Date.now(), r: null, name: form.name.trim(), roaster: form.roaster.trim(), origin: form.origin.trim(), rating: form.rating, notes: form.notes.trim() });
+    setForm({ name: "", roaster: "", origin: "", rating: 0, notes: "" });
+    setShowAdd(false);
+    refresh();
+  };
 
   const refresh = () => { setU(getUser()); setList(getTastings()); setSession(getSession()); setPlanState(getPlan()); setDiags(getDiagHistory()); setAnas(getAnalysisHistory()); };
 
@@ -140,6 +150,45 @@ export function MyLogView({ onOpen, onRoaster }) {
       <div style={{ display: "flex", gap: 18, marginTop: 12, borderTop: `2px solid ${INK}`, borderBottom: `1px solid ${LINE}`, padding: "12px 0" }}>
         <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{list.length}</div><div style={{ fontSize: 10, color: GRAY }}>記録した豆</div></div>
         <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{avg}</div><div style={{ fontSize: 10, color: GRAY }}>平均評価</div></div>
+      </div>
+
+      {/* 過去に飲んだ豆を手動で記録（図鑑に無い豆もカード化） */}
+      <div style={{ marginTop: 12 }}>
+        {!showAdd ? (
+          <button onClick={() => setShowAdd(true)}
+            style={{ width: "100%", padding: "12px 0", background: INK, color: PAPER, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            ＋ 過去に飲んだ豆を記録
+          </button>
+        ) : (
+          <div style={{ padding: "14px 16px", border: `1px solid ${LINE}`, borderRadius: 12, background: "#F7F5EF" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <div style={{ fontSize: 13, fontWeight: 800 }}>☕ 飲んだ豆を記録</div>
+              <button onClick={() => setShowAdd(false)} style={{ background: "none", border: "none", fontSize: 11, color: GRAY, cursor: "pointer" }}>閉じる</button>
+            </div>
+            <div style={{ fontSize: 10.5, color: GRAY, marginTop: 3, lineHeight: 1.6 }}>図鑑に無い豆でもOK。銘柄名と評価だけで記録できます。</div>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="銘柄名（必須）例：Ethiopia Guji"
+              style={{ width: "100%", boxSizing: "border-box", marginTop: 10, padding: "9px 11px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 13, background: PAPER, color: INK }} />
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <input value={form.roaster} onChange={(e) => setForm({ ...form, roaster: e.target.value })} placeholder="ロースター（任意）"
+                style={{ flex: 1, minWidth: 0, boxSizing: "border-box", padding: "9px 11px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12.5, background: PAPER, color: INK }} />
+              <input value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} placeholder="産地（任意）"
+                style={{ flex: 1, minWidth: 0, boxSizing: "border-box", padding: "9px 11px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12.5, background: PAPER, color: INK }} />
+            </div>
+            <div style={{ display: "flex", gap: 6, marginTop: 10, alignItems: "center" }}>
+              <span style={{ fontSize: 11, color: GRAY, marginRight: 2 }}>評価</span>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button key={n} onClick={() => setForm({ ...form, rating: n })} aria-label={`${n}点`}
+                  style={{ background: "none", border: "none", cursor: "pointer", fontSize: 24, lineHeight: 1, padding: 0, color: n <= form.rating ? "#E4A11B" : LINE }}>★</button>
+              ))}
+            </div>
+            <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="香り・酸味・甘み・余韻など、感じた味をメモ（任意）"
+              style={{ width: "100%", boxSizing: "border-box", marginTop: 8, minHeight: 54, padding: "8px 10px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12.5, resize: "vertical", background: PAPER, color: INK, fontFamily: "inherit" }} />
+            <button onClick={saveManual} disabled={!form.name.trim() || !form.rating}
+              style={{ width: "100%", marginTop: 8, padding: "11px 0", background: (form.name.trim() && form.rating) ? INK : "#EDEAE1", color: (form.name.trim() && form.rating) ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: (form.name.trim() && form.rating) ? "pointer" : "default" }}>
+              記録する
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 記録のライブAI分析（トップ）＋おすすめロースター3件 */}
