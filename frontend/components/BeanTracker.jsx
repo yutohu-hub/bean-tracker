@@ -26,6 +26,7 @@ import { RoasterPage } from "./views/RoasterPage";
 import { GlobeView } from "./views/GlobeView";
 import { DiagnosisView } from "./views/DiagnosisView";
 import { FlavorMapView } from "./views/FlavorMapView";
+import { ProcessChart } from "./views/ProcessChart";
 import { GeishaView } from "./views/GeishaView";
 import { MyLogView } from "./views/MyLogView";
 import { PremiumView } from "./views/PremiumView";
@@ -314,7 +315,10 @@ export default function BeanTracker() {
         ) : view === "shindan" ? (
           <DiagnosisView onRoaster={goRoaster} />
         ) : view === "flavor" ? (
-          <FlavorMapView onOpen={setOpen} cur={displayCur} />
+          <>
+            <FlavorMapView onOpen={setOpen} cur={displayCur} />
+            <ProcessChart cur={displayCur} />
+          </>
         ) : view === "geisha" ? (
           <GeishaView onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} onPremium={() => { setView("me"); setMeTab("premium"); window.scrollTo(0, 0); }} />
         ) : view === "me" ? (

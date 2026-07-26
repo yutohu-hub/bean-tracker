@@ -3,7 +3,7 @@ import { toJPY, perGrams } from "./currency";
 
 export const PREMIUM = { key: "premium", bg: "#2A2018", accent: "#E4B84A", label: "¥5,000+/100g" };
 export const MIDHIGH = { key: "midhigh", bg: "#6E4356", accent: "#F3E7EC", label: "¥3,000–5,000/100g" };
-const PROC = {
+export const PROC = {
   washed: { key: "washed", bg: "#3E6E7A", accent: "#EAF2F1", label: "Washed" },
   natural: { key: "natural", bg: "#8A3B2E", accent: "#F5EBE0", label: "Natural" },
   honey: { key: "honey", bg: "#C89A3A", accent: "#2E2A20", label: "Honey" },
