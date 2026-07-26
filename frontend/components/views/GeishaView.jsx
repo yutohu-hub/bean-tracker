@@ -28,8 +28,8 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
       {/* ライブカウンター */}
       <div style={{ borderTop: `2px solid ${INK}`, borderBottom: `1px solid ${LINE}`, padding: "12px 0", marginTop: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="bt-live" style={{ width: 8, height: 8, borderRadius: 999, background: GREEN }} />
-          <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>LIVE</span>
+          <span className="bt-live" style={{ width: 8, height: 8, borderRadius: 999, background: "#E0332B", boxShadow: "0 0 0 3px rgba(224,51,43,0.18)" }} />
+          <span className="bt-live" style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: "#E0332B", fontWeight: 700 }}>LIVE</span>
         </div>
         <div style={{ fontSize: 19, fontWeight: 800, marginTop: 5 }}>
           いま世界で買える <span style={{ fontFamily: "ui-monospace, monospace" }}>{live.length}</span> 銘柄
