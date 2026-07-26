@@ -28,6 +28,7 @@ import { DiagnosisView } from "./views/DiagnosisView";
 import { FlavorMapView } from "./views/FlavorMapView";
 import { ProcessChart } from "./views/ProcessChart";
 import { ProcessPage } from "./views/ProcessPage";
+import { FLAVOR_MAP, computeFlavor } from "./data/flavors";
 import { GeishaView } from "./views/GeishaView";
 import { MyLogView } from "./views/MyLogView";
 import { PremiumView } from "./views/PremiumView";
@@ -55,6 +56,12 @@ export default function BeanTracker() {
   const [roasterTab, setRoasterTab] = useState("now");
   const [procKey, setProcKey] = useState("washed");
   const goProcess = (k) => { setProcKey(k); setView("process"); window.scrollTo(0, 0); };
+  const [flavorFocus, setFlavorFocus] = useState({ fam: null, id: null });
+  const goFlavor = (bean) => {
+    const m = FLAVOR_MAP[bean.id] || computeFlavor(bean);
+    setFlavorFocus({ fam: m.fam, id: bean.id });
+    setView("flavor"); window.scrollTo(0, 0);
+  };
   const [origin, setOrigin] = useState("すべて");
   const [statusF, setStatusF] = useState("all");
   const [open, setOpen] = useState(null);
@@ -297,7 +304,7 @@ export default function BeanTracker() {
           </div>
           <div style={{ display: "flex", gap: 16, marginTop: 10, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
             {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["me", "マイページ"], ["about", "About"]].map(([k, l]) => (
-              <button key={k} onClick={() => setView(k)}
+              <button key={k} onClick={() => { setView(k); setFlavorFocus({ fam: null, id: null }); }}
                 style={{
                   background: "none", border: "none", padding: "0 0 6px", cursor: "pointer",
                   fontSize: 12.5, letterSpacing: "0.12em", whiteSpace: "nowrap", flexShrink: 0,
@@ -319,7 +326,7 @@ export default function BeanTracker() {
           <DiagnosisView onRoaster={goRoaster} />
         ) : view === "flavor" ? (
           <>
-            <FlavorMapView onOpen={setOpen} cur={displayCur} />
+            <FlavorMapView onOpen={setOpen} cur={displayCur} initialFam={flavorFocus.fam} focusId={flavorFocus.id} />
             <ProcessChart cur={displayCur} onProcess={goProcess} />
           </>
         ) : view === "process" ? (
@@ -488,7 +495,7 @@ export default function BeanTracker() {
         </div>
       </footer>
 
-      <DetailSheet bean={open} onClose={() => setOpen(null)} onRoaster={goRoaster} cur={displayCur} />
+      <DetailSheet bean={open} onClose={() => setOpen(null)} onRoaster={goRoaster} onFlavor={goFlavor} cur={displayCur} />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { getTasting, upsertTasting, removeTasting, isRestock, toggleRestock } fr
 import { ROASTERS } from "../data/roasters";
 import { Package } from "./Package";
 
-export function DetailSheet({ bean, onClose, onRoaster, cur }) {
+export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
   const [rating, setRating] = useState(0);
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
@@ -91,6 +91,12 @@ export function DetailSheet({ bean, onClose, onRoaster, cur }) {
             <div style={{ textAlign: "center", fontSize: 10, color: GRAY, marginTop: 8, fontFamily: "ui-monospace, monospace" }}>
               ↗ {roaster.url} へ送客（/go/{String(bean.id).padStart(4, "0")}・utm付き）
             </div>
+          )}
+          {bean.status === "now" && onFlavor && (
+            <button onClick={() => { onClose(); onFlavor(bean); }}
+              style={{ width: "100%", marginTop: 10, padding: "11px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+              🗺 味わいマップでこの豆を見る →
+            </button>
           )}
         </div>
 
