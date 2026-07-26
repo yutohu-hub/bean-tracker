@@ -387,7 +387,7 @@ export const eastAsiaBeans = [
   { id: 1349, r: "gongshetaichung", name: "ルワンダ Lot", origin: "ルワンダ", process: "Washed", amount: 658, cur: "TWD", per: "227g", status: "now", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
   { id: 1350, r: "gongshetaichung", name: "コスタリカ Lot", origin: "コスタリカ", process: "Washed", amount: 722, cur: "TWD", per: "227g", status: "now", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
   { id: 1351, r: "gongshetaichung", name: "インドネシア Lot", origin: "インドネシア", process: "Natural", amount: 618, cur: "TWD", per: "227g", status: "sold", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
-  { id: 1412, r: "lucent", name: "エチオピア Lot", origin: "エチオピア", process: "Washed", amount: 1600, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-25", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
-  { id: 1413, r: "lucent", name: "ケニア Lot", origin: "ケニア", process: "Washed", amount: 1900, cur: "JPY", per: "200g", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
-  { id: 1414, r: "lucent", name: "コロンビア Lot", origin: "コロンビア", process: "Natural", amount: 1800, cur: "JPY", per: "200g", status: "sold", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+  { id: 1412, r: "lucent", name: "エチオピア ストロベリー・フローラル", origin: "エチオピア", process: "Washed", amount: 1600, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-25", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
+  { id: 1413, r: "lucent", name: "ケニア グレープフルーツ・カシス", origin: "ケニア", process: "Washed", amount: 1900, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-25", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
+  { id: 1414, r: "lucent", name: "コロンビア マスカット・スイートスパイス", origin: "コロンビア", process: "Natural", amount: 1800, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-25", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
 ];
