@@ -2,12 +2,6 @@
 import { useState } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 
-const PRINCIPLES = [
-  ["売らない", "私たちは豆を売りません。物流も在庫も持たず、あなたを各ロースターの公式ECへ送り届けることに徹します。"],
-  ["評価しない", "★評価やランキングで優劣をつけません。産地・精製・価格・味わいの座標で「探して辿り着く」ためのインフラです。"],
-  ["送客に徹する", "気になった豆は、その店の公式ページでそのまま買えます。売上はロースターに。私たちは案内役です。"],
-];
-
 const HOWTO = [
   ["図鑑", "世界中の豆をパッケージ図鑑で一覧。精製方法で色分けし、100g換算で価格を比較できます。"],
   ["地球", "本物の地球儀でロースターの所在地を表示。タップでECや Google マップへ。"],
@@ -90,22 +84,60 @@ export function AboutView({ onNavigate }) {
       <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.22em", color: GRAY }}>ABOUT</div>
       <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6, lineHeight: 1.35 }}>Find any bean, anywhere.</div>
       <div style={{ fontSize: 14, fontWeight: 700, color: GRAY, marginTop: 6, lineHeight: 1.4 }}>Log your coffees, find your perfect cup.</div>
-      <p style={{ fontSize: 13, color: INK, lineHeight: 1.9, marginTop: 10, marginBottom: 0 }}>
-        BEAN TRACKER は、世界中のスペシャルティコーヒーの豆に「探して辿り着く」ためのインフラです。
-        売らず、評価せず、あなたを各ロースターの公式ECへ送り届けることに徹します。
+
+      <p style={{ fontSize: 15.5, fontWeight: 800, color: INK, lineHeight: 1.7, marginTop: 14, marginBottom: 0 }}>
+        あなたが飲んできたコーヒーを記録し、次の一杯を探す。
+      </p>
+      <p style={{ fontSize: 13, color: INK, lineHeight: 1.95, marginTop: 12, marginBottom: 0 }}>
+        Bean Tracker は、世界中で販売されている、または過去に販売されていたコーヒー豆を記録していく、あなただけのコーヒー図鑑です。
+        マイページでは、これまでに飲んだコーヒーを記録できます。
       </p>
 
-      {/* 3つの原則 */}
-      <div style={{ marginTop: 22 }}>
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>PRINCIPLES</div>
-        <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
-          {PRINCIPLES.map(([t, d]) => (
-            <div key={t} style={{ padding: "12px 14px", background: "#F2F0E9", borderRadius: 10 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 800 }}>{t}</div>
-              <div style={{ fontSize: 12, color: INK, marginTop: 4, lineHeight: 1.8 }}>{d}</div>
-            </div>
-          ))}
+      {/* 3つの問い */}
+      <div style={{ marginTop: 16, padding: "14px 16px", borderLeft: `3px solid ${INK}`, background: "#F7F5EF", borderRadius: "0 10px 10px 0" }}>
+        <div style={{ fontSize: 13.5, color: INK, lineHeight: 2, fontWeight: 600 }}>
+          どこのロースターの豆だったのか。<br />
+          どんな産地だったのか。<br />
+          どんな味わいだったのか。
         </div>
+      </div>
+
+      <p style={{ fontSize: 13, color: INK, lineHeight: 1.95, marginTop: 14, marginBottom: 0 }}>
+        記録を重ねていくことで、「自分は今まで、どんなコーヒーを飲んできたのか」、そして「次はどんなコーヒーを飲んでみたいのか」が少しずつ見えてきます。
+        図鑑をめくるように、世界中のコーヒーを探してみてください。
+      </p>
+
+      {/* 評価は、あなたのためだけに */}
+      <div style={{ marginTop: 24, padding: "16px 18px", background: "#F2F0E9", borderRadius: 12 }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: INK }}>評価は、あなたのためだけに。</div>
+        <p style={{ fontSize: 12.5, color: INK, lineHeight: 1.95, marginTop: 8, marginBottom: 0 }}>
+          Bean Tracker では、ロースターやコーヒー豆に対するあなたの評価を、他の人が見ることはできません。
+          コーヒーの「おいしい」は、人によって違うから。誰かにとって最高の一杯が、あなたにとって最高とは限りません。
+        </p>
+        <p style={{ fontSize: 12.5, color: INK, lineHeight: 1.95, marginTop: 8, marginBottom: 0 }}>
+          だから Bean Tracker では、他人の評価に左右されるのではなく、自分自身の記憶と感覚を残すことを大切にしています。
+          飲んだ一杯を記録する。気になった豆を図鑑から探す。そして、まだ飲んだことのない一杯に出会う。
+          自分だけのコーヒーの歴史を、少しずつ作っていきましょう。
+        </p>
+      </div>
+
+      {/* PREMIUM */}
+      <div style={{ marginTop: 20, padding: "18px", background: "#141210", color: PAPER, borderRadius: 14 }}>
+        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.2em", color: "#E4B84A" }}>PREMIUM</div>
+        <div style={{ fontSize: 16, fontWeight: 800, marginTop: 6 }}>希少なコーヒーを、誰よりも早く。</div>
+        <p style={{ fontSize: 12.5, color: "#D8D2C6", lineHeight: 1.95, marginTop: 8, marginBottom: 0 }}>
+          Premium では、希少豆や限定豆の入荷情報をいち早く受け取ることができます。
+          気になる豆が入荷したときには通知を受け取り、そのまま購入へ。「飲んでみたい」と思った一杯を、逃さない。
+          あなたのコーヒー図鑑に、まだ見ぬ一杯を加えてみてください。
+        </p>
+      </div>
+
+      {/* クロージング */}
+      <div style={{ marginTop: 24, textAlign: "center" }}>
+        <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: "0.06em" }}>記録する。探す。出会う。</div>
+        <p style={{ fontSize: 12.5, color: GRAY, lineHeight: 1.9, marginTop: 8, marginBottom: 0 }}>
+          世界中のコーヒーから、あなたにとっての「最高の一杯」を探してみてください。
+        </p>
       </div>
 
       {/* 使い方 */}
