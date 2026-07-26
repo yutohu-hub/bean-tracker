@@ -33,16 +33,25 @@ export function RoasterPage({ rid, onOpen, onBack, onRoaster, initialTab, cur })
           <h2 style={{ fontSize: 22, fontWeight: 700, color: INK, margin: 0 }}>{roaster.name}</h2>
           <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY }}>{roaster.country} / {roaster.platform}</span>
         </div>
-        <div style={{ fontSize: 12, color: GRAY, marginTop: 4 }}>{roaster.city} — {roaster.note}</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", marginTop: 12, padding: "10px 12px", background: "#F2F0E9", borderRadius: 8 }}>
-          {[["創業", roaster.founded], ["焙煎", roaster.style], ["発送", roaster.ship], ["得意産地", roaster.focus]].map(([k, v]) => (
-            <div key={k}>
-              <div style={{ fontSize: 9, color: GRAY, letterSpacing: "0.06em" }}>{k}</div>
-              <div style={{ fontSize: 11, color: INK, marginTop: 1, fontWeight: 600 }}>{v}</div>
+        <div style={{ fontSize: 12, color: GRAY, marginTop: 4 }}>{roaster.city}{roaster.note && roaster.note !== "—" ? ` — ${roaster.note}` : ""}</div>
+        {(() => {
+          const meta = [["創業", roaster.founded], ["焙煎", roaster.style], ["発送", roaster.ship], ["得意産地", roaster.focus]]
+            .filter(([, v]) => v && v !== "—");
+          if (meta.length === 0) return null;
+          return (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", marginTop: 12, padding: "10px 12px", background: "#F2F0E9", borderRadius: 8 }}>
+              {meta.map(([k, v]) => (
+                <div key={k}>
+                  <div style={{ fontSize: 9, color: GRAY, letterSpacing: "0.06em" }}>{k}</div>
+                  <div style={{ fontSize: 11, color: INK, marginTop: 1, fontWeight: 600 }}>{v}</div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <p style={{ fontSize: 12, color: INK, lineHeight: 1.85, marginTop: 12, marginBottom: 0 }}>{roaster.bio}</p>
+          );
+        })()}
+        {roaster.bio && roaster.bio !== "—" && (
+          <p style={{ fontSize: 12, color: INK, lineHeight: 1.85, marginTop: 12, marginBottom: 0 }}>{roaster.bio}</p>
+        )}
       </div>
       {roaster.url && (
         <a href={shopHref(roaster)} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", marginTop: 14, padding: "12px 0", background: INK, color: PAPER, borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
