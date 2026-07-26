@@ -8,7 +8,7 @@ settings:
   min_oos_hours: 12      # これ以上欠品していた商品が復活したら「再入荷」と判定
   max_pages: 4           # 1店舗あたり最大取得ページ数（250商品/ページ）
   timeout_sec: 20
-  concurrency: 2            # Shopifyの429(レート制限)を避けるため低めに保つ
+  concurrency: 4            # 429はIP単位の制限で待っても解消しないため、素早く回して短時間で終える
 
 roasters:
   # ---- 日本 ----
