@@ -147,7 +147,7 @@ export default function BeanTracker() {
     high: { label: displayCur === "JPY" ? "¥3,000〜" : "$20〜", test: (jpy) => jpy >= 3000 },
   };
 
-  const PROCESSES = ["すべて", "Washed", "Natural", "Honey", "Anaerobic"];
+  const PROCESSES = ["すべて", "Washed", "Natural", "Honey", "Anaerobic", "Anaerobic Natural", "Anaerobic Washed"];
   const COUNTRIES = useMemo(() => ["all", ...Array.from(new Set(Object.values(ROASTERS).map((r) => r.country))).sort()], []);
   const per100JPY = (b) => (toJPY(b) / perGrams(b)) * 100;
   const minSel = { width: "100%", boxSizing: "border-box", padding: "8px 9px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, background: PAPER, color: INK };
@@ -163,8 +163,10 @@ export default function BeanTracker() {
         PRICE_BANDS[priceF].test(toJPY(b)) &&
         (!q || b.name.toLowerCase().includes(q) || r.name.toLowerCase().includes(q) || (b.origin || "").toLowerCase().includes(q));
     });
+    const ts = (b) => (b.updatedAt ? Date.parse(b.updatedAt) || 0 : 0);
     if (sortBy === "p100asc") list = list.slice().sort((a, b) => per100JPY(a) - per100JPY(b));
     else if (sortBy === "p100desc") list = list.slice().sort((a, b) => per100JPY(b) - per100JPY(a));
+    else if (sortBy === "new") list = list.slice().sort((a, b) => (ts(b) - ts(a)) || (b.id - a.id));
     return list;
   }, [origin, statusF, priceF, processF, country, query, sortBy, displayCur, fxVersion]);
 
@@ -344,6 +346,7 @@ export default function BeanTracker() {
               </select>
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={minSel} aria-label="並び替え">
                 <option value="default">並び：おすすめ順</option>
+                <option value="new">新着順</option>
                 <option value="p100asc">価格/100g 安い順</option>
                 <option value="p100desc">価格/100g 高い順</option>
               </select>
