@@ -43,6 +43,8 @@ _NONCOFFEE = re.compile("|".join([
     r"\bbook\b", r"書籍", r"写真集", r"magazine", r"\bzine\b", r"invoice", r"overdue", r"\btraining\b", r"latte\s?art", r"ceramics?", r"handmade", r"g-?shock", r"\btimex\b",
     r"the\sbusiness\sof\sspecialty", r"barista\shustle",
     r"\bwholesale\b", r"卸", r"業務用", r"バルク", r"\bbulk\b", r"coffee\s?sacks?", r"\bsack\b",
+    # 日本語の非コーヒー（ギフト/セット/焼き菓子など）
+    r"ギフト", r"詰め合わせ", r"飲み比べ", r"アソート", r"福袋", r"セット", r"バナナブレッド", r"ブレッド", r"焼き菓子", r"洋菓子", r"和菓子", r"クッキー", r"マフィン", r"スコーン", r"ドーナツ", r"プリン", r"ビスケット", r"グラノーラ", r"カヌレ", r"マドレーヌ", r"フィナンシェ",
 ]), re.I)
 _COE = re.compile(r"cup of excellence|\bcoe\b", re.I)
 _KG = re.compile(r"(\d+(?:\.\d+)?)\s?kg\b", re.I)
@@ -112,9 +114,21 @@ def main() -> None:
     bid = 100000
     today = datetime.date.today().isoformat()
     year = today[:4]
+    # 豆名の重複判定用（日本語も残すため、区切り記号だけ除去）
+    bnorm = lambda s: re.sub(r"[\s　_\-\[\]（）()／/|、。,.:：!！’'\"]", "", (s or "").lower())
     for rname, prods in by_roaster.items():
         # 豆以外（器具・グッズ・ティー・RTD・業務用 等）を除外して整理整頓
         prods = [p for p in prods if is_coffee(p.get("title"), int(p.get("grams") or 0))]
+        # 同一ロースター内の同名の豆（filter/espresso違い・再掲など）を1件に。now/在庫ありを優先
+        prods.sort(key=lambda p: 0 if (p.get("status") == "now" or p.get("available")) else 1)
+        seen_names, uniq = set(), []
+        for p in prods:
+            n = bnorm(p.get("title"))
+            if n and n in seen_names:
+                continue
+            seen_names.add(n)
+            uniq.append(p)
+        prods = uniq
         if not prods:  # コーヒー豆が無くなった店は追加しない
             continue
         key = seed.get(norm(rname)) or slug(rname)
