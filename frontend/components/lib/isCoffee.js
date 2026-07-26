@@ -30,6 +30,8 @@ const NON_COFFEE = [
   /cold ?brew|コールドブリュー|水出し|アイスコーヒー/,
   // インスタント・フリーズドライ
   /\binstant\b|インスタント|freeze ?dried|フリーズドライ/,
+  // アパレル・雑貨・パーツ・お香・ミネラル等（豆ではない物販）
+  /\bshirts?\b|\bpants\b|\btrousers\b|\bjacket\b|\bsweater\b|\bbandana\b|\bshoes\b|incen[cs]e|お香|\bhat\b|\bbags?\b|\bbasket\b|\bjug\b|\bbooster\b|\bmineral\b|ミネラル/,
 ];
 
 // コーヒー豆（＝図鑑に載せる）なら true
