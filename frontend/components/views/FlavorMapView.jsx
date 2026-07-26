@@ -3,13 +3,16 @@ import { useState, useRef, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { FLAVORS, FLAVOR_MAP, computeFlavor } from "../data/flavors";
+import { PROC, processKey } from "../lib/palette";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const MIN = 1, MAX = 5;
+const PROC_ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"];
 
-export function FlavorMapView({ onOpen, cur }) {
-  const [famF, setFamF] = useState(null);     // 系統ハイライト
+export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null }) {
+  const [famF, setFamF] = useState(initialFam);  // 系統ハイライト
+  const [procF, setProcF] = useState(null);       // 精製ハイライト
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
@@ -21,6 +24,10 @@ export function FlavorMapView({ onOpen, cur }) {
 
   // いま買える(now)豆をすべて表示（座標は手動優先・無ければ産地/精製から推定）
   const beans = BEANS.filter((b) => b.status === "now");
+  // 図鑑からの遷移時は、その豆の系統をハイライト
+  useEffect(() => { if (initialFam) setFamF(initialFam); }, [initialFam, focusId]);
+  // now豆に存在する精製方法だけ（柑橘などの系統の上に提示するチップ用）
+  const presentProc = PROC_ORDER.filter((k) => beans.some((b) => processKey(b.process) === k));
 
   // 目標スケールへ rAF でイージング（毎フレーム寄せて滑らかに）
   const scaleRef = useRef(1);
@@ -100,7 +107,26 @@ export function FlavorMapView({ onOpen, cur }) {
         いま買える豆を、味わいの座標で。ピンチ／ホイールで拡大、ドラッグで移動。●をタップするとその豆の詳細へ移動します。
       </div>
 
+      {/* 精製方法（柑橘などの系統の「上」に提示・タップでハイライト） */}
+      <div style={{ fontSize: 9.5, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>精製方法</div>
+      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch" }}>
+        {presentProc.map((k) => (
+          <button key={k} onClick={() => setProcF(procF === k ? null : k)}
+            style={{
+              flexShrink: 0, display: "flex", alignItems: "center", gap: 5,
+              padding: "5px 11px", borderRadius: 999, fontSize: 11, cursor: "pointer",
+              border: `1px solid ${procF === k ? PROC[k].bg : LINE}`,
+              background: procF === k ? PROC[k].bg : "transparent",
+              color: procF === k ? "#fff" : INK, transition: "all 0.2s ease",
+            }}>
+            <span style={{ width: 8, height: 8, borderRadius: 3, background: procF === k ? "#fff" : PROC[k].bg }} />
+            {PROC[k].label}
+          </button>
+        ))}
+      </div>
+
       {/* 系統の凡例（タップでハイライト） */}
+      <div style={{ fontSize: 9.5, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>系統</div>
       <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch" }}>
         {Object.entries(FLAVORS).map(([k, f]) => (
           <button key={k} onClick={() => setFamF(famF === k ? null : k)}
@@ -140,24 +166,28 @@ export function FlavorMapView({ onOpen, cur }) {
           {beans.map((b, i) => {
             const m = FLAVOR_MAP[b.id] || computeFlavor(b);
             const f = FLAVORS[m.fam] || FLAVORS.citrus;
-            const dimmed = famF && famF !== m.fam;
-            const r = 11 / Math.sqrt(scale); // 拡大時はドットが大きくなりすぎないよう調整
+            const pk = processKey(b.process);
+            const isFocus = focusId && b.id === focusId;
+            const dimmed = !isFocus && ((famF && famF !== m.fam) || (procF && procF !== pk));
+            const base = 11 / Math.sqrt(scale); // 拡大時はドットが大きくなりすぎないよう調整
+            const r = isFocus ? base * 1.55 : base;
             return (
               <button key={b.id} onClick={() => { if (moved.current) return; onOpen(b); }} title={b.name}
-                className="bt-dot"
+                className={isFocus ? "bt-live" : "bt-dot"}
                 style={{
                   position: "absolute", left: `${m.fx}%`, top: `${m.fy}%`,
                   width: 26, height: 26, marginLeft: -13, marginTop: -13,
                   background: "transparent", border: "none", cursor: "pointer", padding: 0,
                   animationDelay: `${0.2 + (i % 40) * 0.02}s`,
-                  opacity: dimmed ? 0.12 : 0.92,
-                  transition: "opacity 0.25s ease", zIndex: 1,
+                  opacity: dimmed ? 0.1 : 0.92,
+                  transition: "opacity 0.25s ease", zIndex: isFocus ? 3 : 1,
                 }}>
                 <span
                   style={{
                     display: "block", width: r, height: r, margin: `${(26 - r) / 2}px auto`,
-                    borderRadius: 999, background: f.color, border: `${2 / Math.sqrt(scale)}px solid ${f.color}`,
-                    boxShadow: "0 1px 2px rgba(23,21,15,0.18)",
+                    borderRadius: 999, background: f.color,
+                    border: `${(isFocus ? 2.4 : 2) / Math.sqrt(scale)}px solid ${isFocus ? INK : f.color}`,
+                    boxShadow: isFocus ? `0 0 0 ${3 / Math.sqrt(scale)}px rgba(23,21,15,0.18)` : "0 1px 2px rgba(23,21,15,0.18)",
                   }} />
               </button>
             );
@@ -185,7 +215,7 @@ export function FlavorMapView({ onOpen, cur }) {
 
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: GRAY, marginTop: 6 }}>
         <span>● いま買える豆（タップで詳細へ）</span>
-        <span>座標は精製・焙煎からの位置づけ（優劣ではありません）</span>
+        <span>系統は豆ごとの風味（無ければ産地・精製）で分類</span>
       </div>
 
       <div style={{ textAlign: "center", fontSize: 10.5, color: GRAY, marginTop: 14 }}>

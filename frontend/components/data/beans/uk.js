@@ -20,7 +20,7 @@ export const ukBeans = [
   { id: 194, r: "ozone", name: "Ethiopia Guji", origin: "エチオピア", process: "Washed", amount: 13, cur: "GBP", per: "250g", status: "now", color: "#22303A", accent: "#C8792E", year: "2026" },
   { id: 195, r: "ozone", name: "Kenya Nyeri", origin: "ケニア", process: "Washed", amount: 13, cur: "GBP", per: "250g", status: "now", color: "#E2DBC8", accent: "#5A4632", year: "2026" },
   { id: 196, r: "kissthehippo", name: "Ethiopia Kayon", origin: "エチオピア", process: "Natural", amount: 13, cur: "GBP", per: "250g", status: "now", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
-  { id: 197, r: "kissthehippo", name: "El Paraíso", origin: "コロンビア", process: "Anaerobic", amount: 13, cur: "GBP", per: "250g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },
+  { id: 197, r: "kissthehippo", name: "El Paraíso", origin: "コロンビア", process: "Anaerobic Natural", amount: 13, cur: "GBP", per: "250g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },
   { id: 368, r: "extract", name: "Ethiopia Wolde", origin: "エチオピア", process: "Washed", amount: 13, cur: "GBP", per: "250g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },
   { id: 369, r: "extract", name: "Kenya Kirinyaga", origin: "ケニア", process: "Washed", amount: 13, cur: "GBP", per: "250g", status: "now", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
   { id: 370, r: "cliftoncoffee", name: "Ethiopia Reko", origin: "エチオピア", process: "Natural", amount: 13, cur: "GBP", per: "250g", status: "now", color: "#2E2A24", accent: "#C8A96A", year: "2026" },

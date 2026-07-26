@@ -567,7 +567,28 @@ export const FLAVOR_MAP = {
   1131: { fx: 50, fy: 22, fam: "berry", notes: "ベリー・カシス" },
 };
 
-/* FLAVOR_MAP に手動座標が無い豆のために、産地・精製から味わい座標を推定する。
+/* ECサイト由来の「豆ごとの味の特徴」（豆名やノートに書かれた風味の言葉）から系統を分類する。
+   該当するキーワードがあればその系統を優先し、無ければ産地・精製から推定する。
+   優先順は、より個性を決定づける風味（ベリー/トロピカル/花・お茶/柑橘/チョコ）の順。
+   fyB: 明るい(−)↔深い(+) の微調整、fxB: クリーン(−)↔個性派(+) の微調整。 */
+const FLAVOR_KEYWORDS = [
+  ["berry",   -6,  10, /ベリー|苺|いちご|ストロベリー|ラズベリー|ブルーベリー|カシス|クランベリー|赤い果実|レッドフルーツ|プラム|チェリー|さくらんぼ|red\s*fruit|berr|cassis|cherry|plum/i],
+  ["tropical", 0,  14, /トロピカル|パイナップル|マンゴー|ライチ|パッション|パパイヤ|グァバ|グアバ|メロン|マスカット|白ぶどう|ピーチ|白桃|杏|アプリコット|tropical|pineapple|mango|lychee|passion|guava|muscat|peach|apricot/i],
+  ["floral",  -10, -4, /フローラル|花|ジャスミン|ローズ|薔薇|バラ|紅茶|ティー|ベルガモット|アールグレイ|オレンジフラワー|カモミール|ラベンダー|floral|jasmine|rose|tea|bergamot|earl\s*grey|lavender/i],
+  ["citrus",  -8,  -6, /柑橘|シトラス|レモン|ライム|オレンジ|グレープフルーツ|マンダリン|みかん|ゆず|すだち|グレフル|citrus|lemon|lime|orange|grapefruit|mandarin|yuzu/i],
+  ["choco",   14,  -2, /チョコ|カカオ|ココア|ナッツ|アーモンド|ヘーゼル|クルミ|キャラメル|ブラウンシュガー|黒糖|きび砂糖|蜂蜜|はちみつ|バニラ|モルト|麦芽|スパイス|シナモン|クローブ|香ばし|ロースト|chocolate|cocoa|cacao|nut|almond|hazelnut|caramel|brown\s*sugar|honey|vanilla|malt|spice|cinnamon/i],
+];
+
+/* 豆名・ノートなどの風味テキストから系統と座標バイアスを返す（無ければ null）。 */
+export function classifyFlavor(text = "") {
+  for (const [fam, fyB, fxB, re] of FLAVOR_KEYWORDS) {
+    if (re.test(text)) return { fam, fyB, fxB };
+  }
+  return null;
+}
+
+/* 手動座標が無い豆のために、まずECの風味記述（豆名/ノート）で分類し、
+   無ければ産地・精製から味わい座標を推定する。
    fx: 0=クリーン ←→ 100=個性派 / fy: 0=明るい ←→ 100=深い。id基準の決定論ジッターで分散。 */
 export function computeFlavor(b) {
   const proc = b.process || "", o = b.origin || "";
@@ -589,6 +610,9 @@ export function computeFlavor(b) {
   else if (/ブラジル|メキシコ|インドネシア|インド|ベトナム|中国/.test(o)) fam = "choco";
   else if (/Natural|Anaerobic/i.test(proc)) fam = "tropical";
   else fam = "citrus";
+  // ECの風味記述が豆名・ノートにあれば、それを最優先で分類に反映
+  const byNotes = classifyFlavor(`${b.name || ""} ${b.notes || ""}`);
+  if (byNotes) { fam = byNotes.fam; fx += byNotes.fxB; fy += byNotes.fyB; }
   const jx = ((b.id * 53) % 21) - 10, jy = ((b.id * 97) % 21) - 10; // -10..10
   return { fx: Math.max(4, Math.min(96, fx + jx * 0.9)), fy: Math.max(4, Math.min(96, fy + jy * 0.9)), fam };
 }

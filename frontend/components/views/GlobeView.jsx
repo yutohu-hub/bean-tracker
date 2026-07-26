@@ -24,7 +24,7 @@ const DOTSEL = "#E8A400";  // 選択中（ゴールド）
 const MIN_DOT_GAP = 13;    // マーカー同士の最小ピクセル間隔（重なり防止）
 
 const ZOOM_MIN = 1;
-const ZOOM_MAX = 6;
+const ZOOM_MAX = 42;   // 都市レベルまで深く拡大できるように
 
 export function GlobeView({ onRoaster }) {
   const svgRef = useRef(null);

@@ -477,7 +477,7 @@ export const eastAsia = {
   gongshetaichung: { name: "Gongshe Coffee", city: "台中 / 西区", country: "TW", region: "eastAsia", platform: "Shopify", note: "エチオピアを軸にした自家焙煎", coord: [120.66, 24.13],
     founded: "2021", style: "浅〜中煎り・少量焙煎", ship: "台湾内・国際発送", focus: "エチオピア・ケニア",
     bio: "台中を拠点とするスペシャルティコーヒーロースター。エチオピア・ケニアを軸に、浅〜中煎り・少量焙煎で素材の個性を引き出す。日々の一杯として、また贈り物としても親しまれている。" },
-  lucent: { name: "Lucent Coffee", city: "東京 / 台東", country: "JP", region: "eastAsia", platform: "STORES", note: "コーヒースタンド併設の焙煎所", coord: [139.79, 35.71], url: "lucentcoffee.stores.jp",
-    founded: "2019", style: "浅〜中煎り・シングルオリジン", ship: "国内発送(2〜4日)", focus: "エチオピア・中南米",
-    bio: "東京・台東区寿のコーヒースタンド併設ロースター。常時多彩なシングルオリジンを浅〜中煎りで焙煎し、素材の個性を伝える一杯を届ける。" },
+  lucent: { name: "Lucent Coffee", city: "東京 / 蔵前", country: "JP", region: "eastAsia", platform: "STORES", note: "蔵前のスタンド併設・浅煎り焙煎所", coord: [139.792, 35.703], url: "lucentcoffee.stores.jp",
+    founded: "2019", style: "浅煎り専門・シングルオリジン", ship: "国内発送・送料¥400(約5日)", focus: "エチオピア・ケニア・コロンビア",
+    bio: "東京・蔵前のコーヒースタンド併設ロースター。「何色にも染まらず、日常に自然と溶け込む」をテーマに、浅煎りで豆本来の甘さ・酸味・果実味を引き出したシングルオリジンを届ける。" },
 };

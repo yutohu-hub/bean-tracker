@@ -179,7 +179,7 @@ export const europeBeans = [
   { id: 1394, r: "simplicoffee", name: "ルワンダ Lot", origin: "ルワンダ", process: "Natural", amount: 14, cur: "EUR", per: "250g", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
   { id: 1395, r: "simplicoffee", name: "コスタリカ Lot", origin: "コスタリカ", process: "Honey", amount: 12, cur: "EUR", per: "250g", status: "now", color: "#22303A", accent: "#C8792E", year: "2026" },
   { id: 1396, r: "simplicoffee", name: "Simpli Blend", origin: "ブレンド", process: "Anaerobic Washed", amount: 15, cur: "EUR", per: "250g", status: "sold", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
-  { id: 1397, r: "theminers", name: "コスタリカ Lot", origin: "コスタリカ", process: "Anaerobic", amount: 303, cur: "CZK", per: "250g", status: "now", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
+  { id: 1397, r: "theminers", name: "コスタリカ Lot", origin: "コスタリカ", process: "Anaerobic Natural", amount: 303, cur: "CZK", per: "250g", status: "now", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
   { id: 1398, r: "theminers", name: "The Blend", origin: "ブレンド", process: "Washed", amount: 284, cur: "CZK", per: "250g", status: "now", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
   { id: 1399, r: "theminers", name: "エチオピア Lot", origin: "エチオピア", process: "Washed", amount: 389, cur: "CZK", per: "250g", status: "sold", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
   { id: 1400, r: "hardbeans", name: "ケニア Lot", origin: "ケニア", process: "Washed", amount: 51, cur: "PLN", per: "250g", status: "now", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },

@@ -26,9 +26,13 @@ import { RoasterPage } from "./views/RoasterPage";
 import { GlobeView } from "./views/GlobeView";
 import { DiagnosisView } from "./views/DiagnosisView";
 import { FlavorMapView } from "./views/FlavorMapView";
+import { ProcessChart } from "./views/ProcessChart";
+import { ProcessPage } from "./views/ProcessPage";
+import { FLAVOR_MAP, computeFlavor } from "./data/flavors";
 import { GeishaView } from "./views/GeishaView";
 import { MyLogView } from "./views/MyLogView";
 import { PremiumView } from "./views/PremiumView";
+import { AboutView } from "./views/AboutView";
 
 const ROWS_PER_PAGE = 10; // 1ページの行数（列数は可変）
 const COL_OPTIONS = [2, 3, 4, 5, 6];
@@ -50,6 +54,14 @@ export default function BeanTracker() {
   const [view, setView] = useState("zukan"); // zukan | roaster
   const [roasterId, setRoasterId] = useState(null);
   const [roasterTab, setRoasterTab] = useState("now");
+  const [procKey, setProcKey] = useState("washed");
+  const goProcess = (k) => { setProcKey(k); setView("process"); window.scrollTo(0, 0); };
+  const [flavorFocus, setFlavorFocus] = useState({ fam: null, id: null });
+  const goFlavor = (bean) => {
+    const m = FLAVOR_MAP[bean.id] || computeFlavor(bean);
+    setFlavorFocus({ fam: m.fam, id: bean.id });
+    setView("flavor"); window.scrollTo(0, 0);
+  };
   const [origin, setOrigin] = useState("すべて");
   const [statusF, setStatusF] = useState("all");
   const [open, setOpen] = useState(null);
@@ -149,7 +161,7 @@ export default function BeanTracker() {
     high: { label: displayCur === "JPY" ? "¥3,000〜" : "$20〜", test: (jpy) => jpy >= 3000 },
   };
 
-  const PROCESSES = ["すべて", "Washed", "Natural", "Honey", "Anaerobic", "Anaerobic Natural", "Anaerobic Washed"];
+  const PROCESSES = ["すべて", "Washed", "Natural", "Honey", "Anaerobic Natural", "Anaerobic Washed"];
   const COUNTRIES = useMemo(() => ["all", ...Array.from(new Set(Object.values(ROASTERS).map((r) => r.country))).sort()], []);
   const per100JPY = (b) => (toJPY(b) / perGrams(b)) * 100;
   const minSel = { width: "100%", boxSizing: "border-box", padding: "8px 9px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, background: PAPER, color: INK };
@@ -291,8 +303,8 @@ export default function BeanTracker() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 16, marginTop: 10, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["me", "マイページ"]].map(([k, l]) => (
-              <button key={k} onClick={() => setView(k)}
+            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["me", "マイページ"], ["about", "About"]].map(([k, l]) => (
+              <button key={k} onClick={() => { setView(k); setFlavorFocus({ fam: null, id: null }); }}
                 style={{
                   background: "none", border: "none", padding: "0 0 6px", cursor: "pointer",
                   fontSize: 12.5, letterSpacing: "0.12em", whiteSpace: "nowrap", flexShrink: 0,
@@ -305,7 +317,7 @@ export default function BeanTracker() {
         </div>
       </header>
 
-      <main style={{ maxWidth: view === "zukan" ? 1120 : 640, margin: "0 auto", padding: "16px 16px 60px" }}>
+      <main style={{ maxWidth: (view === "zukan" || view === "process") ? 1120 : 640, margin: "0 auto", padding: "16px 16px 60px" }}>
         {view === "roaster" && roasterId ? (
           <RoasterPage key={roasterId + roasterTab} rid={roasterId} initialTab={roasterTab} onOpen={setOpen} onBack={() => setView("zukan")} onRoaster={goRoaster} cur={displayCur} />
         ) : view === "map" ? (
@@ -313,7 +325,12 @@ export default function BeanTracker() {
         ) : view === "shindan" ? (
           <DiagnosisView onRoaster={goRoaster} />
         ) : view === "flavor" ? (
-          <FlavorMapView onOpen={setOpen} cur={displayCur} />
+          <>
+            <FlavorMapView onOpen={setOpen} cur={displayCur} initialFam={flavorFocus.fam} focusId={flavorFocus.id} />
+            <ProcessChart cur={displayCur} onProcess={goProcess} />
+          </>
+        ) : view === "process" ? (
+          <ProcessPage pkey={procKey} onOpen={setOpen} onRoaster={goRoaster} onProcess={goProcess} onBack={() => { setView("flavor"); window.scrollTo(0, 0); }} cur={displayCur} />
         ) : view === "geisha" ? (
           <GeishaView onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} onPremium={() => { setView("me"); setMeTab("premium"); window.scrollTo(0, 0); }} />
         ) : view === "me" ? (
@@ -329,6 +346,8 @@ export default function BeanTracker() {
               ? <PremiumView onOpen={setOpen} />
               : <MyLogView onOpen={setOpen} onRoaster={goRoaster} />}
           </>
+        ) : view === "about" ? (
+          <AboutView />
         ) : (
           <>
             {/* 操作系は640pxに集約（グリッドはワイド） */}
@@ -476,7 +495,7 @@ export default function BeanTracker() {
         </div>
       </footer>
 
-      <DetailSheet bean={open} onClose={() => setOpen(null)} onRoaster={goRoaster} cur={displayCur} />
+      <DetailSheet bean={open} onClose={() => setOpen(null)} onRoaster={goRoaster} onFlavor={goFlavor} cur={displayCur} />
     </div>
   );
 }

@@ -9,8 +9,9 @@ import { Package } from "../ui/Package";
 
 function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPremium }) {
   // いま買える(now)豆のみ・100gあたり価格の安い順
+  // 送客先ECのあるロースターに限定（「ECサイト準備中」はレアロットに出さない）
   // 無料は最大10銘柄、プレミアムは最大50銘柄まで表示
-  const live = BEANS.filter((b) => b.status === "now" && match(b));
+  const live = BEANS.filter((b) => b.status === "now" && match(b) && ROASTERS[b.r] && ROASTERS[b.r].url);
   const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
   const fmt100 = (b) => cur === "JPY" ? `¥${Math.round(per100(b)).toLocaleString()}` : `$${(per100(b) / RATES_TO_JPY.USD).toFixed(0)}`;
   const sorted = live.slice().sort((a, b) => per100(a) - per100(b));
@@ -28,8 +29,8 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
       {/* ライブカウンター */}
       <div style={{ borderTop: `2px solid ${INK}`, borderBottom: `1px solid ${LINE}`, padding: "12px 0", marginTop: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="bt-live" style={{ width: 8, height: 8, borderRadius: 999, background: GREEN }} />
-          <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>LIVE</span>
+          <span className="bt-live" style={{ width: 8, height: 8, borderRadius: 999, background: "#E0332B", boxShadow: "0 0 0 3px rgba(224,51,43,0.18)" }} />
+          <span className="bt-live" style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: "#E0332B", fontWeight: 700 }}>LIVE</span>
         </div>
         <div style={{ fontSize: 19, fontWeight: 800, marginTop: 5 }}>
           いま世界で買える <span style={{ fontFamily: "ui-monospace, monospace" }}>{live.length}</span> 銘柄
@@ -48,7 +49,10 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
               <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{b.name}</span>
               <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: INK }}>{fmt100(b)}</span>
             </div>
-            <div style={{ fontSize: 10, color: GRAY, marginTop: 1 }}>{ROASTERS[b.r].name} ・ {b.origin} ・ {b.process}</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginTop: 1 }}>
+              <span style={{ fontSize: 10, color: GRAY }}>{ROASTERS[b.r].name} ・ {b.origin} ・ {b.process}</span>
+              <span style={{ fontSize: 10, color: GREEN, fontWeight: 700, flexShrink: 0 }}>豆の詳細 ›</span>
+            </div>
             <div style={{ height: 6, background: "#F0EDE4", borderRadius: 3, marginTop: 5, overflow: "hidden" }}>
               <div className="bt-bar" style={{
                 height: "100%", borderRadius: 3,
@@ -94,12 +98,8 @@ export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
         </div>
       </div>
 
-      <VarietySection match={(b) => b.vt === "geisha"} title="GEISHA" sub="ゲイシャ品種" {...secProps} />
-      <VarietySection match={(b) => b.vt === "sidra"} title="SIDRA" sub="シドラ品種" {...secProps} />
-      <VarietySection match={(b) => { const m = b.name.match(/COE\s*(\d+)位/); return !!m && Number(m[1]) <= 20 && b.origin !== "エチオピア"; }} title="COE" sub="カップ・オブ・エクセレンス入賞ロット（20位以内・エチオピア以外）" {...secProps} />
-
-      {/* 新着通知CTA */}
-      <div style={{ marginTop: 24, padding: "14px 16px", background: "#F2F0E9", borderRadius: 10 }}>
+      {/* 新着通知CTA（geishaの上） */}
+      <div style={{ marginTop: 18, padding: "14px 16px", background: "#F2F0E9", borderRadius: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 700 }}>🔔 世界のどこかでレアロットが出たら、すぐ知る</div>
         <div style={{ fontSize: 11, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
           巡回が新しいゲイシャやシドラを見つけた瞬間に通知します。少量ロットの売り切れ前に。
@@ -108,6 +108,10 @@ export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
           新着レアロット通知を受け取る<span style={{ fontSize: 9.5, fontWeight: 400, marginLeft: 8, opacity: 0.7 }}>プレミアム ↗</span>
         </button>
       </div>
+
+      <VarietySection match={(b) => b.vt === "geisha"} title="GEISHA" sub="ゲイシャ品種" {...secProps} />
+      <VarietySection match={(b) => b.vt === "sidra"} title="SIDRA" sub="シドラ品種" {...secProps} />
+      <VarietySection match={(b) => { const m = b.name.match(/COE\s*(\d+)位/); return !!m && Number(m[1]) <= 20 && b.origin !== "エチオピア"; }} title="COE" sub="カップ・オブ・エクセレンス入賞ロット（20位以内・エチオピア以外）" {...secProps} />
 
       {/* 今後のセクション予告 */}
       <div style={{ marginTop: 20, padding: "12px 14px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 11, color: GRAY, lineHeight: 1.8 }}>
