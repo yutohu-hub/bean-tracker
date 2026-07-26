@@ -89,6 +89,7 @@ export function AboutView({ onNavigate }) {
       {/* ヒーロー */}
       <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.22em", color: GRAY }}>ABOUT</div>
       <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6, lineHeight: 1.35 }}>Find any bean, anywhere.</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: GRAY, marginTop: 6, lineHeight: 1.4 }}>Log your coffees, find your perfect cup.</div>
       <p style={{ fontSize: 13, color: INK, lineHeight: 1.9, marginTop: 10, marginBottom: 0 }}>
         BEAN TRACKER は、世界中のスペシャルティコーヒーの豆に「探して辿り着く」ためのインフラです。
         売らず、評価せず、あなたを各ロースターの公式ECへ送り届けることに徹します。
