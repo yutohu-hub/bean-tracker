@@ -170,7 +170,8 @@ export default function BeanTracker() {
     const q = query.trim().toLowerCase();
     let list = BEANS.filter((b) => {
       const r = ROASTERS[b.r];
-      return (origin === "すべて" || b.origin === origin) &&
+      return (r && r.url) &&   // EC送客できる（該当ロースターにECサイトがある）豆だけを図鑑に表示
+        (origin === "すべて" || b.origin === origin) &&
         (statusF === "all" ? b.status !== "sold" : b.status === statusF) &&
         (processF === "すべて" || b.process.includes(processF)) &&
         (country === "all" || r.country === country) &&

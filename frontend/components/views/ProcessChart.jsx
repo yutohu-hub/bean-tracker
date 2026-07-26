@@ -2,6 +2,7 @@
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, perGrams } from "../lib/currency";
 import { BEANS } from "../data/beans";
+import { ROASTERS } from "../data/roasters";
 import { PROC, processKey } from "../lib/palette";
 
 // 図鑑カードと同じ精製カラーで、いま買える豆を精製方法ごとに集計する棒グラフ。
@@ -9,7 +10,7 @@ const ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"];
 const JP = { washed: "水洗", natural: "ナチュラル", honey: "ハニー", anatural: "嫌気性ナチュラル", awashed: "嫌気性ウォッシュト", other: "その他" };
 
 export function ProcessChart({ cur = "JPY", onProcess }) {
-  const beans = BEANS.filter((b) => b.status === "now");
+  const beans = BEANS.filter((b) => b.status === "now" && ROASTERS[b.r] && ROASTERS[b.r].url);
   const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
   const fmt = (jpy) => cur === "JPY" ? `¥${Math.round(jpy).toLocaleString()}` : `$${(jpy / RATES_TO_JPY.USD).toFixed(0)}`;
 

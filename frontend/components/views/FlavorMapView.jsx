@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { BEANS } from "../data/beans";
+import { ROASTERS } from "../data/roasters";
 import { FLAVORS, FLAVOR_MAP, computeFlavor } from "../data/flavors";
 import { PROC, processKey } from "../lib/palette";
 
@@ -22,8 +23,8 @@ export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null, 
   const pan = useRef(null);
   const moved = useRef(false);
 
-  // いま買える(now)豆を表示。procOnly 指定時はその精製方法だけに絞る（精製ごとのマップ）
-  const beans = BEANS.filter((b) => b.status === "now" && (!procOnly || processKey(b.process) === procOnly));
+  // いま買える(now)・EC送客できる豆を表示。procOnly 指定時はその精製方法だけに絞る（精製ごとのマップ）
+  const beans = BEANS.filter((b) => b.status === "now" && ROASTERS[b.r] && ROASTERS[b.r].url && (!procOnly || processKey(b.process) === procOnly));
   // 図鑑からの遷移時は、その豆の系統をハイライト
   useEffect(() => { if (initialFam) setFamF(initialFam); }, [initialFam, focusId]);
   // now豆に存在する精製方法だけ（柑橘などの系統の上に提示するチップ用）
