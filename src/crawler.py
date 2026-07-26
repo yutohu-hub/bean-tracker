@@ -79,10 +79,11 @@ def _grams_from_text(text: str) -> int:
 LAST_REASON: dict[str, str] = {}
 
 
-# Shopifyは短時間に多数アクセスすると 429(Too Many Requests) を返す。
-# 429は「今は多すぎる」という一時的な合図なので、Retry-After に従って十分待ってから再試行する。
+# 実測: GitHub Actions のIPからは Shopify が 429 を返し続け、90秒待っても解消しない
+# （1回の巡回に58分かけて成果ゼロだった）。IP単位の制限なので待っても無駄と割り切り、
+# Retry-After が短く示された時だけ1回待ち、それ以外は素早く諦めて次の店へ進む。
 async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
-                          retries: int = 4) -> httpx.Response | None:
+                          retries: int = 3) -> httpx.Response | None:
     resp = None
     for attempt in range(retries):
         try:
@@ -90,22 +91,22 @@ async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
         except httpx.HTTPError as e:
             LAST_REASON["_"] = f"{type(e).__name__}"
             resp = None
-            wait = 3.0 * (2 ** attempt)
+            wait = 2.0 * (2 ** attempt)
         else:
             if resp.status_code in (200, 404):
                 return resp
             LAST_REASON["_"] = f"HTTP {resp.status_code}"
             if resp.status_code == 429:
-                # サーバー指定があれば従う（無ければ 15s → 30s → 60s と大きく待つ）
                 try:
                     wait = float(resp.headers.get("retry-after", ""))
                 except ValueError:
                     wait = 0.0
-                wait = wait or 15.0 * (2 ** attempt)
+                if wait <= 0 or wait > 10:
+                    return resp          # IP制限。待っても無駄なので即あきらめる
             else:
-                wait = 3.0 * (2 ** attempt)
+                wait = 2.0 * (2 ** attempt)
         if attempt < retries - 1:
-            await asyncio.sleep(min(wait, 90.0) + random.uniform(0, 1.0))
+            await asyncio.sleep(min(wait, 10.0) + random.uniform(0, 0.5))
     return resp
 
 
