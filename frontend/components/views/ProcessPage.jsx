@@ -5,6 +5,7 @@ import { RATES_TO_JPY, toJPY, perGrams } from "../lib/currency";
 import { BEANS } from "../data/beans";
 import { PROC, processKey } from "../lib/palette";
 import { BeanCard } from "../ui/BeanCard";
+import { FlavorMapView } from "./FlavorMapView";
 
 // 精製方法ごとの一覧ページ。上部のチップで精製を切り替え、その精製の「いま買える」豆を並べる。
 const ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"];
@@ -20,6 +21,7 @@ const DESC = {
 
 export function ProcessPage({ pkey = "washed", onOpen, onRoaster, onBack, onProcess, cur = "JPY" }) {
   const [sort, setSort] = useState("price");
+  const [mode, setMode] = useState("list");  // list | map
   const now = BEANS.filter((b) => b.status === "now");
   const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
   const fmt = (jpy) => cur === "JPY" ? `¥${Math.round(jpy).toLocaleString()}` : `$${(jpy / RATES_TO_JPY.USD).toFixed(0)}`;
@@ -67,19 +69,35 @@ export function ProcessPage({ pkey = "washed", onOpen, onRoaster, onBack, onProc
         </div>
       </div>
 
-      {/* 並び替え */}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} style={selStyle} aria-label="並び替え">
-          <option value="price">100g安い順</option>
-          <option value="new">新着順</option>
-        </select>
+      {/* 表示切り替え（一覧 / 味わいマップ）＋並び替え */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, gap: 10 }}>
+        <div style={{ display: "flex", border: `1px solid ${INK}`, borderRadius: 8, overflow: "hidden" }}>
+          {[["list", "☰ 一覧"], ["map", "🗺 味わいマップ"]].map(([m, l]) => (
+            <button key={m} onClick={() => setMode(m)}
+              style={{ padding: "7px 12px", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, background: mode === m ? INK : PAPER, color: mode === m ? PAPER : INK }}>{l}</button>
+          ))}
+        </div>
+        {mode === "list" && (
+          <select value={sort} onChange={(e) => setSort(e.target.value)} style={selStyle} aria-label="並び替え">
+            <option value="price">100g安い順</option>
+            <option value="new">新着順</option>
+          </select>
+        )}
       </div>
 
-      {/* 豆グリッド */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: 10, marginTop: 12 }}>
-        {list.map((b) => <BeanCard key={b.id} bean={b} onOpen={onOpen} onRoaster={onRoaster} cur={cur} />)}
-      </div>
-      {list.length === 0 && <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "50px 0" }}>この精製の在庫はいまありません。</div>}
+      {mode === "map" ? (
+        <div style={{ marginTop: 14, maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}>
+          <FlavorMapView onOpen={onOpen} cur={cur} procOnly={key} embedded />
+        </div>
+      ) : (
+        <>
+          {/* 豆グリッド */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: 10, marginTop: 12 }}>
+            {list.map((b) => <BeanCard key={b.id} bean={b} onOpen={onOpen} onRoaster={onRoaster} cur={cur} />)}
+          </div>
+          {list.length === 0 && <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "50px 0" }}>この精製の在庫はいまありません。</div>}
+        </>
+      )}
     </div>
   );
 }
