@@ -26,7 +26,7 @@ roasters:
     currency: JPY
   - name: Leaves Coffee
     country: JP
-    url: https://leavescoffee.jp
+    url: https://shop.leavescoffee.jp   # 本体サイトは商品APIを持たない。ECはこのsubdomain(Shopify)
     currency: JPY
   - name: Onibus Coffee
     country: JP
