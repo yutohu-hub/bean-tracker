@@ -20,3 +20,23 @@ export function isCoffeeBean(bean) {
   if (/cup of excellence|\bcoe\b/.test(n)) return true; // COEはコーヒー
   return !NON_COFFEE.some((re) => re.test(n));
 }
+
+// 内容量を g に換算（"250g" / "12oz" / "1000g"）
+function gramsOf(per) {
+  if (!per) return 0;
+  const s = String(per);
+  if (s.endsWith("oz")) return Math.round(parseFloat(s) * 28.35);
+  return parseInt(s) || 0;
+}
+
+// 業務用・卸（1kg以上、またはwholesale/bulk/○kg/○lbsの表記）なら true → 図鑑から除外
+export function isWholesale(bean) {
+  if (gramsOf(bean && bean.per) >= 1000) return true;
+  const n = ((bean && bean.name) || "").toLowerCase();
+  if (/wholesale|卸売?|業務用|バルク|\bbulk\b|カートン|coffee ?sacks?|\bjute\b/.test(n)) return true;
+  const kg = n.match(/(\d+(?:\.\d+)?)\s?kg\b/);      // 1kg 以上
+  if (kg && parseFloat(kg[1]) >= 1) return true;
+  const lb = n.match(/(\d+(?:\.\d+)?)\s?lbs?\b/);     // 2lb 以上
+  if (lb && parseFloat(lb[1]) >= 2) return true;
+  return false;
+}
