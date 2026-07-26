@@ -23,11 +23,15 @@ export function isNew(bean, now = Date.now()) {
 }
 
 // 豆ダイレクト送客（EC の検索ページに豆名を渡して、その豆に直接辿り着けるようにする）
+// Shopify は /search?q= が共通で使えるが、他プラットフォーム（STORES.jp 等）は
+// 検索パスが異なるため、壊れたディープリンクを避けてトップページ送客にフォールバックする。
 export function beanHref(roaster, bean) {
   if (!roaster || !roaster.url) return null;
   const raw = roaster.url.startsWith("http") ? roaster.url : "https://" + roaster.url;
+  const utm = "utm_source=beantracker&utm_medium=referral&utm_campaign=go";
+  if (roaster.platform !== "Shopify") return shopHref(roaster); // トップへ安全に送客（utm付き）
   let origin;
   try { origin = new URL(raw).origin; } catch { origin = raw.replace(/\/+$/, ""); }
   const q = encodeURIComponent(bean && bean.name ? bean.name : "");
-  return `${origin}/search?q=${q}&utm_source=beantracker&utm_medium=referral&utm_campaign=go`;
+  return `${origin}/search?q=${q}&${utm}`;
 }
