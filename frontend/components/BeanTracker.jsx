@@ -10,6 +10,7 @@ import { RATES_TO_JPY, toJPY, perGrams, fetchLiveRates } from "./lib/currency";
 import { INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGINS } from "./lib/constants";
 import { syncArchive, getArchivedBeans } from "./lib/store";
+import { LEGEND, beanStyle } from "./lib/palette";
 
 /* ============================================================
    BEAN TRACKER — プロトタイプ v0.1
@@ -67,6 +68,7 @@ export default function BeanTracker() {
   const [cols, setCols] = useState("auto"); // "auto" | 2..6（列数）
   const [autoCols, setAutoCols] = useState(4); // 自動時の実効列数（画面幅から算出）
   const [zukanMode, setZukanMode] = useState("beans"); // beans | roasters
+  const [meTab, setMeTab] = useState("log"); // マイページ内: log | premium
   // 列数を端末に保存・復元
   useEffect(() => {
     const s = localStorage.getItem("bt_cols");
@@ -289,7 +291,7 @@ export default function BeanTracker() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 16, marginTop: 10, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["mylog", "味の記録"], ["premium", "プレミアム"]].map(([k, l]) => (
+            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["me", "マイページ"]].map(([k, l]) => (
               <button key={k} onClick={() => setView(k)}
                 style={{
                   background: "none", border: "none", padding: "0 0 6px", cursor: "pointer",
@@ -313,11 +315,20 @@ export default function BeanTracker() {
         ) : view === "flavor" ? (
           <FlavorMapView onOpen={setOpen} cur={displayCur} />
         ) : view === "geisha" ? (
-          <GeishaView onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} onPremium={() => { setView("premium"); window.scrollTo(0, 0); }} />
-        ) : view === "premium" ? (
-          <PremiumView onOpen={setOpen} />
-        ) : view === "mylog" ? (
-          <MyLogView onOpen={setOpen} onRoaster={goRoaster} />
+          <GeishaView onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} onPremium={() => { setView("me"); setMeTab("premium"); window.scrollTo(0, 0); }} />
+        ) : view === "me" ? (
+          <>
+            {/* マイページ内サブ切替：記録 / プレミアム */}
+            <div style={{ display: "flex", gap: 0, marginBottom: 16, border: `1px solid ${INK}`, borderRadius: 8, overflow: "hidden", maxWidth: 360 }}>
+              {[["log", "☕ 味の記録"], ["premium", "★ プレミアム"]].map(([k, l]) => (
+                <button key={k} onClick={() => setMeTab(k)}
+                  style={{ flex: 1, padding: "9px 0", border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 700, background: meTab === k ? INK : PAPER, color: meTab === k ? PAPER : INK }}>{l}</button>
+              ))}
+            </div>
+            {meTab === "premium"
+              ? <PremiumView onOpen={setOpen} />
+              : <MyLogView onOpen={setOpen} onRoaster={goRoaster} />}
+          </>
         ) : (
           <>
             {/* 操作系は640pxに集約（グリッドはワイド） */}
@@ -363,6 +374,14 @@ export default function BeanTracker() {
               ))}
               <div style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, alignSelf: "center" }}>{filtered.length} 銘柄</div>
             </div>
+            {/* 色の凡例（精製方法／レア） */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 12px", marginTop: 10, fontSize: 10, color: GRAY }}>
+              {LEGEND.map((l) => (
+                <span key={l.key} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: 3, background: l.bg }} />{l.label}
+                </span>
+              ))}
+            </div>
             </>)}
             </div>{/* /640集約 */}
             {zukanMode === "roasters" ? (
@@ -407,7 +426,7 @@ export default function BeanTracker() {
                         {/* ミニ標本プレビュー */}
                         <div style={{ display: "flex", gap: 3 }}>
                           {arc.slice(0, 3).map((b) => (
-                            <div key={b.id} style={{ flex: 1, aspectRatio: "3 / 4", borderRadius: 2, background: b.color }} />
+                            <div key={b.id} style={{ flex: 1, aspectRatio: "3 / 4", borderRadius: 2, background: beanStyle(b).bg }} />
                           ))}
                         </div>
                         <div style={{ minWidth: 0 }}>
