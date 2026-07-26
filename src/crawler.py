@@ -75,17 +75,24 @@ def _grams_from_text(text: str) -> int:
     return int(val * 1000) if m.group(2) == "kg" else int(val)
 
 
+# 失敗理由（HTTPステータス等）を店ごとに残し、ログで原因を追えるようにする。
+LAST_REASON: dict[str, str] = {}
+
+
 # Cloudflare等のレート制限で一時的に5xxを返す店が多いため、リトライで拾う。
 async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
                           retries: int = 3) -> httpx.Response | None:
+    resp = None
     for attempt in range(retries):
         try:
             resp = await client.get(url, params=params)
-        except httpx.HTTPError:
+        except httpx.HTTPError as e:
+            LAST_REASON["_"] = f"{type(e).__name__}"
             resp = None
         else:
             if resp.status_code == 200 or resp.status_code == 404:
                 return resp
+            LAST_REASON["_"] = f"HTTP {resp.status_code}"
         if attempt < retries - 1:
             await asyncio.sleep(1.5 * (2 ** attempt) + random.uniform(0, 0.5))
     return resp
@@ -94,16 +101,32 @@ async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
 # ---------------- Shopify ----------------
 
 async def _fetch_shopify(client: httpx.AsyncClient, r: dict, max_pages: int) -> list[Product] | None:
+    # 店によっては /products.json が塞がれていても /collections/all/products.json は開いている
+    for path in ("/products.json", "/collections/all/products.json"):
+        res = await _fetch_shopify_path(client, r, max_pages, path)
+        if res:
+            return res
+    return None
+
+
+async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int,
+                              path: str) -> list[Product] | None:
     base = r["url"].rstrip("/")
     products: list[Product] = []
     for page in range(1, max_pages + 1):
-        resp = await _get_with_retry(client, f"{base}/products.json", {"limit": 250, "page": page})
+        resp = await _get_with_retry(client, f"{base}{path}", {"limit": 250, "page": page})
         if resp is None or resp.status_code != 200:
-            return None if page == 1 else products
+            if page == 1:
+                LAST_REASON[r["name"]] = f"{path} → {LAST_REASON.get('_', 'error')}"
+                return None
+            return products
         try:
             batch = resp.json().get("products", [])
         except json.JSONDecodeError:
-            return None if page == 1 else products
+            if page == 1:
+                LAST_REASON[r["name"]] = f"{path} → JSONではない応答"
+                return None
+            return products
         if not batch:
             break
         for p in batch:
@@ -217,7 +240,7 @@ async def crawl_all(config: dict) -> tuple[list[Product], list[str]]:
             r, res = await coro
             if res is None:
                 failed.append(r["name"])
-                print(f"  ✗ {r['name']} — 取得失敗（API非対応 or ブロック）")
+                print(f"  ✗ {r['name']} — 取得失敗: {LAST_REASON.get(r['name'], '不明')}")
             else:
                 print(f"  ✓ {r['name']} — {len(res)}件")
                 all_products.extend(res)
