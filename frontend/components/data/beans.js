@@ -11,9 +11,12 @@ import { latinAmericaBeans } from "./beans/latinAmerica";
 import { africaMideastBeans } from "./beans/africaMideast";
 
 import { LIVE_BEANS } from "./live";
+import { isCoffeeBean } from "../lib/isCoffee";
 
 const seedBeans = [...nordicBeans, ...ukBeans, ...europeBeans, ...northAmericaBeans, ...oceaniaBeans, ...eastAsiaBeans, ...seAsiaIndiaBeans, ...latinAmericaBeans, ...africaMideastBeans];
 
+// 巡回実データはコーヒー豆以外（サブスク・器具・マグ・ミルク・ギフト等）を含むため除外する
+const liveBeans = LIVE_BEANS.filter(isCoffeeBean);
 // 巡回実データがあるロースターは、そのロースターの種の豆を実データで置き換える
-const liveKeys = new Set(LIVE_BEANS.map((b) => b.r));
-export const BEANS = [...seedBeans.filter((b) => !liveKeys.has(b.r)), ...LIVE_BEANS];
+const liveKeys = new Set(liveBeans.map((b) => b.r));
+export const BEANS = [...seedBeans.filter((b) => !liveKeys.has(b.r)), ...liveBeans];
