@@ -26,6 +26,10 @@ const NON_COFFEE = [
   /\bcanned\b|mini ?can\b|can ?chiller|\bchiller\b|\bmiir\b|iced ?latte|\brtd\b|ready.?to.?drink|缶コーヒー/,
   // ドリップバッグ（挽いた粉の個包装。豆ではない）
   /drip ?bags?|ドリップバッグ|drip ?pack|ドリップパック|drip ?coffee ?bag|coffee ?drip ?bag|dripbag/,
+  // コールドブリュー・水出し（RTD/濃縮/粉。豆ではない）
+  /cold ?brew|コールドブリュー|水出し|アイスコーヒー/,
+  // インスタント・フリーズドライ
+  /\binstant\b|インスタント|freeze ?dried|フリーズドライ/,
 ];
 
 // コーヒー豆（＝図鑑に載せる）なら true
