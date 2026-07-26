@@ -27,6 +27,7 @@ import { GlobeView } from "./views/GlobeView";
 import { DiagnosisView } from "./views/DiagnosisView";
 import { FlavorMapView } from "./views/FlavorMapView";
 import { ProcessChart } from "./views/ProcessChart";
+import { ProcessPage } from "./views/ProcessPage";
 import { GeishaView } from "./views/GeishaView";
 import { MyLogView } from "./views/MyLogView";
 import { PremiumView } from "./views/PremiumView";
@@ -52,6 +53,8 @@ export default function BeanTracker() {
   const [view, setView] = useState("zukan"); // zukan | roaster
   const [roasterId, setRoasterId] = useState(null);
   const [roasterTab, setRoasterTab] = useState("now");
+  const [procKey, setProcKey] = useState("washed");
+  const goProcess = (k) => { setProcKey(k); setView("process"); window.scrollTo(0, 0); };
   const [origin, setOrigin] = useState("すべて");
   const [statusF, setStatusF] = useState("all");
   const [open, setOpen] = useState(null);
@@ -307,7 +310,7 @@ export default function BeanTracker() {
         </div>
       </header>
 
-      <main style={{ maxWidth: view === "zukan" ? 1120 : 640, margin: "0 auto", padding: "16px 16px 60px" }}>
+      <main style={{ maxWidth: (view === "zukan" || view === "process") ? 1120 : 640, margin: "0 auto", padding: "16px 16px 60px" }}>
         {view === "roaster" && roasterId ? (
           <RoasterPage key={roasterId + roasterTab} rid={roasterId} initialTab={roasterTab} onOpen={setOpen} onBack={() => setView("zukan")} onRoaster={goRoaster} cur={displayCur} />
         ) : view === "map" ? (
@@ -317,8 +320,10 @@ export default function BeanTracker() {
         ) : view === "flavor" ? (
           <>
             <FlavorMapView onOpen={setOpen} cur={displayCur} />
-            <ProcessChart cur={displayCur} />
+            <ProcessChart cur={displayCur} onProcess={goProcess} />
           </>
+        ) : view === "process" ? (
+          <ProcessPage pkey={procKey} onOpen={setOpen} onRoaster={goRoaster} onProcess={goProcess} onBack={() => { setView("flavor"); window.scrollTo(0, 0); }} cur={displayCur} />
         ) : view === "geisha" ? (
           <GeishaView onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} onPremium={() => { setView("me"); setMeTab("premium"); window.scrollTo(0, 0); }} />
         ) : view === "me" ? (
