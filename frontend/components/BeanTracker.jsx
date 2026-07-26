@@ -29,6 +29,7 @@ import { FlavorMapView } from "./views/FlavorMapView";
 import { ProcessChart } from "./views/ProcessChart";
 import { ProcessPage } from "./views/ProcessPage";
 import { FLAVOR_MAP, computeFlavor } from "./data/flavors";
+import { RecipeView } from "./views/RecipeView";
 import { GeishaView } from "./views/GeishaView";
 import { MyLogView } from "./views/MyLogView";
 import { PremiumView } from "./views/PremiumView";
@@ -307,7 +308,7 @@ export default function BeanTracker() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 16, marginTop: 10, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["me", "マイページ"], ["about", "About"]].map(([k, l]) => (
+            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["recipe", "レシピ"], ["me", "マイページ"], ["about", "About"]].map(([k, l]) => (
               <button key={k} onClick={() => { setView(k); setFlavorFocus({ fam: null, id: null }); }}
                 style={{
                   background: "none", border: "none", padding: "0 0 6px", cursor: "pointer",
@@ -350,6 +351,8 @@ export default function BeanTracker() {
               ? <PremiumView onOpen={setOpen} />
               : <MyLogView onOpen={setOpen} onRoaster={goRoaster} />}
           </>
+        ) : view === "recipe" ? (
+          <RecipeView />
         ) : view === "about" ? (
           <AboutView />
         ) : (
