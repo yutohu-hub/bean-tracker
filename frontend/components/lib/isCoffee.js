@@ -9,15 +9,23 @@ const NON_COFFEE = [
   /grinder|グラインダー|コーヒーミル|dripper|ドリッパー|\bv-?60\b|kalita|カリタ|chemex|ケメックス|\bkono\b|hario|ハリオ|aeropress|エアロプレス|french ?press|フレンチプレス|moka ?pot|マキネッタ|kettle|ケトル|gooseneck|\bscale\b|スケール|はかり|server\b|サーバー|ドリップポット|\bbrewer\b|ブリューワー|paper ?filter|filter ?paper|ペーパーフィルター|フィルターペーパー|ネルフィルター|canister|キャニスター|tamper|タンパー|portafilter|\bspoon\b|スプーン|\bscoop\b/,
   // 器具ブランド・パーツ（コーヒー品種/生産者と紛らわしい語は製品名まで限定）
   // 例: "Acaia"は焙煎品種アカイア、"Fellow Farms"は生産者名なので、器具モデル名がある時だけ除外
-  /fellow ?(aiden|tally|atmos|stagg|\bode\b|opus|clara|carter|junior|prismo|shibui|kettle|drop)|acaia ?(pearl|lunar|pyxis|cinco|umbra|orbit)|comandante|コマンダンテ|timemore|タイムモア|1zpresso|weber ?workshop|moccamaster|モカマスター|\bwilfa\b|baratza|niche ?zero|wacaco|picopresso|\bflair\b|breville|gaggia|rancilio|profitec|\blelit\b|coffee ?maker|espresso ?machine|コーヒーメーカー|エスプレッソマシン|knock ?box|ノックボックス|\bdistributor\b|\bleveler\b|レベラー|\bwdt\b|puck ?screen|bottomless|shower ?screen|\bgasket\b|dosing ?cup|blind ?shaker|milk ?jug|frothing ?pitcher|ミルクピッチャー/,
+  /fellow ?(aiden|tally|atmos|stagg|\bode\b|opus|clara|carter|junior|prismo|shibui|kettle|drop)|acaia ?(pearl|lunar|pyxis|cinco|umbra|orbit)|comandante|コマンダンテ|timemore|タイムモア|1zpresso|weber ?workshop|moccamaster|モカマスター|\bwilfa\b|baratza|niche ?zero|wacaco|picopresso|\bflair\b|breville|gaggia|rancilio|profitec|\blelit\b|xbloom|la ?marzocco|coffee ?maker|espresso ?machine|コーヒーメーカー|エスプレッソマシン|knock ?box|ノックボックス|\bdistributor\b|\bleveler\b|レベラー|\bwdt\b|puck ?screen|bottomless|shower ?screen|\bgasket\b|dosing ?cup|blind ?shaker|milk ?jug|frothing ?pitcher|ミルクピッチャー/,
   // ブリューキット・洗浄・ペーパーフィルターの箱売り・抹茶等
   /\bbrew(ing)? ?kit\b|water ?kit|brew ?water|starter ?kit|descal|cafiza|puly ?caff|cleaning ?(tablet|powder|solution|kit)|クリーナー|洗浄|\bwhisk\b|matcha|抹茶|茶筅/,
   /filters?\s*\([^)]*\d+[^)]*(pack|count|ct|pcs|pk|枚)\b/,   // ○○ Filters (100 Pack) 等の紙フィルター
   /physics of filter coffee/,                                  // 書籍
   /oat ?milk|barista ?milk|almond ?milk|soy ?milk|オーツミルク|バリスタミルク|アーモンドミルク|豆乳|牛乳|ミルクピッチャー|milk ?pitcher/,
   /public cupping|cupping (session|event|class|masterclass)|カッピング会|\bworkshop\b|ワークショップ|\bseminar\b|セミナー|\bticket\b|チケット|\blesson\b|レッスン|masterclass|\bcourse\b|\bevent\b|イベント|experience|体験/,
-  /\bbook\b|書籍|magazine|マガジン|\bzine\b/,
+  /\bbook\b|書籍|写真集|magazine|マガジン|\bzine\b/,
   /merch\b|グッズ/,
+  // ティー類（茶・チャイ・カスカラ茶など。コーヒーのフレーバー表記ではなく茶製品）
+  /\btea\b|ティー|紅茶|\bchai\b|rooibos|ルイボス|oolong|ウーロン|\bsencha\b|煎茶|genmaicha|玄米茶|hojicha|ほうじ茶|茶葉|loose ?leaf|looseleaf|tea ?bags?|\bkombucha\b|コンブチャ/,
+  // ギフト/詰め合わせボックス（"Juice Box"等の豆名や "Open Box" は誤除外しない）
+  /gift ?box|ギフトボックス|tasting ?box|taster ?box|sample ?box|\bsampler\b|discovery ?box|assort|collection ?box|selection ?box|twin ?box|box ?set|box of \d+|advent|catalog ?box/,
+  // RTD缶・缶飲料（"Cold Brew ... [Roast]"や"Nitrogen Washed"は豆/精製なので除外しない）
+  /\bcanned\b|mini ?can\b|can ?chiller|\bchiller\b|\bmiir\b|iced ?latte|\brtd\b|ready.?to.?drink|缶コーヒー/,
+  // ドリップバッグ（挽いた粉の個包装。豆ではない）
+  /drip ?bags?|ドリップバッグ|drip ?pack|ドリップパック|drip ?coffee ?bag|coffee ?drip ?bag|dripbag/,
 ];
 
 // コーヒー豆（＝図鑑に載せる）なら true
