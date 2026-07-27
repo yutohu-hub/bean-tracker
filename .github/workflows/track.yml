@@ -14,24 +14,51 @@ concurrency:
 
 jobs:
   crawl:
-    runs-on: ubuntu-latest
+    # GitHub Actions の共有IPは Shopify から 429 で弾かれるため、
+    # 自宅/VPS の自己ホストランナーがあればそちらで巡回する。
+    # リポジトリ変数 CRAWL_RUNNER に "self-hosted" を設定すると切り替わる。
+    # 未設定の間は従来どおり ubuntu-latest で動く（設定ミスで巡回が止まらないように）。
+    runs-on: ${{ vars.CRAWL_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
 
+      # 自己ホスト機にツールキャッシュが無い場合もあるため、失敗しても止めない
       - uses: actions/setup-python@v5
+        continue-on-error: true
         with:
           python-version: "3.12"
 
+      - name: Python を確定
+        id: py
+        run: |
+          if command -v python >/dev/null 2>&1; then
+            echo "bin=python" >> "$GITHUB_OUTPUT"
+          else
+            echo "bin=python3" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 依存インストール
-        run: pip install -r requirements.txt
+        run: |
+          PY='${{ steps.py.outputs.bin }}'
+          # 自己ホスト機のシステムPythonを汚さないよう、まず venv を試す
+          if "$PY" -m venv .venv 2>/dev/null; then
+            .venv/bin/pip install -q --upgrade pip
+            .venv/bin/pip install -q -r requirements.txt
+            echo "RUNPY=$PWD/.venv/bin/python" >> "$GITHUB_ENV"
+          else
+            "$PY" -m pip install -q --user -r requirements.txt || "$PY" -m pip install -q -r requirements.txt
+            echo "RUNPY=$PY" >> "$GITHUB_ENV"
+          fi
 
       - name: 巡回と差分検知
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: python main.py
+        run: |
+          "$RUNPY" main.py
 
       - name: フロント用データに変換（巡回結果→図鑑オーバーレイ）
-        run: python scripts/build_frontend_data.py
+        run: |
+          "$RUNPY" scripts/build_frontend_data.py
 
       - name: 結果をコミット（frontendの更新でPages再デプロイがトリガー）
         run: |
