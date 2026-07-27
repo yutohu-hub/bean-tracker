@@ -1,5 +1,9 @@
 // 東アジアのロースターの豆
 export const eastAsiaBeans = [
+  { id: 1415, r: "goodman", name: "Ethiopia Worka G1 [Washed]", origin: "エチオピア", process: "Washed", amount: 3240, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-27", color: "#3E6E7A", accent: "#EAF2F1", year: "2026" },
+  { id: 1416, r: "goodman", name: "Mexico Catuai Amarillo Cooperative [Washed]", origin: "メキシコ", process: "Washed", amount: 3348, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-27", color: "#3E6E7A", accent: "#EAF2F1", year: "2026" },
+  { id: 1417, r: "goodman", name: "Colombia Luz Helena Salazar [Passion]", origin: "コロンビア", process: "Honey", amount: 4320, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-27", color: "#C89A3A", accent: "#2E2A20", year: "2026" },
+  { id: 1418, r: "goodman", name: "Seasonal Blend", origin: "ブレンド", process: "Washed", amount: 1998, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-27", color: "#6E655A", accent: "#F2ECE2", year: "2026" },
   { id: 151, r: "leaves", name: "Ethiopia Guji Uraga", origin: "エチオピア", process: "Natural", amount: 1800, cur: "JPY", per: "100g", status: "now", updatedAt: "2026-07-27", color: "#8A3B2E", accent: "#F5EBE0", year: "2026" },
   { id: 152, r: "leaves", name: "Ethiopia Worka Sakaro", origin: "エチオピア", process: "Washed", amount: 1800, cur: "JPY", per: "100g", status: "now", updatedAt: "2026-07-27", color: "#3E6E7A", accent: "#EAF2F1", year: "2026" },
   { id: 1420, r: "leaves", name: "Kenya Gathaithi AA", origin: "ケニア", process: "Washed", amount: 2000, cur: "JPY", per: "100g", status: "now", updatedAt: "2026-07-27", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
@@ -12,11 +16,6 @@ export const eastAsiaBeans = [
   { id: 1427, r: "leaves", name: "Panama Elida Vuelta", origin: "パナマ", process: "Washed", amount: 9200, cur: "JPY", per: "100g", status: "now", updatedAt: "2026-07-27", color: "#2A2018", accent: "#E4B84A", year: "2026" },
   { id: 1428, r: "leaves", name: "Panama Hacienda La Esmeralda Nido 4F", origin: "パナマ", process: "Washed", amount: 10200, cur: "JPY", per: "100g", status: "now", updatedAt: "2026-07-27", color: "#2A2018", accent: "#E4B84A", year: "2026" },
   { id: 1429, r: "leaves", name: "Best of Panama 2025 GW-06 Stellar", origin: "パナマ", process: "Washed", amount: 20200, cur: "JPY", per: "100g", status: "now", updatedAt: "2026-07-27", color: "#2A2018", accent: "#E4B84A", year: "2026" },
-  { id: 1415, r: "goodman", name: "Colombia Monteblanco", origin: "コロンビア", process: "Washed", amount: 1800, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-26", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
-  { id: 1416, r: "goodman", name: "Ethiopia Sidamo Bensa Logita G1", origin: "エチオピア", process: "Washed", amount: 2000, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-26", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
-  { id: 1417, r: "goodman", name: "Ethiopia Wush Wush", origin: "エチオピア", process: "Natural", amount: 2200, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-26", color: "#8A3B2E", accent: "#F5EBE0", year: "2026" },
-  { id: 1418, r: "goodman", name: "Alishan（台湾・阿里山）", origin: "台湾", process: "Washed", amount: 2400, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-26", color: "#3E6E7A", accent: "#EAF2F1", year: "2026" },
-  { id: 1419, r: "goodman", name: "Seasonal Blend", origin: "ブレンド", process: "Washed", amount: 1500, cur: "JPY", per: "200g", status: "now", updatedAt: "2026-07-26", color: "#6E655A", accent: "#F2ECE2", year: "2026" },
   { id: 1, r: "bibi", name: "Ethiopia Chelbesa", origin: "エチオピア", process: "Washed", amount: 1800, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-25", color: "#DCD6C8", accent: "#8A3B2E", year: "2026" },
   { id: 2, r: "bibi", name: "Colombia El Paraíso", origin: "コロンビア", process: "Anaerobic Washed", amount: 2200, cur: "JPY", per: "150g", status: "sold", color: "#2E2A24", accent: "#C8A96A", year: "2026" },
   { id: 3, r: "bibi", name: "Kenya Karimikui", origin: "ケニア", process: "Washed", amount: 2000, cur: "JPY", per: "150g", status: "archive", color: "#B8433A", accent: "#F2E9DC", year: "2025" },
