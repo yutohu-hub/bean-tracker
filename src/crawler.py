@@ -26,7 +26,13 @@ ORIGIN_WORDS = [
     "ルワンダ", "ブルンジ", "グアテマラ", "コスタリカ", "エルサルバドル",
     "ホンジュラス", "エクアドル", "メキシコ", "インドネシア", "イエメン",
 ]
+# 嫌気性は Natural / Washed まで判別する（図鑑はこの2種を別色・別カテゴリで扱うため、
+# "Anaerobic" だけだとどちらにも分類されず絞り込めなくなる）。複合語を先に判定する。
 PROCESS_WORDS = [
+    ("anaerobic natural", "Anaerobic Natural"), ("natural anaerobic", "Anaerobic Natural"),
+    ("anaerobic washed", "Anaerobic Washed"), ("washed anaerobic", "Anaerobic Washed"),
+    ("嫌気性ナチュラル", "Anaerobic Natural"), ("アナエロビックナチュラル", "Anaerobic Natural"),
+    ("嫌気性ウォッシュ", "Anaerobic Washed"), ("アナエロビックウォッシュ", "Anaerobic Washed"),
     ("anaerobic", "Anaerobic"), ("carbonic", "Carbonic Maceration"),
     ("thermal shock", "Thermal Shock"), ("honey", "Honey"),
     ("natural", "Natural"), ("washed", "Washed"),

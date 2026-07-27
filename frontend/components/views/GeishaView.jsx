@@ -1,11 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { INK, PAPER, GRAY, LINE, GREEN, AMBER } from "../lib/theme";
+import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, perGrams } from "../lib/currency";
 import { getPlan } from "../lib/store";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
-import { Package } from "../ui/Package";
 
 function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPremium }) {
   // いま買える(now)豆のみ・100gあたり価格の安い順

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { INK, PAPER, GRAY, LINE } from "../lib/theme";
+import { INK, GRAY, LINE } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
 import { FLAVORS, FLAVOR_MAP, computeFlavor } from "../data/flavors";

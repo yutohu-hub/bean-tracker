@@ -1,5 +1,5 @@
 "use client";
-import { INK, PAPER, GRAY, LINE } from "../lib/theme";
+import { INK, GRAY } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, perGrams } from "../lib/currency";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";

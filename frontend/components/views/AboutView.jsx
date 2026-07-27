@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
+import { INK, PAPER, GRAY, LINE } from "../lib/theme";
 
 const HOWTO = [
   ["図鑑", "世界中の豆をパッケージ図鑑で一覧。精製方法で色分けし、100g換算で価格を比較できます。"],
