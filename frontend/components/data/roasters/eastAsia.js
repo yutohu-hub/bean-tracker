@@ -27,7 +27,7 @@ export const eastAsia = {
   county: { name: "Coffee County", city: "福岡", country: "JP", region: "eastAsia", platform: "Shopify", note: "九州の名店", coord: [130.4, 33.59], url: "coffeecounty.cc",
     founded: "2013", style: "中浅煎り・中米志向", ship: "国内発送(2〜4日)", focus: "エチオピア・グアテマラ",
     bio: "福岡のロースター。中米・アフリカの銘品を軸に、飲み心地の良い明るい焙煎で九州のシーンを牽引する。" },
-  arabica: { name: "% Arabica", city: "京都", country: "JP", region: "eastAsia", platform: "Shopify", note: "ゲイシャの名店", coord: [135.77, 35], url: "arabica.com",
+  arabica: { name: "% Arabica", city: "京都", country: "JP", region: "eastAsia", platform: "Shopify", note: "ゲイシャの名店", coord: [135.7936, 34.985], url: "arabica.com",
     founded: "2013", style: "浅〜中浅煎り・世界展開", ship: "国内発送(2〜4日)", focus: "ゲイシャ・エチオピア",
     bio: "京都発、世界中に店を構えるブランド。シンプルな設計と%ブレンド、希少ゲイシャで知られる。" },
   maruyama: { name: "丸山珈琲", city: "軽井沢", country: "JP", region: "eastAsia", platform: "Shopify", note: "ゲイシャの名店", coord: [138.6, 36.34], url: "maruyamacoffee.com",
