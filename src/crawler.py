@@ -1,6 +1,7 @@
 """ロースターECの巡回。Shopify / WooCommerce を自動判定して商品を正規化する。"""
 from __future__ import annotations
 import asyncio
+import html
 import json
 import random
 import re
@@ -124,9 +125,50 @@ async def _fetch_shopify(client: httpx.AsyncClient, r: dict, max_pages: int) -> 
         return res
     # 404（この経路が無い店）のときだけ別経路を試す。
     # 429はレート制限なので、ここで追撃すると悪化させるだけ＝再試行しない。
-    if "404" in LAST_REASON.get(r["name"], ""):
-        return await _fetch_shopify_path(client, r, max_pages, "/collections/all/products.json")
-    return None
+    if "404" not in LAST_REASON.get(r["name"], ""):
+        return None
+    # 店によって商品APIの位置が違う。多言語サイトはロケール配下、
+    # 商品APIを閉じている店でもAtomフィードは開いていることがある。
+    for path in ("/collections/all/products.json", "/en/products.json", "/ja/products.json"):
+        res = await _fetch_shopify_path(client, r, max_pages, path)
+        if res:
+            return res
+    return await _fetch_shopify_atom(client, r)
+
+
+# Shopifyは /collections/all.atom で商品一覧をAtomフィードとしても公開している。
+# products.json を塞いでいる店でも、こちらは開いている場合がある。
+async def _fetch_shopify_atom(client: httpx.AsyncClient, r: dict) -> list[Product] | None:
+    base = r["url"].rstrip("/")
+    resp = await _get_with_retry(client, f"{base}/collections/all.atom", {})
+    if resp is None or resp.status_code != 200 or "<entry" not in resp.text:
+        LAST_REASON[r["name"]] = f"/collections/all.atom → {('HTTP %s' % resp.status_code) if resp is not None else '接続失敗'}"
+        return None
+    products: list[Product] = []
+    for m in re.finditer(r"<entry>(.*?)</entry>", resp.text, re.S):
+        e = m.group(1)
+        title = re.search(r"<title>(.*?)</title>", e, re.S)
+        link = re.search(r'<link[^>]*href="([^"]+)"', e)
+        price = re.search(r'<s:price[^>]*>([\d.]+)</s:price>', e)
+        cur = re.search(r'<s:price[^>]*currency="([^"]+)"', e)
+        img = re.search(r'<img src="([^"]+)"', e)
+        if not title:
+            continue
+        name = html.unescape(re.sub(r"<[^>]+>", "", title.group(1))).strip()
+        url = link.group(1) if link else base
+        text = f"{name} {re.sub(r'<[^>]+>', ' ', e)}"
+        grams = _grams_from_text(name)
+        p = float(price.group(1)) if price else 0.0
+        products.append(Product(
+            key=f"{r['name']}::{url.rsplit('/', 1)[-1]}",
+            roaster=r["name"], country=r.get("country", ""), title=name, url=url,
+            image=(img.group(1) if img else ""), price=p,
+            currency=(cur.group(1) if cur else r.get("currency", "")),
+            grams=grams, per100=round(p / grams * 100, 2) if grams and p else None,
+            available=True,          # Atomは在庫切れを載せないため、掲載＝在庫ありとみなす
+            origin=_guess_origin(text), process=_guess_process(text), tags=name[:300],
+        ))
+    return products or None
 
 
 async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int,
