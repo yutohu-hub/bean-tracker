@@ -108,7 +108,7 @@ export const nordic = {
   kontra: { name: "Kontra Coffee", city: "København", country: "DK", region: "nordic", platform: "Shopify", note: "エチオピアの名店", coord: [12.555, 55.694], url: "kontracoffee.com",
     founded: "2005", style: "浅煎り・北欧スタイル", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Københavnを拠点とするデンマークのスペシャルティロースター。エチオピア・コロンビアを軸に、澄んだ北欧スタイルの浅煎りで知られる。" },
-  greatcoffee: { name: "Great Coffee", city: "Aarhus", country: "DK", region: "nordic", platform: "Shopify", note: "エチオピアの名店", coord: [10.2, 56.16], url: "greatcoffee.dk",
+  greatcoffee: { name: "Great Coffee", city: "Aarhus", country: "DK", region: "nordic", platform: "Shopify", note: "エチオピアの名店", coord: [10.1794, 56.1789], url: "greatcoffee.dk",
     founded: "2016", style: "浅煎り・北欧スタイル", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Aarhusを拠点とするデンマークのスペシャルティロースター。エチオピア・コロンビアを軸に、澄んだ北欧スタイルの浅煎りで知られる。" },
   impact: { name: "Impact Roasters", city: "København", country: "DK", region: "nordic", platform: "Shopify", note: "エチオピアの名店", coord: [12.572, 55.652], url: "impactroasters.dk",

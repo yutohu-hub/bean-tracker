@@ -81,7 +81,7 @@ export const latinAmerica = {
   isso: { name: "Isso é Café", city: "São Paulo", country: "BR", region: "latinAmerica", platform: "Shopify", note: "ブラジルの名店", coord: [-46.586, -23.578],
     founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "ブラジル・シングルオリジン",
     bio: "São Pauloを拠点とするブラジルのスペシャルティロースター。ブラジル・シングルオリジンを軸に、素材感を活かした焙煎で知られる。" },
-  kaffa_br: { name: "Lucca Cafés", city: "São Paulo", country: "BR", region: "latinAmerica", platform: "Shopify", note: "ブラジルの名店", coord: [-46.63, -23.55], url: "luccacafes.com.br",
+  kaffa_br: { name: "Lucca Cafés", city: "São Paulo", country: "BR", region: "latinAmerica", platform: "Shopify", note: "ブラジルの名店", coord: [-46.6576, -23.5549], url: "luccacafes.com.br",
     founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "ブラジル・シングルオリジン",
     bio: "São Pauloを拠点とするブラジルのスペシャルティロースター。ブラジル・シングルオリジンを軸に、素材感を活かした焙煎で知られる。" },
   curupira: { name: "Curupira Café", city: "Rio de Janeiro", country: "BR", region: "latinAmerica", platform: "Shopify", note: "ブラジルの名店", coord: [-43.2, -22.91],
