@@ -9,8 +9,8 @@ import { BEANS } from "./data/beans";
 import { RATES_TO_JPY, toJPY, perGrams, fetchLiveRates } from "./lib/currency";
 import { INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGINS } from "./lib/constants";
-import { syncArchive, getArchivedBeans } from "./lib/store";
-import { LEGEND, beanStyle } from "./lib/palette";
+import { syncArchive } from "./lib/store";
+import { LEGEND, beanStyle, processKey } from "./lib/palette";
 
 /* ============================================================
    BEAN TRACKER — プロトタイプ v0.1
@@ -174,7 +174,7 @@ export default function BeanTracker() {
       return (r && r.url) &&   // EC送客できる（該当ロースターにECサイトがある）豆だけを図鑑に表示
         (origin === "すべて" || b.origin === origin) &&
         (statusF === "all" ? b.status !== "sold" : b.status === statusF) &&
-        (processF === "すべて" || b.process.includes(processF)) &&
+        (processF === "すべて" || processKey(b.process) === processKey(processF)) &&
         (country === "all" || r.country === country) &&
         PRICE_BANDS[priceF].test(toJPY(b)) &&
         (!q || b.name.toLowerCase().includes(q) || r.name.toLowerCase().includes(q) || (b.origin || "").toLowerCase().includes(q));
