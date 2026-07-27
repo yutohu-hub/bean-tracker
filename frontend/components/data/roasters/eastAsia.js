@@ -18,7 +18,7 @@ export const eastAsia = {
   philo: { name: "Philocoffea", city: "船橋 / 千葉", country: "JP", region: "eastAsia", platform: "Shopify", note: "世界王者の設計", coord: [139.98, 35.69], url: "philocoffea.com",
     founded: "2016", style: "浅煎り・ブレンド設計", ship: "国内発送(2〜4日)", focus: "エチオピア・コロンビア",
     bio: "World Brewers Cup王者・粕谷哲が率いる千葉・船橋の焙煎所。抽出まで見据えた設計と、Tokyo Blend などで知られる。" },
-  leaves: { name: "Leaves Coffee", city: "東京 / 両国", country: "JP", region: "eastAsia", platform: "Shopify", note: "甘さと香りの追求", coord: [139.79, 35.69], url: "shop.leavescoffee.jp",
+  leaves: { name: "Leaves Coffee", city: "東京 / 両国", country: "JP", region: "eastAsia", platform: "Shopify", note: "甘さと香りの追求", coord: [139.79, 35.69], url: "leavescoffee.jp",
     founded: "2017", style: "浅煎り・甘さ重視", ship: "国内発送(2〜4日)", focus: "エチオピア・ケニア",
     bio: "東京・両国の焙煎所。甘さと香りに振り切った浅煎りで、焙煎競技でも上位に食い込む石井康雄が率いる。" },
   lightup: { name: "Light Up Coffee", city: "東京 / 吉祥寺", country: "JP", region: "eastAsia", platform: "Shopify", note: "軽やかな明るさ", coord: [139.58, 35.7], url: "lightupcoffee.com",
