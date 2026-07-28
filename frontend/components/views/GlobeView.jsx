@@ -1,208 +1,156 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import * as THREE from "three";
 import { INK, PAPER, GRAY, GREEN, AMBER, LINE } from "../lib/theme";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
 import { shopHref, mapHref } from "../lib/utils";
-import { buildEarthTexture } from "../lib/earthTexture";
 
-const R = 1;                 // 地球の半径（シーン内の単位）
-const DIST_MIN = 1.35;       // カメラ最接近（都市が見える距離）
-const DIST_MAX = 4.2;        // 引き（地球全体）
-const DOT = 0xf0603f;        // マーカー
-const DOTSEL = 0xffc23d;     // 選択中
+// Cesium は実行時に自前のアセットを読むため、ベースURLを先に教える必要がある。
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || "";
+if (typeof window !== "undefined") window.CESIUM_BASE_URL = `${BASE}/cesium/`;
 
-// 経緯度 → 球面座標
-function toVec(lon, lat, r = R) {
-  const p = (90 - lat) * (Math.PI / 180);
-  const t = (lon + 180) * (Math.PI / 180);
-  return new THREE.Vector3(
-    -r * Math.sin(p) * Math.cos(t),
-    r * Math.cos(p),
-    r * Math.sin(p) * Math.sin(t),
-  );
+const DOT = "#F0603F";
+const DOTSEL = "#FFC23D";
+
+// Cesium は public/cesium から素のスクリプトとして読み込む（webpack でバンドルしない）。
+let cesiumPromise = null;
+function loadCesium() {
+  if (window.Cesium) return Promise.resolve(window.Cesium);
+  if (cesiumPromise) return cesiumPromise;
+  cesiumPromise = new Promise((resolve, reject) => {
+    const css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = `${BASE}/cesium/Widgets/widgets.css`;
+    document.head.appendChild(css);
+    const s = document.createElement("script");
+    s.src = `${BASE}/cesium/Cesium.js`;
+    s.async = true;
+    s.onload = () => (window.Cesium ? resolve(window.Cesium) : reject(new Error("Cesium not found")));
+    s.onerror = () => reject(new Error("failed to load Cesium"));
+    document.head.appendChild(s);
+  });
+  return cesiumPromise;
 }
 
 export function GlobeView({ onRoaster }) {
   const wrapRef = useRef(null);
+  const viewerRef = useRef(null);
   const apiRef = useRef(null);
   const [selected, setSelected] = useState(null);
-  const selRef = useRef(null);
-  selRef.current = selected;
+  const [status, setStatus] = useState("loading");   // loading | ready | error
 
   useEffect(() => {
-    const wrap = wrapRef.current;
-    const size = Math.max(300, Math.min(wrap.clientWidth, 460));
+    let viewer, disposed = false;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(size, size);
-    wrap.appendChild(renderer.domElement);
-    renderer.domElement.style.touchAction = "none";
-    renderer.domElement.style.cursor = "grab";
-    renderer.domElement.style.borderRadius = "50%";
+    (async () => {
+      try {
+        const Cesium = await loadCesium();
+        if (disposed) return;
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
-    let dist = 2.9, targetDist = 2.9;
+        // Cesium ion のトークンがあれば地形（起伏）まで表示する。無くても衛星写真は出る。
+        const ionToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
+        if (ionToken) Cesium.Ion.defaultAccessToken = ionToken;
 
-    // 地球本体。テクスチャは手持ちデータから生成し、public/earth.jpg があれば差し替える。
-    const globe = new THREE.Group();
-    scene.add(globe);
-    const mat = new THREE.MeshPhongMaterial({ shininess: 8, specular: 0x223344 });
-    mat.map = new THREE.CanvasTexture(buildEarthTexture(2048));
-    mat.map.colorSpace = THREE.SRGBColorSpace;
-    mat.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    const earth = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), mat);
-    globe.add(earth);
+        viewer = new Cesium.Viewer(wrapRef.current, {
+          // 余計なUIは全て隠し、図鑑の見た目に寄せる
+          baseLayerPicker: false, geocoder: false, homeButton: false,
+          sceneModePicker: false, navigationHelpButton: false, animation: false,
+          timeline: false, fullscreenButton: false, infoBox: false,
+          selectionIndicator: false, creditContainer: document.createElement("div"),
+          // 衛星写真：ion トークン不要の Esri World Imagery を使う
+          baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+            Cesium.ArcGisMapServerImageryProvider.fromUrl(
+              "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+            ),
+          ),
+        });
+        viewerRef.current = viewer;
 
-    const base = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/earth.jpg";
-    new THREE.TextureLoader().load(base, (tex) => {
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      mat.map = tex; mat.needsUpdate = true;
-    }, undefined, () => {});   // 無ければ生成テクスチャのまま
+        // 地形（起伏）は ion トークンがあるときだけ
+        if (ionToken) {
+          try { viewer.terrainProvider = await Cesium.createWorldTerrainAsync(); } catch {}
+        }
 
-    // 大気の光（縁がふわっと光って地球らしく見える）
-    const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(R * 1.035, 64, 48),
-      new THREE.ShaderMaterial({
-        transparent: true, side: THREE.BackSide, depthWrite: false,
-        vertexShader: `varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-        fragmentShader: `varying vec3 vN; void main(){ float i = pow(0.72 - dot(vN, vec3(0,0,1.0)), 2.0); gl_FragColor = vec4(0.42,0.68,1.0,1.0) * i; }`,
-      }),
-    );
-    scene.add(glow);
+        const s = viewer.scene;
+        s.globe.enableLighting = true;
+        s.globe.showGroundAtmosphere = true;
+        s.skyAtmosphere.show = true;
+        s.backgroundColor = Cesium.Color.fromCssColorString("#060d16");
+        s.screenSpaceCameraController.minimumZoomDistance = 800;       // 都市レベルまで
+        s.screenSpaceCameraController.maximumZoomDistance = 3.2e7;
 
-    scene.add(new THREE.AmbientLight(0xffffff, 1.15));
-    const sun = new THREE.DirectionalLight(0xffffff, 1.25);
-    sun.position.set(-1.4, 0.8, 1.6);
-    scene.add(sun);
+        // ロースターのマーカー
+        for (const [key, r] of Object.entries(ROASTERS)) {
+          const [lon, lat] = r.coord || [0, 0];
+          viewer.entities.add({
+            id: key,
+            position: Cesium.Cartesian3.fromDegrees(lon, lat),
+            point: {
+              pixelSize: 7,
+              color: Cesium.Color.fromCssColorString(DOT),
+              outlineColor: Cesium.Color.WHITE,
+              outlineWidth: 1.2,
+              // 地球の裏側の点は隠す
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+              disableDepthTestDistance: 0,
+              scaleByDistance: new Cesium.NearFarScalar(1.0e5, 1.6, 1.5e7, 0.65),
+            },
+          });
+        }
 
-    // ロースターのマーカー（球体に貼り付く点。地球の裏側は自然に隠れる）
-    const keys = Object.keys(ROASTERS);
-    const pos = new Float32Array(keys.length * 3);
-    const col = new Float32Array(keys.length * 3);
-    const cBase = new THREE.Color(DOT), cSel = new THREE.Color(DOTSEL);
-    keys.forEach((k, i) => {
-      const [lon, lat] = ROASTERS[k].coord || [0, 0];
-      const v = toVec(lon, lat, R * 1.006);
-      pos.set([v.x, v.y, v.z], i * 3);
-      col.set([cBase.r, cBase.g, cBase.b], i * 3);
-    });
-    const pg = new THREE.BufferGeometry();
-    pg.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    pg.setAttribute("color", new THREE.BufferAttribute(col, 3));
-    const points = new THREE.Points(pg, new THREE.PointsMaterial({
-      size: 0.022, vertexColors: true, sizeAttenuation: true,
-    }));
-    globe.add(points);
+        // タップで選択
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+        handler.setInputAction((click) => {
+          const picked = viewer.scene.pick(click.position);
+          const id = picked && picked.id && picked.id.id;
+          if (id && ROASTERS[id]) setSelected(id);
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-    const paintSelection = (selKey) => {
-      const a = pg.getAttribute("color");
-      keys.forEach((k, i) => {
-        const c = k === selKey ? cSel : cBase;
-        a.setXYZ(i, c.r, c.g, c.b);
-      });
-      a.needsUpdate = true;
-    };
+        // 日本あたりから開始
+        viewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(139.7, 35.0, 1.6e7),
+        });
 
-    // --- 操作：ドラッグで回転、ホイール/ピンチで寄り引き ---
-    let rotY = -Math.PI * 0.72, rotX = -0.32;   // 初期は日本あたり
-    let dragging = false, moved = false, last = null, pinch = null;
-    const el = renderer.domElement;
-
-    const down = (e) => {
-      dragging = true; moved = false; last = [e.clientX, e.clientY];
-      el.style.cursor = "grabbing"; el.setPointerCapture?.(e.pointerId);
-    };
-    const move = (e) => {
-      if (!dragging || !last) return;
-      const dx = e.clientX - last[0], dy = e.clientY - last[1];
-      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true;
-      const k = 0.005 * (dist / DIST_MAX);      // 寄るほど動きを穏やかに
-      rotY += dx * k; rotX += dy * k;
-      rotX = Math.max(-1.35, Math.min(1.35, rotX));
-      last = [e.clientX, e.clientY];
-    };
-    const up = (e) => { dragging = false; last = null; el.style.cursor = "grab"; el.releasePointerCapture?.(e.pointerId); };
-    el.addEventListener("pointerdown", down);
-    el.addEventListener("pointermove", move);
-    el.addEventListener("pointerup", up);
-    el.addEventListener("pointercancel", up);
-
-    const clampD = (d) => Math.max(DIST_MIN, Math.min(DIST_MAX, d));
-    const onWheel = (e) => { e.preventDefault(); targetDist = clampD(targetDist * (e.deltaY > 0 ? 1.12 : 1 / 1.12)); };
-    el.addEventListener("wheel", onWheel, { passive: false });
-
-    const dist2 = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-    const tmove = (e) => {
-      if (e.touches.length !== 2) return;
-      e.preventDefault();
-      const d = dist2(e.touches);
-      if (pinch) targetDist = clampD(targetDist * (pinch / d));
-      pinch = d;
-    };
-    const tend = (e) => { if (!e.touches || e.touches.length < 2) pinch = null; };
-    el.addEventListener("touchmove", tmove, { passive: false });
-    el.addEventListener("touchend", tend);
-    el.addEventListener("touchcancel", tend);
-
-    // タップでマーカー選択
-    const ray = new THREE.Raycaster();
-    ray.params.Points.threshold = 0.028;
-    el.addEventListener("click", (e) => {
-      if (moved) return;
-      const r = el.getBoundingClientRect();
-      const m = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-      ray.setFromCamera(m, camera);
-      const hits = ray.intersectObject(points, false);
-      if (!hits.length) return;
-      // 手前（カメラに近い）ものを選ぶ＝裏側の点を拾わない
-      const i = hits.sort((a, b) => a.distance - b.distance)[0].index;
-      setSelected(keys[i]);
-    });
-
-    apiRef.current = {
-      zoomIn: () => { targetDist = clampD(targetDist / 1.3); },
-      zoomOut: () => { targetDist = clampD(targetDist * 1.3); },
-      reset: () => { targetDist = 2.9; rotY = -Math.PI * 0.72; rotX = -0.32; },
-      select: paintSelection,
-    };
-
-    let raf;
-    const loop = () => {
-      raf = requestAnimationFrame(loop);
-      if (!dragging && targetDist > DIST_MAX * 0.82) rotY += 0.0007;   // 引いている間はゆっくり自転
-      dist += (targetDist - dist) * 0.12;
-      globe.rotation.set(rotX, rotY, 0);
-      glow.rotation.copy(globe.rotation);
-      camera.position.set(0, 0, dist);
-      camera.lookAt(0, 0, 0);
-      renderer.render(scene, camera);
-    };
-    loop();
+        apiRef.current = {
+          zoomIn: () => viewer.camera.zoomIn(viewer.camera.positionCartographic.height * 0.35),
+          zoomOut: () => viewer.camera.zoomOut(viewer.camera.positionCartographic.height * 0.5),
+          reset: () => viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(139.7, 35.0, 1.6e7), duration: 1.0,
+          }),
+          focus: (key) => {
+            const r = ROASTERS[key]; if (!r || !r.coord) return;
+            viewer.camera.flyTo({
+              destination: Cesium.Cartesian3.fromDegrees(r.coord[0], r.coord[1], 6.0e5),
+              duration: 1.2,
+            });
+          },
+          paint: (selKey) => {
+            for (const [key] of Object.entries(ROASTERS)) {
+              const e = viewer.entities.getById(key);
+              if (!e || !e.point) continue;
+              const on = key === selKey;
+              e.point.color = Cesium.Color.fromCssColorString(on ? DOTSEL : DOT);
+              e.point.pixelSize = on ? 13 : 7;
+            }
+          },
+          handler,
+        };
+        setStatus("ready");
+      } catch (e) {
+        console.error(e);
+        if (!disposed) setStatus("error");
+      }
+    })();
 
     return () => {
-      cancelAnimationFrame(raf);
-      el.removeEventListener("pointerdown", down);
-      el.removeEventListener("pointermove", move);
-      el.removeEventListener("pointerup", up);
-      el.removeEventListener("pointercancel", up);
-      el.removeEventListener("wheel", onWheel);
-      el.removeEventListener("touchmove", tmove);
-      el.removeEventListener("touchend", tend);
-      el.removeEventListener("touchcancel", tend);
-      renderer.dispose();
-      pg.dispose();
-      earth.geometry.dispose();
-      mat.dispose();
-      if (el.parentNode) el.parentNode.removeChild(el);
+      disposed = true;
+      try { apiRef.current?.handler?.destroy(); } catch {}
+      try { viewer && !viewer.isDestroyed() && viewer.destroy(); } catch {}
+      viewerRef.current = null;
     };
   }, []);
 
-  useEffect(() => { apiRef.current?.select(selected); }, [selected]);
+  useEffect(() => { apiRef.current?.paint(selected); }, [selected]);
 
   const sel = selected ? ROASTERS[selected] : null;
   const selBeans = selected ? BEANS.filter((b) => b.r === selected) : [];
@@ -211,15 +159,31 @@ export function GlobeView({ onRoaster }) {
   return (
     <div>
       <div style={{ fontSize: 11, color: GRAY, marginBottom: 6 }}>
-        衛星写真のような3Dの地球。ドラッグで回転、ホイール／ピンチ／＋−で拡大縮小。● をタップでロースター詳細。
+        衛星写真の地球。ドラッグで回転、ホイール／ピンチ／＋−で拡大縮小。● をタップでロースター詳細。
       </div>
-      <div ref={wrapRef} style={{ position: "relative", display: "flex", justifyContent: "center", touchAction: "none", background: "radial-gradient(circle at 50% 45%, #0b1a2b 0%, #060d16 70%)", borderRadius: 14, padding: "8px 0" }}>
-        <div style={{ position: "absolute", right: 6, bottom: 6, display: "flex", flexDirection: "column", gap: 6, zIndex: 2 }}>
-          <button aria-label="拡大" style={btn} onClick={() => apiRef.current?.zoomIn()}>＋</button>
-          <button aria-label="縮小" style={btn} onClick={() => apiRef.current?.zoomOut()}>−</button>
-          <button aria-label="リセット" style={{ ...btn, fontSize: 13 }} onClick={() => apiRef.current?.reset()}>⟲</button>
+
+      <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", background: "#060d16" }}>
+        <div ref={wrapRef} style={{ width: "100%", height: 420 }} />
+
+        {status !== "ready" && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#B8AE9E", fontSize: 12, textAlign: "center", padding: 20 }}>
+            {status === "loading" ? "地球を読み込み中…" : "地球を表示できませんでした（通信環境をご確認ください）"}
+          </div>
+        )}
+
+        {status === "ready" && (
+          <div style={{ position: "absolute", right: 8, bottom: 8, display: "flex", flexDirection: "column", gap: 6, zIndex: 2 }}>
+            <button aria-label="拡大" style={btn} onClick={() => apiRef.current?.zoomIn()}>＋</button>
+            <button aria-label="縮小" style={btn} onClick={() => apiRef.current?.zoomOut()}>−</button>
+            <button aria-label="リセット" style={{ ...btn, fontSize: 13 }} onClick={() => apiRef.current?.reset()}>⟲</button>
+          </div>
+        )}
+
+        <div style={{ position: "absolute", left: 8, bottom: 8, fontSize: 9, color: "rgba(255,255,255,0.55)", zIndex: 2 }}>
+          Imagery © Esri, Maxar, Earthstar Geographics
         </div>
       </div>
+
       {sel ? (
         <div style={{ borderTop: `2px solid ${INK}`, marginTop: 14, paddingTop: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -235,13 +199,17 @@ export function GlobeView({ onRoaster }) {
             <span style={{ color: AMBER }}>SOLD OUT {selBeans.filter((b) => b.status === "sold").length}</span>
             <span style={{ color: GRAY }}>ARCHIVE {selBeans.filter((b) => b.status === "archive").length}</span>
           </div>
+          <button onClick={() => apiRef.current?.focus(selected)}
+            style={{ width: "100%", marginTop: 10, padding: "9px 0", background: "none", color: INK, border: `1px dashed ${LINE}`, borderRadius: 8, fontSize: 12, cursor: "pointer" }}>
+            🌍 この街まで寄る
+          </button>
           {sel.url ? (
             <a href={shopHref(sel)} target="_blank" rel="noopener noreferrer"
-              style={{ display: "block", textAlign: "center", textDecoration: "none", width: "100%", marginTop: 12, padding: "12px 0", background: INK, color: PAPER, borderRadius: 8, fontSize: 13, fontWeight: 700 }}>
+              style={{ display: "block", textAlign: "center", textDecoration: "none", width: "100%", marginTop: 8, padding: "12px 0", background: INK, color: PAPER, borderRadius: 8, fontSize: 13, fontWeight: 700 }}>
               {sel.name} のECサイトへ ↗
             </a>
           ) : (
-            <div style={{ textAlign: "center", marginTop: 12, padding: "12px 0", background: "#EDEAE1", color: GRAY, borderRadius: 8, fontSize: 12, fontWeight: 700 }}>ECサイト準備中</div>
+            <div style={{ textAlign: "center", marginTop: 8, padding: "12px 0", background: "#EDEAE1", color: GRAY, borderRadius: 8, fontSize: 12, fontWeight: 700 }}>ECサイト準備中</div>
           )}
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             <button onClick={() => onRoaster(selected)}
