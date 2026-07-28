@@ -12,7 +12,7 @@ export const europe = {
   friedhats: { name: "Friedhats", city: "Amsterdam", country: "NL", region: "europe", platform: "Shopify", note: "蘭の極浅ロースター", coord: [4.89, 52.37], url: "friedhats.com",
     founded: "2016", style: "極浅煎り・北欧寄り", ship: "海外発送(1〜2週間)", focus: "エチオピア・ケニア",
     bio: "アムステルダムの焙煎所。クリーンで果実味の際立つ極浅を軸に、欧州の愛好家から支持を集める。" },
-  dak: { name: "DAK Coffee", city: "Amsterdam", country: "NL", region: "europe", platform: "Shopify", note: "実験と遊び心", coord: [4.9, 52.36], url: "dakcoffeeroasters.com",
+  dak: { name: "DAK Coffee", city: "Amsterdam", country: "NL", region: "europe", platform: "Webflow", note: "実験と遊び心", coord: [4.9, 52.36], url: "dakcoffeeroasters.com",
     founded: "2018", style: "浅煎り・実験系", ship: "海外発送(1〜2週間)", focus: "ゲイシャ・エチオピア",
     bio: "モントリオール出身のデュオがアムステルダムで創業。ファンキーな実験ロットから王道まで、遊び心ある選定で人気。" },
   bonanza: { name: "Bonanza Coffee", city: "Berlin", country: "DE", region: "europe", platform: "Shopify", note: "欧州の先駆者", coord: [13.42, 52.5], url: "bonanzacoffee.de",

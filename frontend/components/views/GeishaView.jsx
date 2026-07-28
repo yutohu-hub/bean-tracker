@@ -71,7 +71,10 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
           </div>
         ))}
         {ladder.length === 0 && (
-          <div style={{ fontSize: 11, color: GRAY, padding: "14px 0" }}>いま買える{title}はありません。</div>
+          <div style={{ fontSize: 11, color: GRAY, padding: "14px 0", lineHeight: 1.7 }}>
+            いま買える{title}はありません。<br />
+            巡回が各ロースターのECで見つけ次第ここに並びます。
+          </div>
         )}
         {!premium && locked > 0 && (
           <button onClick={onPremium}
