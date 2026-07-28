@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN, AMBER } from "../lib/theme";
 import { BEANS } from "../data/beans";
+import { ROASTERS } from "../data/roasters";
 import { getPlan, setPlan, getNotify, setNotify, getRestocks } from "../lib/store";
 import { paymentLinkFor } from "../lib/billing";
+import { beanHref } from "../lib/utils";
 
 // プラン定義（課金の受け皿）
 const PLANS = [
@@ -186,13 +188,29 @@ export function PremiumView({ onOpen }) {
           <div style={{ fontSize: 11, color: GRAY, marginTop: 6, lineHeight: 1.7 }}>SOLD OUT の豆の詳細から「再入荷を待つ」で追加できます。再入荷したら通知します。</div>
         ) : (
           <div style={{ marginTop: 8 }}>
-            {restocks.map((rc) => (
-              <button key={rc.beanId} onClick={() => { const b = BEANS.find((x) => x.id === rc.beanId); if (b && onOpen) onOpen(b); }}
-                style={{ display: "flex", justifyContent: "space-between", width: "100%", gap: 8, background: "none", border: "none", borderTop: `1px solid ${LINE}`, padding: "10px 0", cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: INK }}>{rc.name}</span>
-                <span style={{ fontSize: 10.5, color: GRAY, flexShrink: 0 }}>{rc.roaster}</span>
-              </button>
-            ))}
+            {restocks.map((rc) => {
+              // 再入荷済みなら、待っていた人がそのまま買えるようにする
+              const b = BEANS.find((x) => x.id === rc.beanId);
+              const r = b && ROASTERS[b.r];
+              const back = b && b.status === "now" && r && r.url;
+              return (
+                <div key={rc.beanId} style={{ display: "flex", alignItems: "center", gap: 10, borderTop: `1px solid ${LINE}`, padding: "10px 0" }}>
+                  <button onClick={() => { if (b && onOpen) onOpen(b); }}
+                    style={{ display: "flex", justifyContent: "space-between", flex: 1, minWidth: 0, gap: 8, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: INK }}>{rc.name}</span>
+                    <span style={{ fontSize: 10.5, color: GRAY, flexShrink: 0 }}>{rc.roaster}</span>
+                  </button>
+                  {back ? (
+                    <a href={beanHref(r, b)} target="_blank" rel="noopener noreferrer"
+                      style={{ flexShrink: 0, textDecoration: "none", padding: "6px 12px", background: INK, color: PAPER, borderRadius: 6, fontSize: 10.5, fontWeight: 700, whiteSpace: "nowrap" }}>
+                      買う ↗
+                    </a>
+                  ) : (
+                    <span style={{ flexShrink: 0, fontSize: 10, color: GRAY, whiteSpace: "nowrap" }}>入荷待ち</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

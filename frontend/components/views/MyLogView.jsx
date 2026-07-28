@@ -6,6 +6,7 @@ import { ROASTERS } from "../data/roasters";
 import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getPlan, setPlan, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis } from "../lib/store";
 import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings, cloudGetPlan } from "../lib/account";
 import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis";
+import { beanHref } from "../lib/utils";
 
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
 const rowToTasting = (r) => ({ beanId: r.bean_id, r: r.r, name: r.name, roaster: r.roaster, origin: r.origin, rating: r.rating, notes: r.notes, at: Number(r.at) || Date.now() });
@@ -300,9 +301,23 @@ export function MyLogView({ onOpen, onRoaster }) {
                 {t.roaster}{t.origin ? ` ・ ${t.origin}` : ""}
               </button>
               {t.notes && <div style={{ fontSize: 12, color: INK, marginTop: 5, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{t.notes}</div>}
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 6 }}>
                 <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY }}>{new Date(t.at).toLocaleDateString("ja-JP")}</span>
-                <button onClick={() => { removeTasting(t.beanId); refresh(); }} style={{ background: "none", border: "none", fontSize: 10.5, color: GRAY, cursor: "pointer" }}>削除</button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {/* 気に入った豆をここから買い直せるようにする（記録タブから図鑑に戻らせない） */}
+                  {(() => {
+                    const b = BEANS.find((x) => x.id === t.beanId);
+                    const r = b && ROASTERS[b.r];
+                    if (!b || b.status !== "now" || !r || !r.url) return null;
+                    return (
+                      <a href={beanHref(r, b)} target="_blank" rel="noopener noreferrer"
+                        style={{ textDecoration: "none", padding: "6px 12px", background: INK, color: PAPER, borderRadius: 6, fontSize: 10.5, fontWeight: 700, whiteSpace: "nowrap" }}>
+                        また買う ↗
+                      </a>
+                    );
+                  })()}
+                  <button onClick={() => { removeTasting(t.beanId); refresh(); }} style={{ background: "none", border: "none", fontSize: 10.5, color: GRAY, cursor: "pointer" }}>削除</button>
+                </div>
               </div>
             </div>
           ))}
