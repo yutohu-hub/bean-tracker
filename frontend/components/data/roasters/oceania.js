@@ -120,4 +120,23 @@ export const oceania = {
   fivesenses: { name: "Five Senses Coffee", city: "メルボルン", country: "AU", region: "oceania", platform: "Shopify", note: "中南米を軸にした自家焙煎", coord: [144.97, -37.81], url: "fivesenses.com.au",
     founded: "2015", style: "中煎りバランス", ship: "豪州内・国際発送", focus: "中南米・エチオピア",
     bio: "メルボルンを拠点とするスペシャルティコーヒーロースター。中南米・エチオピアを軸に、中煎りバランスで素材の個性を引き出す。国際的にも評価される一軒。" },
+
+  /* ▼ メルボルン追加分。EC のドメインと取り扱い銘柄を実店舗サイトで確認したもののみ。
+     豆側には可能な範囲で商品ページの実URL（link）を持たせ、無い場合も店に実在する
+     商品名をそのまま入れて、Shopify の店内検索で必ず当たるようにしている。 */
+  maker: { name: "Maker Coffee", city: "Melbourne (Richmond)", country: "AU", region: "oceania", platform: "Shopify", note: "リッチモンドの焙煎所", coord: [144.995, -37.823], url: "makercoffee.com.au",
+    founded: "2015", style: "浅〜中煎り", ship: "豪州内(A$70以上送料無料)", focus: "ブラジル・エチオピア",
+    bio: "リッチモンドの焙煎所から豪州全土へ発送するメルボルンのスペシャルティロースター。CBD リトルバーク通りやサウスヤラにもエスプレッソバーを構える。定番の The SMITH を軸に、エチオピア Chelchele などのシングルオリジンを通年で並べる。" },
+  clarkst: { name: "Clark St Coffee", city: "Melbourne (CBD)", country: "AU", region: "oceania", platform: "Shopify", note: "堆肥化できる袋のCBD勢", coord: [144.968, -37.814], url: "clarkst.coffee",
+    founded: "2011", style: "エスプレッソ主体", ship: "豪州内", focus: "ブレンド・季節のシングルオリジン",
+    bio: "2011年創業のメルボルンCBDのロースター。Ringleader と Mastermind の2枚看板のエスプレッソブレンドを、家庭で堆肥化できる包材の250g／1kgで販売する。倫理的な調達と定期便に力を入れる。" },
+  wideopenroad: { name: "Wide Open Road", city: "Melbourne (Brunswick)", country: "AU", region: "oceania", platform: "Shopify", note: "ブランズウィックの古参", coord: [144.960, -37.767], url: "wideopenroad.com.au",
+    founded: "2008", style: "中煎りバランス", ship: "豪州内・国際発送", focus: "ブレンド・季節のシングルオリジン",
+    bio: "ブランズウィックを拠点に、豪州各地のカフェへ卸しながら世界へも豆を送るロースター。看板の Bathysphere はニカラグア・エチオピア・エルサルバドルを組んだ定番ブレンドで、シングルオリジンは季節ごとに入れ替わる。" },
+  vacation: { name: "Vacation Coffee", city: "Melbourne", country: "AU", region: "oceania", platform: "Shopify", note: "ナチュラル偏愛", coord: [144.978, -37.800], url: "vacationcoffee.com.au",
+    founded: "2019", style: "浅煎り", ship: "豪州内", focus: "エチオピア・ナチュラル",
+    bio: "メルボルンでナチュラル精製を偏愛するロースター。同じ生豆をエスプレッソとフィルターで別々に焼き分けて並べるのが特徴で、イルガチェフェ Xinoo やグジ Guribea などエチオピアの比率が高い。" },
+  sensorylab: { name: "Sensory Lab", city: "Melbourne (Port Melbourne)", country: "AU", region: "oceania", platform: "Shopify", note: "ポートメルボルンの精密焙煎", coord: [144.935, -37.838], url: "sensorylab.com.au",
+    founded: "2009", style: "中煎りバランス", ship: "豪州内(A$99以上送料無料)", focus: "ブレンド・中南米",
+    bio: "2009年創業。ポートメルボルンの焙煎所で精密に焼き分け、リトルコリンズ通りとバーク通り、シドニーのボンダイビーチに店を構える。Steadfast・Seamless のブレンドとコロンビア／コスタリカのシングルオリジンが軸。" },
 };

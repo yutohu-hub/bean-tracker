@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN, STATUS } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, fmtPrice, perGrams, fmtLocal } from "../lib/currency";
-import { beanHref } from "../lib/utils";
+import { beanHref, beanLinkKind } from "../lib/utils";
 import { getTasting, upsertTasting, removeTasting, isRestock, toggleRestock } from "../lib/store";
 import { ROASTERS } from "../data/roasters";
 import { Package } from "./Package";
@@ -64,8 +64,12 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
         <div style={{ marginTop: 18 }}>
           {bean.status === "now" && (
             roaster.url ? (
-              <a href={beanHref(roaster, bean)} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", textDecoration: "none", width: "100%", padding: "13px 0", background: INK, color: PAPER, borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                この豆をECで見る ↗
+              <a href={beanHref(roaster, bean)} target="_blank" rel="noopener noreferrer" style={{ display: "block", textDecoration: "none", width: "100%", padding: "13px 14px", boxSizing: "border-box", background: INK, color: PAPER, borderRadius: 8, cursor: "pointer" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <span style={{ fontSize: 15, fontWeight: 800 }}>この豆を買う ↗</span>
+                  <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 12.5, opacity: 0.9 }}>{fmtPrice(bean, cur)} / {perGrams(bean)}g</span>
+                </div>
+                <div style={{ fontSize: 10.5, opacity: 0.75, marginTop: 3 }}>{roaster.name} の公式ECへ</div>
               </a>
             ) : (
               <div style={{ width: "100%", padding: "13px 0", background: "#EDEAE1", color: GRAY, borderRadius: 8, fontSize: 13, fontWeight: 700, textAlign: "center" }}>ECサイト準備中</div>
@@ -88,8 +92,14 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
             </div>
           )}
           {bean.status === "now" && roaster.url && (
-            <div style={{ textAlign: "center", fontSize: 10, color: GRAY, marginTop: 8, fontFamily: "ui-monospace, monospace" }}>
-              ↗ {roaster.url} へ送客（/go/{String(bean.id).padStart(4, "0")}・utm付き）
+            // 連動レベルを隠さず出す。直リンクなのか店内検索なのかで、押したあとの体験が変わるため。
+            <div style={{ textAlign: "center", fontSize: 10, color: GRAY, marginTop: 8, lineHeight: 1.6 }}>
+              {beanLinkKind(roaster, bean) === "direct"
+                ? <>この豆の商品ページへ直接ひらきます</>
+                : beanLinkKind(roaster, bean) === "search"
+                  ? <>{roaster.url} 内でこの豆を検索した結果をひらきます</>
+                  : <>{roaster.url} のトップページをひらきます</>}
+              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, marginTop: 2 }}>↗ {roaster.url}</div>
             </div>
           )}
           {bean.status === "now" && onFlavor && (

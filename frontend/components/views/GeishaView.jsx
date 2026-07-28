@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, perGrams } from "../lib/currency";
 import { getPlan } from "../lib/store";
+import { beanHref } from "../lib/utils";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
 
@@ -42,25 +43,32 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
           PRICE / 100g
         </div>
         {ladder.map((b, i) => (
-          <button key={b.id} onClick={() => onOpen(b)}
-            style={{ display: "block", width: "100%", background: "none", border: "none", padding: "10px 0 0", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{b.name}</span>
-              <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: INK }}>{fmt100(b)}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginTop: 1 }}>
-              <span style={{ fontSize: 10, color: GRAY }}>{ROASTERS[b.r].name} ・ {b.origin} ・ {b.process}</span>
-              <span style={{ fontSize: 10, color: GREEN, fontWeight: 700, flexShrink: 0 }}>豆の詳細 ›</span>
-            </div>
-            <div style={{ height: 6, background: "#F0EDE4", borderRadius: 3, marginTop: 5, overflow: "hidden" }}>
-              <div className="bt-bar" style={{
-                height: "100%", borderRadius: 3,
-                width: `${(per100(b) / maxP) * 100}%`,
-                background: `linear-gradient(90deg, ${GREEN}, #6B8F3C)`,
-                animationDelay: `${0.15 + i * 0.09}s`,
-              }} />
-            </div>
-          </button>
+          <div key={b.id} style={{ display: "flex", alignItems: "flex-end", gap: 10, padding: "10px 0 0" }}>
+            <button onClick={() => onOpen(b)}
+              style={{ display: "block", flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{b.name}</span>
+                <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: INK }}>{fmt100(b)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginTop: 1 }}>
+                <span style={{ fontSize: 10, color: GRAY }}>{ROASTERS[b.r].name} ・ {b.origin} ・ {b.process}</span>
+                <span style={{ fontSize: 10, color: GREEN, fontWeight: 700, flexShrink: 0 }}>豆の詳細 ›</span>
+              </div>
+              <div style={{ height: 6, background: "#F0EDE4", borderRadius: 3, marginTop: 5, overflow: "hidden" }}>
+                <div className="bt-bar" style={{
+                  height: "100%", borderRadius: 3,
+                  width: `${(per100(b) / maxP) * 100}%`,
+                  background: `linear-gradient(90deg, ${GREEN}, #6B8F3C)`,
+                  animationDelay: `${0.15 + i * 0.09}s`,
+                }} />
+              </div>
+            </button>
+            {/* レアロットは売り切れるのが速い。一覧から直接ECへ行けるようにする */}
+            <a href={beanHref(ROASTERS[b.r], b)} target="_blank" rel="noopener noreferrer"
+              style={{ flexShrink: 0, textDecoration: "none", padding: "7px 12px", background: INK, color: PAPER, borderRadius: 6, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
+              買う ↗
+            </a>
+          </div>
         ))}
         {ladder.length === 0 && (
           <div style={{ fontSize: 11, color: GRAY, padding: "14px 0" }}>いま買える{title}はありません。</div>
