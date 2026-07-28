@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 
 // ---- データ / ロジック（分離済みモジュール） ----
 import { ROASTERS } from "./data/roasters";
@@ -23,7 +24,11 @@ import { BeanCard } from "./ui/BeanCard";
 import { DetailSheet } from "./ui/DetailSheet";
 import { Splash } from "./ui/Splash";
 import { RoasterPage } from "./views/RoasterPage";
-import { GlobeView } from "./views/GlobeView";
+// 地球儀は three.js を使うので、地球タブを開いたときだけ読み込む（初回表示を軽く保つ）
+const GlobeView = dynamic(() => import("./views/GlobeView").then((m) => m.GlobeView), {
+  ssr: false,
+  loading: () => <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "60px 0" }}>地球を読み込み中…</div>,
+});
 import { DiagnosisView } from "./views/DiagnosisView";
 import { FlavorMapView } from "./views/FlavorMapView";
 import { ProcessChart } from "./views/ProcessChart";
