@@ -565,6 +565,9 @@ export const FLAVOR_MAP = {
   1127: { fx: 50, fy: 22, fam: "berry", notes: "ベリー・カシス" },
   1129: { fx: 52, fy: 14, fam: "floral", notes: "ジャスミン・柑橘" },
   1131: { fx: 50, fy: 22, fam: "berry", notes: "ベリー・カシス" },
+  // Lucent の KENYA Gikirima AB。ノートは "Blackcurrant and Acerola with Hibiscus Tea" で
+  // 主役はカシスとアセロラだが、自動分類だと後半の Tea が先に当たって「花・お茶」になる。
+  3401: { fx: 26, fy: 14, fam: "berry", notes: "カシス・アセロラ・ハイビスカスティー" },
 };
 
 /* ECサイト由来の「豆ごとの味の特徴」（豆名やノートに書かれた風味の言葉）から系統を分類する。

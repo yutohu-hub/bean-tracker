@@ -26,6 +26,8 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
   const rows = [
     ["産地", bean.origin],
     ["精製", bean.process],
+    // ECに記載のフレーバーノートがある豆だけ表示する
+    ...(bean.notes ? [["風味", bean.notes]] : []),
     ["現地価格", `${fmtLocal(bean)} / ${bean.per}`],
     [cur === "JPY" ? "円換算" : "ドル換算", `${fmtPrice(bean, cur)} / ${perGrams(bean)}g`],
     ["100gあたり", (() => {
