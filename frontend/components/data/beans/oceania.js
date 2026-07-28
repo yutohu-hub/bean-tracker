@@ -92,4 +92,26 @@ export const oceaniaBeans = [
   { id: 1409, r: "fivesenses", name: "ルワンダ Lot", origin: "ルワンダ", process: "Anaerobic Natural", amount: 23, cur: "AUD", per: "250g", status: "now", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
   { id: 1410, r: "fivesenses", name: "コスタリカ Lot", origin: "コスタリカ", process: "Washed", amount: 24, cur: "AUD", per: "250g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
   { id: 1411, r: "fivesenses", name: "Five Blend", origin: "ブレンド", process: "Washed", amount: 25, cur: "AUD", per: "250g", status: "sold", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
+
+  /* ▼ メルボルン追加分。銘柄名は各ECに実在する商品名そのまま。
+     link を持つものは商品ページへ直行、それ以外も Shopify の店内検索で当たる。 */
+  // Maker Coffee — makercoffee.com.au
+  { id: 3300, r: "maker", name: "The SMITH - Cerrado Mineiro, Brazil", origin: "ブラジル", process: "Natural", amount: 21, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#2A2018", accent: "#E4B84A", year: "2026", link: "https://makercoffee.com.au/products/the-smith-cerrado-mineiro-brazil-maker-coffee" },
+  { id: 3301, r: "maker", name: "Chelchele - Washed - Ethiopia", origin: "エチオピア", process: "Washed", amount: 25, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#F2EFE6", accent: "#2F5233", year: "2026" },
+  { id: 3302, r: "maker", name: "Chelchele - Natural - Ethiopia", origin: "エチオピア", process: "Natural", amount: 25, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
+  { id: 3303, r: "maker", name: "Decaf - Colombia", origin: "コロンビア", process: "Washed", amount: 23, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
+  // Clark St Coffee — clarkst.coffee
+  { id: 3304, r: "clarkst", name: "Ringleader Espresso Blend", origin: "ブレンド", process: "Washed / Natural", amount: 18, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#6B2D3C", accent: "#EFE9DA", year: "2026", link: "https://clarkst.coffee/products/ringleader" },
+  { id: 3305, r: "clarkst", name: "Mastermind Espresso Blend", origin: "ブレンド", process: "Washed / Natural", amount: 18, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#22303A", accent: "#C8792E", year: "2026", link: "https://clarkst.coffee/products/mastermind-espresso-blend" },
+  // Wide Open Road — wideopenroad.com.au
+  { id: 3306, r: "wideopenroad", name: "Bathysphere Signature Espresso Blend", origin: "ブレンド", process: "Washed / Natural", amount: 22, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#22303A", accent: "#C8792E", year: "2026", link: "https://wideopenroad.com.au/products/bathysphere-espresso-blend" },
+  // Vacation Coffee — vacationcoffee.com.au（同じ生豆をエスプレッソ／フィルターで焼き分けている）
+  { id: 3307, r: "vacation", name: "ETHIOPIA Yirgacheffe Xinoo ESPRESSO", origin: "エチオピア", process: "Natural", amount: 18, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#F2EFE6", accent: "#8A3B2E", year: "2026", link: "https://vacationcoffee.com.au/products/ethiopia-yirgacheffe-xinoo-espresso" },
+  { id: 3308, r: "vacation", name: "ETHIOPIA Yirgacheffe Xinoo FILTER", origin: "エチオピア", process: "Natural", amount: 18, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#EFE9DA", accent: "#2F5233", year: "2026", link: "https://vacationcoffee.com.au/products/ethiopia-yirgacheffe-xinoo-filter" },
+  { id: 3309, r: "vacation", name: "ETHIOPIA Guji Guribea FILTER", origin: "エチオピア", process: "Natural", amount: 18, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#7C4D8F", accent: "#F2E9DC", year: "2026", link: "https://vacationcoffee.com.au/products/ethiopia-guji-guribea-filter" },
+  // Sensory Lab — sensorylab.com.au
+  { id: 3310, r: "sensorylab", name: "Steadfast", origin: "ブレンド", process: "Washed / Natural", amount: 24, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#2A2018", accent: "#E4B84A", year: "2026" },
+  { id: 3311, r: "sensorylab", name: "Seamless", origin: "ブレンド", process: "Washed", amount: 24, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#F4F1E8", accent: "#1A1815", year: "2026" },
+  { id: 3312, r: "sensorylab", name: "Colombia San Agustin", origin: "コロンビア", process: "Washed", amount: 26, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },
+  { id: 3313, r: "sensorylab", name: "Costa Rica Finca La Milena", origin: "コスタリカ", process: "Washed", amount: 26, cur: "AUD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
 ];

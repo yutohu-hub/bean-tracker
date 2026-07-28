@@ -1,13 +1,16 @@
 "use client";
 import { useState } from "react";
-import { INK, GRAY, STATUS } from "../lib/theme";
+import { INK, PAPER, GRAY, STATUS } from "../lib/theme";
 import { fmtPrice, perGrams, toJPY, RATES_TO_JPY } from "../lib/currency";
 import { ROASTERS } from "../data/roasters";
-import { isNew } from "../lib/utils";
+import { isNew, beanHref } from "../lib/utils";
 import { Package } from "./Package";
 
 export function BeanCard({ bean, onOpen, onRoaster, cur }) {
   const s = STATUS[bean.status];
+  const roaster = ROASTERS[bean.r];
+  // いま買える豆は、詳細シートを開かずカードから直接ECへ行けるようにする
+  const buyable = bean.status === "now" && roaster && roaster.url;
   const [tap, setTap] = useState(false);
   const per100 = (toJPY(bean) / perGrams(bean)) * 100;
   const per100Str = cur === "JPY" ? `¥${Math.round(per100).toLocaleString()}` : `$${(per100 / RATES_TO_JPY.USD).toFixed(2)}`;
@@ -30,8 +33,17 @@ export function BeanCard({ bean, onOpen, onRoaster, cur }) {
           onClick={(e) => { e.stopPropagation(); onRoaster(bean.r); }}
           style={{ fontSize: 10.5, color: GRAY, marginTop: 2, background: "none", border: "none", padding: 0, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}
         >
-          {ROASTERS[bean.r].name}
+          {roaster.name}
         </button>
+        {buyable && (
+          <a
+            href={beanHref(roaster, bean)} target="_blank" rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: "block", textAlign: "center", textDecoration: "none", marginTop: 7, padding: "7px 0", background: INK, color: PAPER, borderRadius: 6, fontSize: 11, fontWeight: 700 }}
+          >
+            買う ↗
+          </a>
+        )}
       </div>
     </div>
   );
