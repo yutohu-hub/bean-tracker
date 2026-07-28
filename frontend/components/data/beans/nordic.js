@@ -33,7 +33,7 @@ export const nordicBeans = [
   { id: 87, r: "prolog", name: "Nariño", origin: "コロンビア", process: "Washed", amount: 150, cur: "DKK", per: "250g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },
   { id: 88, r: "prolog", name: "Costa Rica La Pastora", origin: "コスタリカ", process: "Honey", amount: 155, cur: "DKK", per: "250g", status: "sold", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
   { id: 160, r: "standout", name: "Ethiopia Aricha", origin: "エチオピア", process: "Natural", amount: 175, cur: "SEK", per: "250g", status: "now", color: "#F2EFE6", accent: "#8A3B2E", year: "2026" },
-  { id: 161, r: "standout", name: "Gesha Especial", origin: "コロンビア", process: "Washed", amount: 320, cur: "SEK", per: "100g", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026", vt: "geisha" },
+  { id: 161, r: "standout", name: "Hacienda La Esmeralda Washed Gesha Aguila Lot Panama", origin: "パナマ", process: "Washed", amount: 320, cur: "SEK", per: "100g", status: "now", color: "#3A2E4F", accent: "#D9B44A", year: "2026", link: "https://www.standoutcoffee.com/products/esmeralda-washed-gesha", vt: "geisha" },
   { id: 162, r: "damatteo", name: "Yirgacheffe", origin: "エチオピア", process: "Washed", amount: 175, cur: "SEK", per: "250g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
   { id: 163, r: "damatteo", name: "Kirinyaga AA", origin: "ケニア", process: "Washed", amount: 175, cur: "SEK", per: "250g", status: "sold", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
   { id: 164, r: "johannystrom", name: "Ljus Etiopien", origin: "エチオピア", process: "Washed", amount: 175, cur: "SEK", per: "250g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },

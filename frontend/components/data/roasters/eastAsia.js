@@ -30,7 +30,7 @@ export const eastAsia = {
   arabica: { name: "% Arabica", city: "京都", country: "JP", region: "eastAsia", platform: "Shopify", note: "ゲイシャの名店", coord: [135.7936, 34.985], url: "arabica.com",
     founded: "2013", style: "浅〜中浅煎り・世界展開", ship: "国内発送(2〜4日)", focus: "ゲイシャ・エチオピア",
     bio: "京都発、世界中に店を構えるブランド。シンプルな設計と%ブレンド、希少ゲイシャで知られる。" },
-  maruyama: { name: "丸山珈琲", city: "軽井沢", country: "JP", region: "eastAsia", platform: "Shopify", note: "ゲイシャの名店", coord: [138.6, 36.34], url: "maruyamacoffee.com",
+  maruyama: { name: "丸山珈琲", city: "軽井沢", country: "JP", region: "eastAsia", platform: "EC-CUBE", note: "ゲイシャの名店", coord: [138.6, 36.34], url: "maruyamacoffee.com",
     founded: "1991", style: "中浅煎り・COE志向", ship: "国内発送(2〜4日)", focus: "ゲイシャ・エチオピア",
     bio: "軽井沢発、日本のスペシャルティを牽引してきた名門。COE審査員も務め、希少ロットに強い。" },
   switch: { name: "Switch Coffee", city: "東京", country: "JP", region: "eastAsia", platform: "Shopify", note: "エチオピアの名店", coord: [139.68, 35.64], url: "switchcoffeetokyo.com",
