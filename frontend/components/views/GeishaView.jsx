@@ -111,8 +111,10 @@ export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
       <VarietySection match={(b) => b.vt === "geisha"} title="GEISHA" sub="ゲイシャ品種" {...secProps} />
       <VarietySection match={(b) => b.vt === "sidra"} title="SIDRA" sub="シドラ品種" {...secProps} />
       <VarietySection match={(b) => { const m = b.name.match(/COE\s*(\d+)位/); return !!m && Number(m[1]) <= 20 && b.origin !== "エチオピア"; }} title="COE" sub="カップ・オブ・エクセレンス入賞ロット（20位以内・エチオピア以外）" {...secProps} />
-      {/* CGLE = Café Granja La Esperanza。生産者直販ぶんに加え、各ロースターが扱う同農園のロットも拾う */}
-      <VarietySection match={(b) => b.r === "cgle" || /CGLE|Cerro Azul|Las Margaritas|Potos[íi]|La Esperanza/i.test(b.name)} title="CGLE" sub="Café Granja La Esperanza（Cerro Azul・Las Margaritas・Potosí 等の農園ロット）" {...secProps} />
+      {/* CGLE = Café Granja La Esperanza 農園のロット。
+          農園名の文字列一致では拾わない（"La Esperanza"/"Las Margaritas" は中南米に同名農園が多く誤検出するため）。
+          ECの商品ページを確認できたロットに data 側で cgle: true を立て、それだけを表示する。 */}
+      <VarietySection match={(b) => b.cgle === true} title="CGLE" sub="Café Granja La Esperanza（Cerro Azul・Las Margaritas 等の農園ロット）" {...secProps} />
 
       {/* 今後のセクション予告 */}
       <div style={{ marginTop: 20, padding: "12px 14px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 11, color: GRAY, lineHeight: 1.8 }}>

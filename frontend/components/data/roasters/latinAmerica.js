@@ -99,7 +99,4 @@ export const latinAmerica = {
   botanica: { name: "Botánica Coffee", city: "Quito", country: "EC", region: "latinAmerica", platform: "Shopify", note: "エチオピアの名店", coord: [-78.47, -0.18],
     founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Quitoを拠点とするエクアドルのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
-  cgle: { name: "Café Granja La Esperanza", city: "Valle del Cauca / Trujillo", country: "CO", region: "latinAmerica", platform: "Shopify", note: "ゲイシャ・希少品種の名門生産者", coord: [-76.32, 4.21], url: "cafegranjalaesperanza.com",
-    founded: "1945", style: "生産者直販・浅煎り", ship: "国際発送", focus: "ゲイシャ・シドラ・希少品種",
-    bio: "1945年にポトシ農園から始まったコロンビアの生産者。2008年のBest of Panamaでゲイシャ部門1位を獲得したのを機にコロンビアへゲイシャを導入し、Potosí・La Esperanza・Cerro Azul・Las Margaritas の4農園で希少品種と実験的精製を手がける。" },
 };
