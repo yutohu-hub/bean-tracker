@@ -36,6 +36,7 @@ export function GlobeView({ onRoaster }) {
   const wrapRef = useRef(null);
   const viewerRef = useRef(null);
   const apiRef = useRef(null);
+  const paintedRef = useRef(null);   // 直前に強調表示したロースター
   const [selected, setSelected] = useState(null);
   const [status, setStatus] = useState("loading");   // loading | ready | error
 
@@ -72,37 +73,51 @@ export function GlobeView({ onRoaster }) {
         }
 
         const s = viewer.scene;
-        s.globe.enableLighting = true;
+        // 影・照明は負荷が高いうえ、夜側のマーカーが見えなくなるので使わない
+        s.globe.enableLighting = false;
         s.globe.showGroundAtmosphere = true;
         s.skyAtmosphere.show = true;
+        s.fog.enabled = false;
+        s.shadows = false;
         s.backgroundColor = Cesium.Color.fromCssColorString("#060d16");
-        s.screenSpaceCameraController.minimumZoomDistance = 800;       // 都市レベルまで
-        s.screenSpaceCameraController.maximumZoomDistance = 3.2e7;
+        s.postProcessStages.fxaa.enabled = true;
 
-        // ロースターのマーカー
+        const cc = s.screenSpaceCameraController;
+        cc.minimumZoomDistance = 800;        // 都市レベルまで
+        cc.maximumZoomDistance = 3.2e7;
+        cc.enableCollisionDetection = true;
+        // 指を離したあとに滑らせる（慣性）。既定より強めにして動きを滑らかに見せる
+        cc.inertiaSpin = 0.85;
+        cc.inertiaTranslate = 0.85;
+        cc.inertiaZoom = 0.75;
+
+        // マーカーは Entity ではなく PointPrimitive で描く。
+        // Entity + CLAMP_TO_GROUND は627件ぶんの地形高さ問い合わせが毎フレーム走って重いため。
+        const pts = s.primitives.add(new Cesium.PointPrimitiveCollection());
+        const cBase = Cesium.Color.fromCssColorString(DOT);
+        const cSel = Cesium.Color.fromCssColorString(DOTSEL);
+        const byKey = new Map();
         for (const [key, r] of Object.entries(ROASTERS)) {
           const [lon, lat] = r.coord || [0, 0];
-          viewer.entities.add({
+          const p = pts.add({
             id: key,
-            position: Cesium.Cartesian3.fromDegrees(lon, lat),
-            point: {
-              pixelSize: 7,
-              color: Cesium.Color.fromCssColorString(DOT),
-              outlineColor: Cesium.Color.WHITE,
-              outlineWidth: 1.2,
-              // 地球の裏側の点は隠す
-              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-              disableDepthTestDistance: 0,
-              scaleByDistance: new Cesium.NearFarScalar(1.0e5, 1.6, 1.5e7, 0.65),
-            },
+            position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
+            pixelSize: 7,
+            color: cBase,
+            outlineColor: Cesium.Color.WHITE,
+            outlineWidth: 1.2,
+            scaleByDistance: new Cesium.NearFarScalar(1.0e5, 1.6, 1.5e7, 0.7),
+            // 地球の裏側の点は隠れる（深度テストを有効に保つ）
+            disableDepthTestDistance: 0,
           });
+          byKey.set(key, p);
         }
 
         // タップで選択
         const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
         handler.setInputAction((click) => {
           const picked = viewer.scene.pick(click.position);
-          const id = picked && picked.id && picked.id.id;
+          const id = picked && (typeof picked.id === "string" ? picked.id : picked.id && picked.id.id);
           if (id && ROASTERS[id]) setSelected(id);
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
@@ -114,6 +129,7 @@ export function GlobeView({ onRoaster }) {
         apiRef.current = {
           zoomIn: () => viewer.camera.zoomIn(viewer.camera.positionCartographic.height * 0.35),
           zoomOut: () => viewer.camera.zoomOut(viewer.camera.positionCartographic.height * 0.5),
+          // ボタンでも一気に飛ばず、滑らかに移動する
           reset: () => viewer.camera.flyTo({
             destination: Cesium.Cartesian3.fromDegrees(139.7, 35.0, 1.6e7), duration: 1.0,
           }),
@@ -124,14 +140,19 @@ export function GlobeView({ onRoaster }) {
               duration: 1.2,
             });
           },
+          // 前回選択と今回だけを書き換える（627件を毎回舐めない）
           paint: (selKey) => {
-            for (const [key] of Object.entries(ROASTERS)) {
-              const e = viewer.entities.getById(key);
-              if (!e || !e.point) continue;
-              const on = key === selKey;
-              e.point.color = Cesium.Color.fromCssColorString(on ? DOTSEL : DOT);
-              e.point.pixelSize = on ? 13 : 7;
+            const prev = paintedRef.current;
+            if (prev && byKey.has(prev)) {
+              const p = byKey.get(prev);
+              p.color = cBase; p.pixelSize = 7;
             }
+            if (selKey && byKey.has(selKey)) {
+              const p = byKey.get(selKey);
+              p.color = cSel; p.pixelSize = 13;
+            }
+            paintedRef.current = selKey || null;
+            s.requestRender();
           },
           handler,
         };
