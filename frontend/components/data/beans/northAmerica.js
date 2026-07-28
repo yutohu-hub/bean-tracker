@@ -4,8 +4,8 @@ export const northAmericaBeans = [
   { id: 9, r: "onyx", name: "Ethiopia Hambela", origin: "エチオピア", process: "Natural", amount: 24, cur: "USD", per: "10oz", status: "now", updatedAt: "2026-07-25", color: "#3A2E4F", accent: "#D9B44A", year: "2026" },
   { id: 10, r: "onyx", name: "Colombia Aponte", origin: "コロンビア", process: "Honey", amount: 22, cur: "USD", per: "10oz", status: "sold", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
   { id: 11, r: "onyx", name: "Monarch", origin: "ブレンド", process: "Natural", amount: 18, cur: "USD", per: "10oz", status: "archive", color: "#22303A", accent: "#C8792E", year: "2023" },
-  { id: 15, r: "onyx", name: "Hacienda La Esmeralda Geisha", origin: "パナマ", process: "Washed", amount: 62, cur: "USD", per: "100g", status: "now", color: "#EFE9DA", accent: "#3A2E4F", year: "2026", vt: "geisha" },
-  { id: 20, r: "onyx", name: "Los Nogales Sidra", origin: "コロンビア", process: "Honey", amount: 30, cur: "USD", per: "100g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026", vt: "sidra" },
+  { id: 15, r: "onyx", name: "Panama Hacienda Esmeralda Buena Vista Gesha", origin: "パナマ", process: "Washed", amount: 62, cur: "USD", per: "100g", status: "now", color: "#EFE9DA", accent: "#3A2E4F", year: "2026", link: "https://onyxcoffeelab.com/products/panama-hacienda-esmeralda-buena-vista-gesha", vt: "geisha" },
+  { id: 20, r: "onyx", name: "Colombia La Palma Sidra", origin: "コロンビア", process: "Honey", amount: 30, cur: "USD", per: "100g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026", link: "https://onyxcoffeelab.com/products/colombia-la-palma-sidra-131", vt: "sidra" },
   { id: 33, r: "sey", name: "Nginda Estate", origin: "ケニア", process: "Washed", amount: 26, cur: "USD", per: "250g", status: "now", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
   { id: 34, r: "sey", name: "El Diamante Chiroso", origin: "コロンビア", process: "Washed", amount: 25, cur: "USD", per: "250g", status: "now", color: "#F4F1E8", accent: "#8A3B2E", year: "2026" },
   { id: 35, r: "sey", name: "Buku Sayisa", origin: "エチオピア", process: "Washed", amount: 24, cur: "USD", per: "250g", status: "sold", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
@@ -53,7 +53,6 @@ export const northAmericaBeans = [
   { id: 210, r: "sweetbloom", name: "Hometown", origin: "ブレンド", process: "Washed", amount: 22, cur: "USD", per: "250g", status: "now", color: "#6B2D3C", accent: "#EFE9DA", year: "2026" },
   { id: 211, r: "sweetbloom", name: "Ethiopia Hambela", origin: "エチオピア", process: "Natural", amount: 22, cur: "USD", per: "250g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },
   { id: 212, r: "corvus", name: "Ethiopia Guji", origin: "エチオピア", process: "Natural", amount: 22, cur: "USD", per: "250g", status: "now", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
-  { id: 213, r: "corvus", name: "Colombia Sidra", origin: "コロンビア", process: "Washed", amount: 37, cur: "USD", per: "100g", status: "now", color: "#2E2A24", accent: "#C8A96A", year: "2026", vt: "sidra" },
   { id: 214, r: "methodical", name: "Ethiopia Yirga", origin: "エチオピア", process: "Washed", amount: 22, cur: "USD", per: "250g", status: "now", color: "#F4F1E8", accent: "#1A1815", year: "2026" },
   { id: 215, r: "methodical", name: "El Placer", origin: "コロンビア", process: "Washed", amount: 22, cur: "USD", per: "250g", status: "sold", color: "#1C1B19", accent: "#E8E2D2", year: "2026" },
   { id: 216, r: "tandem", name: "Time & Temperature", origin: "ブレンド", process: "Washed", amount: 22, cur: "USD", per: "250g", status: "now", color: "#F2EFE6", accent: "#8A3B2E", year: "2026" },
@@ -80,7 +79,6 @@ export const northAmericaBeans = [
   { id: 350, r: "dune", name: "Colombia Popayán", origin: "コロンビア", process: "Washed", amount: 22, cur: "USD", per: "250g", status: "now", color: "#7C4D8F", accent: "#F2E9DC", year: "2026" },
   { id: 351, r: "portrait", name: "Ethiopia Wolde", origin: "エチオピア", process: "Washed", amount: 22, cur: "USD", per: "250g", status: "now", color: "#22303A", accent: "#C8792E", year: "2026" },
   { id: 352, r: "portrait", name: "Kenya Kirinyaga", origin: "ケニア", process: "Washed", amount: 22, cur: "USD", per: "250g", status: "sold", color: "#E2DBC8", accent: "#5A4632", year: "2026" },
-  { id: 353, r: "portrait", name: "Portrait Geisha", origin: "コロンビア", process: "Washed", amount: 30, cur: "USD", per: "100g", status: "now", color: "#6B2D3C", accent: "#EFE9DA", year: "2026", vt: "geisha" },
   { id: 354, r: "littlewolf", name: "Ethiopia Reko", origin: "エチオピア", process: "Natural", amount: 22, cur: "USD", per: "250g", status: "now", color: "#4A5A3A", accent: "#EFE9DA", year: "2026" },
   { id: 355, r: "littlewolf", name: "Brazil Mogiana", origin: "ブラジル", process: "Natural", amount: 22, cur: "USD", per: "250g", status: "now", color: "#D97E3A", accent: "#2E2A24", year: "2026" },
   { id: 356, r: "broadsheet", name: "Ethiopia Aricha", origin: "エチオピア", process: "Washed", amount: 22, cur: "USD", per: "250g", status: "now", color: "#2E2A24", accent: "#C8A96A", year: "2026" },
@@ -194,4 +192,10 @@ export const northAmericaBeans = [
   { id: 1403, r: "detourcoffee", name: "コスタリカ Lot", origin: "コスタリカ", process: "Washed", amount: 23, cur: "CAD", per: "340g", status: "now", color: "#B8433A", accent: "#F2E9DC", year: "2026" },
   { id: 1404, r: "detourcoffee", name: "Detour Blend", origin: "ブレンド", process: "Washed", amount: 23, cur: "CAD", per: "340g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
   { id: 1405, r: "detourcoffee", name: "エチオピア Lot", origin: "エチオピア", process: "Natural", amount: 26, cur: "CAD", per: "340g", status: "sold", color: "#F4F1E8", accent: "#1A1815", year: "2026" },
+
+  /* Onyx Coffee Lab が扱う CGLE（Café Granja La Esperanza）のロット。
+     いずれも商品ページの実在を確認済み。価格は Onyx の他のロットに合わせた代表値。 */
+  { id: 3500, r: "onyx", name: "Colombia Cafe Granja Gesha", origin: "コロンビア", process: "Washed", amount: 55, cur: "USD", per: "100g", status: "now", updatedAt: "2026-07-28", color: "#F2EFE6", accent: "#2F5233", year: "2026", vt: "geisha", cgle: true, link: "https://onyxcoffeelab.com/products/colombia-cafe-granja-gesha" },
+  { id: 3501, r: "onyx", name: "ECHELON Colombia Cafe Granja Las Margaritas Gesha", origin: "コロンビア", process: "Washed", amount: 68, cur: "USD", per: "100g", status: "now", updatedAt: "2026-07-28", color: "#3A2E4F", accent: "#D9B44A", year: "2026", vt: "geisha", cgle: true, link: "https://onyxcoffeelab.com/products/echelon-colombia-cafe-granja-las-margaritas-gesha" },
+  { id: 3502, r: "onyx", name: "ECHELON Colombia Cafe Granja Sidra Honey", origin: "コロンビア", process: "Honey", amount: 48, cur: "USD", per: "100g", status: "now", updatedAt: "2026-07-28", color: "#2A2018", accent: "#E4B84A", year: "2026", vt: "sidra", cgle: true, link: "https://onyxcoffeelab.com/products/echelon-colombia-cafe-granja-sidra-honey" },
 ];
