@@ -29,6 +29,11 @@ export function beanHref(roaster, bean) {
   if (!roaster || !roaster.url) return null;
   const raw = roaster.url.startsWith("http") ? roaster.url : "https://" + roaster.url;
   const utm = "utm_source=beantracker&utm_medium=referral&utm_campaign=go";
+  // 実在を確認した商品ページのURLがあれば、検索フォールバックより優先して直リンクする
+  if (bean && bean.link) {
+    const sep = bean.link.indexOf("?") === -1 ? "?" : "&";
+    return bean.link + sep + utm;
+  }
   if (roaster.platform !== "Shopify") return shopHref(roaster); // トップへ安全に送客（utm付き）
   let origin;
   try { origin = new URL(raw).origin; } catch { origin = raw.replace(/\/+$/, ""); }

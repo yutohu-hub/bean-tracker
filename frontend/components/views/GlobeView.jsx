@@ -12,6 +12,11 @@ if (typeof window !== "undefined") window.CESIUM_BASE_URL = `${BASE}/cesium/`;
 const DOT = "#F0603F";
 const DOTSEL = "#FFC23D";
 
+// 寄れる上限（カメラ高度・m）。
+// 628軒の最近傍距離は中央値2.2km・下位5%でも610m。上空15kmなら高さ420pxの画面で
+// 610m ≒ 14px となり、7pxの●同士が重ならない。ここより深いタイルは読みに行かせない。
+const MIN_ALT = 15000;
+
 // Cesium は public/cesium から素のスクリプトとして読み込む（webpack でバンドルしない）。
 let cesiumPromise = null;
 function loadCesium() {
@@ -58,6 +63,13 @@ export function GlobeView({ onRoaster }) {
           sceneModePicker: false, navigationHelpButton: false, animation: false,
           timeline: false, fullscreenButton: false, infoBox: false,
           selectionIndicator: false, creditContainer: document.createElement("div"),
+          // 3Dだけ使う（2D/コロンバスビューの資源を確保しない）
+          scene3DOnly: true,
+          // 画面に変化があったときだけ描画する。止まっている間はGPUを回さない
+          requestRenderMode: true,
+          maximumRenderTimeChange: Infinity,
+          // MSAAは切ってFXAAで済ませる（下で msaaSamples = 1）
+          contextOptions: { webgl: { antialias: false, powerPreference: "high-performance" } },
           // 衛星写真：ion トークン不要の Esri World Imagery を使う
           baseLayer: Cesium.ImageryLayer.fromProviderAsync(
             Cesium.ArcGisMapServerImageryProvider.fromUrl(
@@ -81,11 +93,21 @@ export function GlobeView({ onRoaster }) {
         s.shadows = false;
         s.backgroundColor = Cesium.Color.fromCssColorString("#060d16");
         s.postProcessStages.fxaa.enabled = true;
+        // マルチサンプルは1画素あたりのコストが数倍になる。FXAAで代替する
+        s.msaaSamples = 1;
+        // タイルの解像度をわずかに落とす（既定2）。読み込む枚数が減り、回転が引っかからない
+        s.globe.maximumScreenSpaceError = 3;
+        // 一度読んだタイルを多めに保持し、戻ってきたときに再取得しない（既定100）
+        s.globe.tileCacheSize = 250;
+        s.globe.showSkirts = false;
 
         const cc = s.screenSpaceCameraController;
-        cc.minimumZoomDistance = 800;        // 都市レベルまで
+        // 寄れる上限は上空15km。●が重なりはじめる手前で、街全体が入る縮尺。
+        // ここで止めることで最深部の衛星タイル読み込みが発生しなくなる。
+        cc.minimumZoomDistance = MIN_ALT;
         cc.maximumZoomDistance = 3.2e7;
-        cc.enableCollisionDetection = true;
+        // 15kmまでしか降りないので地形との衝突は起こりえない。毎フレームの判定を省く
+        cc.enableCollisionDetection = false;
         // 指を離したあとに滑らせる（慣性）。既定より強めにして動きを滑らかに見せる
         cc.inertiaSpin = 0.85;
         cc.inertiaTranslate = 0.85;
@@ -126,18 +148,38 @@ export function GlobeView({ onRoaster }) {
           destination: Cesium.Cartesian3.fromDegrees(139.7, 35.0, 1.6e7),
         });
 
+        // ＋−ボタンも一段ずつ跳ばず、イージングをかけて寄る／引く
+        let zoomRaf = null;
+        const smoothZoom = (factor) => {
+          const start = viewer.camera.positionCartographic.height;
+          const target = Math.min(Math.max(start * factor, MIN_ALT * 1.02), cc.maximumZoomDistance * 0.98);
+          if (Math.abs(target - start) < 1) return;
+          if (zoomRaf) cancelAnimationFrame(zoomRaf);
+          const t0 = performance.now(), dur = 420;
+          const step = (t) => {
+            const k = Math.min(1, (t - t0) / dur);
+            const want = start + (target - start) * (1 - Math.pow(1 - k, 3));   // easeOutCubic
+            const d = viewer.camera.positionCartographic.height - want;
+            if (d > 0) viewer.camera.zoomIn(d); else if (d < 0) viewer.camera.zoomOut(-d);
+            zoomRaf = k < 1 ? requestAnimationFrame(step) : null;
+          };
+          zoomRaf = requestAnimationFrame(step);
+        };
+
         apiRef.current = {
-          zoomIn: () => viewer.camera.zoomIn(viewer.camera.positionCartographic.height * 0.35),
-          zoomOut: () => viewer.camera.zoomOut(viewer.camera.positionCartographic.height * 0.5),
+          zoomIn: () => smoothZoom(0.55),
+          zoomOut: () => smoothZoom(1 / 0.55),
+          cancelZoom: () => { if (zoomRaf) cancelAnimationFrame(zoomRaf); zoomRaf = null; },
           // ボタンでも一気に飛ばず、滑らかに移動する
           reset: () => viewer.camera.flyTo({
             destination: Cesium.Cartesian3.fromDegrees(139.7, 35.0, 1.6e7), duration: 1.0,
           }),
           focus: (key) => {
             const r = ROASTERS[key]; if (!r || !r.coord) return;
+            // 「この街まで寄る」＝寄れる上限のすこし手前。街全体が入る高さで止める
             viewer.camera.flyTo({
-              destination: Cesium.Cartesian3.fromDegrees(r.coord[0], r.coord[1], 6.0e5),
-              duration: 1.2,
+              destination: Cesium.Cartesian3.fromDegrees(r.coord[0], r.coord[1], MIN_ALT * 4),
+              duration: 1.4,
             });
           },
           // 前回選択と今回だけを書き換える（627件を毎回舐めない）
@@ -165,6 +207,7 @@ export function GlobeView({ onRoaster }) {
 
     return () => {
       disposed = true;
+      try { apiRef.current?.cancelZoom?.(); } catch {}
       try { apiRef.current?.handler?.destroy(); } catch {}
       try { viewer && !viewer.isDestroyed() && viewer.destroy(); } catch {}
       viewerRef.current = null;
@@ -181,6 +224,7 @@ export function GlobeView({ onRoaster }) {
     <div>
       <div style={{ fontSize: 11, color: GRAY, marginBottom: 6 }}>
         衛星写真の地球。ドラッグで回転、ホイール／ピンチ／＋−で拡大縮小。● をタップでロースター詳細。
+        拡大は ● が重ならない縮尺（街全体が入る高さ）までです。
       </div>
 
       <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", background: "#060d16" }}>
