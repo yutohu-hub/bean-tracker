@@ -28,7 +28,7 @@ def slug(s: str) -> str: return (re.sub(r"[^a-z0-9]", "", (s or "").lower())[:24
 _NONCOFFEE = re.compile("|".join([
     r"subscription", r"定期便", r"頒布会",
     r"gift\s?card", r"ギフトカード", r"\bvoucher\b", r"gift\s?set", r"e-?gift",
-    r"t-?shirt", r"\btee\b", r"tシャツ", r"hoodie", r"パーカー", r"sweatshirt", r"crewneck", r"\bbeanie\b", r"\bsocks\b", r"\btote\b", r"apron", r"エプロン", r"keychain", r"\bsticker\b", r"ステッカー", r"\bcaps?\b", r"\bhat\b", r"\bshirts?\b", r"\bpants\b", r"\btrousers\b", r"\bjacket\b", r"\bsweater\b", r"\bbandana\b", r"\bshoes\b", r"incen[cs]e", r"お香",
+    r"t-?shirt", r"\btee\b", r"tシャツ", r"hoodie", r"パーカー", r"sweatshirt", r"crewneck", r"\bbeanie\b", r"\bsocks\b", r"\btote\b", r"apron", r"エプロン", r"keychain", r"\bstickers?\b", r"ステッカー", r"\bcaps?\b", r"\bhat\b", r"\bshirts?\b", r"\bpants\b", r"\btrousers\b", r"\bjacket\b", r"\bsweater\b", r"\bbandana\b", r"\bshoes\b", r"incen[cs]e", r"お香",
     r"\bmugs?\b", r"マグカップ", r"tumbler", r"タンブラー", r"\bglass(es)?\b", r"グラス", r"\bbottle\b", r"ボトル", r"flask", r"thermos", r"carafe", r"カラフェ", r"decanter", r"demitasse", r"\bcup\b", r"カップ",
     r"grinder", r"グラインダー", r"coffee\s?mill", r"dripper", r"ドリッパー", r"\bv-?60\b", r"kalita", r"カリタ", r"chemex", r"\bkono\b", r"hario", r"ハリオ", r"aeropress", r"french\s?press", r"moka\s?pot", r"kettle", r"ケトル", r"gooseneck", r"\bscale\b", r"スケール", r"\bserver\b", r"サーバー", r"\bbrewer\b", r"paper\s?filter", r"filter\s?paper", r"ペーパーフィルター", r"canister", r"tamper", r"portafilter", r"\bspoon\b", r"\bscoop\b", r"\bbasket\b", r"\bjug\b", r"\bbrush\b", r"\blid\b", r"\bstraw\b", r"\bholder\b", r"\breplacement\b", r"flannel", r"ネル", r"sibarist", r"\borea\b", r"flo\s?screen", r"cera\s?filter", r"wave\s?filters?", r"deodorizer", r"消臭", r"\bcutter\b", r"stainless\s?steel", r"zebrang",
     r"fellow\s?(aiden|tally|atmos|stagg|ode|opus|clara|carter|prismo)", r"acaia\s?(pearl|lunar|pyxis)", r"comandante", r"timemore", r"1zpresso", r"moccamaster", r"wilfa", r"baratza", r"wacaco", r"picopresso", r"breville", r"gaggia", r"xbloom", r"la\s?marzocco", r"coffee\s?maker", r"espresso\s?machine", r"\bkinto\b", r"\bceado\b", r"\bfetco\b",
@@ -45,6 +45,17 @@ _NONCOFFEE = re.compile("|".join([
     r"\bwholesale\b", r"卸", r"業務用", r"バルク", r"\bbulk\b", r"coffee\s?sacks?", r"\bsack\b",
     # 日本語の非コーヒー（ギフト/セット/焼き菓子など）
     r"ギフト", r"詰め合わせ", r"飲み比べ", r"アソート", r"福袋", r"セット", r"バナナブレッド", r"ブレッド", r"焼き菓子", r"洋菓子", r"和菓子", r"クッキー", r"マフィン", r"スコーン", r"ドーナツ", r"プリン", r"ビスケット", r"グラノーラ", r"カヌレ", r"マドレーヌ", r"フィナンシェ",
+    # カプセル・ポッド／抽出用ミネラル／紙フィルター／体験／植物性飲料（いずれも豆ではない）
+    r"\bcapsules?\b", r"カプセル", r"nespresso", r"ネスプレッソ", r"\bpods?\b",
+    r"water\s?minerals?", r"minerals?\s?for\s?coffee", r"brew\s?water", r"\bapax\b", r"\bosmo\b", r"lotus\s?coffee",
+    r"filters?\s?\((?:\d+|[^)]*(?:count|ct|pack))",
+    r"roastery\s?tour", r"tasting\s?tour", r"coffee\s?tasting\s?and",
+    r"pistachio", r"\bbeverage\b", r"nut\s?butter", r"chocolate\s?chips", r"^almond butter$",
+    r"\(internal\)", r"\btest\s?product\b",
+    # バリスタ用ツール／グッズ／商品でない行（JS側 isCoffee.js と同じ規則）
+    r"\btools?\b", r"tamping\s?mat", r"\btamping\b", r"distribution\s?tool", r"dosing\s?funnel", r"puck\s?prep", r"post-?extraction", r"pulling\s?tool", r"mahlk[\u00f6o]nig",
+    r"\bpins?\b", r"\bpatch(es)?\b", r"\bkeyring\b", r"\bbadges?\b",
+    r"^shipping$", r"^timer$", r"^donation$", r"配送料", r"送料", r"coke\s?case", r"sprite\s?case", r"soda\s?case",
 ]), re.I)
 _COE = re.compile(r"cup of excellence|\bcoe\b", re.I)
 _KG = re.compile(r"(\d+(?:\.\d+)?)\s?kg\b", re.I)
@@ -155,6 +166,10 @@ def main() -> None:
             }
             if p.get("image"):
                 bean["img"] = p["image"]
+            # 商品ページのURL。これが無いと「買う」ボタンが店内検索止まりになり、
+            # 巡回で実際の商品を掴んでいるのに該当ページへ直行できない。
+            if p.get("url"):
+                bean["link"] = p["url"]
             beans.append(bean)
             bid += 1
 
