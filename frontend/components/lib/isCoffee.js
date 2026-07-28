@@ -4,7 +4,7 @@
 const NON_COFFEE = [
   /subscription|サブスク|定期便|頒布会/,
   /gift ?card|ギフトカード|ギフト券|商品券|\bvoucher\b|e-?gift|gift ?set|ギフトセット/,
-  /t-?shirt|\btee\b|tシャツ|hoodie|パーカー|sweatshirt|crewneck|beanie|\bsocks\b|靴下|\btote\b|トートバッグ|エコバッグ|apron|エプロン|enamel pin|keychain|キーホルダー|\bsticker\b|ステッカー|\bcap\b|\bbeanie\b/,
+  /t-?shirt|\btee\b|tシャツ|hoodie|パーカー|sweatshirt|crewneck|beanie|\bsocks\b|靴下|\btote\b|トートバッグ|エコバッグ|apron|エプロン|enamel pin|keychain|キーホルダー|\bstickers?\b|ステッカー|\bcap\b|\bbeanie\b/,
   /\bmugs?\b|マグカップ|tumbler|タンブラー|\bglass(es)?\b|グラス|\bbottle\b|ボトル|flask|thermos|水筒|carafe|カラフェ|decanter|デカンタ|demitasse|\bcup\b|カップ|\bglassware\b/,
   /grinder|グラインダー|コーヒーミル|dripper|ドリッパー|\bv-?60\b|kalita|カリタ|chemex|ケメックス|\bkono\b|hario|ハリオ|aeropress|エアロプレス|french ?press|フレンチプレス|moka ?pot|マキネッタ|kettle|ケトル|gooseneck|\bscale\b|スケール|はかり|server\b|サーバー|ドリップポット|\bbrewer\b|ブリューワー|paper ?filter|filter ?paper|ペーパーフィルター|フィルターペーパー|ネルフィルター|canister|キャニスター|tamper|タンパー|portafilter|\bspoon\b|スプーン|\bscoop\b/,
   // 器具ブランド・パーツ（コーヒー品種/生産者と紛らわしい語は製品名まで限定）
@@ -46,6 +46,24 @@ const NON_COFFEE = [
   /coffee ?mill|\bcutter\b|stainless ?steel|deodorizer|消臭|\bflannel\b|ネル|\bsibarist\b|\borea\b|flo ?screen|cera ?filter|wave ?filters?|dripkit|key ?holder|\bholder\b|\breplacement\b|zebrang/,
   // 日本語の非コーヒー（ギフト/セット/焼き菓子など。"ブレンド"はコーヒーなので除外しない）
   /ギフト|詰め合わせ|飲み比べ|アソート|福袋|セット|バナナブレッド|ブレッド|焼き菓子|洋菓子|和菓子|クッキー|マフィン|スコーン|ドーナツ|プリン|ビスケット|グラノーラ|カヌレ|マドレーヌ|フィナンシェ/,
+  // カプセル・ポッド（豆ではないので図鑑に出さない。ドリップバッグ・インスタントと同じ扱い）
+  /\bcapsules?\b|カプセル|nespresso|ネスプレッソ|\bpods?\b|キャップ式/,
+  // 抽出用のミネラル・調整水（豆ではない）。"April Water Minerals" のように店名が付くことがある
+  /water ?minerals?|minerals? ?for ?coffee|brew ?water|\bapax\b|\bosmo\b|lotus ?coffee/,
+  // 紙フィルター類（"(100 count)" のように枚数が付く。焙煎表記の "Filter" とは区別する）
+  /filters? ?\((?:\d+|[^)]*(?:count|ct|pack))/i,
+  // 体験・イベント（豆ではない）
+  /roastery ?tour|tasting ?tour|coffee ?tasting ?and|\bworkshop ticket\b|\bclass\b ?ticket/,
+  // ミルク以外の植物性飲料・食品（"Almond Butter Espresso" は豆なので単体名のときだけ落とす）
+  /pistachio|\bbeverage\b|nut ?butter|chocolate ?chips|^almond butter$/,
+  // 社内向け・非公開商品
+  /\(internal\)|\btest ?product\b/,
+  // バリスタ用ツール類（"FELLOW Espresso Tamping Mat" のように器具ブランド名だけでは弾けない）
+  /\btools?\b|tamping ?mat|\btamping\b|distribution ?tool|dosing ?funnel|puck ?prep|post-?extraction|pulling ?tool|mahlk[öo]nig/,
+  // エナメルピン等のグッズ（"Pink Bourbon" のような品種名には当たらない）
+  /\bpins?\b|\bpatch(es)?\b|\bkeyring\b|\bbadges?\b/,
+  // 商品ではない行（送料・チップ等）と、コーヒー以外の飲料
+  /^shipping$|^timer$|^donation$|配送料|送料|coke ?case|sprite ?case|soda ?case/,
 ];
 
 // コーヒー豆（＝図鑑に載せる）なら true

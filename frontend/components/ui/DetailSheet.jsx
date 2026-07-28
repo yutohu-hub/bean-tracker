@@ -18,6 +18,13 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
     setRating(t ? t.rating : 0); setNotes(t ? t.notes : ""); setSaved(!!t);
     setWatching(isRestock(bean.id));
   }, [bean ? bean.id : null]);
+  // Esc で閉じる。背景タップしか閉じる手段が無いと、開いたあと戻れなくなる
+  useEffect(() => {
+    if (!bean) return;
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [bean, onClose]);
   if (!bean) return null;
   const s = STATUS[bean.status];
   const roaster = ROASTERS[bean.r];
@@ -39,7 +46,11 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
   return (
     <div onClick={onClose} className="bt-overlay" style={{ position: "fixed", inset: 0, background: "rgba(23,21,15,0.45)", zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
       <div className="bt-sheet" onClick={(e) => e.stopPropagation()} style={{ background: PAPER, width: "100%", maxWidth: 480, borderRadius: "14px 14px 0 0", padding: "18px 20px 26px", maxHeight: "82vh", overflowY: "auto" }}>
-        <div style={{ width: 34, height: 4, borderRadius: 999, background: LINE, margin: "0 auto 16px" }} />
+        <div style={{ position: "relative" }}>
+          <div style={{ width: 34, height: 4, borderRadius: 999, background: LINE, margin: "0 auto 16px" }} />
+          <button onClick={onClose} aria-label="閉じる"
+            style={{ position: "absolute", top: -4, right: -4, width: 30, height: 30, borderRadius: 999, border: "none", background: "#F2F0E9", color: GRAY, fontSize: 15, lineHeight: 1, cursor: "pointer" }}>✕</button>
+        </div>
         <div style={{ display: "flex", gap: 16 }}>
           <div className="bt-detail-pkg" style={{ width: 120, flexShrink: 0 }}><Package bean={bean} /></div>
           <div className="bt-detail-info" style={{ flex: 1, minWidth: 0 }}>
