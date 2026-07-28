@@ -111,6 +111,8 @@ export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
       <VarietySection match={(b) => b.vt === "geisha"} title="GEISHA" sub="ゲイシャ品種" {...secProps} />
       <VarietySection match={(b) => b.vt === "sidra"} title="SIDRA" sub="シドラ品種" {...secProps} />
       <VarietySection match={(b) => { const m = b.name.match(/COE\s*(\d+)位/); return !!m && Number(m[1]) <= 20 && b.origin !== "エチオピア"; }} title="COE" sub="カップ・オブ・エクセレンス入賞ロット（20位以内・エチオピア以外）" {...secProps} />
+      {/* CGLE = Café Granja La Esperanza。生産者直販ぶんに加え、各ロースターが扱う同農園のロットも拾う */}
+      <VarietySection match={(b) => b.r === "cgle" || /CGLE|Cerro Azul|Las Margaritas|Potos[íi]|La Esperanza/i.test(b.name)} title="CGLE" sub="Café Granja La Esperanza（Cerro Azul・Las Margaritas・Potosí 等の農園ロット）" {...secProps} />
 
       {/* 今後のセクション予告 */}
       <div style={{ marginTop: 20, padding: "12px 14px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 11, color: GRAY, lineHeight: 1.8 }}>

@@ -56,4 +56,12 @@ export const latinAmericaBeans = [
   { id: 1095, r: "variedad", name: "Ethiopia Sidama", origin: "エチオピア", process: "Natural", amount: 38000, cur: "COP", per: "250g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
   { id: 1097, r: "botanica", name: "Ethiopia Hambela", origin: "エチオピア", process: "Washed", amount: 22, cur: "USD", per: "250g", status: "now", color: "#22303A", accent: "#C8792E", year: "2026" },
   { id: 1098, r: "botanica", name: "Ethiopia Sidama", origin: "エチオピア", process: "Washed", amount: 22, cur: "USD", per: "250g", status: "now", color: "#E2DBC8", accent: "#5A4632", year: "2026" },
+  { id: 3200, r: "cgle", name: "Cerro Azul Geisha Natural", origin: "コロンビア", process: "Natural", amount: 95, cur: "USD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#F2EFE6", accent: "#2F5233", year: "2026", vt: "geisha" },
+  { id: 3201, r: "cgle", name: "Cerro Azul Geisha Honey", origin: "コロンビア", process: "Honey", amount: 92, cur: "USD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#2A2018", accent: "#E4B84A", year: "2026", vt: "geisha" },
+  { id: 3202, r: "cgle", name: "Cerro Azul Geisha Hybrid Washed", origin: "コロンビア", process: "Washed", amount: 88, cur: "USD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#B8433A", accent: "#F2E9DC", year: "2026", vt: "geisha" },
+  { id: 3203, r: "cgle", name: "Las Margaritas Geisha Hybrid Washed", origin: "コロンビア", process: "Washed", amount: 85, cur: "USD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#3A2E4F", accent: "#D9B44A", year: "2026", vt: "geisha" },
+  { id: 3204, r: "cgle", name: "Potosí Pink Bourbon Washed", origin: "コロンビア", process: "Washed", amount: 42, cur: "USD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#F2EFE6", accent: "#2F5233", year: "2026" },
+  { id: 3205, r: "cgle", name: "Las Margaritas Sidra", origin: "コロンビア", process: "Washed", amount: 68, cur: "USD", per: "250g", status: "sold", updatedAt: "2026-07-28", color: "#2A2018", accent: "#E4B84A", year: "2026", vt: "sidra" },
+  { id: 3206, r: "corvus", name: "CGLE Cerro Azul Geisha", origin: "コロンビア", process: "Washed", amount: 75, cur: "USD", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#B8433A", accent: "#F2E9DC", year: "2026", vt: "geisha" },
+  { id: 3207, r: "archers", name: "CGLE Las Margaritas Geisha", origin: "コロンビア", process: "Natural", amount: 320, cur: "AED", per: "250g", status: "now", updatedAt: "2026-07-28", color: "#3A2E4F", accent: "#D9B44A", year: "2026", vt: "geisha" },
 ];
