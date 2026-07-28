@@ -5,6 +5,13 @@ import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 // 数値・豆情報は公開情報に基づく。判明しない項目は空欄("")にして「情報準備中」を表示（捏造しない）。
 const RECIPES = [
   {
+    comp: "World Brewers Cup", year: "2026", flag: "🇲🇾", winner: "Nas Jaafar",
+    dripper: "UFO V3 + Hario Switch（浸漬×透過）",
+    bean: [["生産国", "パナマ"], ["農園", "Finca Nuguo（標高1,700m）"], ["品種", "Geisha"], ["精製", "アナエロビック・ナチュラル"], ["焙煎", "浅煎り（熱風焙煎・焙煎3日後に使用）"], ["ロースター", ""]],
+    recipe: [["☕", "Coffee", "15g"], ["💧", "Water", "200g"], ["🌡", "Temperature", "92℃"], ["⚙", "Grind", "約700μm"]],
+    pours: [["0:00", "100g 透過（円を描いて注湯）"], ["0:58", "スイッチを閉じる"], ["1:00", "100g 浸漬"], ["2:00", "スイッチを開く"]], total: "2:10",
+  },
+  {
     comp: "World Brewers Cup", year: "2025", flag: "🇨🇳", winner: "George Jinyang Peng",
     dripper: "SOLO Dripper",
     bean: [["生産国", "パナマ"], ["農園", "Mount Totumas（Cloud Forest）"], ["品種", "Geisha"], ["精製", "ナチュラル"], ["焙煎", "3通りに焙煎"], ["ロースター", "Captain George Coffee Roasters（中国・貴陽）"]],
@@ -160,7 +167,7 @@ export function RecipeView() {
       <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.2em", color: GRAY }}>BREW RECIPES</div>
       <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6, lineHeight: 1.35 }}>チャンピオンの抽出レシピ</div>
       <p style={{ fontSize: 12.5, color: GRAY, lineHeight: 1.9, marginTop: 8, marginBottom: 0 }}>
-        World Brewers Cup 過去10大会の優勝者が使った豆と抽出レシピ。同じ一杯を、あなたの手で。<br />
+        World Brewers Cup 過去11大会の優勝者が使った豆と抽出レシピ。同じ一杯を、あなたの手で。<br />
         ※ 2020年は新型コロナのため中止。
       </p>
 
