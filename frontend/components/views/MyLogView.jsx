@@ -156,6 +156,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   }
 
   const openBean = (id) => { const b = BEANS.find((x) => x.id === id); if (b) onOpen(b); };
+  const hasCard = (id) => BEANS.some((x) => x.id === id);   // 手入力の記録には図鑑のカードが無い
   const accountEmail = signed ? (session && session.user ? session.user.email : null) : (user ? user.email || null : null);
   const accountName = signed ? (session && session.user ? session.user.email : "アカウント") : (user ? user.name : "");
   const doLogout = async () => { if (signed) { await signOut(); } else { logout(); } refresh(); };
@@ -355,8 +356,18 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
                 {t.roaster}{t.origin ? ` ・ ${t.origin}` : ""}
               </button>
               {photos[t.beanId] && (
-                <img src={photos[t.beanId]} alt=""
-                  style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10, marginTop: 8, display: "block", background: "#F0EDE4" }} />
+                // 写真からも豆のカードを開けるようにする（銘柄名だけが入口だと押しづらい）。
+                // 手入力の記録は図鑑に対応する豆が無いので、押せる見た目にしない。
+                hasCard(t.beanId) ? (
+                  <button onClick={() => openBean(t.beanId)} aria-label={`${t.name} の詳細を開く`}
+                    style={{ display: "block", width: "100%", padding: 0, marginTop: 8, background: "none", border: "none", cursor: "pointer" }}>
+                    <img src={photos[t.beanId]} alt=""
+                      style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10, display: "block", background: "#F0EDE4" }} />
+                  </button>
+                ) : (
+                  <img src={photos[t.beanId]} alt=""
+                    style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10, marginTop: 8, display: "block", background: "#F0EDE4" }} />
+                )
               )}
               {t.notes && <div style={{ fontSize: 12, color: INK, marginTop: 5, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{t.notes}</div>}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 6 }}>
