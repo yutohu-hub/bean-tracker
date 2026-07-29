@@ -601,14 +601,14 @@ export function computeFlavor(b) {
   else if (/Honey/i.test(proc)) fx = 54;
   else if (/Washed/i.test(proc)) fx = 30;
   let fy = 48;
-  if (/エチオピア|ケニア|ルワンダ|ブルンジ/.test(o)) fy = 24;
+  if (/エチオピア|ケニア|ルワンダ|ブルンジ|タンザニア/.test(o)) fy = 24;
   else if (/コロンビア|グアテマラ|コスタリカ|パナマ/.test(o)) fy = 42;
   else if (/ペルー|メキシコ/.test(o)) fy = 55;
   else if (/ブラジル|インドネシア|インド|ベトナム|中国/.test(o)) fy = 72;
   else if (/ブレンド/.test(o)) fy = 62;
   let fam;
   if (/エチオピア/.test(o)) fam = /Natural|Anaerobic/i.test(proc) ? "berry" : "floral";
-  else if (/ケニア/.test(o)) fam = "berry";
+  else if (/ケニア|タンザニア/.test(o)) fam = "berry";
   else if (/コロンビア|グアテマラ|コスタリカ|パナマ|ペルー/.test(o)) fam = "citrus";
   else if (/ブラジル|メキシコ|インドネシア|インド|ベトナム|中国/.test(o)) fam = "choco";
   else if (/Natural|Anaerobic/i.test(proc)) fam = "tropical";

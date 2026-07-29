@@ -18,7 +18,7 @@ export function featureOf(r) {
 }
 
 export const ORIGIN_GROUP = (o = "") => {
-  if (/エチオピア|ケニア|ルワンダ|ブルンジ/.test(o)) return "africa";
+  if (/エチオピア|ケニア|ルワンダ|ブルンジ|タンザニア/.test(o)) return "africa";
   if (/コロンビア|ブラジル|グアテマラ|コスタリカ|メキシコ|ペルー|パナマ|エルサルバドル|ホンジュラス|ボリビア|ニカラグア|エクアドル/.test(o)) return "latam";
   if (/インドネシア|ベトナム|インド|中国|タイ|東ティモール|パプア/.test(o)) return "asia";
   return null;
