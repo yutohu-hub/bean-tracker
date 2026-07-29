@@ -57,6 +57,7 @@ class Product:
     origin: str
     process: str
     tags: str
+    notes: str = ""
 
 
 def _guess_origin(text: str) -> str:
@@ -71,6 +72,70 @@ def _guess_process(text: str) -> str:
     for needle, label in PROCESS_WORDS:
         if needle in low:
             return label
+    return ""
+
+
+# --- 店が書いたテイスティングノートの抽出 ---------------------------------
+# 産地・精製・風味は商品タイトルではなく商品説明(body_html)に書かれていることが
+# ほとんどで、そこを読まないと味わいマップの入力が「産地と精製」だけになる。
+_TAG_BR = re.compile(r"(?i)<\s*(br|/p|/div|/li|/tr|/h[1-6])\s*/?>")
+_TAGS = re.compile(r"(?is)<[^>]+>")
+_WS = re.compile(r"[ \t\u3000]+")
+
+def html_to_text(html: str) -> str:
+    """body_html を行つきの素テキストにする（ブロック要素を改行に置き換える）。"""
+    s = html or ""
+    s = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", s)
+    s = _TAG_BR.sub("\n", s)
+    s = _TAGS.sub(" ", s)
+    s = (s.replace("&nbsp;", " ").replace("&amp;", "&").replace("&lt;", "<")
+          .replace("&gt;", ">").replace("&quot;", '"').replace("&#39;", "'"))
+    s = _WS.sub(" ", s)
+    return "\n".join(ln.strip() for ln in s.split("\n") if ln.strip())
+
+# 「Tasting Notes: 〜」のように見出しが付いている行を拾う
+_NOTE_LABEL = re.compile(
+    r"(?im)^[\s\-–・*]*(?:tasting\s*notes?|flavou?r\s*notes?|cupping\s*notes?|flavou?r\s*profile"
+    r"|tasting|notes?|フレーバー(?:ノート)?|テイスティング\s*ノート|カッピング\s*ノート|風味|味わい|フレーバ)"
+    r"\s*[:：]?\s*(.*)$")
+# 見出しが無い店向け。風味語が2つ以上並ぶ短い行を候補にする
+_FLAVOR_WORD = re.compile(
+    r"(?i)berr|cassis|cherry|plum|straw|blueberr|raspberr|currant|acerola|hibiscus"
+    r"|citrus|lemon|lime|orange|grapefruit|mandarin|bergamot|yuzu"
+    r"|floral|jasmine|rose|tea\b|lavender|chamomile|blossom"
+    r"|tropical|pineapple|mango|lychee|passion|guava|melon|peach|apricot|papaya"
+    r"|chocolate|cocoa|cacao|nut|almond|hazelnut|caramel|toffee|brown\s*sugar|honey|vanilla|malt|molasses|syrup"
+    r"|apple|pear|grape|fig|date|raisin|tamarind|rhubarb|lemongrass|nougat|cane|spice|cinnamon"
+    r"|ベリー|カシス|苺|いちご|ストロベリー|チェリー|プラム|柑橘|レモン|オレンジ|グレープフルーツ"
+    r"|花|ジャスミン|紅茶|ローズ|トロピカル|パイナップル|マンゴー|ライチ|ピーチ|白桃|杏"
+    r"|チョコ|カカオ|ココア|ナッツ|キャラメル|黒糖|蜂蜜|はちみつ|バニラ|モルト|林檎|りんご|ぶどう")
+
+def _clean_note(s: str) -> str:
+    s = re.sub(r"(?i)^(and|of)\s+", "", (s or "").strip(" .．、,:：-–—/|"))
+    return _WS.sub(" ", s)[:160]
+
+def extract_notes(html: str, title: str = "") -> str:
+    """商品説明から風味の記述だけを取り出す。見つからなければ空文字。"""
+    text = html_to_text(html)
+    if not text:
+        return ""
+    lines = text.split("\n")
+    for i, ln in enumerate(lines):
+        m = _NOTE_LABEL.match(ln)
+        if not m:
+            continue
+        val = _clean_note(m.group(1))
+        # 「Tasting Notes」だけの見出し行なら、次の行が中身
+        if len(val) < 3 and i + 1 < len(lines):
+            val = _clean_note(lines[i + 1])
+        if len(val) >= 3 and _FLAVOR_WORD.search(val):
+            return val
+    # 見出しが無い場合：風味語が2種類以上ある短い行を採る
+    for ln in lines:
+        if len(ln) > 90 or len(ln) < 5:
+            continue
+        if len(set(w.group(0).lower() for w in _FLAVOR_WORD.finditer(ln))) >= 2:
+            return _clean_note(ln)
     return ""
 
 
@@ -209,8 +274,14 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
             grams = int(v.get("grams") or 0) or _grams_from_text(
                 f"{v.get('title','')} {p.get('title','')}")
             per100 = round(price / grams * 100, 2) if grams and price else None
-            text = " ".join([p.get("title", ""), " ".join(p.get("tags", []))
-                             if isinstance(p.get("tags"), list) else str(p.get("tags", ""))])
+            tagtext = (" ".join(p.get("tags", [])) if isinstance(p.get("tags"), list)
+                       else str(p.get("tags", "")))
+            text = " ".join([p.get("title", ""), tagtext])
+            # 産地・精製・風味は説明文にしか書かれていないことが多い。
+            # タイトル/タグで決まらない分をここで補う（味わいマップの入力になる）
+            body = p.get("body_html") or ""
+            notes = extract_notes(body, p.get("title", ""))
+            deep = " ".join([text, html_to_text(body)[:1200]])
             images = p.get("images") or []
             products.append(Product(
                 key=f"{r['name']}::{p.get('handle','')}",
@@ -221,8 +292,9 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
                 price=price, currency=r.get("currency", ""),
                 grams=grams, per100=per100,
                 available=bool(avail_vs),
-                origin=_guess_origin(text), process=_guess_process(text),
-                tags=text[:300],
+                origin=_guess_origin(text) or _guess_origin(deep),
+                process=_guess_process(text) or _guess_process(deep),
+                tags=text[:300], notes=notes,
             ))
         if len(batch) < 250:
             break

@@ -1,1 +1,81 @@
-{"_roaster": {"name": "Test Roastery Tokyo", "country": "JP", "url": "https://example-a.com", "currency": "JPY"}, "products": [{"handle": "ethiopia-chelbesa", "title": "Ethiopia Chelbesa Washed 200g", "tags": ["washed", "filter"], "variants": [{"price": "1980", "grams": 200, "available": true}]}, {"handle": "kenya-karatina", "title": "Kenya Karatina AA 200g", "tags": ["washed"], "variants": [{"price": "2200", "grams": 200, "available": true}]}, {"handle": "colombia-pink", "title": "Colombia Pink Bourbon Natural 100g", "tags": ["natural"], "variants": [{"price": "1650", "grams": 100, "available": false}]}]}
+{
+ "_roaster": {
+  "name": "Test Roastery Tokyo",
+  "country": "JP",
+  "url": "https://example-a.com",
+  "currency": "JPY"
+ },
+ "products": [
+  {
+   "handle": "ethiopia-chelbesa",
+   "title": "Ethiopia Chelbesa Washed 200g",
+   "tags": [
+    "washed",
+    "filter"
+   ],
+   "variants": [
+    {
+     "price": "1980",
+     "grams": 200,
+     "available": true
+    }
+   ]
+  },
+  {
+   "handle": "kenya-karatina",
+   "title": "Kenya Karatina AA 200g",
+   "tags": [
+    "washed"
+   ],
+   "variants": [
+    {
+     "price": "2200",
+     "grams": 200,
+     "available": true
+    }
+   ]
+  },
+  {
+   "handle": "colombia-pink",
+   "title": "Colombia Pink Bourbon Natural 100g",
+   "tags": [
+    "natural"
+   ],
+   "variants": [
+    {
+     "price": "1650",
+     "grams": 100,
+     "available": false
+    }
+   ]
+  },
+  {
+   "handle": "ethiopia-guji-natural",
+   "title": "Ethiopia Guji Natural",
+   "tags": [
+    "single origin"
+   ],
+   "body_html": "<p>Producer: Buku Abel</p><p><strong>Tasting Notes</strong><br>Strawberry, Blueberry, Milk Chocolate</p><p>Process: Natural</p><p>Altitude: 2,050m</p>",
+   "variants": [
+    {
+     "price": "2400",
+     "grams": 150,
+     "available": true
+    }
+   ]
+  },
+  {
+   "handle": "colombia-el-diviso-anaerobic",
+   "title": "Colombia El Diviso",
+   "tags": [],
+   "body_html": "<div>Huila, Colombia</div><div>Flavour notes: pineapple, passionfruit, rum, funky</div><div>Anaerobic Natural</div>",
+   "variants": [
+    {
+     "price": "3200",
+     "grams": 100,
+     "available": true
+    }
+   ]
+  }
+ ]
+}

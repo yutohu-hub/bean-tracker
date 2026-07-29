@@ -14,7 +14,8 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
-from crawler import crawl_all, products_to_dicts, Product, _guess_origin, _guess_process  # noqa: E402
+from crawler import (crawl_all, products_to_dicts, Product, _guess_origin,  # noqa: E402
+                     _guess_process, extract_notes, html_to_text)
 from state import open_db, apply_snapshot, export_for_site  # noqa: E402
 from build_site import build  # noqa: E402
 from notify import notify  # noqa: E402
@@ -33,6 +34,8 @@ def load_mock(fixture_dir: str) -> list[dict]:
             grams = int(v.get("grams") or 0)
             price = float(v["price"])
             text = p["title"] + " " + " ".join(p.get("tags", []))
+            body = p.get("body_html") or ""
+            deep = text + " " + html_to_text(body)[:1200]
             products.append(dict(
                 key=f"{roaster['name']}::{p['handle']}",
                 roaster=roaster["name"], country=roaster["country"],
@@ -41,7 +44,9 @@ def load_mock(fixture_dir: str) -> list[dict]:
                 grams=grams,
                 per100=round(price / grams * 100, 2) if grams else None,
                 available=any(x.get("available") for x in p["variants"]),
-                origin=_guess_origin(text), process=_guess_process(text), tags=text,
+                origin=_guess_origin(text) or _guess_origin(deep),
+                process=_guess_process(text) or _guess_process(deep),
+                tags=text, notes=extract_notes(body, p["title"]),
             ))
     return products
 

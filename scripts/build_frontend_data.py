@@ -179,6 +179,9 @@ def main() -> None:
             # 巡回で実際の商品を掴んでいるのに該当ページへ直行できない。
             if p.get("url"):
                 bean["link"] = p["url"]
+            # 店が書いたテイスティングノート。味わいマップの座標はこれを最優先で使う
+            if p.get("notes"):
+                bean["notes"] = p["notes"]
             beans.append(bean)
             bid += 1
 

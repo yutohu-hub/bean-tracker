@@ -1,9 +1,9 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { INK, GRAY, LINE } from "../lib/theme";
+import { INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
-import { FLAVORS, FLAVOR_MAP, computeFlavor } from "../data/flavors";
+import { FLAVORS, flavorOf } from "../data/flavors";
 import { PROC, processKey } from "../lib/palette";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -13,6 +13,7 @@ const PROC_ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"
 
 export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null, procOnly = null, embedded = false }) {
   const [famF, setFamF] = useState(initialFam);  // 系統ハイライト
+  const [notesOnly, setNotesOnly] = useState(false);  // 店のノートで座標を決めた豆だけに絞る
   const [procF, setProcF] = useState(null);       // 精製ハイライト
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(0);
@@ -24,7 +25,10 @@ export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null, 
   const moved = useRef(false);
 
   // いま買える(now)・EC送客できる豆を表示。procOnly 指定時はその精製方法だけに絞る（精製ごとのマップ）
-  const beans = BEANS.filter((b) => b.status === "now" && ROASTERS[b.r] && ROASTERS[b.r].url && (!procOnly || processKey(b.process) === procOnly));
+  const all = BEANS.filter((b) => b.status === "now" && ROASTERS[b.r] && ROASTERS[b.r].url && (!procOnly || processKey(b.process) === procOnly));
+  // 座標の出どころ。店のノートから出したものと、産地・精製から推定したものを区別する
+  const noted = all.filter((b) => flavorOf(b).src === "notes");
+  const beans = notesOnly ? noted : all;
   // 図鑑からの遷移時は、その豆の系統をハイライト
   useEffect(() => { if (initialFam) setFamF(initialFam); }, [initialFam, focusId]);
   // now豆に存在する精製方法だけ（柑橘などの系統の上に提示するチップ用）
@@ -132,6 +136,20 @@ export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null, 
         </>
       )}
 
+      {/* 座標の出どころを隠さない。店が書いたノートで置いた豆と、産地・精製から推定した豆は
+          精度がまるで違うので、件数を出して絞り込めるようにする */}
+      <button onClick={() => setNotesOnly(!notesOnly)}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%",
+          marginBottom: 10, padding: "9px 12px", background: notesOnly ? INK : "none", color: notesOnly ? PAPER : INK,
+          border: `1px solid ${notesOnly ? INK : LINE}`, borderRadius: 8, fontSize: 11.5, cursor: "pointer", textAlign: "left" }}>
+        <span style={{ fontWeight: 700 }}>
+          {notesOnly ? "✓ 店のノートで置いた豆だけ" : "店のノートで置いた豆だけを見る"}
+        </span>
+        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10.5, opacity: 0.8 }}>
+          {noted.length} / {all.length}
+        </span>
+      </button>
+
       {/* 系統の凡例（タップでハイライト） */}
       <div style={{ fontSize: 9.5, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>系統</div>
       <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch" }}>
@@ -171,7 +189,7 @@ export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null, 
           <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: LINE }} />
           {/* 豆のドット */}
           {beans.map((b, i) => {
-            const m = FLAVOR_MAP[b.id] || computeFlavor(b);
+            const m = flavorOf(b);
             const f = FLAVORS[m.fam] || FLAVORS.citrus;
             const pk = processKey(b.process);
             const isFocus = focusId && b.id === focusId;
