@@ -13,7 +13,7 @@ const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 
 const validEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s || "").trim());
 const rowToTasting = (r) => ({ beanId: r.bean_id, r: r.r, name: r.name, roaster: r.roaster, origin: r.origin, rating: r.rating, notes: r.notes, at: Number(r.at) || Date.now() });
 
-export function MyLogView({ onOpen, onRoaster }) {
+export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [user, setU] = useState(null);
   const [session, setSession] = useState(null);
   const [list, setList] = useState([]);
@@ -54,12 +54,19 @@ export function MyLogView({ onOpen, onRoaster }) {
 
   useEffect(() => {
     (async () => {
-      await captureSessionFromUrl();       // マジックリンクで戻ってきた場合セッション確立
+      // セッションの確立は BeanTracker 起動時に済んでいる。
+      // ここは直接マイページから読み込まれた場合の保険（既に処理済みなら null が返る）。
+      await captureSessionFromUrl();
       refresh();
       setReady(true);
       if (isCloud() && isSignedIn()) syncNow();
     })();
   }, []);
+
+  // メールリンクでログインが成立した直後は、その場で同期して結果を見せる
+  useEffect(() => {
+    if (authNotice && authNotice.ok) { refresh(); syncNow(); }
+  }, [authNotice]);
 
   if (!ready) return null;
 
@@ -69,10 +76,21 @@ export function MyLogView({ onOpen, onRoaster }) {
   // 認証の往復を待たずにポートフォリオを開けるよう、クラウド設定時もローカルの user を認める
   const authed = signed || !!user;
 
+  // メールリンクの結果を出す帯（成功・失敗どちらも黙って消さない）
+  const Notice = () => !authNotice ? null : (
+    <div style={{ marginBottom: 12, padding: "11px 14px", borderRadius: 10, display: "flex", alignItems: "flex-start", gap: 10,
+      background: authNotice.ok ? "#EEF4E9" : "#FBEDEC", border: `1px solid ${authNotice.ok ? "#CBDDBC" : "#EDC9C6"}` }}>
+      <span style={{ fontSize: 12.5, lineHeight: 1.7, color: authNotice.ok ? "#3C5C2A" : "#8A3B2E", flex: 1 }}>{authNotice.text}</span>
+      <button onClick={onDismissNotice} aria-label="閉じる"
+        style={{ background: "none", border: "none", fontSize: 13, color: GRAY, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
+    </div>
+  );
+
   // ---- 未ログイン ----
   if (!authed) {
     return (
       <div className="bt-card">
+        <Notice />
         <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>MY ACCOUNT</div>
         <div style={{ fontSize: 18, fontWeight: 800, marginTop: 6 }}>ログインして味を記録</div>
 
@@ -141,6 +159,7 @@ export function MyLogView({ onOpen, onRoaster }) {
 
   return (
     <div>
+      <Notice />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <div>
           <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>MY LOG</div>

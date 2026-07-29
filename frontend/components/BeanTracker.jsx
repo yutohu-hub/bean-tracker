@@ -11,6 +11,7 @@ import { RATES_TO_JPY, toJPY, perGrams, fetchLiveRates } from "./lib/currency";
 import { INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGINS } from "./lib/constants";
 import { syncArchive } from "./lib/store";
+import { captureSessionFromUrl } from "./lib/account";
 import { LEGEND, beanStyle, processKey } from "./lib/palette";
 
 /* ============================================================
@@ -87,6 +88,7 @@ export default function BeanTracker() {
   const [autoCols, setAutoCols] = useState(4); // 自動時の実効列数（画面幅から算出）
   const [zukanMode, setZukanMode] = useState("beans"); // beans | roasters
   const [meTab, setMeTab] = useState("log"); // マイページ内: log | premium
+  const [authNotice, setAuthNotice] = useState(null); // メールリンクからのログイン結果
   // 列数を端末に保存・復元
   useEffect(() => {
     const s = localStorage.getItem("bt_cols");
@@ -121,6 +123,21 @@ export default function BeanTracker() {
     const t1 = setTimeout(() => setSplashDone(true), 1700);   // 表示を終えてフェード開始
     const t2 = setTimeout(() => setSplashGone(true), 2400);   // 完全に取り除く
     return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  /* メールのログインリンクから戻ってきた場合の受け取り。
+     リンクの着地点は図鑑タブなので、マイページの中で処理していると
+     トークンが使われないまま次の操作で消えてしまう（＝押しても反映されない）。
+     アプリ起動時にここで拾い、結果をマイページに引き渡して表示する。 */
+  useEffect(() => {
+    (async () => {
+      const r = await captureSessionFromUrl();
+      if (!r) return;
+      setAuthNotice(r.ok
+        ? { ok: true, text: "ログインしました。この端末の記録を同期します。" }
+        : { ok: false, text: `ログインできませんでした：${r.error}` });
+      setView("me"); setMeTab("log"); window.scrollTo(0, 0);
+    })();
   }, []);
 
   // ライブ為替: 起動時に取得 → 10分ごと＋タブ復帰/フォーカス時に再取得して変動を自動反映
@@ -354,7 +371,7 @@ export default function BeanTracker() {
             </div>
             {meTab === "premium"
               ? <PremiumView onOpen={setOpen} />
-              : <MyLogView onOpen={setOpen} onRoaster={goRoaster} />}
+              : <MyLogView onOpen={setOpen} onRoaster={goRoaster} authNotice={authNotice} onDismissNotice={() => setAuthNotice(null)} />}
           </>
         ) : view === "recipe" ? (
           <RecipeView />

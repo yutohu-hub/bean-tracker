@@ -18,8 +18,14 @@
 2. **Project Settings → API** で「Project URL」「anon public」キーを取得。
 3. `components/lib/account.js` の `SUPABASE` に貼り付けてコミット（**anon キーは公開可**。
    `service_role` は絶対に貼らない）。
-4. **Authentication → URL Configuration → Redirect URLs** に本サイトURLを追加
-   （例: `https://yutohu-hub.github.io/bean-tracker/`）。
+4. **Authentication → URL Configuration** を設定する。ここが合っていないと、
+   メールのリンクを開いてもログインが成立しない（リンクが別の場所へ飛ぶ、
+   あるいは `Email link is invalid` になる）。アプリ側はこの2つを直す手段が無いので、
+   「同期できない」ときは最初にここを疑う。
+   - **Redirect URLs** に末尾スラッシュ付きで追加: `https://yutohu-hub.github.io/bean-tracker/`
+     （アプリは `window.location.origin + pathname` を `redirect_to` に渡すため、
+     この文字列と完全に一致する必要がある）
+   - **Site URL** も同じ値にしておく（Redirect URLs に一致が無いときの退避先になるため）
 5. 下記 SQL を **SQL Editor** で実行してテーブルと RLS を作成。
 
 ## 2. テーブル & RLS（SQL）
