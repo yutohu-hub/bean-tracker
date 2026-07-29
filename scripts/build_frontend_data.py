@@ -91,6 +91,9 @@ C2COORD = {"JP": [139.7, 35.68], "KR": [126.98, 37.57], "TW": [121.5, 25.0], "CN
            "MY": [101.7, 3.14], "PH": [121, 14.6], "SG": [103.8, 1.35], "IN": [77.2, 28.6], "BR": [-46.6, -23.5],
            "CO": [-74.1, 4.6], "MX": [-99.1, 19.4], "GT": [-90.5, 14.6], "CR": [-84.1, 9.9], "PE": [-77, -12],
            "AE": [55.3, 25.2], "SA": [46.7, 24.7], "ZA": [18.4, -33.9], "ET": [38.7, 9.0], "KE": [36.8, -1.3], "RW": [30.1, -1.9]}
+# 1ロースターあたりフロントに載せる上限（巡回対象が増えても配信JSONが太らないように）
+MAX_LIVE_PER_ROASTER = 60   # いま買える豆
+MAX_PAST_PER_ROASTER = 12   # 売切・終了の履歴
 PAL = [["#DCD6C8", "#8A3B2E"], ["#2E2A24", "#C8A96A"], ["#B8433A", "#F2E9DC"], ["#3A2E4F", "#D9B44A"],
        ["#EFE9DA", "#2F5233"], ["#5A2E3A", "#E8C8A0"], ["#22303A", "#C8792E"], ["#7C4D8F", "#F2E9DC"],
        ["#F4F1E8", "#1A1815"], ["#6B2D3C", "#EFE9DA"]]
@@ -140,6 +143,12 @@ def main() -> None:
             seen_names.add(n)
             uniq.append(p)
         prods = uniq
+        # 1店あたりの上限。巡回対象を増やすとこのJSONがそのままフロントに配られるため、
+        # 「いま買える豆」は厚めに、売切・終了の履歴は薄く残して総量を抑える。
+        # （Proud Mary は664件のうち販売中が13件で、残りは売切履歴だった）
+        live_p = [p for p in prods if p.get("status") == "now" or p.get("available")]
+        past_p = [p for p in prods if p not in live_p]
+        prods = live_p[:MAX_LIVE_PER_ROASTER] + past_p[:MAX_PAST_PER_ROASTER]
         if not prods:  # コーヒー豆が無くなった店は追加しない
             continue
         key = seed.get(norm(rname)) or slug(rname)
