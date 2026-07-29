@@ -1,7 +1,7 @@
 name: フロント公開 (GitHub Pages)
 
 # frontend/ を静的エクスポートして GitHub Pages に自動デプロイする。
-# main への push（frontend 配下の変更）と、手動実行に対応。
+# main への push（frontend 配下の変更）と、手動実行、そして巡回の完了に対応。
 
 on:
   push:
@@ -10,6 +10,12 @@ on:
       - "frontend/**"
       - ".github/workflows/deploy-frontend.yml"
   workflow_dispatch:
+  # 巡回が live.generated.json を更新しても、その push は GITHUB_TOKEN によるものなので
+  # GitHub は上の push トリガーを発火させない（ワークフローの無限ループ防止の仕様）。
+  # そのため巡回結果がサイトに反映されないままだった。workflow_run で拾い直す。
+  workflow_run:
+    workflows: ["Bean Tracker 巡回"]
+    types: [completed]
 
 # Pages デプロイに必要な権限
 permissions:
@@ -25,11 +31,16 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # 巡回きっかけの場合、失敗した巡回では公開しない
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     defaults:
       run:
         working-directory: frontend
     steps:
+      # workflow_run で来たときも、巡回がコミットした最新の main を取る
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - uses: actions/setup-node@v4
         with:
