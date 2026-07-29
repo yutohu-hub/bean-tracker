@@ -7,8 +7,10 @@ import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, me
 import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings, cloudGetPlan } from "../lib/account";
 import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis";
 import { beanHref } from "../lib/utils";
+import { Portfolio } from "../ui/Portfolio";
 
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
+const validEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s || "").trim());
 const rowToTasting = (r) => ({ beanId: r.bean_id, r: r.r, name: r.name, roaster: r.roaster, origin: r.origin, rating: r.rating, notes: r.notes, at: Number(r.at) || Date.now() });
 
 export function MyLogView({ onOpen, onRoaster }) {
@@ -63,7 +65,9 @@ export function MyLogView({ onOpen, onRoaster }) {
 
   const cloud = isCloud();
   const signed = cloud && isSignedIn();
-  const authed = signed || (!cloud && !!user);
+  // メール認証済み、またはこの端末でメール/ニックネームを入れた人。
+  // 認証の往復を待たずにポートフォリオを開けるよう、クラウド設定時もローカルの user を認める
+  const authed = signed || !!user;
 
   // ---- 未ログイン ----
   if (!authed) {
@@ -75,21 +79,30 @@ export function MyLogView({ onOpen, onRoaster }) {
         {cloud ? (
           <>
             <div style={{ fontSize: 12, color: GRAY, marginTop: 6, lineHeight: 1.7 }}>
-              メールアドレスでログインすると、味の記録が複数端末で同期され、プレミアムの状態も連動します。
+              メールアドレスを入れると、この端末のポートフォリオがすぐ開きます。
             </div>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com"
+              onKeyDown={(e) => { if (e.key === "Enter" && validEmail(email)) { setUser(email.trim().split("@")[0], email.trim()); refresh(); } }}
               style={{ width: "100%", boxSizing: "border-box", marginTop: 12, padding: "10px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 14, background: PAPER, color: INK }} />
+            {/* メール認証の往復を待たずにポートフォリオへ入れる。
+                認証リンクは「複数端末で同期したいとき」の任意手段として下に置く */}
+            <button onClick={() => { if (validEmail(email)) { setUser(email.trim().split("@")[0], email.trim()); refresh(); } }}
+              disabled={!validEmail(email)}
+              style={{ width: "100%", marginTop: 10, padding: "12px 0", background: validEmail(email) ? INK : "#EDEAE1", color: validEmail(email) ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: validEmail(email) ? "pointer" : "default" }}>
+              ポートフォリオを見る
+            </button>
             <button onClick={async () => {
-                if (!email.trim()) return;
-                try { await signInWithEmail(email.trim()); setLoginMsg("メールを送信しました。届いたログインリンクを開いてください。"); }
-                catch { setLoginMsg("送信に失敗しました。メールアドレスとSupabase設定を確認してください。"); }
+                if (!validEmail(email)) return;
+                try { await signInWithEmail(email.trim()); setLoginMsg("メールを送信しました。届いたリンクを開くと、他の端末とも記録が同期されます。"); }
+                catch { setLoginMsg("送信に失敗しました。メールアドレスとネットワークを確認してください。"); }
               }}
-              style={{ width: "100%", marginTop: 10, padding: "12px 0", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-              ログインリンクをメールで送る
+              disabled={!validEmail(email)}
+              style={{ width: "100%", marginTop: 8, padding: "11px 0", background: "none", color: validEmail(email) ? INK : GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: validEmail(email) ? "pointer" : "default" }}>
+              ☁ 他の端末とも同期する（メール認証）
             </button>
             {loginMsg && <div style={{ fontSize: 11, color: GREEN, marginTop: 8, lineHeight: 1.6 }}>{loginMsg}</div>}
             <div style={{ fontSize: 10, color: GRAY, marginTop: 10, lineHeight: 1.7 }}>
-              メールのリンクを開くとこの画面に戻り、ログインが完了します。
+              メールアドレスはこの端末の中だけに保存されます。認証するまでサーバーには送られません。
             </div>
           </>
         ) : (
@@ -112,9 +125,8 @@ export function MyLogView({ onOpen, onRoaster }) {
     );
   }
 
-  const rated = list.filter((t) => t.rating);
-  const avg = rated.length ? (rated.reduce((s, t) => s + t.rating, 0) / rated.length).toFixed(1) : "–";
   const openBean = (id) => { const b = BEANS.find((x) => x.id === id); if (b) onOpen(b); };
+  const accountEmail = signed ? (session && session.user ? session.user.email : null) : (user ? user.email || null : null);
   const accountName = signed ? (session && session.user ? session.user.email : "アカウント") : (user ? user.name : "");
   const doLogout = async () => { if (signed) { await signOut(); } else { logout(); } refresh(); };
   const premium = plan.id && plan.id.startsWith("premium");
@@ -148,10 +160,22 @@ export function MyLogView({ onOpen, onRoaster }) {
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 18, marginTop: 12, borderTop: `2px solid ${INK}`, borderBottom: `1px solid ${LINE}`, padding: "12px 0" }}>
-        <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{list.length}</div><div style={{ fontSize: 10, color: GRAY }}>記録した豆</div></div>
-        <div><div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800 }}>{avg}</div><div style={{ fontSize: 10, color: GRAY }}>平均評価</div></div>
-      </div>
+      {/* メールで入っただけの状態からでも、あとから同期を始められるようにする */}
+      {!signed && cloud && accountEmail && (
+        <div style={{ marginTop: 10 }}>
+          <button onClick={async () => {
+              try { await signInWithEmail(accountEmail); setSyncMsg("認証メールを送りました。リンクを開くと他の端末とも同期されます。"); }
+              catch { setSyncMsg("送信に失敗しました。ネットワークを確認してください。"); }
+            }}
+            style={{ padding: "8px 14px", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>
+            ☁ 他の端末とも同期する
+          </button>
+          {syncMsg && <div style={{ fontSize: 11, color: GREEN, marginTop: 6, lineHeight: 1.6 }}>{syncMsg}</div>}
+        </div>
+      )}
+
+      {/* ポートフォリオ（記録から集計。件数・平均評価もここに含まれる） */}
+      <Portfolio list={list} email={accountEmail} onOpen={onOpen} onRoaster={onRoaster} />
 
       {/* 過去に飲んだ豆を手動で記録（図鑑に無い豆もカード化） */}
       <div style={{ marginTop: 12 }}>
@@ -283,11 +307,8 @@ export function MyLogView({ onOpen, onRoaster }) {
         </div>
       )}
 
-      {list.length === 0 ? (
-        <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "40px 0", lineHeight: 1.8 }}>
-          まだ記録がありません。<br />図鑑で豆を開いて「☕ 飲んだ味を記録」から追加できます。
-        </div>
-      ) : (
+      {/* 記録が無いときの案内はポートフォリオ側で出しているので、ここでは繰り返さない */}
+      {list.length > 0 && (
         <div style={{ marginTop: 6 }}>
           {list.map((t) => (
             <div key={t.beanId} style={{ borderBottom: `1px solid ${LINE}`, padding: "12px 0" }}>
