@@ -8,6 +8,8 @@ import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl
 import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis";
 import { beanHref } from "../lib/utils";
 import { Portfolio } from "../ui/Portfolio";
+import { PhotoPicker } from "../ui/PhotoPicker";
+import { savePhotoDataUrl, deletePhoto, getPhotos } from "../lib/photos";
 
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
 const validEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s || "").trim());
@@ -28,17 +30,24 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [diags, setDiags] = useState([]);
   const [anas, setAnas] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: "", roaster: "", origin: "", rating: 0, notes: "" });
+  const [form, setForm] = useState({ name: "", roaster: "", origin: "", rating: 0, notes: "", photo: null });
+  const [photos, setPhotos] = useState({});   // beanId -> dataURL（一覧のサムネイル）
 
-  const saveManual = () => {
+  const saveManual = async () => {
     if (!form.name.trim() || !form.rating) return;
-    upsertTasting({ beanId: -Date.now(), r: null, name: form.name.trim(), roaster: form.roaster.trim(), origin: form.origin.trim(), rating: form.rating, notes: form.notes.trim() });
-    setForm({ name: "", roaster: "", origin: "", rating: 0, notes: "" });
+    const id = -Date.now();
+    upsertTasting({ beanId: id, r: null, name: form.name.trim(), roaster: form.roaster.trim(), origin: form.origin.trim(), rating: form.rating, notes: form.notes.trim(), hasPhoto: !!form.photo });
+    if (form.photo) await savePhotoDataUrl(id, form.photo);
+    setForm({ name: "", roaster: "", origin: "", rating: 0, notes: "", photo: null });
     setShowAdd(false);
     refresh();
   };
 
-  const refresh = () => { setU(getUser()); setList(getTastings()); setSession(getSession()); setPlanState(getPlan()); setDiags(getDiagHistory()); setAnas(getAnalysisHistory()); };
+  const refresh = () => {
+    setU(getUser()); const l = getTastings(); setList(l);
+    setSession(getSession()); setPlanState(getPlan()); setDiags(getDiagHistory()); setAnas(getAnalysisHistory());
+    getPhotos(l.map((t) => t.beanId)).then(setPhotos);   // 写真は IndexedDB から後追いで
+  };
 
   const syncNow = async () => {
     if (!isCloud() || !isSignedIn()) return;
@@ -231,6 +240,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
             </div>
             <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="香り・酸味・甘み・余韻など、感じた味をメモ（任意）"
               style={{ width: "100%", boxSizing: "border-box", marginTop: 8, minHeight: 54, padding: "8px 10px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12.5, resize: "vertical", background: PAPER, color: INK, fontFamily: "inherit" }} />
+            <PhotoPicker value={form.photo} onChange={(p) => setForm({ ...form, photo: p })} />
             <button onClick={saveManual} disabled={!form.name.trim() || !form.rating}
               style={{ width: "100%", marginTop: 8, padding: "11px 0", background: (form.name.trim() && form.rating) ? INK : "#EDEAE1", color: (form.name.trim() && form.rating) ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: (form.name.trim() && form.rating) ? "pointer" : "default" }}>
               記録する
@@ -344,6 +354,10 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
               <button onClick={() => t.r && onRoaster(t.r)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 10.5, color: GRAY, marginTop: 2, textDecoration: "underline", textUnderlineOffset: 2 }}>
                 {t.roaster}{t.origin ? ` ・ ${t.origin}` : ""}
               </button>
+              {photos[t.beanId] && (
+                <img src={photos[t.beanId]} alt=""
+                  style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10, marginTop: 8, display: "block", background: "#F0EDE4" }} />
+              )}
               {t.notes && <div style={{ fontSize: 12, color: INK, marginTop: 5, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{t.notes}</div>}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 6 }}>
                 <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY }}>{new Date(t.at).toLocaleDateString("ja-JP")}</span>
@@ -360,7 +374,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
                       </a>
                     );
                   })()}
-                  <button onClick={() => { removeTasting(t.beanId); refresh(); }} style={{ background: "none", border: "none", fontSize: 10.5, color: GRAY, cursor: "pointer" }}>削除</button>
+                  <button onClick={() => { removeTasting(t.beanId); deletePhoto(t.beanId); refresh(); }} style={{ background: "none", border: "none", fontSize: 10.5, color: GRAY, cursor: "pointer" }}>削除</button>
                 </div>
               </div>
             </div>
