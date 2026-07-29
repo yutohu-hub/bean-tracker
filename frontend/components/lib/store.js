@@ -15,7 +15,13 @@ function read(key, fallback) {
 function write(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
 export function getUser() { return read(USER_KEY, null); }
-export function setUser(name) { const u = { name: String(name).trim().slice(0, 24), since: Date.now() }; write(USER_KEY, u); return u; }
+// email は「この端末での本人の目印」。メール認証が済むまではサーバーには渡さない
+export function setUser(name, email = null) {
+  const u = { name: String(name).trim().slice(0, 24), since: Date.now() };
+  if (email) u.email = String(email).trim().slice(0, 120);
+  write(USER_KEY, u);
+  return u;
+}
 export function logout() { try { localStorage.removeItem(USER_KEY); } catch {} }
 
 export function getTastings() { const l = read(TASTE_KEY, []); return Array.isArray(l) ? l : []; }
