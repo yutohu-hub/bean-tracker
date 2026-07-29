@@ -522,4 +522,7 @@ export const eastAsia = {
   justincoffee: { name: "JC咖啡 Justin Coffee", city: "新北", country: "TW", region: "eastAsia", platform: "Shopify", note: "CQI鑑定士が品質を管理", coord: [121.465, 25.012], url: "justincoffee.com.tw",
     founded: "2013", style: "浅〜中煎り・シングルオリジン", ship: "国内発送", focus: "CQI基準の品質管理",
     bio: "CQIのコーヒー品質鑑定士が生豆を選定・管理する台湾の焙煎豆専門店。新鮮な焙煎とオンライン販売に力を入れる。" },
+  berth: { name: "BERTH COFFEE", city: "東京 / 馬喰町", country: "JP", region: "eastAsia", platform: "STORES", note: "CITAN併設・生産者名で並ぶ棚", coord: [139.7802, 35.6926], url: "berthcoffee.stores.jp",
+    founded: "2021", style: "浅〜中浅煎り・シングルオリジン", ship: "国内発送", focus: "中南米・アフリカの生産者ロット",
+    bio: "馬喰町のホステル CITAN に併設するコーヒースタンド。2021年4月には錦糸町・押上のあいだに焙煎所「BERTH COFFEE ROASTERY Haru」を構え、シェアロースターや卸も手がける。棚は国名と生産者名で並び、その年に採れた豆を扱う。" },
 };

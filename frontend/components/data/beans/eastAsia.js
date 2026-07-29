@@ -445,4 +445,18 @@ export const eastAsiaBeans = [
   { id: 3084, r: "justincoffee", name: "エチオピア Washed", origin: "エチオピア", process: "Washed", amount: 500, cur: "TWD", per: "200g", status: "now", color: "#EFE9DA", accent: "#2F5233", year: "2026" },
   { id: 3085, r: "justincoffee", name: "コロンビア Natural", origin: "コロンビア", process: "Natural", amount: 520, cur: "TWD", per: "200g", status: "now", color: "#5A2E3A", accent: "#E8C8A0", year: "2026" },
   { id: 3086, r: "justincoffee", name: "台湾 Washed", origin: "台湾", process: "Washed", amount: 880, cur: "TWD", per: "200g", status: "sold", color: "#22303A", accent: "#C8792E", year: "2026" },
+
+  /* BERTH COFFEE（berthcoffee.stores.jp）— 銘柄名と価格は店頭の一覧そのまま。
+     内容量は店頭表示に出ないため 150g とした（定期便150g×3=¥5,500 と、
+     単品 GUATEMALA ¥1,950 が同じ ¥1,300/100g で揃うため）。要確認。
+     精製は銘柄名に書かれているものだけ採り、無いものは Washed を置いている。
+     【Subscription】定期便と5周年記念シャツは豆ではないので入れていない。 */
+  { id: 3600, r: "berth", name: "COLOMBIA Jorge Elias Natural", origin: "コロンビア", process: "Natural", amount: 2700, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-29", color: "#B4D24B", accent: "#2E2A24", year: "2026" },
+  { id: 3601, r: "berth", name: "TANZANIA Leon Christianakis Geisha AB/PB", origin: "タンザニア", process: "Washed", amount: 2500, cur: "JPY", per: "100g", status: "now", updatedAt: "2026-07-29", color: "#2E9BB5", accent: "#F2E9DC", year: "2026", vt: "geisha" },
+  { id: 3602, r: "berth", name: "COLOMBIA Urrao Antioquia", origin: "コロンビア", process: "Washed", amount: 2100, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-29", color: "#9BBF3F", accent: "#2E2A24", year: "2026" },
+  { id: 3603, r: "berth", name: "ETHIOPIA Wuri Natural", origin: "エチオピア", process: "Natural", amount: 2100, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-29", color: "#B0705F", accent: "#F5EBE0", year: "2026" },
+  { id: 3604, r: "berth", name: "EL SALVADOR Luis & Santos Hernandez Bourbon", origin: "エルサルバドル", process: "Washed", amount: 1950, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-29", color: "#1F6B5A", accent: "#EAF2F1", year: "2026" },
+  { id: 3605, r: "berth", name: "HONDURAS Belarmino Contreras", origin: "ホンジュラス", process: "Washed", amount: 2100, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-29", color: "#E0C08A", accent: "#5A4632", year: "2026" },
+  { id: 3606, r: "berth", name: "GUATEMALA Benito Ramos", origin: "グアテマラ", process: "Washed", amount: 1950, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-29", color: "#146B57", accent: "#EAF2F1", year: "2026" },
+  { id: 3607, r: "berth", name: "ETHIOPIA Sidamo G-2 \"Decaf\"", origin: "エチオピア", process: "Washed", amount: 2150, cur: "JPY", per: "150g", status: "now", updatedAt: "2026-07-29", color: "#6E8B5A", accent: "#F5EBE0", year: "2026" },
 ];
