@@ -46,10 +46,30 @@ def load_mock(fixture_dir: str) -> list[dict]:
     return products
 
 
+def apply_shard(roasters: list[dict], spec: str) -> list[dict]:
+    """"i/n" 形式で巡回対象を n 分割し、i 番目だけ返す。
+
+    Shopify は共有IPあたりの総リクエスト数で 429 を返すため、442店を一度に叩くと
+    ほぼ全滅する（実測: 411店が失敗し、それまで取れていた33店まで巻き添えになった）。
+    1回あたりを実績のある規模に抑え、run ごとにスライスをずらして全体を回す。
+    state.db は巡回しなかった店の情報を消さないので、数回ぶんで全店がそろう。
+    [i::n] のストライドで、地域や登録順が偏らないように散らす。
+    """
+    i, n = (int(x) for x in spec.split("/", 1))
+    n = max(1, n)
+    return roasters[i % n::n]
+
+
 def main() -> None:
     t0 = time.time()
     config = yaml.safe_load((ROOT / "config" / "roasters.yaml").read_text(encoding="utf-8"))
     settings = config.get("settings", {})
+
+    if "--shard" in sys.argv:
+        spec = sys.argv[sys.argv.index("--shard") + 1]
+        every = config["roasters"]
+        config["roasters"] = apply_shard(every, spec)
+        print(f"分割巡回 {spec}: {len(config['roasters'])}/{len(every)}店舗")
 
     if "--mock" in sys.argv:
         fixture_dir = sys.argv[sys.argv.index("--mock") + 1]
