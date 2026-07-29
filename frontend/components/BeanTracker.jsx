@@ -420,7 +420,7 @@ export default function BeanTracker() {
                     borderBottom: statusF === k ? `2px solid ${INK}` : "2px solid transparent", paddingBottom: 6,
                   }}>{l}</button>
               ))}
-              <div style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, alignSelf: "center" }}>{filtered.length} 銘柄</div>
+              <div style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, alignSelf: "center" }}>{/* アーカイブはロースターのカードが並ぶため、枚数と件数が食い違って見えないよう軒数も出す */}{statusF === "archive" ? `${Object.keys(archiveByRoaster).length} 店 / ${archiveBeans.length} 銘柄` : `${filtered.length} 銘柄`}</div>
             </div>
             {/* 色の凡例（精製方法／レア） */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 12px", marginTop: 10, fontSize: 10, color: GRAY }}>
@@ -471,16 +471,23 @@ export default function BeanTracker() {
                           background: PAPER, border: `1px solid ${LINE}`, borderRadius: 8,
                           padding: "8px 8px", cursor: "pointer", textAlign: "left",
                         }}>
-                        {/* ミニ標本プレビュー */}
-                        <div style={{ display: "flex", gap: 3 }}>
-                          {arc.slice(0, 3).map((b) => (
-                            <div key={b.id} style={{ flex: 1, aspectRatio: "3 / 4", borderRadius: 2, background: beanStyle(b).bg }} />
+                        {/* ミニ標本プレビュー。1枠だけだと縦に伸びてカードの高さが揃わないため、
+                            常に3枠・固定高さで並べ、足りない分は余白として置く */}
+                        <div style={{ display: "flex", gap: 3, height: 46 }}>
+                          {[0, 1, 2].map((i) => (
+                            <div key={i} style={{ flex: 1, borderRadius: 2, background: arc[i] ? beanStyle(arc[i]).bg : "#F0EDE4" }} />
                           ))}
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: INK, lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
-                          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 8.5, color: GRAY, marginTop: 2 }}>
-                            {Math.min(...years)}–{Math.max(...years)}
+                          {/* 年と件数は必ず別行にする。1行にすると年の桁数で折り返しが起き、
+                              カードの高さが1枚だけ変わって列が乱れる */}
+                          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 8.5, color: GRAY, marginTop: 2, lineHeight: 1.5 }}>
+                            {/* 単年なら "2025–2025" ではなく "2025" と書く */}
+                            <div>{Math.min(...years) === Math.max(...years)
+                              ? Math.min(...years)
+                              : `${Math.min(...years)}–${Math.max(...years)}`}</div>
+                            <div>{arc.length} 銘柄</div>
                           </div>
                         </div>
                       </button>
