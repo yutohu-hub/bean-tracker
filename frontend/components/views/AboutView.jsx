@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
 
+const NOTE_URL = "https://note.com/higghhffuigfdty";
+
 const HOWTO = [
   ["図鑑", "世界中の豆をパッケージ図鑑で一覧。精製方法で色分けし、100g換算で価格を比較できます。"],
   ["地球", "本物の地球儀でロースターの所在地を表示。タップでECや Google マップへ。"],
@@ -173,6 +175,21 @@ export function AboutView({ onNavigate }) {
           ))}
         </div>
       </div>
+
+      {/* note — 外部の読みもの。周りの記事一覧と同じ罫線だけで、装飾を足さずに置く */}
+      <a href={NOTE_URL} target="_blank" rel="noopener noreferrer"
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          marginTop: 26, padding: "16px 2px", borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}`,
+          textDecoration: "none", color: INK }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>NOTE</div>
+          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 5 }}>note でも書いています</div>
+          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10.5, color: GRAY, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis" }}>
+            note.com/higghhffuigfdty
+          </div>
+        </div>
+        <span style={{ fontSize: 14, color: GRAY, flexShrink: 0 }}>↗</span>
+      </a>
 
       <div style={{ marginTop: 26, padding: "14px 16px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 11, color: GRAY, lineHeight: 1.8 }}>
         BEAN TRACKER はプロトタイプです。掲載データは実在ロースターをベースに、価格・在庫・説明の一部を代表値で補っています。
