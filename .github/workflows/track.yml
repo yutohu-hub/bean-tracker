@@ -2,7 +2,9 @@ name: Bean Tracker 巡回
 
 on:
   schedule:
-    - cron: "0 3 * * *"     # 毎日 12:00 JST（03:00 UTC）に巡回・自動更新
+    # 442店を13分割して毎時1スライスずつ巡回する（1周およそ13時間）。
+    # 一度に全店を叩くと Shopify の共有IP制限(429)でほぼ全滅するため、量を分けて回す。
+    - cron: "0 * * * *"
   workflow_dispatch:         # 手動実行ボタン
 
 permissions:
@@ -66,8 +68,11 @@ jobs:
       - name: 巡回と差分検知
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RUN_NUMBER: ${{ github.run_number }}
+          SHARDS: "13"
         run: |
-          "$RUNPY" main.py
+          # run ごとにスライスをずらし、13回で全店を一周する
+          "$RUNPY" main.py --shard "$(( RUN_NUMBER % SHARDS ))/$SHARDS"
 
       - name: フロント用データに変換（巡回結果→図鑑オーバーレイ）
         run: |
