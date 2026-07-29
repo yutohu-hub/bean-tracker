@@ -34,7 +34,7 @@ import { DiagnosisView } from "./views/DiagnosisView";
 import { FlavorMapView } from "./views/FlavorMapView";
 import { ProcessChart } from "./views/ProcessChart";
 import { ProcessPage } from "./views/ProcessPage";
-import { FLAVOR_MAP, computeFlavor } from "./data/flavors";
+import { flavorOf } from "./data/flavors";
 import { RecipeView } from "./views/RecipeView";
 import { GeishaView } from "./views/GeishaView";
 import { MyLogView } from "./views/MyLogView";
@@ -65,7 +65,7 @@ export default function BeanTracker() {
   const goProcess = (k) => { setProcKey(k); setView("process"); window.scrollTo(0, 0); };
   const [flavorFocus, setFlavorFocus] = useState({ fam: null, id: null });
   const goFlavor = (bean) => {
-    const m = FLAVOR_MAP[bean.id] || computeFlavor(bean);
+    const m = flavorOf(bean);
     setFlavorFocus({ fam: m.fam, id: bean.id });
     setView("flavor"); window.scrollTo(0, 0);
   };

@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS products (
   roaster TEXT, country TEXT, title TEXT, url TEXT, image TEXT,
   price REAL, currency TEXT, grams INTEGER, per100 REAL,
   available INTEGER,
-  origin TEXT, process TEXT, tags TEXT,
+  origin TEXT, process TEXT, tags TEXT, notes TEXT,
   first_seen REAL, last_seen REAL,
   last_status_change REAL
 );
@@ -26,6 +26,11 @@ def open_db(path: str) -> sqlite3.Connection:
     con = sqlite3.connect(path)
     con.row_factory = sqlite3.Row
     con.executescript(SCHEMA)
+    # 既存DBには列を後から足す（キャッシュから復元した古いDBでも動くように）
+    cols = {r["name"] for r in con.execute("PRAGMA table_info(products)")}
+    if "notes" not in cols:
+        con.execute("ALTER TABLE products ADD COLUMN notes TEXT")
+        con.commit()
     return con
 
 
@@ -42,11 +47,11 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
 
         if row is None:
             con.execute(
-                """INSERT INTO products VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                """INSERT INTO products VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (p["key"], p["roaster"], p["country"], p["title"], p["url"], p["image"],
                  p["price"], p["currency"], p["grams"], p["per100"],
                  int(p["available"]), p["origin"], p["process"], p["tags"],
-                 now, now, now))
+                 p.get("notes") or "", now, now, now))
             if p["available"]:
                 con.execute("INSERT INTO events (key,type,ts,oos_hours) VALUES (?,?,?,?)",
                             (p["key"], "new", now, None))
@@ -69,12 +74,12 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
 
         con.execute(
             """UPDATE products SET roaster=?,country=?,title=?,url=?,image=?,
-               price=?,currency=?,grams=?,per100=?,available=?,origin=?,process=?,tags=?,
+               price=?,currency=?,grams=?,per100=?,available=?,origin=?,process=?,tags=?,notes=?,
                last_seen=?, last_status_change=CASE WHEN available!=? THEN ? ELSE last_status_change END
                WHERE key=?""",
             (p["roaster"], p["country"], p["title"], p["url"], p["image"],
              p["price"], p["currency"], p["grams"], p["per100"], int(is_available),
-             p["origin"], p["process"], p["tags"], now,
+             p["origin"], p["process"], p["tags"], p.get("notes") or "", now,
              int(is_available), now, p["key"]))
 
     con.commit()

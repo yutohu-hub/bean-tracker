@@ -1,7 +1,7 @@
 // 味の記録の分析・ロースター特徴量・おすすめ算出（オンデバイス・診断/マイページ共用）
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
-import { FLAVOR_MAP } from "../data/flavors";
+import { flavorOf } from "../data/flavors";
 
 // ロースターの特徴量（style / focus / region / ship から算出）
 export function featureOf(r) {
@@ -51,7 +51,7 @@ export function analyzeTastings(tastings) {
       if (rf.light > 0.7) add(attr, "light", w * 0.6); else if (rf.medium > 0.7) add(attr, "medium", w * 0.5);
       if (w > 0) add(aff, t.r, w * 0.8);
     }
-    const fm = FLAVOR_MAP[t.beanId];
+    const fm = bean ? flavorOf(bean) : null;   // ノートがある豆も分析に効くように
     if (fm && w > 0) add(fam, fm.fam, w);
   }
   const top = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
