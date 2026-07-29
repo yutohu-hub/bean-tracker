@@ -2,3 +2,10 @@
 __pycache__/
 *.pyc
 frontend/public/cesium/
+
+# 巡回の生成物。毎日の巡回で丸ごと書き換わるため、コミットするとリポジトリが際限なく太る。
+# state.db は実行間で保持が必要だが、派生キャッシュなので git ではなく Actions のキャッシュに置く。
+data/site.json
+data/state.db
+docs/data.json
+docs/index.html

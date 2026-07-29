@@ -19,8 +19,21 @@ jobs:
     # リポジトリ変数 CRAWL_RUNNER に "self-hosted" を設定すると切り替わる。
     # 未設定の間は従来どおり ubuntu-latest で動く（設定ミスで巡回が止まらないように）。
     runs-on: ${{ vars.CRAWL_RUNNER || 'ubuntu-latest' }}
+    # 442店を巡回しても通常は10分弱。応答しない店に引きずられて張り付かないよう上限を置く
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+
+      # 新着・再入荷の判定には前回までの履歴(first_seen / last_status_change)が要る。
+      # ただし state.db は毎回書き換わる 3MB のバイナリで、コミットするとリポジトリが
+      # 日々肥大化する。派生キャッシュなので git ではなく Actions のキャッシュで持ち越す。
+      - name: 巡回履歴DBを復元
+        uses: actions/cache@v4
+        with:
+          path: data/state.db
+          key: bean-tracker-state-${{ github.run_id }}
+          restore-keys: |
+            bean-tracker-state-
 
       # 自己ホスト機にツールキャッシュが無い場合もあるため、失敗しても止めない
       - uses: actions/setup-python@v5
@@ -64,6 +77,8 @@ jobs:
         run: |
           git config user.name "bean-tracker-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/ docs/ frontend/components/data/live.generated.json
+          # コミットするのはサイトが読む1ファイルだけ。
+          # data/site.json と docs/ の生成物は同じジョブ内で使い切る中間成果物なので追跡しない。
+          git add frontend/components/data/live.generated.json
           git diff --cached --quiet || git commit -m "crawl: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push
