@@ -4,6 +4,8 @@ import { INK, PAPER, GRAY, LINE, GREEN, STATUS } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, fmtPrice, perGrams, fmtLocal } from "../lib/currency";
 import { beanHref, beanLinkKind } from "../lib/utils";
 import { getTasting, upsertTasting, removeTasting, isRestock, toggleRestock } from "../lib/store";
+import { getPhoto, savePhotoDataUrl, deletePhoto } from "../lib/photos";
+import { PhotoPicker } from "./PhotoPicker";
 import { ROASTERS } from "../data/roasters";
 import { Package } from "./Package";
 
@@ -12,11 +14,14 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
   const [watching, setWatching] = useState(false);
+  const [photo, setPhoto] = useState(null);
   useEffect(() => {
     if (!bean) return;
     const t = getTasting(bean.id);
     setRating(t ? t.rating : 0); setNotes(t ? t.notes : ""); setSaved(!!t);
     setWatching(isRestock(bean.id));
+    setPhoto(null);
+    getPhoto(bean.id).then((p) => setPhoto(p));   // 写真は IndexedDB から後追いで読む
   }, [bean ? bean.id : null]);
   // Esc で閉じる。背景タップしか閉じる手段が無いと、開いたあと戻れなくなる
   useEffect(() => {
@@ -28,8 +33,14 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
   if (!bean) return null;
   const s = STATUS[bean.status];
   const roaster = ROASTERS[bean.r];
-  const saveTasting = () => { if (!rating) return; upsertTasting({ beanId: bean.id, r: bean.r, name: bean.name, roaster: roaster.name, origin: bean.origin, rating, notes }); setSaved(true); };
-  const delTasting = () => { removeTasting(bean.id); setRating(0); setNotes(""); setSaved(false); };
+  const saveTasting = async () => {
+    if (!rating) return;
+    upsertTasting({ beanId: bean.id, r: bean.r, name: bean.name, roaster: roaster.name, origin: bean.origin, rating, notes, hasPhoto: !!photo });
+    // 写真は記録を押したときだけ確定する（開いて閉じただけで残らないように）
+    if (photo) await savePhotoDataUrl(bean.id, photo); else await deletePhoto(bean.id);
+    setSaved(true);
+  };
+  const delTasting = () => { removeTasting(bean.id); deletePhoto(bean.id); setRating(0); setNotes(""); setPhoto(null); setSaved(false); };
   const rows = [
     ["産地", bean.origin],
     ["精製", bean.process],
@@ -136,6 +147,7 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
           </div>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="香り・酸味・甘み・余韻など、感じた味をメモ"
             style={{ width: "100%", boxSizing: "border-box", marginTop: 8, minHeight: 60, padding: "8px 10px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12.5, resize: "vertical", background: PAPER, color: INK, fontFamily: "inherit" }} />
+          <PhotoPicker value={photo} onChange={setPhoto} />
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             <button onClick={saveTasting} disabled={!rating}
               style={{ flex: 1, padding: "10px 0", background: rating ? INK : "#EDEAE1", color: rating ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: rating ? "pointer" : "default" }}>
