@@ -32,14 +32,39 @@ const h = (token) => ({
 });
 
 // メール宛にログインリンク（マジックリンク）を送信
+/* 送信できなかったときは「失敗しました」で終わらせず、Supabase が返した理由をそのまま返す。
+   実際に起きるのはほぼ次のどれかで、対処がまったく違うため区別できないと直せない:
+   - 429 : メール送信のレート制限（無料枠は1時間に数通）。時間をおけば直る
+   - 401 : APIキーが無効/失効。account.js の SUPABASE を貼り直す
+   - 422 : メールアドレスの形式、またはサインアップ無効化
+   - 通信自体の失敗 : オフライン、またはプロジェクトURLの誤り */
 export async function signInWithEmail(email) {
   if (!isCloud()) throw new Error("cloud-not-configured");
   const redirect = typeof window !== "undefined" ? window.location.origin + window.location.pathname : "";
-  const res = await fetch(`${SUPABASE.url}/auth/v1/otp?redirect_to=${encodeURIComponent(redirect)}`, {
-    method: "POST", headers: h(), body: JSON.stringify({ email, create_user: true }),
-  });
-  if (!res.ok) throw new Error(`otp-failed:${res.status}`);
-  return true;
+  let res;
+  try {
+    res = await fetch(`${SUPABASE.url}/auth/v1/otp?redirect_to=${encodeURIComponent(redirect)}`, {
+      method: "POST", headers: h(), body: JSON.stringify({ email, create_user: true }),
+    });
+  } catch {
+    throw new Error("Supabase に接続できませんでした（オフライン、またはプロジェクトURLの誤り）");
+  }
+  if (res.ok) return true;
+
+  let detail = "";
+  try {
+    const d = await res.json();
+    detail = d.msg || d.error_description || d.message || d.error || "";
+  } catch { detail = (await res.text().catch(() => "")).slice(0, 160); }
+
+  const retry = Number(res.headers.get("retry-after"));
+  if (res.status === 429) {
+    throw new Error(`メール送信の回数制限に達しました。${retry ? `${Math.ceil(retry / 60)}分ほど` : "しばらく"}おいて再度お試しください（Supabaseの無料枠は1時間に数通まで）`);
+  }
+  if (res.status === 401 || res.status === 403) {
+    throw new Error(`APIキーが受け付けられませんでした (${res.status}${detail ? `: ${detail}` : ""})。Supabaseのキーを確認してください`);
+  }
+  throw new Error(`送信できませんでした (${res.status}${detail ? `: ${detail}` : ""})`);
 }
 
 /* マジックリンクで戻ってきたときにセッションを確立する。

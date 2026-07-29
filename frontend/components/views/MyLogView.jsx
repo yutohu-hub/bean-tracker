@@ -22,6 +22,8 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [ready, setReady] = useState(false);
   const [loginMsg, setLoginMsg] = useState("");
   const [syncMsg, setSyncMsg] = useState("");
+  const [loginErr, setLoginErr] = useState(false);   // 送信結果が失敗かどうか（色分け用）
+  const [syncErr, setSyncErr] = useState(false);
   const [plan, setPlanState] = useState({ id: "free" });
   const [diags, setDiags] = useState([]);
   const [anas, setAnas] = useState([]);
@@ -111,14 +113,15 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
             </button>
             <button onClick={async () => {
                 if (!validEmail(email)) return;
+                setLoginErr(false); setLoginMsg("送信中…");
                 try { await signInWithEmail(email.trim()); setLoginMsg("メールを送信しました。届いたリンクを開くと、他の端末とも記録が同期されます。"); }
-                catch { setLoginMsg("送信に失敗しました。メールアドレスとネットワークを確認してください。"); }
+                catch (e) { setLoginErr(true); setLoginMsg(e.message || "送信できませんでした"); }
               }}
               disabled={!validEmail(email)}
               style={{ width: "100%", marginTop: 8, padding: "11px 0", background: "none", color: validEmail(email) ? INK : GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: validEmail(email) ? "pointer" : "default" }}>
               ☁ 他の端末とも同期する（メール認証）
             </button>
-            {loginMsg && <div style={{ fontSize: 11, color: GREEN, marginTop: 8, lineHeight: 1.6 }}>{loginMsg}</div>}
+            {loginMsg && <div style={{ fontSize: 11, color: loginErr ? "#B8433A" : GREEN, marginTop: 8, lineHeight: 1.7 }}>{loginMsg}</div>}
             <div style={{ fontSize: 10, color: GRAY, marginTop: 10, lineHeight: 1.7 }}>
               メールアドレスはこの端末の中だけに保存されます。認証するまでサーバーには送られません。
             </div>
@@ -183,13 +186,14 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
       {!signed && cloud && accountEmail && (
         <div style={{ marginTop: 10 }}>
           <button onClick={async () => {
+              setSyncErr(false); setSyncMsg("送信中…");
               try { await signInWithEmail(accountEmail); setSyncMsg("認証メールを送りました。リンクを開くと他の端末とも同期されます。"); }
-              catch { setSyncMsg("送信に失敗しました。ネットワークを確認してください。"); }
+              catch (e) { setSyncErr(true); setSyncMsg(e.message || "送信できませんでした"); }
             }}
             style={{ padding: "8px 14px", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>
             ☁ 他の端末とも同期する
           </button>
-          {syncMsg && <div style={{ fontSize: 11, color: GREEN, marginTop: 6, lineHeight: 1.6 }}>{syncMsg}</div>}
+          {syncMsg && <div style={{ fontSize: 11, color: syncErr ? "#B8433A" : GREEN, marginTop: 6, lineHeight: 1.7 }}>{syncMsg}</div>}
         </div>
       )}
 
