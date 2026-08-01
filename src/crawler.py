@@ -186,6 +186,51 @@ async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
 
 # ---------------- Shopify ----------------
 
+# Shopify は「要求元の市場」に合わせた通貨で値段を返す（presentment currency）。
+# GitHub の runner は米国にあるため、日本や北欧の店でもドル建てで返ってくる。
+# ところが /products.json には通貨がどこにも書かれておらず、設定ファイルの現地通貨を
+# そのまま貼っていたので、¥1,690 の豆が「¥11」($11) になっていた。実測:
+#
+#   店         既定の price   /cart.js   /meta.json   ?currency=現地
+#   Onibus         11.00        USD        JPY          1690 JPY
+#   Goodman        27.97        USD        JPY          4320 JPY
+#   Drop           25.00        USD        SEK        230.00 SEK
+#   Standout      101.00        USD        SEK       1199.00 SEK
+#
+# ?currency= を付ければ店が実際につけている値段が返る。ドル換算値ではなく
+# 買う人が払う額なので、そちらを取る。
+_SHOP_CUR: dict[str, tuple[str, str]] = {}   # base -> (home, presentment)
+
+
+async def _shop_currencies(client: httpx.AsyncClient, base: str) -> tuple[str, str]:
+    """(店の本来の通貨, いまの接続で返ってくる通貨)。分からない側は空文字。"""
+    if base in _SHOP_CUR:
+        return _SHOP_CUR[base]
+    home = presentment = ""
+    for path, key in (("/meta.json", "home"), ("/cart.js", "presentment")):
+        try:
+            resp = await client.get(f"{base}{path}")
+            if resp.status_code == 200:
+                cur = (resp.json().get("currency") or "").upper()
+                if key == "home":
+                    home = cur
+                else:
+                    presentment = cur
+        except (httpx.HTTPError, json.JSONDecodeError, AttributeError, ValueError):
+            pass
+    _SHOP_CUR[base] = (home, presentment)
+    return home, presentment
+
+
+def _first_price(payload: dict) -> str:
+    """先頭商品の先頭バリアントの値段。?currency= が効いたかの判定に使う。"""
+    prods = payload.get("products") or []
+    if not prods:
+        return ""
+    variants = prods[0].get("variants") or []
+    return str(variants[0].get("price")) if variants else ""
+
+
 async def _fetch_shopify(client: httpx.AsyncClient, r: dict, max_pages: int) -> list[Product] | None:
     res = await _fetch_shopify_path(client, r, max_pages, "/products.json")
     if res:
@@ -251,9 +296,30 @@ async def _fetch_shopify_atom(client: httpx.AsyncClient, r: dict) -> list[Produc
 async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int,
                               path: str) -> list[Product] | None:
     base = r["url"].rstrip("/")
+    # 値段より先に通貨を決める。設定ファイルの現地通貨は当てにしない。
+    home, presentment = await _shop_currencies(client, base)
+    currency = home or presentment or r.get("currency", "")
+    # 表示通貨が現地と違うときだけ、現地建てで取り直す。
+    # 店が ?currency= を無視することもあるので、効いたかどうかを確かめてから採用する。
+    # 判定には1ページ目の応答をそのまま使う（確認のためだけの往復を増やさない）。
+    ask = {}
+    if home and presentment and home != presentment:
+        plain, _ = await _get_with_retry(client, f"{base}{path}", {"limit": 1})
+        asked, _ = await _get_with_retry(client, f"{base}{path}",
+                                         {"limit": 1, "currency": home})
+        try:
+            if (plain is not None and asked is not None
+                    and plain.status_code == 200 and asked.status_code == 200
+                    and _first_price(plain.json()) != _first_price(asked.json())):
+                ask = {"currency": home}          # 効いた。現地建てで取る
+            else:
+                currency = presentment            # 無視された。返ってくる通貨で名乗る
+        except json.JSONDecodeError:
+            currency = presentment
     products: list[Product] = []
     for page in range(1, max_pages + 1):
-        resp, why = await _get_with_retry(client, f"{base}{path}", {"limit": 250, "page": page})
+        resp, why = await _get_with_retry(client, f"{base}{path}",
+                                          {"limit": 250, "page": page, **ask})
         if resp is None or resp.status_code != 200:
             if page == 1:
                 LAST_REASON[r["name"]] = f"{path} → {why}"
@@ -300,7 +366,7 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
                 title=p.get("title", "").strip(),
                 url=f"{base}/products/{p.get('handle','')}",
                 image=(images[0].get("src", "") if images else ""),
-                price=price, currency=r.get("currency", ""),
+                price=price, currency=currency,
                 grams=grams, per100=per100,
                 available=bool(avail_vs),
                 origin=_guess_origin(text) or _guess_origin(deep),
