@@ -1,0 +1,35 @@
+name: 店の座標を実測して照合
+
+# 手で置いた座標を、都市名から引いた実座標と突き合わせる。
+# 開発環境からは Nominatim に到達できないので、ネットワークのある runner で引き、
+# 結果を config/citycoords.json に貯めてコミットする。
+# 座標そのものの書き換えは、差分を見て別途 --apply で行う。
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 依存インストール
+        run: pip install httpx
+      - name: 都市名から座標を引いて照合
+        run: python scripts/verify_positions.py
+      - name: 引けた座標を保存
+        run: |
+          git config user.name "bean-tracker-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add config/citycoords.json
+          git diff --cached --quiet || git commit -m "geocode: 都市の座標を取得"
+          git push
