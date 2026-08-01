@@ -154,32 +154,34 @@ LAST_REASON: dict[str, str] = {}
 # 実測: GitHub Actions のIPからは Shopify が 429 を返し続け、90秒待っても解消しない
 # （1回の巡回に58分かけて成果ゼロだった）。IP単位の制限なので待っても無駄と割り切り、
 # Retry-After が短く示された時だけ1回待ち、それ以外は素早く諦めて次の店へ進む。
+# 理由は戻り値で返す。店は並行に巡回しているので、共有の辞書に書くと
+# 隣の店の失敗理由が混ざり、URLの誤りとレート制限を見分けられなくなる。
 async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
-                          retries: int = 3) -> httpx.Response | None:
-    resp = None
+                          retries: int = 3) -> tuple[httpx.Response | None, str]:
+    resp, why = None, "接続失敗"
     for attempt in range(retries):
         try:
             resp = await client.get(url, params=params)
         except httpx.HTTPError as e:
-            LAST_REASON["_"] = f"{type(e).__name__}"
+            why = type(e).__name__
             resp = None
             wait = 2.0 * (2 ** attempt)
         else:
             if resp.status_code in (200, 404):
-                return resp
-            LAST_REASON["_"] = f"HTTP {resp.status_code}"
+                return resp, f"HTTP {resp.status_code}"
+            why = f"HTTP {resp.status_code}"
             if resp.status_code == 429:
                 try:
                     wait = float(resp.headers.get("retry-after", ""))
                 except ValueError:
                     wait = 0.0
                 if wait <= 0 or wait > 10:
-                    return resp          # IP制限。待っても無駄なので即あきらめる
+                    return resp, why     # IP制限。待っても無駄なので即あきらめる
             else:
                 wait = 2.0 * (2 ** attempt)
         if attempt < retries - 1:
             await asyncio.sleep(min(wait, 10.0) + random.uniform(0, 0.5))
-    return resp
+    return resp, why
 
 
 # ---------------- Shopify ----------------
@@ -205,9 +207,11 @@ async def _fetch_shopify(client: httpx.AsyncClient, r: dict, max_pages: int) -> 
 # products.json を塞いでいる店でも、こちらは開いている場合がある。
 async def _fetch_shopify_atom(client: httpx.AsyncClient, r: dict) -> list[Product] | None:
     base = r["url"].rstrip("/")
-    resp = await _get_with_retry(client, f"{base}/collections/all.atom", {})
+    resp, why = await _get_with_retry(client, f"{base}/collections/all.atom", {})
     if resp is None or resp.status_code != 200 or "<entry" not in resp.text:
-        LAST_REASON[r["name"]] = f"/collections/all.atom → {('HTTP %s' % resp.status_code) if resp is not None else '接続失敗'}"
+        if resp is not None and resp.status_code == 200:
+            why = "Atomフィードではない応答"
+        LAST_REASON[r["name"]] = f"/collections/all.atom → {why}"
         return None
     products: list[Product] = []
     for m in re.finditer(r"<entry>(.*?)</entry>", resp.text, re.S):
@@ -221,7 +225,13 @@ async def _fetch_shopify_atom(client: httpx.AsyncClient, r: dict) -> list[Produc
             continue
         name = html.unescape(re.sub(r"<[^>]+>", "", title.group(1))).strip()
         url = link.group(1) if link else base
+        # Atomの <summary> は商品説明そのもの。products.json を閉じている店の
+        # ノートはここしか出所が無いので、JSON経路と同じように読む。
+        summary = re.search(r"(?is)<summary[^>]*>(.*?)</summary>", e)
+        body = html.unescape(summary.group(1)) if summary else ""
+        notes = extract_notes(body, name)
         text = f"{name} {re.sub(r'<[^>]+>', ' ', e)}"
+        deep = f"{text} {html_to_text(body)[:1200]}"
         grams = _grams_from_text(name)
         p = float(price.group(1)) if price else 0.0
         products.append(Product(
@@ -231,7 +241,9 @@ async def _fetch_shopify_atom(client: httpx.AsyncClient, r: dict) -> list[Produc
             currency=(cur.group(1) if cur else r.get("currency", "")),
             grams=grams, per100=round(p / grams * 100, 2) if grams and p else None,
             available=True,          # Atomは在庫切れを載せないため、掲載＝在庫ありとみなす
-            origin=_guess_origin(text), process=_guess_process(text), tags=name[:300],
+            origin=_guess_origin(text) or _guess_origin(deep),
+            process=_guess_process(text) or _guess_process(deep),
+            tags=name[:300], notes=notes,
         ))
     return products or None
 
@@ -241,10 +253,9 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
     base = r["url"].rstrip("/")
     products: list[Product] = []
     for page in range(1, max_pages + 1):
-        resp = await _get_with_retry(client, f"{base}{path}", {"limit": 250, "page": page})
+        resp, why = await _get_with_retry(client, f"{base}{path}", {"limit": 250, "page": page})
         if resp is None or resp.status_code != 200:
             if page == 1:
-                why = f"HTTP {resp.status_code}" if resp is not None else LAST_REASON.get("_", "接続失敗")
                 LAST_REASON[r["name"]] = f"{path} → {why}"
                 return None
             return products
@@ -307,10 +318,16 @@ async def _fetch_woo(client: httpx.AsyncClient, r: dict, max_pages: int) -> list
     base = r["url"].rstrip("/")
     products: list[Product] = []
     for page in range(1, max_pages + 1):
-        resp = await _get_with_retry(client, f"{base}/wp-json/wc/store/v1/products",
-                                     {"per_page": 100, "page": page})
+        resp, why = await _get_with_retry(client, f"{base}/wp-json/wc/store/v1/products",
+                                         {"per_page": 100, "page": page})
         if resp is None or resp.status_code != 200:
-            return None if page == 1 else products
+            if page == 1:
+                # auto判定ではShopifyを先に試している。先に出た理由のほうが
+                # 店の素性を表すので、上書きせず埋まっていないときだけ入れる。
+                LAST_REASON.setdefault(r["name"],
+                                       f"/wp-json/wc/store/v1/products → {why}")
+                return None
+            return products
         try:
             batch = resp.json()
         except json.JSONDecodeError:
@@ -327,6 +344,9 @@ async def _fetch_woo(client: httpx.AsyncClient, r: dict, max_pages: int) -> list
             title = re.sub(r"<[^>]+>", "", p.get("name", "")).strip()
             grams = _grams_from_text(title)
             per100 = round(price / grams * 100, 2) if grams and price else None
+            body = f"{p.get('short_description') or ''}\n{p.get('description') or ''}"
+            notes = extract_notes(body, title)
+            deep = f"{title} {html_to_text(body)[:1200]}"
             products.append(Product(
                 key=f"{r['name']}::{p.get('id')}",
                 roaster=r["name"], country=r.get("country", ""),
@@ -337,8 +357,9 @@ async def _fetch_woo(client: httpx.AsyncClient, r: dict, max_pages: int) -> list
                 currency=prices.get("currency_code") or r.get("currency", ""),
                 grams=grams, per100=per100,
                 available=bool(p.get("is_in_stock", True)),
-                origin=_guess_origin(title), process=_guess_process(title),
-                tags=title,
+                origin=_guess_origin(title) or _guess_origin(deep),
+                process=_guess_process(title) or _guess_process(deep),
+                tags=title, notes=notes,
             ))
         if len(batch) < 100:
             break
@@ -347,18 +368,48 @@ async def _fetch_woo(client: httpx.AsyncClient, r: dict, max_pages: int) -> list
 
 # ---------------- orchestration ----------------
 
+async def _fetch_any(client, r, max_pages) -> list[Product] | None:
+    platform = r.get("platform", "auto")
+    if platform in ("auto", "shopify"):
+        res = await _fetch_shopify(client, r, max_pages)
+        if res is not None:
+            return res
+    if platform in ("auto", "woocommerce"):
+        res = await _fetch_woo(client, r, max_pages)
+        if res is not None:
+            return res
+    return None
+
+
+# 名前解決や接続そのもので落ちた合図。HTTPで応答がある店とは原因が違う。
+_CONNECT_FAIL = ("ConnectError", "ConnectTimeout", "接続失敗")
+
+
+def _alt_host(url: str) -> str:
+    """www の有無を入れ替えたURL。無ければ空文字。"""
+    m = re.match(r"(https?://)(www\.)?(.+)", url or "")
+    if not m:
+        return ""
+    scheme, has_www, rest = m.groups()
+    return f"{scheme}{rest}" if has_www else f"{scheme}www.{rest}"
+
+
 async def crawl_roaster(client, r, max_pages, sem) -> tuple[dict, list[Product] | None]:
     async with sem:
         await asyncio.sleep(random.uniform(0.3, 1.2))  # 一斉アクセスを避けて間隔をあける
-        platform = r.get("platform", "auto")
-        if platform in ("auto", "shopify"):
-            res = await _fetch_shopify(client, r, max_pages)
-            if res is not None:
-                return r, res
-        if platform in ("auto", "woocommerce"):
-            res = await _fetch_woo(client, r, max_pages)
-            if res is not None:
-                return r, res
+        res = await _fetch_any(client, r, max_pages)
+        if res is not None:
+            return r, res
+        # 接続で落ちた店は www 側にしかAレコードが無いことがある。リダイレクトは
+        # 追えても名前解決の失敗は追えないので、ここだけ手で入れ替えて1回試す。
+        if any(w in LAST_REASON.get(r["name"], "") for w in _CONNECT_FAIL):
+            alt = _alt_host(r["url"])
+            if alt:
+                LAST_REASON.pop(r["name"], None)
+                res = await _fetch_any(client, {**r, "url": alt}, max_pages)
+                if res is not None:
+                    print(f"  ↻ {r['name']} — {alt} で取得")
+                    return r, res
         return r, None
 
 

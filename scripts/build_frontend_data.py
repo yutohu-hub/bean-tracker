@@ -179,9 +179,11 @@ def main() -> None:
             # 巡回で実際の商品を掴んでいるのに該当ページへ直行できない。
             if p.get("url"):
                 bean["link"] = p["url"]
-            # 店が書いたテイスティングノート。味わいマップの座標はこれを最優先で使う
-            if p.get("notes"):
-                bean["notes"] = p["notes"]
+            # 店が書いたテイスティングノート。味わいマップの座標はこれを最優先で使う。
+            # 文字を含まない値（列ズレで数値が紛れ込んだ場合など）はノートではないので捨てる。
+            notes = (p.get("notes") or "").strip()
+            if notes and re.search(r"[^\W\d_]", notes):
+                bean["notes"] = notes
             beans.append(bean)
             bid += 1
 

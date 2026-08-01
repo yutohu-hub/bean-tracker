@@ -331,7 +331,7 @@ roasters:
     currency: CAD
   - name: "De Mello"
     country: "CA"
-    url: https://demellopalheta.ca
+    url: https://hellodemello.com
     currency: CAD
   - name: "Detour Coffee Roasters"
     country: "CA"
@@ -839,7 +839,7 @@ roasters:
     currency: EUR
   - name: "Orsonero"
     country: "IT"
-    url: https://orsonerocoffee.com
+    url: https://www.orsonerocoffee.it
     currency: EUR
   - name: "% Arabica"
     country: "JP"
@@ -903,7 +903,7 @@ roasters:
     currency: JPY
   - name: "LiLo Coffee Roasters"
     country: "JP"
-    url: https://lilocoffee.jp
+    url: https://coffee.liloinveve.com
     currency: JPY
   - name: "Light Up Coffee"
     country: "JP"
@@ -1007,7 +1007,7 @@ roasters:
     currency: JPY
   - name: "Single O Japan"
     country: "JP"
-    url: https://jp.singleo.com
+    url: https://singleo.jp
     currency: JPY
   - name: "Streamer Coffee"
     country: "JP"
