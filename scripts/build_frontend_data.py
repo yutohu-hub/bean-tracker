@@ -55,6 +55,11 @@ _NONCOFFEE = re.compile("|".join([
     # バリスタ用ツール／グッズ／商品でない行（JS側 isCoffee.js と同じ規則）
     r"\btools?\b", r"tamping\s?mat", r"\btamping\b", r"distribution\s?tool", r"dosing\s?funnel", r"puck\s?prep", r"post-?extraction", r"pulling\s?tool", r"mahlk[\u00f6o]nig",
     r"\bpins?\b", r"\bpatch(es)?\b", r"\bkeyring\b", r"\bbadges?\b",
+    # 器具ブランド・中古機材・講座（いずれも豆ではないのに高額で価格順を荒らす）
+    r"\becm\s+(puristika|synchronika|mechanika|classika|casa|barista)", r"\brocket\s+(r9|appartamento|mozzafiato|giotto|cinquantotto)",
+    r"\bfagor\b", r"\bprofitec\b", r"\blelit\b", r"\bvictoria\s?arduino\b", r"\bslayer\b", r"\bdalla\s?corte\b",
+    r"pre-?owned", r"open-?box", r"\bex-?demo\b",
+    r"sca\s*(csp|cds)", r"brewing\s?skills", r"sensory\s?skills", r"barista\s?skills", r"green\s?coffee\s?skills", r"\bcourse\b", r"\bworkshop\s+\(", r"講座", r"セミナー",
     r"taste\s?cards?", r"tasting\s?cards?", r"flavou?r\s?cards?",
     r"^shipping$", r"^timer$", r"^donation$", r"配送料", r"送料", r"coke\s?case", r"sprite\s?case", r"soda\s?case",
 ]), re.I)

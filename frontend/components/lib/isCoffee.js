@@ -38,6 +38,11 @@ const NON_COFFEE = [
   /ceramics?|セラミック|陶器|handmade|\bstrap\b|orbitkey|key ?organizer|キーオーガナイザー|organiser/,
   /g-?shock|\btimex\b|\bcasio\b|\bseiko\b|腕時計|\bwatch\b(?!\s*(list|ing))/,
   /invoice|overdue|payment ?arrangement|請求|お支払い|voucher/,
+  // 器具ブランド・中古機材・講座。豆ではないのに高額で、価格順の一覧を荒らす
+  /\becm ?(puristika|synchronika|mechanika|classika|casa|barista)|\brocket ?(r9|appartamento|mozzafiato|giotto|cinquantotto)/,
+  /\bfagor\b|\bprofitec\b|\blelit\b|victoria ?arduino|\bslayer\b|dalla ?corte/,
+  /pre-?owned|open-?box|\bex-?demo\b/,
+  /sca ?(csp|cds)|brewing ?skills|sensory ?skills|barista ?skills|green ?coffee ?skills|\bcourse\b|講座|セミナー/,
   // テイスティングノートのカード。豆と同じ棚に並ぶが飲めない
   /taste ?cards?|tasting ?cards?|flavou?r ?cards?/,
   // チョコレート・焼き菓子等の食品（"Milky Cake"等の豆名やコーヒーの風味表記は除外しない）
