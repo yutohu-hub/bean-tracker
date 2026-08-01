@@ -165,14 +165,24 @@ export async function cloudPushTastings(list) {
 }
 
 // ---- プレミアム連動（entitlements） ----
-// Stripe 入金 → Edge Function(Webhook) が entitlements を更新（docs参照）。
+// Stripe 入金 → Edge Function(Webhook) が entitlements を更新（docs/premium.md）。
+// フロントは読むだけ。RLS で自分の行しか見えないため、他人の権限は取得できない。
+//
+// 行そのものを返す。判定に必要なのはプラン名だけでなく status と期限で、
+// 名前だけ返していたころは「解約済みだが行は残っている」を見分けられなかった。
 export async function cloudGetPlan() {
   if (!readSession()) return null;
   try {
-    const res = await authFetch(`/rest/v1/entitlements?select=plan,status`);
+    const res = await authFetch(`/rest/v1/entitlements?select=plan,status,current_period_end`);
     if (!res.ok) return null;
     const rows = await res.json();
-    const row = Array.isArray(rows) ? rows.find((r) => r.status === "active") || rows[0] : null;
-    return row ? row.plan : null;
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return rows.find((r) => r.status === "active" || r.status === "trialing") || rows[0];
   } catch { return null; }
+}
+
+// 決済を自分の行に結びつけるための ID。Stripe の client_reference_id に渡す。
+export function currentUserId() {
+  const s = readSession();
+  return (s && (s.user_id || (s.user && s.user.id))) || null;
 }

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, perGrams } from "../lib/currency";
-import { getPlan } from "../lib/store";
+import { usePlan } from "../lib/usePlan";
 import { beanHref } from "../lib/utils";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
@@ -10,7 +10,7 @@ import { BEANS } from "../data/beans";
 function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPremium }) {
   // いま買える(now)豆のみ・100gあたり価格の安い順
   // 送客先ECのあるロースターに限定（「ECサイト準備中」はレアロットに出さない）
-  // 無料は最大10銘柄、プレミアムは最大50銘柄まで表示
+  // 表示件数の上限はプランで決まる（lib/entitlements.js の LIMITS が唯一の出どころ）
   const live = BEANS.filter((b) => b.status === "now" && match(b) && ROASTERS[b.r] && ROASTERS[b.r].url);
   const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
   const fmt100 = (b) => cur === "JPY" ? `¥${Math.round(per100(b)).toLocaleString()}` : `$${(per100(b) / RATES_TO_JPY.USD).toFixed(0)}`;
@@ -79,7 +79,7 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
         {!premium && locked > 0 && (
           <button onClick={onPremium}
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", marginTop: 12, padding: "12px 0", background: "#F2F0E9", color: INK, border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-            🔒 さらに {locked} 銘柄。プレミアムで最大30銘柄まで表示 ↗
+            🔒 あと {locked} 銘柄あります。プレミアムで全件表示 ↗
           </button>
         )}
         {premium && locked > 0 && (
@@ -91,9 +91,8 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
 }
 
 export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
-  const [premium, setPremium] = useState(false);
-  useEffect(() => { setPremium(getPlan().id.startsWith("premium")); }, []);
-  const limit = premium ? 30 : 10;
+  const { premium, limits } = usePlan();
+  const limit = limits.rareLots;
   const secProps = { onOpen, cur, limit, premium, onPremium };
   return (
     <div>
@@ -104,7 +103,7 @@ export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
           少量で消えていく希少な豆だけを追いかけるトラッカー。
         </div>
         <div style={{ marginTop: 8, fontSize: 11, color: premium ? GREEN : GRAY }}>
-          {premium ? "プレミアム：各カテゴリ最大30銘柄まで表示中" : "無料プランは各カテゴリ10銘柄まで。プレミアムで30銘柄まで表示"}
+          {premium ? "プレミアム：全銘柄を表示中" : `無料プランは各カテゴリ ${limit} 銘柄まで。プレミアムで全件表示`}
         </div>
       </div>
 

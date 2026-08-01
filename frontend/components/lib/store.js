@@ -94,10 +94,13 @@ export function syncArchive(currentArchive) {
   return stored;
 }
 
-// ---- プラン（課金の受け皿・端末内プロトタイプ） ----
-// 実際の決済は Stripe Checkout / IAP 連携後に有効化。ここでは申込意思をローカル保持。
-export function getPlan() { const p = read(PLAN_KEY, null); return p && p.id ? p : { id: "free", at: null }; }
-export function setPlan(id) { const p = { id, at: Date.now() }; write(PLAN_KEY, p); return p; }
+// ---- プラン ----
+// 権限の判定は lib/entitlements.js に移した。支払いの記録（Supabase の entitlements）
+// だけが根拠で、端末側から書き換える口は用意しない。
+// ここに setPlan があったころは、画面のボタンが直接 localStorage に premium を
+// 書いていたため、決済せずにプレミアムを取得できた。
+// 古い端末に残った書き込み済みの値も、起動時に捨てる。
+export function purgeLegacyPlan() { try { localStorage.removeItem(PLAN_KEY); } catch {} }
 
 // ---- 新着レアロット通知の購読設定（端末内プロトタイプ） ----
 const NOTIFY_DEFAULT = { email: "", mail: true, push: false, cats: { geisha: true, sidra: true, coe: true, restock: true }, at: null };
