@@ -38,6 +38,8 @@ const NON_COFFEE = [
   /ceramics?|セラミック|陶器|handmade|\bstrap\b|orbitkey|key ?organizer|キーオーガナイザー|organiser/,
   /g-?shock|\btimex\b|\bcasio\b|\bseiko\b|腕時計|\bwatch\b(?!\s*(list|ing))/,
   /invoice|overdue|payment ?arrangement|請求|お支払い|voucher/,
+  // テイスティングノートのカード。豆と同じ棚に並ぶが飲めない
+  /taste ?cards?|tasting ?cards?|flavou?r ?cards?/,
   // チョコレート・焼き菓子等の食品（"Milky Cake"等の豆名やコーヒーの風味表記は除外しない）
   /drinking ?chocolate|chocolate ?bar|ground ?chocolate|chocolate ?(product|strudel|waffle|bark)|板チョコ|specialty ?chocolate|\braaka\b|cocoa ?(bar|powder|nibs)|cacao ?(bar|nibs|powder)|cupcakes?|strudel|waffle ?cone|soft ?bar|croissant/,
   // シロップ・雑貨・パーツ・食器/器具ブランド
