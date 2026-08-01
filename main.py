@@ -86,7 +86,10 @@ def main() -> None:
         raw, failed = asyncio.run(crawl_all(config))
         products = products_to_dicts(raw)
 
-    print(f"取得: {len(products)}商品（失敗 {len(failed)}店舗）")
+    # ノートの取得率は味わいマップの精度そのものなので、毎回ログに出して追えるようにする
+    noted = sum(1 for p in products if (p.get("notes") or "").strip())
+    pct = round(noted / len(products) * 100, 1) if products else 0.0
+    print(f"取得: {len(products)}商品（失敗 {len(failed)}店舗） / ノートあり {noted}件 {pct}%")
 
     (ROOT / "data").mkdir(exist_ok=True)
     con = open_db(str(ROOT / "data" / "state.db"))

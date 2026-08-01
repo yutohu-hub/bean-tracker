@@ -31,6 +31,12 @@ def open_db(path: str) -> sqlite3.Connection:
     if "notes" not in cols:
         con.execute("ALTER TABLE products ADD COLUMN notes TEXT")
         con.commit()
+    # ALTER で足した notes は列順が末尾になる。SCHEMA の並び（tags の次）を前提にした
+    # 位置指定INSERTが notes と first_seen を入れ違いに書いた行が残っているので戻す。
+    # first_seen は REAL 宣言なので、ノート文字列が入った行だけ typeof が text になる。
+    con.execute("""UPDATE products SET notes = first_seen, first_seen = last_seen
+                   WHERE typeof(first_seen) = 'text'""")
+    con.commit()
     return con
 
 
@@ -46,8 +52,15 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
         row = con.execute("SELECT * FROM products WHERE key=?", (p["key"],)).fetchone()
 
         if row is None:
+            # 列名を明示する。ALTER で足した列は末尾に付くため、位置指定だと
+            # 新規DBと移行済みDBで並びが違い、値が隣の列に書き込まれる。
             con.execute(
-                """INSERT INTO products VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                """INSERT INTO products
+                   (key, roaster, country, title, url, image,
+                    price, currency, grams, per100, available,
+                    origin, process, tags, notes,
+                    first_seen, last_seen, last_status_change)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (p["key"], p["roaster"], p["country"], p["title"], p["url"], p["image"],
                  p["price"], p["currency"], p["grams"], p["per100"],
                  int(p["available"]), p["origin"], p["process"], p["tags"],
