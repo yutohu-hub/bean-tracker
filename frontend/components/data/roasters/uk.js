@@ -42,7 +42,7 @@ export const uk = {
   darkarts: { name: "Dark Arts Coffee", city: "London", country: "GB", region: "uk", platform: "Shopify", note: "エチオピアの名店", coord: [-0.12, 51.51], url: "darkartscoffee.co.uk",
     founded: "2014", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Londonを拠点とするイギリスのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした浅〜中浅煎りで知られる。" },
-  girlswhogrind: { name: "Girls Who Grind", city: "Wiltshire", country: "GB", region: "uk", platform: "Shopify", note: "エチオピアの名店", coord: [0, 20], url: "girlswhogrindcoffee.com",
+  girlswhogrind: { name: "Girls Who Grind", city: "Wiltshire", country: "GB", region: "uk", platform: "Shopify", note: "エチオピアの名店", coord: [-1.93, 51.35], url: "girlswhogrindcoffee.com",
     founded: "2018", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Wiltshireを拠点とするイギリスのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした浅〜中浅煎りで知られる。" },
   threefe: { name: "3fe", city: "Dublin", country: "IE", region: "uk", platform: "Shopify", note: "エチオピアの名店", coord: [-6.26, 53.35], url: "3fe.com",

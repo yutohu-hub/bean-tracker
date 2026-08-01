@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS products (
   price REAL, currency TEXT, grams INTEGER, per100 REAL,
   available INTEGER,
   origin TEXT, process TEXT, tags TEXT, notes TEXT,
+  city TEXT, province TEXT,
   first_seen REAL, last_seen REAL,
   last_status_change REAL
 );
@@ -31,6 +32,11 @@ def open_db(path: str) -> sqlite3.Connection:
     if "notes" not in cols:
         con.execute("ALTER TABLE products ADD COLUMN notes TEXT")
         con.commit()
+    # 店の所在地。地球儀の点をこれで置く。
+    for col in ("city", "province"):
+        if col not in cols:
+            con.execute(f"ALTER TABLE products ADD COLUMN {col} TEXT")
+    con.commit()
     # ALTER で足した notes は列順が末尾になる。SCHEMA の並び（tags の次）を前提にした
     # 位置指定INSERTが notes と first_seen を入れ違いに書いた行が残っているので戻す。
     # first_seen は REAL 宣言なので、ノート文字列が入った行だけ typeof が text になる。
@@ -58,13 +64,14 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
                 """INSERT INTO products
                    (key, roaster, country, title, url, image,
                     price, currency, grams, per100, available,
-                    origin, process, tags, notes,
+                    origin, process, tags, notes, city, province,
                     first_seen, last_seen, last_status_change)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (p["key"], p["roaster"], p["country"], p["title"], p["url"], p["image"],
                  p["price"], p["currency"], p["grams"], p["per100"],
                  int(p["available"]), p["origin"], p["process"], p["tags"],
-                 p.get("notes") or "", now, now, now))
+                 p.get("notes") or "", p.get("city") or "", p.get("province") or "",
+                 now, now, now))
             if p["available"]:
                 con.execute("INSERT INTO events (key,type,ts,oos_hours) VALUES (?,?,?,?)",
                             (p["key"], "new", now, None))
@@ -88,11 +95,13 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
         con.execute(
             """UPDATE products SET roaster=?,country=?,title=?,url=?,image=?,
                price=?,currency=?,grams=?,per100=?,available=?,origin=?,process=?,tags=?,notes=?,
+               city=?, province=?,
                last_seen=?, last_status_change=CASE WHEN available!=? THEN ? ELSE last_status_change END
                WHERE key=?""",
             (p["roaster"], p["country"], p["title"], p["url"], p["image"],
              p["price"], p["currency"], p["grams"], p["per100"], int(is_available),
-             p["origin"], p["process"], p["tags"], p.get("notes") or "", now,
+             p["origin"], p["process"], p["tags"], p.get("notes") or "",
+             p.get("city") or "", p.get("province") or "", now,
              int(is_available), now, p["key"]))
 
     con.commit()
