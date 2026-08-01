@@ -37,6 +37,33 @@ function loadCesium() {
   return cesiumPromise;
 }
 
+/* 衛星写真の取得。ここは他社のタイル配信に依存しているので、落ちる前提で書く。
+   以前は fromProviderAsync に promise を渡しっぱなしで、拒否されても誰も受け取らず、
+   コンソールに素の例外が出たまま地球が真っ黒（点だけ浮かぶ）になっていた。
+   1枚目が駄目なら別ホストへ、それも駄目なら画像なしで地球の色だけ塗る。 */
+async function buildBaseLayer(Cesium) {
+  const sources = [
+    ["Esri World Imagery", () => Cesium.ArcGisMapServerImageryProvider.fromUrl(
+      "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")],
+    ["OpenStreetMap", async () => new Cesium.OpenStreetMapImageryProvider({
+      url: "https://tile.openstreetmap.org/" })],
+  ];
+  for (const [name, make] of sources) {
+    try {
+      const provider = await make();
+      return { layer: new Cesium.ImageryLayer(provider), provider, source: name };
+    } catch (e) {
+      console.warn(`[globe] ${name} の地図タイルを読み込めませんでした`, e);
+    }
+  }
+  return { layer: false, provider: null, source: null };   // baseLayer:false = 画像なし
+}
+
+// タイルが実際に落ちてくるかは、プロバイダを作れたかどうかとは別の話。
+// OpenStreetMap のプロバイダは配信が死んでいても問題なく生成できるので、
+// 「作れた＝写真が出る」ではない。実際のタイル取得の失敗を数えて判断する。
+const TILE_ERRORS_BEFORE_GIVING_UP = 3;
+
 export function GlobeView({ onRoaster }) {
   const wrapRef = useRef(null);
   const viewerRef = useRef(null);
@@ -44,6 +71,8 @@ export function GlobeView({ onRoaster }) {
   const paintedRef = useRef(null);   // 直前に強調表示したロースター
   const [selected, setSelected] = useState(null);
   const [status, setStatus] = useState("loading");   // loading | ready | error
+  const [noImagery, setNoImagery] = useState(false);  // 衛星写真だけ落ちた場合
+  const sourceRef = useRef(null);                     // 実際に使えた地図タイルの出所
 
   useEffect(() => {
     let viewer, disposed = false;
@@ -56,6 +85,17 @@ export function GlobeView({ onRoaster }) {
         // Cesium ion のトークンがあれば地形（起伏）まで表示する。無くても衛星写真は出る。
         const ionToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
         if (ionToken) Cesium.Ion.defaultAccessToken = ionToken;
+
+        const base = await buildBaseLayer(Cesium);
+        if (disposed) return;
+        if (!base.layer) setNoImagery(true);
+        sourceRef.current = base.source;
+        if (base.layer && base.provider?.errorEvent) {
+          let fails = 0;
+          base.provider.errorEvent.addEventListener(() => {
+            if (++fails >= TILE_ERRORS_BEFORE_GIVING_UP && !disposed) setNoImagery(true);
+          });
+        }
 
         viewer = new Cesium.Viewer(wrapRef.current, {
           // 余計なUIは全て隠し、図鑑の見た目に寄せる
@@ -70,12 +110,8 @@ export function GlobeView({ onRoaster }) {
           maximumRenderTimeChange: Infinity,
           // MSAAは切ってFXAAで済ませる（下で msaaSamples = 1）
           contextOptions: { webgl: { antialias: false, powerPreference: "high-performance" } },
-          // 衛星写真：ion トークン不要の Esri World Imagery を使う
-          baseLayer: Cesium.ImageryLayer.fromProviderAsync(
-            Cesium.ArcGisMapServerImageryProvider.fromUrl(
-              "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
-            ),
-          ),
+          // 衛星写真（ion トークン不要）。取れなければ false = 画像なしで続行する
+          baseLayer: base.layer,
         });
         viewerRef.current = viewer;
 
@@ -92,6 +128,9 @@ export function GlobeView({ onRoaster }) {
         s.fog.enabled = false;
         s.shadows = false;
         s.backgroundColor = Cesium.Color.fromCssColorString("#060d16");
+        // 写真が出ないときに点だけ宇宙に浮いて見えないよう、下地に海の色を敷いておく。
+        // 既定の明るい青より落ち着いた色にして、写真が出たときも縁で悪目立ちしない。
+        s.globe.baseColor = Cesium.Color.fromCssColorString("#16324a");
         s.postProcessStages.fxaa.enabled = true;
         // マルチサンプルは1画素あたりのコストが数倍になる。FXAAで代替する
         s.msaaSamples = 1;
@@ -244,8 +283,20 @@ export function GlobeView({ onRoaster }) {
           </div>
         )}
 
+        {/* 衛星写真だけ落ちたとき。真っ暗な球に点だけ浮いていると壊れて見えるので、
+            位置は正しく出ていることと、原因が地図タイル側であることを書く。 */}
+        {noImagery && status === "ready" && (
+          <div style={{ position: "absolute", left: 8, right: 8, top: 8, zIndex: 3,
+            background: "rgba(6,13,22,0.82)", color: "rgba(255,255,255,0.9)",
+            fontSize: 10.5, lineHeight: 1.7, padding: "7px 10px", borderRadius: 6 }}>
+            衛星写真を読み込めませんでした。ロースターの位置は正しく表示されています。
+          </div>
+        )}
+
         <div style={{ position: "absolute", left: 8, bottom: 8, fontSize: 9, color: "rgba(255,255,255,0.55)", zIndex: 2 }}>
-          Imagery © Esri, Maxar, Earthstar Geographics
+          {noImagery ? "Roaster locations © BEAN TRACKER"
+            : sourceRef.current === "OpenStreetMap" ? "Imagery © OpenStreetMap contributors"
+              : "Imagery © Esri, Maxar, Earthstar Geographics"}
         </div>
       </div>
 
