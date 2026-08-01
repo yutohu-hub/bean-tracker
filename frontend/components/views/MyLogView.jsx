@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
-import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getPlan, setPlan, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis } from "../lib/store";
-import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings, cloudGetPlan } from "../lib/account";
+import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis } from "../lib/store";
+import { usePlan, refreshPlan } from "../lib/usePlan";
+import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings } from "../lib/account";
 import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis";
 import { beanHref } from "../lib/utils";
 import { Portfolio } from "../ui/Portfolio";
@@ -17,6 +18,7 @@ const rowToTasting = (r) => ({ beanId: r.bean_id, r: r.r, name: r.name, roaster:
 
 export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [user, setU] = useState(null);
+  const { premium } = usePlan();
   const [session, setSession] = useState(null);
   const [list, setList] = useState([]);
   const [name, setName] = useState("");
@@ -26,7 +28,6 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [syncMsg, setSyncMsg] = useState("");
   const [loginErr, setLoginErr] = useState(false);   // 送信結果が失敗かどうか（色分け用）
   const [syncErr, setSyncErr] = useState(false);
-  const [plan, setPlanState] = useState({ id: "free" });
   const [diags, setDiags] = useState([]);
   const [anas, setAnas] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -45,7 +46,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
 
   const refresh = () => {
     setU(getUser()); const l = getTastings(); setList(l);
-    setSession(getSession()); setPlanState(getPlan()); setDiags(getDiagHistory()); setAnas(getAnalysisHistory());
+    setSession(getSession()); setDiags(getDiagHistory()); setAnas(getAnalysisHistory());
     getPhotos(l.map((t) => t.beanId)).then(setPhotos);   // 写真は IndexedDB から後追いで
   };
 
@@ -56,8 +57,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
       const cloud = await cloudPullTastings();
       mergeTastings(cloud.map(rowToTasting));
       await cloudPushTastings(getTastings());
-      const p = await cloudGetPlan();
-      if (p) setPlan(p);                   // 決済ランクをローカルプランへ反映（プレミアム連動）
+      await refreshPlan();                 // 支払いの記録からプレミアムを確定させる
       refresh();
       setSyncMsg("同期しました");
     } catch { setSyncMsg("同期に失敗しました（Supabase設定・ネットワークを確認）"); }
@@ -160,7 +160,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const accountEmail = signed ? (session && session.user ? session.user.email : null) : (user ? user.email || null : null);
   const accountName = signed ? (session && session.user ? session.user.email : "アカウント") : (user ? user.name : "");
   const doLogout = async () => { if (signed) { await signOut(); } else { logout(); } refresh(); };
-  const premium = plan.id && plan.id.startsWith("premium");
+
 
   // 記録のライブAI分析（保存不要・記録から即時算出）＋相性の良いロースター3件
   const tan = analyzeTastings(list);

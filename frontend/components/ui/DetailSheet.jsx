@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { INK, PAPER, GRAY, LINE, GREEN, STATUS } from "../lib/theme";
+import { INK, PAPER, GRAY, LINE, GREEN, AMBER, STATUS } from "../lib/theme";
 import { RATES_TO_JPY, toJPY, fmtPrice, perGrams, fmtLocal } from "../lib/currency";
 import { beanHref, beanLinkKind } from "../lib/utils";
-import { getTasting, upsertTasting, removeTasting, isRestock, toggleRestock } from "../lib/store";
+import { getTasting, upsertTasting, removeTasting, isRestock, toggleRestock, getRestocks } from "../lib/store";
+import { usePlan } from "../lib/usePlan";
 import { getPhoto, savePhotoDataUrl, deletePhoto } from "../lib/photos";
 import { PhotoPicker } from "./PhotoPicker";
 import { ROASTERS } from "../data/roasters";
@@ -14,12 +15,19 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
   const [watching, setWatching] = useState(false);
+  const [watchCount, setWatchCount] = useState(0);
+  const [watchMsg, setWatchMsg] = useState("");
   const [photo, setPhoto] = useState(null);
+  const { premium, limits } = usePlan();
+  // 上限判定は「いま登録済みの件数」で見る。この豆が未登録のときだけ追加を止める。
+  const watchFull = watchCount >= limits.watchlist;
   useEffect(() => {
     if (!bean) return;
     const t = getTasting(bean.id);
     setRating(t ? t.rating : 0); setNotes(t ? t.notes : ""); setSaved(!!t);
     setWatching(isRestock(bean.id));
+    setWatchCount(getRestocks().length);
+    setWatchMsg("");
     setPhoto(null);
     getPhoto(bean.id).then((p) => setPhoto(p));   // 写真は IndexedDB から後追いで読む
   }, [bean ? bean.id : null]);
@@ -101,12 +109,25 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
           )}
           {bean.status === "sold" && (
             <>
-              <button onClick={() => { toggleRestock({ beanId: bean.id, r: bean.r, name: bean.name, roaster: roaster.name }); setWatching(isRestock(bean.id)); }}
-                style={{ width: "100%", padding: "13px 0", background: watching ? INK : PAPER, color: watching ? PAPER : INK, border: `1.5px solid ${INK}`, borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+              <button onClick={() => {
+                  // 上限に達していたら追加はできない。外すのはいつでもできる。
+                  if (!watching && watchFull) { setWatchMsg(`無料プランのウォッチは ${limits.watchlist} 銘柄までです。プレミアムで上限がなくなります。`); return; }
+                  toggleRestock({ beanId: bean.id, r: bean.r, name: bean.name, roaster: roaster.name });
+                  setWatching(isRestock(bean.id));
+                  setWatchCount(getRestocks().length);
+                  setWatchMsg("");
+                }}
+                style={{ width: "100%", padding: "13px 0", background: watching ? INK : PAPER, color: watching ? PAPER : INK, border: `1.5px solid ${INK}`, borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: watching || !watchFull ? "pointer" : "not-allowed", opacity: !watching && watchFull ? 0.55 : 1 }}>
                 {watching ? "✓ 再入荷ウォッチ中" : "🔔 再入荷を待つ"}
               </button>
-              <div style={{ textAlign: "center", fontSize: 10, color: GRAY, marginTop: 8, lineHeight: 1.6 }}>
-                {watching ? "再入荷したら通知します。ウォッチリストは「プレミアム」タブで確認できます。" : "この端末のウォッチリストに追加します（通知はプレミアムで有効化）。"}
+              <div style={{ textAlign: "center", fontSize: 10, color: watchMsg ? AMBER : GRAY, marginTop: 8, lineHeight: 1.6 }}>
+                {watchMsg
+                  ? watchMsg
+                  : watching
+                    ? "再入荷を見つけたら、マイページのウォッチリストに「買う」が出ます。"
+                    : premium
+                      ? "ウォッチリストに追加します（上限なし）。"
+                      : `ウォッチリストに追加します（無料プランは ${limits.watchlist} 銘柄まで・現在 ${watchCount} 件）。`}
               </div>
             </>
           )}

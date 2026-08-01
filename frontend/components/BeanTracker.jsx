@@ -12,6 +12,9 @@ import { INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGINS } from "./lib/constants";
 import { syncArchive } from "./lib/store";
 import { captureSessionFromUrl } from "./lib/account";
+import { purgeLegacyPlan } from "./lib/store";
+import { refreshPlan } from "./lib/usePlan";
+import { isReturningFromCheckout } from "./lib/billing";
 import { LEGEND, beanStyle, processKey } from "./lib/palette";
 
 /* ============================================================
@@ -131,12 +134,21 @@ export default function BeanTracker() {
      アプリ起動時にここで拾い、結果をマイページに引き渡して表示する。 */
   useEffect(() => {
     (async () => {
+      /* 以前は画面のボタンが localStorage に premium を書けたため、決済せずに
+         プレミアムになった端末が残っている。起動時にその値を捨てる。
+         正しい権限は、このあと refreshPlan() が支払いの記録から取り直す。 */
+      purgeLegacyPlan();
+
       const r = await captureSessionFromUrl();
-      if (!r) return;
-      setAuthNotice(r.ok
-        ? { ok: true, text: "ログインしました。この端末の記録を同期します。" }
-        : { ok: false, text: `ログインできませんでした：${r.error}` });
-      setView("me"); setMeTab("log"); window.scrollTo(0, 0);
+      if (r) {
+        setAuthNotice(r.ok
+          ? { ok: true, text: "ログインしました。この端末の記録を同期します。" }
+          : { ok: false, text: `ログインできませんでした：${r.error}` });
+        setView("me"); setMeTab("log"); window.scrollTo(0, 0);
+      }
+      // 決済から戻ってきたときは、反映待ちを見せるためプレミアム画面へ送る
+      if (isReturningFromCheckout()) { setView("me"); setMeTab("premium"); window.scrollTo(0, 0); }
+      refreshPlan();
     })();
   }, []);
 
@@ -370,7 +382,7 @@ export default function BeanTracker() {
               ))}
             </div>
             {meTab === "premium"
-              ? <PremiumView onOpen={setOpen} />
+              ? <PremiumView onOpen={setOpen} onNeedSignIn={() => { setMeTab("log"); window.scrollTo(0, 0); }} />
               : <MyLogView onOpen={setOpen} onRoaster={goRoaster} authNotice={authNotice} onDismissNotice={() => setAuthNotice(null)} />}
           </>
         ) : view === "recipe" ? (

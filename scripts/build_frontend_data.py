@@ -107,6 +107,25 @@ def load_seed_keys() -> dict:
     return m
 
 
+# レアロット画面のカテゴリはこの印で組まれている。銘柄名か店のタグから拾う。
+# 「ゲイシャ入りブレンド」まで拾うと希少ロットの一覧が薄まるので、
+# ブレンドと明記されているものは対象から外す。
+_GEISHA = re.compile(r"(?i)\b(geisha|gesha)\b|ゲイシャ|ゲシャ")
+_SIDRA = re.compile(r"(?i)\bsidra\b|シドラ")
+_BLEND = re.compile(r"(?i)\bblend\b|ブレンド")
+
+
+def _variety(title: str, tags: str) -> str:
+    text = f"{title} {tags}"
+    if _BLEND.search(text):
+        return ""
+    if _SIDRA.search(text):
+        return "sidra"
+    if _GEISHA.search(text):
+        return "geisha"
+    return ""
+
+
 def host(url: str) -> str:
     m = re.match(r"https?://([^/]+)", url or "")
     return (m.group(1) if m else "").replace("www.", "")
@@ -184,6 +203,11 @@ def main() -> None:
             notes = (p.get("notes") or "").strip()
             if notes and re.search(r"[^\W\d_]", notes):
                 bean["notes"] = notes
+            # 品種の印。レアロット画面はこの vt でカテゴリを組んでいるため、
+            # 付けないと巡回で取れたゲイシャ・シドラが1件も並ばない。
+            vt = _variety(p.get("title") or "", p.get("tags") or "")
+            if vt:
+                bean["vt"] = vt
             beans.append(bean)
             bid += 1
 
