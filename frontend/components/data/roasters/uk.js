@@ -57,7 +57,7 @@ export const uk = {
   blossom: { name: "Blossom Coffee", city: "Manchester", country: "GB", region: "uk", platform: "Shopify", note: "エチオピアの名店", coord: [-2.255, 53.494], url: "blossomcoffee.co.uk",
     founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Manchesterを拠点とするイギリスのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
-  atkinsons: { name: "Atkinsons Coffee", city: "Lancaster", country: "GB", region: "uk", platform: "Shopify", note: "エチオピアの名店", coord: [-1.5, 52.5], url: "thecoffeehopper.com",
+  atkinsons: { name: "Atkinsons Coffee", city: "Lancaster", country: "GB", region: "uk", platform: "Shopify", note: "エチオピアの名店", coord: [-2.8013, 54.0488], url: "thecoffeehopper.com",
     founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Lancasterを拠点とするイギリスのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
   oddkin: { name: "OddKin Coffee", city: "Bristol", country: "GB", region: "uk", platform: "Shopify", note: "エチオピアの名店", coord: [-2.568, 51.479], url: "oddkin.co.uk",

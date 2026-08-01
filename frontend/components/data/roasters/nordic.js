@@ -150,7 +150,7 @@ export const nordic = {
   teogkaffi: { name: "Te & Kaffi", city: "Reykjavík", country: "IS", region: "nordic", platform: "Shopify", note: "エチオピアの名店", coord: [-21.938, 64.122], url: "teogkaffi.is",
     founded: "1984", style: "浅煎り・北欧スタイル", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Reykjavíkを拠点とするアイスランドのスペシャルティロースター。エチオピア・コロンビアを軸に、澄んだ北欧スタイルの浅煎りで知られる。" },
-  sonora: { name: "Sonora Coffee", city: "København", country: "DK", region: "nordic", platform: "Shopify", note: "エチオピアの名店", coord: [9.485, 56.014], url: "sonora.dk",
+  sonora: { name: "Sonora Coffee", city: "København", country: "DK", region: "nordic", platform: "Shopify", note: "エチオピアの名店", coord: [12.5701, 55.6867], url: "sonora.dk",
     founded: "—", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Københavnを拠点とするデンマークのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
 };
