@@ -5,11 +5,17 @@
 店名ではなく **都市名** を基準に照合する。都市はその店の所在地として
 すでに書かれている情報なので、これと座標が食い違っていれば座標のほうが誤り。
 
-  python scripts/verify_positions.py            # 照合して差分を報告するだけ
-  python scripts/verify_positions.py --apply    # キャッシュにある座標で修正する
+  python scripts/verify_positions.py                  # 照合して差分を報告するだけ
+  python scripts/verify_positions.py --apply key1,key2  # 指定した店だけ書き換える
 
---apply は問い合わせをしない。CI で貯めた config/citycoords.json だけを使うので、
-ネットワークの無い環境でも実行でき、何が書き換わるかは差分で確認できる。
+**まとめて自動適用はしない。** 実際にやってみたところ、引いた座標のほうが
+間違っている例が大半だった:
+  * 同名の別地点を拾う（Acton は George Howell のいるマサチューセッツではなく
+    カリフォルニアが返る。Nelsonville も同様）
+  * 都市欄に国名や州名が入っている店（「インド」「フィリピン」「Arkansas」）
+  * 「京都 / 紫竹」のように複合表記だと別の場所になる
+手で置かれた座標は 402/411 が市の中心から60km以内、319軒は5km以内で、
+基本的に正しい。だから既定は報告だけにして、直すものは名指しで指定する。
 """
 from __future__ import annotations
 import math
@@ -53,7 +59,15 @@ def read_all():
 
 
 def main() -> None:
-    apply = "--apply" in sys.argv
+    # --apply の後ろにキーを列挙したときだけ書き換える（名指ししたものに限る）
+    apply_keys = set()
+    if "--apply" in sys.argv:
+        i = sys.argv.index("--apply")
+        if i + 1 < len(sys.argv):
+            apply_keys = {k.strip() for k in sys.argv[i + 1].split(",") if k.strip()}
+        if not apply_keys:
+            print("--apply には書き換える店のキーを指定してください（例: --apply sonora,atkinsons）")
+            return
     rows = read_all()
     print(f"種データのロースター: {len(rows)}軒")
 
@@ -61,9 +75,9 @@ def main() -> None:
     checkable = [r for r in rows if r["city"] and r["city"].upper() != r["country"].upper()]
     print(f"都市名が入っていて照合できる: {len(checkable)}軒\n")
 
-    if apply:
+    if apply_keys:
         coords = geocode.load_cache()
-        print(f"キャッシュ {len(coords)}件を使って修正します（問い合わせはしません）\n")
+        print(f"キャッシュ {len(coords)}件を使い、指定された {len(apply_keys)}軒だけ書き換えます\n")
     else:
         coords = geocode.resolve([(r["city"], r["country"]) for r in checkable], limit=500)
         print()
@@ -87,13 +101,16 @@ def main() -> None:
         for d, r, real in far[:40]:
             print(f"{d:8.0f}km  {r['name'][:25]:<26} {r['city'][:15]:<16} {r['coord']} → {real}")
 
-    if not apply:
-        print("\n--apply を付けて実行すると、上のずれを実際の座標に書き換えます。")
+    if not apply_keys:
+        print("\n直すものは1軒ずつ確かめてから --apply <キー> で指定してください。")
+        print("（引いた座標のほうが誤っている場合が多いため、一括では適用しません）")
         return
 
-    # 書き換え。1行目の coord だけを差し替える。
+    # 書き換え。名指しされた店の coord だけを差し替える。
     edited = 0
     for d, r, real in far:
+        if r["key"] not in apply_keys:
+            continue
         text = r["file"].read_text(encoding="utf-8")
         old = f'{r["key"]}: {{ name: "{r["name"]}"'
         i = text.find(old)
