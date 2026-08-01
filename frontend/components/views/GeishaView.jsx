@@ -8,16 +8,32 @@ import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
 
 function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPremium }) {
-  // いま買える(now)豆のみ・100gあたり価格の安い順
+  // いま買える(now)豆のみ・50gあたり価格の安い順
+  // レアロットは 50g や 100g の少量売りが主流で、袋の大きさがまちまち。
+  // 50g に揃えると、実際に買う単位に近い額で横に並べられる。
   // 送客先ECのあるロースターに限定（「ECサイト準備中」はレアロットに出さない）
   // 表示件数の上限はプランで決まる（lib/entitlements.js の LIMITS が唯一の出どころ）
-  const live = BEANS.filter((b) => b.status === "now" && match(b) && ROASTERS[b.r] && ROASTERS[b.r].url);
-  const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
-  const fmt100 = (b) => cur === "JPY" ? `¥${Math.round(per100(b)).toLocaleString()}` : `$${(per100(b) / RATES_TO_JPY.USD).toFixed(0)}`;
-  const sorted = live.slice().sort((a, b) => per100(a) - per100(b));
+  // 値段が取れなかった豆（amount=0）は最初から除く
+  const live = BEANS.filter((b) => b.status === "now" && match(b)
+    && ROASTERS[b.r] && ROASTERS[b.r].url && Number(b.amount) > 0);
+  const per50 = (b) => (toJPY(b) / perGrams(b)) * 50;
+  // 50g だと半数以上が $10 を切る。整数のままだと $9.2 と $9.6 が潰れるので、
+  // 桁が下がるぶんだけ小数を伸ばす（$0.0 のような無意味な表示を出さない）。
+  const fmtUsd = (v) => v.toFixed(v < 1 ? 2 : v < 10 ? 1 : 0);
+  // 換算して1円に満たない額は、値段として使える数字ではない（取得できていないか、
+  // 桁が落ちている）。0円と表示して最安の席に座らせず、末尾に「価格不明」で置く。
+  const priced = (b) => per50(b) >= 1;
+  const fmt50 = (b) => !priced(b) ? "価格不明"
+    : cur === "JPY"
+      ? `¥${Math.round(per50(b)).toLocaleString()}`
+      : `$${fmtUsd(per50(b) / RATES_TO_JPY.USD)}`;
+  const sorted = live.slice().sort((a, b) => {
+    if (priced(a) !== priced(b)) return priced(a) ? -1 : 1;
+    return per50(a) - per50(b);
+  });
   const ladder = sorted.slice(0, limit);
   const locked = Math.max(0, sorted.length - ladder.length);
-  const maxP = ladder.length ? Math.max(...ladder.map(per100)) : 1;
+  const maxP = ladder.length ? Math.max(...ladder.map(per50)) : 1;
 
   return (
     <div style={{ marginTop: 26 }}>
@@ -37,10 +53,10 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
         </div>
       </div>
 
-      {/* 100gあたり価格軸 */}
+      {/* 50gあたり価格軸 */}
       <div style={{ marginTop: 14 }}>
         <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.12em", color: GRAY }}>
-          PRICE / 100g
+          PRICE / 50g
         </div>
         {ladder.map((b, i) => (
           <div key={b.id} style={{ display: "flex", alignItems: "flex-end", gap: 10, padding: "10px 0 0" }}>
@@ -48,7 +64,7 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
               style={{ display: "block", flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{b.name}</span>
-                <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: INK }}>{fmt100(b)}</span>
+                <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: INK }}>{fmt50(b)}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginTop: 1 }}>
                 <span style={{ fontSize: 10, color: GRAY }}>{ROASTERS[b.r].name} ・ {b.origin} ・ {b.process}</span>
@@ -57,7 +73,7 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
               <div style={{ height: 6, background: "#F0EDE4", borderRadius: 3, marginTop: 5, overflow: "hidden" }}>
                 <div className="bt-bar" style={{
                   height: "100%", borderRadius: 3,
-                  width: `${(per100(b) / maxP) * 100}%`,
+                  width: `${(per50(b) / maxP) * 100}%`,
                   background: `linear-gradient(90deg, ${GREEN}, #6B8F3C)`,
                   animationDelay: `${0.15 + i * 0.09}s`,
                 }} />

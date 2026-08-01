@@ -55,6 +55,7 @@ _NONCOFFEE = re.compile("|".join([
     # バリスタ用ツール／グッズ／商品でない行（JS側 isCoffee.js と同じ規則）
     r"\btools?\b", r"tamping\s?mat", r"\btamping\b", r"distribution\s?tool", r"dosing\s?funnel", r"puck\s?prep", r"post-?extraction", r"pulling\s?tool", r"mahlk[\u00f6o]nig",
     r"\bpins?\b", r"\bpatch(es)?\b", r"\bkeyring\b", r"\bbadges?\b",
+    r"taste\s?cards?", r"tasting\s?cards?", r"flavou?r\s?cards?",
     r"^shipping$", r"^timer$", r"^donation$", r"配送料", r"送料", r"coke\s?case", r"sprite\s?case", r"soda\s?case",
 ]), re.I)
 _COE = re.compile(r"cup of excellence|\bcoe\b", re.I)
@@ -225,7 +226,10 @@ def main() -> None:
             bean = {
                 "id": bid, "r": key, "name": p.get("title") or "Lot",
                 "origin": p.get("origin") or "ブレンド", "process": p.get("process") or "Washed",
-                "amount": round(float(p.get("price") or 0)) or 1, "cur": p.get("currency") or "JPY",
+                # 値段が取れなかったときに 1 を入れていた。通貨単位1（¥1・£1）の
+                # コーヒーは存在せず、レアロットの安い順の先頭を占めてしまう。
+                # 取れなければ 0 のままにして、価格順の一覧からは外す。
+                "amount": round(float(p.get("price") or 0)), "cur": p.get("currency") or "JPY",
                 "per": f"{grams}g" if grams else "250g",
                 "status": p.get("status") or ("now" if p.get("available") else "sold"),
                 "color": col, "accent": acc, "year": year, "updatedAt": today,
