@@ -25,7 +25,7 @@ SHOPIFY_PATHS = ["/products.json", "/collections/all/products.json",
                  "/en/products.json", "/ja/products.json"]
 
 
-async def probe(client: httpx.AsyncClient, base: str) -> None:
+async def probe(client: httpx.AsyncClient, base: str, hint: str = "JPY") -> None:
     base = base.rstrip("/")
     print(f"\n{'=' * 72}\n{base}\n{'=' * 72}")
 
@@ -45,11 +45,33 @@ async def probe(client: httpx.AsyncClient, base: str) -> None:
             print(f"  {path:34s} JSONではない（{r.text[:60]!r}）")
             continue
         print(f"  {path:34s} HTTP 200 / {len(prods)}件")
-        for p in prods[:3]:
+        for p in prods[:2]:
             v = (p.get("variants") or [{}])[0]
             print(f"      title   : {p.get('title', '')[:56]}")
             print(f"      price   : {v.get('price')!r}  (型 {type(v.get('price')).__name__})")
             print(f"      grams   : {v.get('grams')!r}   variant: {v.get('title')!r}")
+
+        # products.json は通貨を書いていない。実際に何の通貨で返されたのかを確かめる。
+        # Shopify は要求元の市場に合わせた通貨(presentment currency)で値段を返すので、
+        # 設定ファイルに書いた店の現地通貨とは一致しないことがある。
+        for probe_path in ("/cart.js", "/meta.json"):
+            try:
+                c = await client.get(f"{base}{probe_path}")
+                if c.status_code == 200:
+                    d = c.json()
+                    print(f"      {probe_path:11s} → currency={d.get('currency')!r} "
+                          f"{'' if probe_path == '/cart.js' else str(d)[:80]}")
+            except Exception as e:
+                print(f"      {probe_path:11s} → {type(e).__name__}")
+
+        # 現地通貨を指定して取り直せるか
+        try:
+            c = await client.get(f"{base}{path}", params={"limit": 2, "currency": hint})
+            if c.status_code == 200:
+                pv = ((c.json().get("products") or [{}])[0].get("variants") or [{}])[0]
+                print(f"      ?currency={hint} → price={pv.get('price')!r}")
+        except Exception as e:
+            print(f"      ?currency={hint} → {type(e).__name__}")
         return   # 応答した経路が判明したら終わり
 
     # --- Shopify Atom ---
@@ -97,14 +119,15 @@ async def probe(client: httpx.AsyncClient, base: str) -> None:
 
 async def main() -> None:
     targets = sys.argv[1:] or [
-        "https://koppi.se", "https://shop.glitchcoffee.com",
-        "https://onibuscoffee.com", "https://dropcoffee.com",
-        "https://goodmanroaster.com", "https://standoutcoffee.com",
+        "https://koppi.se|SEK", "https://shop.glitchcoffee.com|JPY",
+        "https://onibuscoffee.com|JPY", "https://dropcoffee.com|SEK",
+        "https://goodmanroaster.com|JPY", "https://standoutcoffee.com|SEK",
     ]
     async with httpx.AsyncClient(headers=REQ_HEADERS, timeout=httpx.Timeout(20),
                                  follow_redirects=True) as client:
         for t in targets:
-            await probe(client, t)
+            url, _, hint = t.partition("|")
+            await probe(client, url, hint or "JPY")
 
 
 if __name__ == "__main__":
