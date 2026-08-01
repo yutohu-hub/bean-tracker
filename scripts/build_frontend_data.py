@@ -12,7 +12,11 @@ from __future__ import annotations
 import json
 import re
 import datetime
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import geocode  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "data" / "site.json"
@@ -89,14 +93,49 @@ C2REGION = {"JP": "eastAsia", "KR": "eastAsia", "TW": "eastAsia", "CN": "eastAsi
             "PH": "seAsiaIndia", "SG": "seAsiaIndia", "IN": "seAsiaIndia", "BR": "latinAmerica",
             "CO": "latinAmerica", "MX": "latinAmerica", "GT": "latinAmerica", "CR": "latinAmerica",
             "PE": "latinAmerica", "AE": "africaMideast", "SA": "africaMideast", "ZA": "africaMideast",
-            "ET": "africaMideast", "KE": "africaMideast", "RW": "africaMideast"}
+            "ET": "africaMideast", "KE": "africaMideast", "RW": "africaMideast",
+            # ここが空いていたせいで、独仏西白葡墺波愛の店が地図上どこにも置けず
+            # 既定値[0,20]＝大西洋のギニア湾に流れ込んでいた
+            "DE": "europe", "FR": "europe", "ES": "europe", "IT": "europe", "NL": "europe",
+            "BE": "europe", "AT": "europe", "PT": "europe", "PL": "europe", "IE": "uk",
+            "CH": "europe", "CZ": "europe", "GR": "europe", "HU": "europe", "TR": "europe",
+            "RO": "europe", "HR": "europe", "SI": "europe", "SK": "europe", "EE": "europe",
+            "LV": "europe", "LT": "europe", "UA": "europe", "RS": "europe", "BG": "europe",
+            "LU": "europe", "MT": "europe", "CY": "europe",
+            "PA": "latinAmerica", "EC": "latinAmerica", "BO": "latinAmerica", "CL": "latinAmerica",
+            "AR": "latinAmerica", "NI": "latinAmerica", "HN": "latinAmerica", "SV": "latinAmerica",
+            "DO": "latinAmerica", "JM": "latinAmerica", "UY": "latinAmerica",
+            "IL": "africaMideast", "QA": "africaMideast", "KW": "africaMideast",
+            "BH": "africaMideast", "OM": "africaMideast", "JO": "africaMideast",
+            "EG": "africaMideast", "MA": "africaMideast", "TZ": "africaMideast",
+            "UG": "africaMideast", "BI": "africaMideast", "MG": "africaMideast",
+            "KH": "seAsiaIndia", "LA": "seAsiaIndia", "MM": "seAsiaIndia", "LK": "seAsiaIndia",
+            "NP": "seAsiaIndia", "BD": "seAsiaIndia", "MO": "eastAsia", "MN": "eastAsia"}
 C2COORD = {"JP": [139.7, 35.68], "KR": [126.98, 37.57], "TW": [121.5, 25.0], "CN": [116.4, 39.9],
            "HK": [114.1, 22.3], "US": [-98, 39], "CA": [-106, 56], "NO": [10.75, 59.9], "SE": [18.07, 59.3],
            "DK": [12.57, 55.7], "FI": [24.94, 60.17], "IS": [-21.9, 64.1], "UK": [-1.5, 52.5], "GB": [-1.5, 52.5],
            "AU": [145, -37.8], "NZ": [174.8, -41.3], "ID": [106.8, -6.2], "VN": [106.7, 10.8], "TH": [100.5, 13.75],
            "MY": [101.7, 3.14], "PH": [121, 14.6], "SG": [103.8, 1.35], "IN": [77.2, 28.6], "BR": [-46.6, -23.5],
            "CO": [-74.1, 4.6], "MX": [-99.1, 19.4], "GT": [-90.5, 14.6], "CR": [-84.1, 9.9], "PE": [-77, -12],
-           "AE": [55.3, 25.2], "SA": [46.7, 24.7], "ZA": [18.4, -33.9], "ET": [38.7, 9.0], "KE": [36.8, -1.3], "RW": [30.1, -1.9]}
+           "AE": [55.3, 25.2], "SA": [46.7, 24.7], "ZA": [18.4, -33.9], "ET": [38.7, 9.0],
+           "KE": [36.8, -1.3], "RW": [30.1, -1.9],
+           # 各国の首都。都市が分かる店は geocode.py が実際の街に置くので、
+           # ここは市区町村を取れなかったときの受け皿。
+           "DE": [13.4, 52.52], "FR": [2.35, 48.86], "ES": [-3.7, 40.42], "IT": [12.5, 41.9],
+           "NL": [4.9, 52.37], "BE": [4.35, 50.85], "AT": [16.37, 48.21], "PT": [-9.14, 38.72],
+           "PL": [21.01, 52.23], "IE": [-6.26, 53.35], "CH": [7.45, 46.95], "CZ": [14.42, 50.09],
+           "GR": [23.73, 37.98], "HU": [19.04, 47.5], "TR": [32.86, 39.93], "RO": [26.1, 44.43],
+           "HR": [15.98, 45.81], "SI": [14.51, 46.06], "SK": [17.11, 48.15], "EE": [24.75, 59.44],
+           "LV": [24.11, 56.95], "LT": [25.28, 54.69], "UA": [30.52, 50.45], "RS": [20.46, 44.79],
+           "BG": [23.32, 42.7], "LU": [6.13, 49.61], "MT": [14.51, 35.9], "CY": [33.38, 35.19],
+           "PA": [-79.52, 8.98], "EC": [-78.47, -0.18], "BO": [-68.15, -16.5], "CL": [-70.65, -33.45],
+           "AR": [-58.38, -34.6], "NI": [-86.25, 12.13], "HN": [-87.19, 14.08], "SV": [-89.19, 13.69],
+           "DO": [-69.93, 18.49], "JM": [-76.79, 17.97], "UY": [-56.16, -34.9],
+           "IL": [34.78, 32.08], "QA": [51.53, 25.29], "KW": [47.98, 29.38], "BH": [50.59, 26.23],
+           "OM": [58.41, 23.59], "JO": [35.93, 31.95], "EG": [31.24, 30.04], "MA": [-6.84, 33.97],
+           "TZ": [39.28, -6.79], "UG": [32.58, 0.35], "BI": [29.36, -3.38], "MG": [47.52, -18.88],
+           "KH": [104.92, 11.56], "LA": [102.6, 17.97], "MM": [96.16, 16.87], "LK": [79.86, 6.93],
+           "NP": [85.32, 27.7], "BD": [90.41, 23.81], "MO": [113.54, 22.2], "MN": [106.92, 47.89]}
 # 1ロースターあたりフロントに載せる上限（巡回対象が増えても配信JSONが太らないように）
 MAX_LIVE_PER_ROASTER = 60   # いま買える豆
 MAX_PAST_PER_ROASTER = 12   # 売切・終了の履歴
@@ -176,12 +215,24 @@ def host(url: str) -> str:
 
 
 def main() -> None:
+    # 地球儀の点を実際の街に置くため、店が名乗っている市区町村を先に座標へ直す。
+    # 取得済みは config/citycoords.json に貯まるので、回を重ねるほど問い合わせは減る。
     if not SITE.exists():
         OUT.write_text('{"roasters":{},"beans":[]}', encoding="utf-8")
         print("no site.json; wrote empty overlay")
         return
     data = json.loads(SITE.read_text(encoding="utf-8"))
     seed = load_seed_keys()
+
+    # 店ごとに1つだけ (市区町村, 国) を集めて座標に直す。
+    # 失敗しても空の辞書が返るだけで、国の代表座標に落ちる。
+    places, seen_place = [], set()
+    for p in data.get("products", []):
+        cp = ((p.get("city") or "").strip(), (p.get("country") or "").upper())
+        if cp[0] and cp not in seen_place:
+            seen_place.add(cp)
+            places.append(cp)
+    coords = geocode.resolve(places) if places else geocode.load_cache()
     roasters: dict = {}
     beans: list = []
     by_roaster: dict = {}
@@ -214,17 +265,29 @@ def main() -> None:
         prods = live_p[:MAX_LIVE_PER_ROASTER] + past_p[:MAX_PAST_PER_ROASTER]
         if not prods:  # コーヒー豆が無くなった店は追加しない
             continue
-        key = seed.get(norm(rname)) or slug(rname)
+        # 種データに同じ店があるか。seed は「正規化した店名 → キー」なので、
+        # 引き当てにも正規化した名前を使う。ここをキーで見ていたため、ほぼ全ての店が
+        # 「新規」と判定され、手で書いた都市名・座標が国コードと国の代表座標で
+        # 上書きされていた（Onyx は Rogers から米国の中心へ、Five Elephant は
+        # ベルリンから大西洋へ飛んでいた）。
+        matched = norm(rname) in seed
+        key = seed[norm(rname)] if matched else slug(rname)
         country = (prods[0].get("country") or "JP").upper()
-        if key not in seed:  # 新規ロースターはメタ情報も生成
+        # 店が /meta.json で名乗っている市区町村。ここが取れていれば実際の街に置ける。
+        city = (prods[0].get("city") or "").strip()
+        coord = coords.get(geocode.key_of(city, country)) if city else None
+        if not matched:  # 種に無い店だけメタ情報を作る（ある店の情報は触らない）
             roasters[key] = {
-                "name": rname, "city": country, "country": country,
+                "name": rname, "city": city or country, "country": country,
                 "region": C2REGION.get(country, "europe"), "platform": "Shopify",
-                "note": "巡回で取得したロースター", "coord": C2COORD.get(country, [0, 20]),
+                "note": "巡回で取得したロースター",
+                # 街が分かればその座標。分からなければ国の代表座標に落とす。
+                "coord": coord or C2COORD.get(country, [0, 20]),
                 "url": host(prods[0].get("url")), "founded": "—", "style": "—",
                 "ship": "—", "focus": "—",
-                "bio": f"{rname}（{country}）。巡回システムが公式ECから取得したロースターです。",
+                "bio": f"{rname}（{city or country}）。巡回システムが公式ECから取得したロースターです。",
             }
+
         for i, p in enumerate(prods):
             grams = int(p.get("grams") or 0)
             col, acc = PAL[(bid) % len(PAL)]

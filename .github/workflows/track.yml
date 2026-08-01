@@ -84,6 +84,8 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           # コミットするのはサイトが読む1ファイルだけ。
           # data/site.json と docs/ の生成物は同じジョブ内で使い切る中間成果物なので追跡しない。
-          git add frontend/components/data/live.generated.json
+          # 座標のキャッシュも残す。これを捨てると毎回 Nominatim に問い合わせ直すことになり、
+          # 相手の利用規約にも反する（同じ街を何度も引かないための蓄積）。
+          git add frontend/components/data/live.generated.json config/citycoords.json
           git diff --cached --quiet || git commit -m "crawl: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push

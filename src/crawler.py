@@ -58,6 +58,10 @@ class Product:
     process: str
     tags: str
     notes: str = ""
+    # 店の所在地。地球儀の点はここから決まる。国コードしか無いと、
+    # 同じ国の店が全部1点に重なる（実際、米国の10軒はカンザスに固まっていた）。
+    city: str = ""
+    province: str = ""
 
 
 def _guess_origin(text: str) -> str:
@@ -200,6 +204,8 @@ async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
 # ?currency= を付ければ店が実際につけている値段が返る。ドル換算値ではなく
 # 買う人が払う額なので、そちらを取る。
 _SHOP_CUR: dict[str, tuple[str, str]] = {}   # base -> (home, presentment)
+# 店の所在地。/meta.json は通貨と一緒に city / province も返すので、同じ応答から取る。
+SHOP_PLACE: dict[str, dict] = {}            # base -> {city, province, country}
 
 
 async def _shop_currencies(client: httpx.AsyncClient, base: str) -> tuple[str, str]:
@@ -207,17 +213,24 @@ async def _shop_currencies(client: httpx.AsyncClient, base: str) -> tuple[str, s
     if base in _SHOP_CUR:
         return _SHOP_CUR[base]
     home = presentment = ""
-    for path, key in (("/meta.json", "home"), ("/cart.js", "presentment")):
-        try:
-            resp = await client.get(f"{base}{path}")
-            if resp.status_code == 200:
-                cur = (resp.json().get("currency") or "").upper()
-                if key == "home":
-                    home = cur
-                else:
-                    presentment = cur
-        except (httpx.HTTPError, json.JSONDecodeError, AttributeError, ValueError):
-            pass
+    try:
+        resp = await client.get(f"{base}/meta.json")
+        if resp.status_code == 200:
+            meta = resp.json()
+            home = (meta.get("currency") or "").upper()
+            SHOP_PLACE[base] = {
+                "city": (meta.get("city") or "").strip(),
+                "province": (meta.get("province") or "").strip(),
+                "country": (meta.get("country") or "").strip(),
+            }
+    except (httpx.HTTPError, json.JSONDecodeError, AttributeError, ValueError):
+        pass
+    try:
+        resp = await client.get(f"{base}/cart.js")
+        if resp.status_code == 200:
+            presentment = (resp.json().get("currency") or "").upper()
+    except (httpx.HTTPError, json.JSONDecodeError, AttributeError, ValueError):
+        pass
     _SHOP_CUR[base] = (home, presentment)
     return home, presentment
 
@@ -299,6 +312,7 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
     # 値段より先に通貨を決める。設定ファイルの現地通貨は当てにしない。
     home, presentment = await _shop_currencies(client, base)
     currency = home or presentment or r.get("currency", "")
+    place = SHOP_PLACE.get(base, {})
     # 表示通貨が現地と違うときだけ、現地建てで取り直す。
     # 店が ?currency= を無視することもあるので、効いたかどうかを確かめてから採用する。
     # 判定には1ページ目の応答をそのまま使う（確認のためだけの往復を増やさない）。
@@ -372,6 +386,7 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
                 origin=_guess_origin(text) or _guess_origin(deep),
                 process=_guess_process(text) or _guess_process(deep),
                 tags=text[:300], notes=notes,
+                city=place.get("city", ""), province=place.get("province", ""),
             ))
         if len(batch) < 250:
             break
