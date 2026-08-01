@@ -126,6 +126,44 @@ def _variety(title: str, tags: str) -> str:
     return ""
 
 
+# COE。順位まで書いていない店も多いので、店が COE と名乗っていることを条件にする。
+# 「COE農園のロット」も店自身がそう売っているので含め、見出し側でそう書く。
+_COE = re.compile(r"(?i)\bCOE\b|cup\s*of\s*excellence|カップ[・\s]?オブ[・\s]?エクセレンス")
+_COE_RANK = re.compile(r"(?i)#\s*(\d{1,2})\b|\b(\d{1,2})\s*(?:st|nd|rd|th)\s*place|\b(\d{1,2})\s*位")
+
+
+def _is_coe(title: str) -> bool:
+    return bool(_COE.search(title or ""))
+
+
+def _coe_rank(title: str):
+    m = _COE_RANK.search(title or "")
+    if not m:
+        return None
+    n = int(next(g for g in m.groups() if g))
+    return n if 1 <= n <= 40 else None
+
+
+# Café Granja La Esperanza。農園名だけで拾うと大量に誤爆する:
+#   「Granja Paraiso 92」はカウカの別農園、「La Esperanza」はコスタリカにも
+#   グアテマラにもホンジュラスにもある。以前これで無関係な豆が CGLE に並んだ。
+# 店が CGLE と明記しているか、この生産者固有の農園名が出ている場合だけにする。
+_CGLE = re.compile(r"(?i)\bCGLE\b|caf[eé]\s*granja|granja\s+la\s+esperanza|カフェ[・\s]?グランハ")
+_CERRO_AZUL = re.compile(r"(?i)cerro\s*azul|セロ[・\s]?アスール")
+_GRANJA_OTHER = re.compile(r"(?i)granja\s+para[ií]so")   # 別農園。巻き込まない
+
+
+def _is_cgle(title: str, origin: str) -> bool:
+    t = title or ""
+    if _GRANJA_OTHER.search(t):
+        return False
+    if _CGLE.search(t):
+        return True
+    # Cerro Azul は CGLE の看板農園だが、地名としては他国にもある。
+    # コロンビアと分かる場合に限る。
+    return bool(_CERRO_AZUL.search(t) and (origin == "コロンビア" or re.search(r"(?i)colombia", t)))
+
+
 def host(url: str) -> str:
     m = re.match(r"https?://([^/]+)", url or "")
     return (m.group(1) if m else "").replace("www.", "")
@@ -208,6 +246,14 @@ def main() -> None:
             vt = _variety(p.get("title") or "", p.get("tags") or "")
             if vt:
                 bean["vt"] = vt
+            title = p.get("title") or ""
+            if _is_coe(title):
+                bean["coe"] = True
+                rank = _coe_rank(title)
+                if rank:
+                    bean["coeRank"] = rank
+            if _is_cgle(title, bean["origin"]):
+                bean["cgle"] = True
             beans.append(bean)
             bid += 1
 
