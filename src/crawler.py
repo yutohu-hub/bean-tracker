@@ -250,7 +250,11 @@ async def _fetch_shopify(client: httpx.AsyncClient, r: dict, max_pages: int) -> 
         return res
     # 404（この経路が無い店）のときだけ別経路を試す。
     # 429はレート制限なので、ここで追撃すると悪化させるだけ＝再試行しない。
-    if "404" not in LAST_REASON.get(r["name"], ""):
+    # 404（この経路が無い店）に加えて、401/403（この経路だけ閉じている店）でも
+    # 別経路を試す。実測: Sample Coffee は /products.json が403、Kaffitár は401 で、
+    # そこで打ち切っていたためAtomフィードを一度も見ていなかった。
+    # 429 はレート制限なので、ここで追撃すると悪化させるだけ＝再試行しない。
+    if not any(c in LAST_REASON.get(r["name"], "") for c in ("404", "401", "403")):
         return None
     # 店によって商品APIの位置が違う。多言語サイトはロケール配下、
     # 商品APIを閉じている店でもAtomフィードは開いていることがある。
@@ -447,6 +451,142 @@ async def _fetch_woo(client: httpx.AsyncClient, r: dict, max_pages: int) -> list
     return products
 
 
+# ---------------- どのECでも使える経路（sitemap + JSON-LD） ----------------
+
+# 436軒のうち176軒は豆が1件も出ていなかった。全て巡回の失敗で、理由の大半は
+# 「Shopify でも WooCommerce でもない」＝BASE / STORES / Squarespace / Wix など。
+# ECごとに対応を書くと店の数だけ手間がかかるので、ECを問わず共通の2つを使う:
+#   * sitemap.xml   商品ページのURL一覧。ほぼ全てのECが出している
+#   * JSON-LD の Product  商品名・価格・在庫。Google の商品検索に載せるため
+#                          各社が出力していて、書式が決まっている
+# 商品ページを1枚ずつ開くので、店あたりの上限を決めて相手に負担をかけない。
+MAX_GENERIC_PRODUCTS = 40
+_SITEMAPS = ("/sitemap.xml", "/sitemap_index.xml", "/sitemap_products_1.xml")
+_LOC = re.compile(r"<loc>\s*([^<\s]+)\s*</loc>")
+_LD_BLOCK = re.compile(r'(?is)<script[^>]+application/ld\+json[^>]*>(.*?)</script>')
+# 商品ページらしいURL。一覧・カート・アカウント等は除く
+_PROD_URL = re.compile(r"(?i)/(?:products?|items?|goods|shop)/[^/?#]+/?$")
+_SKIP_URL = re.compile(r"(?i)/(cart|account|login|search|blogs?|pages?|policies|collections)/")
+
+
+def _ld_products(html: str) -> list[dict]:
+    """ページ内の JSON-LD から Product だけを取り出す。"""
+    out = []
+    for block in _LD_BLOCK.findall(html or ""):
+        try:
+            data = json.loads(block.strip())
+        except (json.JSONDecodeError, ValueError):
+            continue
+        # @graph でまとめている店、配列で並べている店の両方がある
+        items = data if isinstance(data, list) else data.get("@graph", [data]) if isinstance(data, dict) else []
+        for it in items if isinstance(items, list) else []:
+            if isinstance(it, dict) and "product" in str(it.get("@type", "")).lower():
+                out.append(it)
+    return out
+
+
+def _ld_offer(prod: dict) -> dict:
+    """offers は単体・配列・AggregateOffer の3通りある。1つに均す。"""
+    off = prod.get("offers") or {}
+    if isinstance(off, list):
+        off = off[0] if off else {}
+    if not isinstance(off, dict):
+        return {}
+    if str(off.get("@type", "")).lower() == "aggregateoffer":
+        return {"price": off.get("lowPrice") or off.get("price") or "",
+                "priceCurrency": off.get("priceCurrency", ""),
+                "availability": off.get("availability", "")}
+    return off
+
+
+async def _sitemap_product_urls(client: httpx.AsyncClient, base: str) -> list[str]:
+    """sitemap をたどって商品ページのURLを集める。"""
+    seen: set[str] = set()
+    urls: list[str] = []
+    queue = [f"{base}{p}" for p in _SITEMAPS]
+    depth = 0
+    while queue and depth < 12 and len(urls) < MAX_GENERIC_PRODUCTS * 3:
+        target = queue.pop(0)
+        depth += 1
+        try:
+            resp = await client.get(target)
+        except httpx.HTTPError:
+            continue
+        if resp.status_code != 200 or "<loc" not in resp.text:
+            continue
+        for loc in _LOC.findall(resp.text):
+            if loc in seen:
+                continue
+            seen.add(loc)
+            if loc.endswith(".xml"):
+                # 商品の sitemap だけ追う。記事やページの一覧まで開くと無駄が多い
+                if re.search(r"(?i)product|item|shop|goods", loc):
+                    queue.append(loc)
+            elif _PROD_URL.search(loc) and not _SKIP_URL.search(loc):
+                urls.append(loc)
+    return urls[:MAX_GENERIC_PRODUCTS]
+
+
+def _product_from_ld(r: dict, url: str, html: str) -> Product | None:
+    """商品ページ1枚から Product を1つ作る。作れなければ None。"""
+    lds = _ld_products(html)
+    if not lds:
+        return None
+    ld = lds[0]
+    title = str(ld.get("name") or "").strip()
+    if not title:
+        return None
+    offer = _ld_offer(ld)
+    try:
+        price = float(str(offer.get("price") or 0).replace(",", ""))
+    except (TypeError, ValueError):
+        price = 0.0
+    image = ld.get("image")
+    if isinstance(image, list):
+        image = image[0] if image else ""
+    if isinstance(image, dict):
+        image = image.get("url", "")
+    desc = str(ld.get("description") or "")
+    avail = str(offer.get("availability") or "").lower()
+    grams = _grams_from_text(title) or _grams_from_text(desc)
+    deep = f"{title} {html_to_text(desc)[:1200]}"
+    return Product(
+        key=f"{r['name']}::{url.rstrip('/').rsplit('/', 1)[-1]}",
+        roaster=r["name"], country=r.get("country", ""),
+        title=title, url=url, image=str(image or ""),
+        price=price, currency=(offer.get("priceCurrency") or r.get("currency", "")).upper(),
+        grams=grams, per100=round(price / grams * 100, 2) if grams and price else None,
+        # 在庫の記載が無い店は「売っている」とみなす。載っている＝買えるページなので
+        available=("outofstock" not in avail.replace(" ", "") and "soldout" not in avail.replace(" ", "")),
+        origin=_guess_origin(title) or _guess_origin(deep),
+        process=_guess_process(title) or _guess_process(deep),
+        tags=title[:300], notes=extract_notes(desc, title),
+    )
+
+
+async def _fetch_generic(client: httpx.AsyncClient, r: dict) -> list[Product] | None:
+    base = r["url"].rstrip("/")
+    urls = await _sitemap_product_urls(client, base)
+    if not urls:
+        LAST_REASON.setdefault(r["name"], "sitemapに商品ページが無い")
+        return None
+    products: list[Product] = []
+    for u in urls:
+        try:
+            resp = await client.get(u)
+        except httpx.HTTPError:
+            continue
+        if resp.status_code != 200:
+            continue
+        p = _product_from_ld(r, u, resp.text)
+        if p:
+            products.append(p)
+    if not products:
+        LAST_REASON[r["name"]] = f"商品ページにJSON-LDが無い（{len(urls)}枚見た）"
+        return None
+    return products
+
+
 # ---------------- orchestration ----------------
 
 async def _fetch_any(client, r, max_pages) -> list[Product] | None:
@@ -457,6 +597,11 @@ async def _fetch_any(client, r, max_pages) -> list[Product] | None:
             return res
     if platform in ("auto", "woocommerce"):
         res = await _fetch_woo(client, r, max_pages)
+        if res is not None:
+            return res
+    # 上の2つに当てはまらない店（BASE / STORES / Squarespace 等）はここで拾う
+    if platform in ("auto", "generic"):
+        res = await _fetch_generic(client, r)
         if res is not None:
             return res
     return None
