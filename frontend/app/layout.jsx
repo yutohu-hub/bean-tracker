@@ -1,6 +1,10 @@
 import { PWARegister } from "@/components/PWARegister";
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+// metadataBase はオリジンだけ。以降のパスは base 付きの相対で書く
+// （両方に base を入れると /bean-tracker/bean-tracker/... になる）
+const ORIGIN = "https://yutohu-hub.github.io";
+const SITE = `${base || ""}/`;
 
 export const metadata = {
   title: "BEAN TRACKER — Find any bean, anywhere.",
@@ -15,6 +19,29 @@ export const metadata = {
     apple: `${base}/apple-touch-icon.png`,
   },
   appleWebApp: { capable: true, statusBarStyle: "default", title: "BEAN TRACKER" },
+  // SNSやメッセージアプリに貼ったときの見え方。これが無いと、URLだけが
+  // 素のまま出てタイトルも画像も付かない（送客が目的なので、貼られる形は重要）。
+  metadataBase: new URL(ORIGIN),
+  // 共有リンクは ?b=... のようにクエリが付く。中身は同じ1枚なので、
+  // 検索側には正規のURLを1つだけ示す（同じ内容が別URLとして重複しないように）
+  alternates: { canonical: SITE },
+  openGraph: {
+    type: "website",
+    siteName: "BEAN TRACKER",
+    locale: "ja_JP",
+    url: SITE,
+    title: "BEAN TRACKER — Find any bean, anywhere.",
+    description:
+      "世界中のロースターの在庫を毎時追いかけて、いま買える豆だけを並べています。",
+    images: [{ url: `${base}/icon-512.png`, width: 512, height: 512, alt: "BEAN TRACKER" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "BEAN TRACKER — Find any bean, anywhere.",
+    description:
+      "世界中のロースターの在庫を毎時追いかけて、いま買える豆だけを並べています。",
+    images: [`${base}/icon-512.png`],
+  },
 };
 
 export const viewport = {
