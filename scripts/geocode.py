@@ -108,3 +108,27 @@ def resolve(places: list[tuple[str, str]], limit: int = 80) -> dict:
     if remaining > 0:
         print(f"未取得 {remaining}件は次回に持ち越し")
     return cache
+
+
+# --- 逆引き（座標 → 都市名） ------------------------------------------
+# 都市欄に「香港」「インド」のように国名・地域名が入っている店がある。
+# 座標自体は正しいので、その座標から本当の市区町村名を引き直す。
+REVERSE_ENDPOINT = "https://nominatim.openstreetmap.org/reverse"
+
+
+def reverse(lon: float, lat: float, lang: str = "ja") -> str:
+    """座標の市区町村名。引けなければ空文字。"""
+    import httpx
+    params = {"lon": lon, "lat": lat, "format": "json", "zoom": 10, "addressdetails": 1}
+    try:
+        r = httpx.get(REVERSE_ENDPOINT, params=params,
+                      headers={"User-Agent": UA, "Accept-Language": lang}, timeout=20)
+        if r.status_code != 200:
+            return ""
+        a = (r.json() or {}).get("address") or {}
+        for k in ("city", "town", "municipality", "city_district", "county", "state"):
+            if a.get(k):
+                return str(a[k])
+        return ""
+    except Exception:
+        return ""
