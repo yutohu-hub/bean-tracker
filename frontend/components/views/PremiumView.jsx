@@ -125,7 +125,8 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
         <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.2em", color: GRAY }}>PREMIUM</div>
         <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4 }}>レアロットを、取りこぼさない</div>
         <div style={{ fontSize: 12, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
-          巡回が世界 429 軒の在庫を追い続けています。プレミアムは、その全部を見られるプランです。
+          {/* 軒数は巡回で増える。書き換え忘れで古い数字が残らないよう、実データから数える */}
+          巡回が世界 {Object.values(ROASTERS).filter((r) => r.url).length} 軒の在庫を追い続けています。プレミアムは、その全部を見られるプランです。
         </div>
         <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 12px", borderRadius: 999, background: premium ? GREEN : "#F2F0E9", color: premium ? PAPER : GRAY, fontSize: 11, fontWeight: 700 }}>
           <span style={{ width: 7, height: 7, borderRadius: 999, background: premium ? PAPER : AMBER }} />

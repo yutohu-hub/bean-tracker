@@ -9,6 +9,7 @@ import { getPhoto, savePhotoDataUrl, deletePhoto } from "../lib/photos";
 import { PhotoPicker } from "./PhotoPicker";
 import { ROASTERS } from "../data/roasters";
 import { Package } from "./Package";
+import { shareUrl } from "../lib/urlState";
 
 export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
   const [rating, setRating] = useState(0);
@@ -18,6 +19,7 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
   const [watchCount, setWatchCount] = useState(0);
   const [watchMsg, setWatchMsg] = useState("");
   const [photo, setPhoto] = useState(null);
+  const [copied, setCopied] = useState("");
   const { premium, limits } = usePlan();
   // 上限判定は「いま登録済みの件数」で見る。この豆が未登録のときだけ追加を止める。
   const watchFull = watchCount >= limits.watchlist;
@@ -29,6 +31,7 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
     setWatchCount(getRestocks().length);
     setWatchMsg("");
     setPhoto(null);
+    setCopied("");
     getPhoto(bean.id).then((p) => setPhoto(p));   // 写真は IndexedDB から後追いで読む
   }, [bean ? bean.id : null]);
   // Esc で閉じる。背景タップしか閉じる手段が無いと、開いたあと戻れなくなる
@@ -47,6 +50,26 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
     // 写真は記録を押したときだけ確定する（開いて閉じただけで残らないように）
     if (photo) await savePhotoDataUrl(bean.id, photo); else await deletePhoto(bean.id);
     setSaved(true);
+  };
+  /* この豆のリンクをコピーする。開いている豆はURLに載っているので、
+     受け取った人は同じカードが開いた状態で着地する。
+     clipboard API は安全なコンテキスト（https/localhost）でしか使えないので、
+     使えない環境では選択してコピーする昔ながらの方法に落とす。 */
+  const copyLink = async () => {
+    const url = shareUrl({ bean: bean.id });
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = url; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch { setCopied("コピーできませんでした"); return; }
+    }
+    setCopied("リンクをコピーしました");
+    setTimeout(() => setCopied(""), 2000);
   };
   const delTasting = () => { removeTasting(bean.id); deletePhoto(bean.id); setRating(0); setNotes(""); setPhoto(null); setSaved(false); };
   const rows = [
@@ -69,7 +92,10 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
           <div style={{ width: 34, height: 4, borderRadius: 999, background: LINE, margin: "0 auto 16px" }} />
           <button onClick={onClose} aria-label="閉じる"
             style={{ position: "absolute", top: -4, right: -4, width: 30, height: 30, borderRadius: 999, border: "none", background: "#F2F0E9", color: GRAY, fontSize: 15, lineHeight: 1, cursor: "pointer" }}>✕</button>
+          <button onClick={copyLink} aria-label="この豆のリンクをコピー" title="この豆のリンクをコピー"
+            style={{ position: "absolute", top: -4, right: 30, height: 30, padding: "0 10px", borderRadius: 999, border: "none", background: "#F2F0E9", color: GRAY, fontSize: 11, lineHeight: 1, cursor: "pointer" }}>🔗</button>
         </div>
+        {copied && <div style={{ textAlign: "center", fontSize: 10.5, color: GREEN, marginTop: -8, marginBottom: 6 }}>{copied}</div>}
         <div style={{ display: "flex", gap: 16 }}>
           <div className="bt-detail-pkg" style={{ width: 120, flexShrink: 0 }}><Package bean={bean} /></div>
           <div className="bt-detail-info" style={{ flex: 1, minWidth: 0 }}>

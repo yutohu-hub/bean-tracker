@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
@@ -15,6 +15,7 @@ import { captureSessionFromUrl } from "./lib/account";
 import { purgeLegacyPlan } from "./lib/store";
 import { refreshPlan } from "./lib/usePlan";
 import { isReturningFromCheckout } from "./lib/billing";
+import { readUrlState, writeUrlState, onUrlChange } from "./lib/urlState";
 import { LEGEND, beanStyle, processKey } from "./lib/palette";
 
 /* ============================================================
@@ -65,6 +66,8 @@ export default function BeanTracker() {
   const [roasterId, setRoasterId] = useState(null);
   const [roasterTab, setRoasterTab] = useState("now");
   const [procKey, setProcKey] = useState("washed");
+  // URLから戻したときに、その反映で履歴をもう1つ積まないための目印
+  const restoringRef = useRef(false);
   const goProcess = (k) => { setProcKey(k); setView("process"); window.scrollTo(0, 0); };
   const [flavorFocus, setFlavorFocus] = useState({ fam: null, id: null });
   const goFlavor = (bean) => {
@@ -121,6 +124,59 @@ export default function BeanTracker() {
     for (const b of archiveBeans) { if (!ROASTERS[b.r]) continue; (m[b.r] = m[b.r] || []).push(b); }
     return m;
   }, [archiveBeans]);
+
+  /* URL → 画面。起動時と、戻る/進むのたびに実行する。
+     静的書き出しなのでサーバ側は常に既定の画面を返す。ここで組み立て直す。 */
+  const applyUrl = (u) => {
+    restoringRef.current = true;
+    setView(u.view);
+    if (u.roaster) { setRoasterId(u.roaster); setRoasterTab(u.roasterTab); }
+    if (u.process) setProcKey(u.process);
+    if (u.query) setQuery(u.query);
+    if (u.origin) setOrigin(u.origin);
+    if (u.status) setStatusF(u.status);
+    if (u.meTab) setMeTab(u.meTab);
+    // 豆は id から実体を引く。消えた豆のリンクを踏んでも落ちないよう存在確認する
+    setOpen(u.bean ? BEANS.find((b) => b.id === u.bean) || null : null);
+  };
+
+  useEffect(() => {
+    applyUrl(readUrlState());
+    return onUrlChange(applyUrl);
+  }, []);
+
+  /* 画面 → URL。戻るで辿れると嬉しいもの（タブ・豆・ロースター）は履歴に積み、
+     検索語や絞り込みは1文字ごとに履歴が増えないよう置き換えにする。
+
+     起動直後の1回は書かない。上のURL適用は state を更新するだけなので、
+     同じコミットで走るここはまだ既定値を見ている。そのまま書くと
+     直リンク（?b=... など）を既定値で消してしまう。 */
+  const urlState = () => ({
+    view, bean: open ? open.id : null, roaster: roasterId,
+    roasterTab, process: view === "process" ? procKey : null,
+    query, origin, status: statusF, meTab,
+  });
+  const navWroteRef = useRef(false);
+  const filterWroteRef = useRef(false);
+
+  useEffect(() => {
+    if (!navWroteRef.current) {
+      // 起動直後。URLの内容はまだ state に届いていないので書かない。
+      // 復元の目印もここで下ろす（下ろさないと絞り込みの書き戻しが止まったままになる）
+      navWroteRef.current = true;
+      restoringRef.current = false;
+      return;
+    }
+    // 戻る/進むで戻した直後は、その反映で履歴をもう1つ積まない
+    if (restoringRef.current) { restoringRef.current = false; writeUrlState(urlState()); return; }
+    writeUrlState(urlState(), { push: true });
+  }, [view, open, roasterId, roasterTab, procKey, meTab]);
+
+  useEffect(() => {
+    if (!filterWroteRef.current) { filterWroteRef.current = true; return; }
+    if (restoringRef.current) return;
+    writeUrlState(urlState());
+  }, [query, origin, statusF]);
 
   useEffect(() => {
     const t1 = setTimeout(() => setSplashDone(true), 1700);   // 表示を終えてフェード開始
