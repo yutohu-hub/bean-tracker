@@ -1,6 +1,6 @@
 // 北米のスペシャルティロースター
 export const northAmerica = {
-  onyx: { name: "Onyx Coffee Lab", city: "Arkansas", country: "US", region: "northAmerica", platform: "Shopify", note: "デザインと透明性の名店", coord: [-94.12, 36.33], url: "onyxcoffeelab.com",
+  onyx: { name: "Onyx Coffee Lab", city: "Rogers", country: "US", region: "northAmerica", platform: "Shopify", note: "デザインと透明性の名店", coord: [-94.12, 36.33], url: "onyxcoffeelab.com",
     founded: "2012", style: "浅〜中煎り・実験的精製", ship: "海外発送(1〜2週間)", focus: "エチオピア・中南米",
     bio: "アーカンソー州で夫妻が創業。生産者への支払額まで公開する徹底した透明性と、グラフィカルなパッケージデザインで知られる。実験的な精製の豆を積極的に扱い、アメリカのスペシャルティシーンを牽引する一軒。" },
   sey: { name: "Sey Coffee", city: "Brooklyn", country: "US", region: "northAmerica", platform: "Shopify", note: "生産者名で選ぶ透明性", coord: [-73.93, 40.71], url: "seycoffee.com",
