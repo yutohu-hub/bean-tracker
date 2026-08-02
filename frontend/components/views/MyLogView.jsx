@@ -60,7 +60,8 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
       await refreshPlan();                 // 支払いの記録からプレミアムを確定させる
       refresh();
       setSyncMsg("同期しました");
-    } catch { setSyncMsg("同期に失敗しました（Supabase設定・ネットワークを確認）"); }
+      // 失敗の理由は account.js が日本語で返す。握りつぶすと直しようがない
+    } catch (e) { setSyncMsg(e.message || "同期に失敗しました（ネットワークを確認）"); }
   };
 
   useEffect(() => {

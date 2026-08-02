@@ -79,7 +79,21 @@ export async function captureSessionFromUrl() {
   const clean = () => history.replaceState(null, "", window.location.pathname);
 
   const err = p.get("error_description") || p.get("error");
-  if (err) { clean(); return { ok: false, error: decodeURIComponent(err.replace(/\+/g, " ")) }; }
+  if (err) {
+    clean();
+    const text = decodeURIComponent(err.replace(/\+/g, " "));
+    /* Supabase は「戻り先URLが許可されていない」ときも、期限切れと同じ
+       otp_expired / access_denied を返す。文面だけ見て「時間をおいて再送」を
+       繰り返しても直らないので、もう一方の可能性も併せて出す。
+       実測: Redirect URLs が未登録だと Site URL（初期値 http://localhost:3000）
+       へ飛ばされ、リンクを開いてもサイトに戻ってこない。 */
+    const code = p.get("error_code") || "";
+    const hint = /otp_expired|access_denied/.test(`${code} ${text}`)
+      ? "（リンクの有効期限が切れているか、Supabase の Authentication → URL Configuration に "
+        + "このサイトのURLが Redirect URLs として登録されていません）"
+      : "";
+    return { ok: false, error: text + hint };
+  }
 
   const access_token = p.get("access_token");
   const refresh_token = p.get("refresh_token");
@@ -142,10 +156,25 @@ export async function signOut() {
 }
 
 // ---- データ同期（tastings） ----
+
+/* 同期が失敗する理由は「テーブルがまだ無い」「ログインが切れた」で対処が違うのに、
+   pull-failed:404 のような文字列を画面に出していたため区別できなかった。
+   実測: tastings / entitlements を作る前は REST が 404 を返す。 */
+function syncError(status, what) {
+  if (status === 404) {
+    return new Error(`${what}用のテーブルがまだ作られていません`
+      + "（Supabase の SQL Editor で docs/account-sync.md の SQL を実行してください）");
+  }
+  if (status === 401 || status === 403) {
+    return new Error("ログインの有効期限が切れています。もう一度ログインしてください");
+  }
+  return new Error(`${what}に失敗しました (${status})`);
+}
+
 export async function cloudPullTastings() {
   if (!readSession()) return [];
   const res = await authFetch(`/rest/v1/tastings?select=*`);
-  if (!res.ok) throw new Error(`pull-failed:${res.status}`);
+  if (!res.ok) throw syncError(res.status, "記録の取得");
   return await res.json();
 }
 export async function cloudPushTastings(list) {
@@ -160,7 +189,7 @@ export async function cloudPushTastings(list) {
     method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
     body: JSON.stringify(rows),
   });
-  if (!res.ok) throw new Error(`push-failed:${res.status}`);
+  if (!res.ok) throw syncError(res.status, "記録の保存");
   return true;
 }
 
