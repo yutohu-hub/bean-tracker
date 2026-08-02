@@ -28,10 +28,12 @@ jobs:
         run: python scripts/verify_positions.py
       - name: 都市欄が国名になっている店の表示名を座標から引き直す
         run: python scripts/fix_city_labels.py --apply
+      - name: 巡回追加の店のうち、まだ国コードのままの店を実際の街に置く
+        run: python scripts/locate_new_shops.py --apply
       - name: 引けた座標を保存
         run: |
           git config user.name "bean-tracker-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add config/citycoords.json frontend/components/data/roasters
+          git add config/citycoords.json frontend/components/data/roasters frontend/components/data/live.generated.json
           git diff --cached --quiet || git commit -m "geocode: 座標を取得し、国名だった都市表示を実際の市区町村に直す"
           git push
