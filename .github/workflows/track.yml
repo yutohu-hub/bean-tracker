@@ -74,6 +74,11 @@ jobs:
           # run ごとにスライスをずらし、13回で全店を一周する
           "$RUNPY" main.py --shard "$(( RUN_NUMBER % SHARDS ))/$SHARDS"
 
+      - name: note の記事を取り込む（About に見出しを出す）
+        run: |
+          "$RUNPY" scripts/fetch_note.py
+        continue-on-error: true
+
       - name: フロント用データに変換（巡回結果→図鑑オーバーレイ）
         run: |
           "$RUNPY" scripts/build_frontend_data.py
@@ -86,6 +91,6 @@ jobs:
           # data/site.json と docs/ の生成物は同じジョブ内で使い切る中間成果物なので追跡しない。
           # 座標のキャッシュも残す。これを捨てると毎回 Nominatim に問い合わせ直すことになり、
           # 相手の利用規約にも反する（同じ街を何度も引かないための蓄積）。
-          git add frontend/components/data/live.generated.json config/citycoords.json
+          git add frontend/components/data/live.generated.json frontend/components/data/note.generated.json config/citycoords.json
           git diff --cached --quiet || git commit -m "crawl: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push
