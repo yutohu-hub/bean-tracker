@@ -53,6 +53,40 @@ PROBES = [
     ("wc-store", "/wp-json/wc/store/v1/products"),
 ]
 
+# ECごとに対応を書くのは店の数だけ手間がかかる。どのECでも共通して使える
+# 入口があるなら、そちらを1本作るほうが早い。候補は2つ:
+#   * sitemap.xml — 商品ページのURL一覧。ほぼ全てのECが出している
+#   * JSON-LD の Product — 商品名・価格・在庫の構造化データ。
+#     Google の商品検索に載せるために、BASE / STORES / Squarespace / Wix なども出す
+# その2つが実際に使えるかを、失敗した店ごとに確かめる。
+SITEMAPS = ["/sitemap.xml", "/sitemap_index.xml", "/sitemap.xml?page=1"]
+_LD = re.compile(r'(?is)<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>')
+_PRODUCTish = re.compile(r"(?i)/(product|products|items|item|shop|goods|store)/")
+
+
+async def generic_entries(client: httpx.AsyncClient, url: str, top_html: str) -> str:
+    """sitemap と JSON-LD が使えるかどうかを一言で返す。"""
+    found = []
+    for path in SITEMAPS:
+        try:
+            r = await client.get(f"{url.rstrip('/')}{path}")
+        except httpx.HTTPError:
+            continue
+        if r.status_code != 200 or "<" not in r.text[:200]:
+            continue
+        locs = re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", r.text)
+        prod = [u for u in locs if _PRODUCTish.search(u)]
+        found.append(f"sitemap{path.replace('/sitemap', '')}:{len(locs)}件(商品ぽい{len(prod)})")
+        break
+    else:
+        found.append("sitemap:なし")
+    kinds = []
+    for block in _LD.findall(top_html or ""):
+        if re.search(r'"@type"\s*:\s*"(Product|ItemList|Offer)"', block):
+            kinds.append(re.search(r'"@type"\s*:\s*"(\w+)"', block).group(1))
+    found.append(f"JSON-LD:{','.join(sorted(set(kinds))) if kinds else 'なし'}")
+    return " ".join(found)
+
 
 def norm(url: str) -> str:
     u = (url or "").strip()
@@ -60,8 +94,9 @@ def norm(url: str) -> str:
 
 
 async def fingerprint(client: httpx.AsyncClient, url: str) -> dict:
-    """トップページと3つの入口を見て、素性と到達性を返す。"""
-    out = {"platform": "不明", "top": "", "final": "", "probe": {}}
+    """トップページと入口を見て、素性・到達性・共通の入口の有無を返す。"""
+    out = {"platform": "不明", "top": "", "final": "", "probe": {}, "generic": ""}
+    body = ""
     try:
         r = await client.get(url)
         out["top"] = f"HTTP {r.status_code}"
@@ -80,6 +115,8 @@ async def fingerprint(client: httpx.AsyncClient, url: str) -> dict:
             out["probe"][label] = f"{p.status_code} {ct}"
         except httpx.HTTPError as e:
             out["probe"][label] = type(e).__name__
+    if out["top"].startswith("HTTP 2"):
+        out["generic"] = await generic_entries(client, url, body)
     return out
 
 
@@ -119,12 +156,19 @@ async def main() -> None:
             probes = " ".join(f"{k}:{v}" for k, v in fp["probe"].items())
             print(f"✗ {r['name'][:26]:28s} {fp['platform']:<12} top:{fp['top']:<12} {probes}")
             print(f"   巡回の理由: {LAST_REASON.get(r['name'], '不明')}")
+            if fp["generic"]:
+                print(f"   共通の入口: {fp['generic']}")
+                if "商品ぽい0)" not in fp["generic"] and "sitemap:なし" not in fp["generic"]:
+                    tally["＊sitemapに商品URLあり"] += 1
+                if "JSON-LD:なし" not in fp["generic"]:
+                    tally["＊JSON-LDあり"] += 1
             if fp["final"] and norm(r["url"]).rstrip("/") not in fp["final"]:
                 print(f"   → 転送先: {fp['final']}")
 
     print(f"\n取得できている {ok} / {len(roasters)}")
     for name, n in tally.most_common():
         print(f"  {name:<16} {n}軒")
+    print("\n＊印は、失敗した店のうち共通の入口が使えそうな数（重複あり）")
 
 
 if __name__ == "__main__":
