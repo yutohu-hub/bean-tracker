@@ -38,8 +38,14 @@ const h = (token) => ({
    - 401 : APIキーが無効/失効。account.js の SUPABASE を貼り直す
    - 422 : メールアドレスの形式、またはサインアップ無効化
    - 通信自体の失敗 : オフライン、またはプロジェクトURLの誤り */
+const LAST_EMAIL_KEY = "bt_last_email";
+export function lastEmail() { try { return localStorage.getItem(LAST_EMAIL_KEY) || ""; } catch { return ""; } }
+
 export async function signInWithEmail(email) {
   if (!isCloud()) throw new Error("cloud-not-configured");
+  // どのアドレスに送ったかを覚えておく。リンクが失敗したとき、
+  // 打ち直さずに「もう一度送る」「コードを入れる」へ進めるようにするため
+  try { localStorage.setItem(LAST_EMAIL_KEY, String(email).trim()); } catch {}
   const redirect = typeof window !== "undefined" ? window.location.origin + window.location.pathname : "";
   let res;
   try {
@@ -67,6 +73,56 @@ export async function signInWithEmail(email) {
   throw new Error(`送信できませんでした (${res.status}${detail ? `: ${detail}` : ""})`);
 }
 
+/* メールに載っている6桁のコードでログインする。
+
+   リンクを踏む方式は、こちらでは直せない事情で失敗することが多い:
+     * 戻り先URLが Supabase 側で許可されていない（Site URL に飛ばされる）
+     * メールのセキュリティ検査がリンクを先に開き、1回きりのトークンを使い切る
+       （Outlook / Gmail の保護機能。届いた瞬間に無効化される）
+     * リンクの有効期限切れ
+     * スマホのメールアプリ内ブラウザで開くと、ログインしたいPCには反映されない
+   いま入りたい端末にコードを打ち込む方式なら、この4つとも起きない。
+   「ほかの端末と同期する」ためのログインなので、こちらのほうが素直でもある。
+
+   ※ 送信メールの本文に {{ .Token }} を入れておく必要がある
+      （Supabase の Authentication → Email Templates。docs/account-sync.md 参照）。 */
+export async function signInWithCode(email, code) {
+  if (!isCloud()) throw new Error("cloud-not-configured");
+  const token = String(code || "").replace(/\D/g, "");
+  if (token.length < 6) throw new Error("6桁のコードを入力してください");
+  const body = (type) => JSON.stringify({ type, email: String(email).trim(), token });
+  let res;
+  try {
+    // signInWithOtp で送ったコードの type は email。
+    // 古い設定の環境では magiclink で発行されることがあるので、駄目なら順に試す
+    res = await fetch(`${SUPABASE.url}/auth/v1/verify`, { method: "POST", headers: h(), body: body("email") });
+    if (!res.ok) {
+      res = await fetch(`${SUPABASE.url}/auth/v1/verify`, { method: "POST", headers: h(), body: body("magiclink") });
+    }
+  } catch {
+    throw new Error("Supabase に接続できませんでした（オフライン、またはプロジェクトURLの誤り）");
+  }
+  if (!res.ok) {
+    let detail = "";
+    try { const d = await res.json(); detail = d.msg || d.error_description || d.message || d.error || ""; } catch {}
+    if (res.status === 403 || res.status === 401 || /expired|invalid/i.test(detail)) {
+      throw new Error("コードが違うか、有効期限が切れています。もう一度メールを送ってください");
+    }
+    throw new Error(`ログインできませんでした (${res.status}${detail ? `: ${detail}` : ""})`);
+  }
+  const d = await res.json();
+  if (!d.access_token) throw new Error("ログインできませんでした（応答にトークンがありません）");
+  const session = {
+    access_token: d.access_token,
+    refresh_token: d.refresh_token || null,
+    user: d.user ? { id: d.user.id, email: d.user.email } : null,
+    at: Date.now(),
+    expires_at: Date.now() + (Number(d.expires_in) || 3600) * 1000,
+  };
+  writeSession(session);
+  return session;
+}
+
 /* マジックリンクで戻ってきたときにセッションを確立する。
    Supabase はトークンを URL のハッシュに載せて返すが、失敗時は #error=... を返す。
    以前はエラーを黙って捨てていたため、リンクを開いても何も起きないように見えていた。
@@ -88,11 +144,22 @@ export async function captureSessionFromUrl() {
        実測: Redirect URLs が未登録だと Site URL（初期値 http://localhost:3000）
        へ飛ばされ、リンクを開いてもサイトに戻ってこない。 */
     const code = p.get("error_code") || "";
-    const hint = /otp_expired|access_denied/.test(`${code} ${text}`)
-      ? "（リンクの有効期限が切れているか、Supabase の Authentication → URL Configuration に "
-        + "このサイトのURLが Redirect URLs として登録されていません）"
+    /* 「使えないリンク」は原因が3つあり、どれも文面は同じ otp_expired になる。
+       全部並べても読めないので、対処だけを1行で示し、詳しい話は画面側に譲る。 */
+    const hint = /otp_expired|access_denied|invalid/.test(`${code} ${text}`)
+      ? "（リンクは一度きり・時間切れがあります。メール側の安全確認で先に開かれて"
+        + "使い切られることもあります。下の「6桁のコードでログイン」が確実です）"
       : "";
-    return { ok: false, error: text + hint };
+    return { ok: false, error: text + hint, recoverable: true };
+  }
+
+  /* PKCE の設定になっている場合、リンクは ?code=... で戻ってくる。
+     この作りでは引き換えに必要な控え（code_verifier）を持っていないので完了できない。
+     黙って無視すると「リンクを開いても何も起きない」になるため、道を示す。 */
+  if (p.get("code") && !p.get("access_token")) {
+    clean();
+    return { ok: false, recoverable: true,
+      error: "このリンクの形式では、開いた端末でしかログインを完了できません。下の「6桁のコードでログイン」をお使いください。" };
   }
 
   const access_token = p.get("access_token");
