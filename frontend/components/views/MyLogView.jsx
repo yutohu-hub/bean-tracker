@@ -5,7 +5,7 @@ import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
 import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis, exportBackup, importBackup } from "../lib/store";
 import { usePlan, refreshPlan } from "../lib/usePlan";
-import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings } from "../lib/account";
+import { isCloud, isSignedIn, getSession, signInWithEmail, signInWithCode, lastEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings } from "../lib/account";
 import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis";
 import { beanHref } from "../lib/utils";
 import { Portfolio } from "../ui/Portfolio";
@@ -32,6 +32,10 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [anas, setAnas] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [switching, setSwitching] = useState(false);   // 別のアカウントに切り替える欄
+  const [code, setCode] = useState("");                // メールに届く6桁のコード
+  const [codeEmail, setCodeEmail] = useState("");
+  const [codeMsg, setCodeMsg] = useState("");
+  const [codeErr, setCodeErr] = useState(false);
   const [backupMsg, setBackupMsg] = useState("");
   const [form, setForm] = useState({ name: "", roaster: "", origin: "", rating: 0, notes: "", photo: null });
   const [photos, setPhotos] = useState({});   // beanId -> dataURL（一覧のサムネイル）
@@ -90,21 +94,80 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   // 認証の往復を待たずにポートフォリオを開けるよう、クラウド設定時もローカルの user を認める
   const authed = signed || !!user;
 
+  const accountEmailGuess = (user && user.email)
+    || (session && session.user && session.user.email) || "";
+
   // メールリンクの結果を出す帯（成功・失敗どちらも黙って消さない）
-  const Notice = () => !authNotice ? null : (
-    <div style={{ marginBottom: 12, padding: "11px 14px", borderRadius: 10, display: "flex", alignItems: "flex-start", gap: 10,
+  const noticeBlock = () => !authNotice ? null : (
+    <div style={{ marginBottom: 12, padding: "11px 14px", borderRadius: 10,
       background: authNotice.ok ? "#EEF4E9" : "#FBEDEC", border: `1px solid ${authNotice.ok ? "#CBDDBC" : "#EDC9C6"}` }}>
-      <span style={{ fontSize: 12.5, lineHeight: 1.7, color: authNotice.ok ? "#3C5C2A" : "#8A3B2E", flex: 1 }}>{authNotice.text}</span>
-      <button onClick={onDismissNotice} aria-label="閉じる"
-        style={{ background: "none", border: "none", fontSize: 13, color: GRAY, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <span style={{ fontSize: 12.5, lineHeight: 1.7, color: authNotice.ok ? "#3C5C2A" : "#8A3B2E", flex: 1 }}>{authNotice.text}</span>
+        <button onClick={onDismissNotice} aria-label="閉じる"
+          style={{ background: "none", border: "none", fontSize: 13, color: GRAY, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
+      </div>
+      {/* リンクが駄目だったときは、ここから立て直せるようにする。
+          「エラーが出た → マイページを探して → アドレスを打ち直す」を無くす。 */}
+      {authNotice.recoverable && codeLoginBlock(true)}
     </div>
   );
+
+  /* 6桁のコードでログインする欄。
+     リンク方式は、戻り先URLの許可・メール側の安全確認による使い切り・有効期限・
+     メールアプリ内ブラウザへの着地、と失敗の道が多い。いま入りたい端末に
+     コードを打ち込む方式なら、そのどれも起きない。 */
+  const codeLoginBlock = (compact) => {
+    const target = (codeEmail || lastEmail() || accountEmailGuess || "").trim();
+    return (
+      <div style={{ marginTop: compact ? 10 : 12, padding: compact ? "10px 12px" : "13px 14px",
+        border: `1px solid ${LINE}`, borderRadius: 10, background: PAPER }}>
+        <div style={{ fontSize: 12, fontWeight: 700 }}>6桁のコードでログイン</div>
+        <div style={{ fontSize: 10.5, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
+          メールに書かれた6桁の数字を、いまお使いのこの端末で入力してください。
+          リンクを開けなかったときでも、こちらなら確実に入れます。
+        </div>
+        <input type="email" value={target} onChange={(e) => setCodeEmail(e.target.value)} placeholder="you@example.com"
+          style={{ width: "100%", boxSizing: "border-box", marginTop: 9, padding: "9px 11px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 13, background: PAPER, color: INK }} />
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            inputMode="numeric" autoComplete="one-time-code" placeholder="123456"
+            style={{ flex: 1, minWidth: 0, boxSizing: "border-box", padding: "9px 11px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 16, letterSpacing: "0.2em", fontFamily: "ui-monospace, monospace", background: PAPER, color: INK }} />
+          <button onClick={async () => {
+              setCodeErr(false); setCodeMsg("確認中…");
+              try {
+                await signInWithCode(target, code);
+                setCodeMsg("ログインしました");
+                setCode("");
+                refresh();
+                await refreshPlan();
+                syncNow();
+              } catch (e) { setCodeErr(true); setCodeMsg(e.message || "ログインできませんでした"); }
+            }}
+            disabled={code.length < 6 || !validEmail(target)}
+            style={{ padding: "9px 16px", background: (code.length >= 6 && validEmail(target)) ? INK : "#EDEAE1", color: (code.length >= 6 && validEmail(target)) ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: (code.length >= 6 && validEmail(target)) ? "pointer" : "default", whiteSpace: "nowrap" }}>
+            ログイン
+          </button>
+        </div>
+        <button onClick={async () => {
+            if (!validEmail(target)) return;
+            setCodeErr(false); setCodeMsg("送信中…");
+            try { await signInWithEmail(target); setCodeMsg("送り直しました。届いたメールのコードを入力してください。"); }
+            catch (e) { setCodeErr(true); setCodeMsg(e.message || "送信できませんでした"); }
+          }}
+          disabled={!validEmail(target)}
+          style={{ marginTop: 8, background: "none", border: "none", padding: 0, fontSize: 11, color: GRAY, cursor: validEmail(target) ? "pointer" : "default", textDecoration: "underline", textUnderlineOffset: 2 }}>
+          メールを送り直す
+        </button>
+        {codeMsg && <div style={{ fontSize: 11, color: codeErr ? "#B8433A" : GREEN, marginTop: 7, lineHeight: 1.7 }}>{codeMsg}</div>}
+      </div>
+    );
+  };
 
   // ---- 未ログイン ----
   if (!authed) {
     return (
       <div className="bt-card">
-        <Notice />
+        {noticeBlock()}
         <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>MY ACCOUNT</div>
         <div style={{ fontSize: 18, fontWeight: 800, marginTop: 6 }}>ログインして味を記録</div>
 
@@ -134,6 +197,9 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
               ☁ 他の端末とも同期する（メール認証）
             </button>
             {loginMsg && <div style={{ fontSize: 11, color: loginErr ? "#B8433A" : GREEN, marginTop: 8, lineHeight: 1.7 }}>{loginMsg}</div>}
+            {/* 2台目の端末で入るときの本命。メールを別の端末で開いても、
+                コードならこの端末に打ち込めるので、リンクの往復に依存しない */}
+            {codeLoginBlock(false)}
             <div style={{ fontSize: 10, color: GRAY, marginTop: 10, lineHeight: 1.7 }}>
               メールアドレスはこの端末の中だけに保存されます。認証するまでサーバーには送られません。
             </div>
@@ -181,7 +247,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
 
   return (
     <div>
-      <Notice />
+      {noticeBlock()}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <div>
           <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>MY LOG</div>
@@ -225,6 +291,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
             ✉ 認証メールを送る
           </button>
           {loginMsg && <div style={{ fontSize: 11, color: loginErr ? "#B8433A" : GREEN, marginTop: 7, lineHeight: 1.7 }}>{loginMsg}</div>}
+          {codeLoginBlock(true)}
         </div>
       )}
 
