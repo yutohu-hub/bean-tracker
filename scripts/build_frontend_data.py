@@ -136,6 +136,26 @@ C2COORD = {"JP": [139.7, 35.68], "KR": [126.98, 37.57], "TW": [121.5, 25.0], "CN
            "TZ": [39.28, -6.79], "UG": [32.58, 0.35], "BI": [29.36, -3.38], "MG": [47.52, -18.88],
            "KH": [104.92, 11.56], "LA": [102.6, 17.97], "MM": [96.16, 16.87], "LK": [79.86, 6.93],
            "NP": [85.32, 27.7], "BD": [90.41, 23.81], "MO": [113.54, 22.2], "MN": [106.92, 47.89]}
+# 巡回は産地を英語で拾う（"Colombia"）が、図鑑の産地フィルタは日本語で並んでいる
+# （"コロンビア"）。そのため、コロンビアの豆が827件あってもフィルタでは1件も
+# 出てこなかった。書き出すときに日本語へ揃える。
+ORIGIN_JA = {
+    "ethiopia": "エチオピア", "kenya": "ケニア", "colombia": "コロンビア",
+    "panama": "パナマ", "peru": "ペルー", "brazil": "ブラジル", "bolivia": "ボリビア",
+    "rwanda": "ルワンダ", "burundi": "ブルンジ", "guatemala": "グアテマラ",
+    "costa rica": "コスタリカ", "el salvador": "エルサルバドル", "honduras": "ホンジュラス",
+    "ecuador": "エクアドル", "mexico": "メキシコ", "nicaragua": "ニカラグア",
+    "yemen": "イエメン", "india": "インド", "indonesia": "インドネシア",
+    "uganda": "ウガンダ", "tanzania": "タンザニア", "madagascar": "マダガスカル",
+    "china": "中国", "taiwan": "台湾", "thailand": "タイ", "myanmar": "ミャンマー",
+}
+
+
+def origin_ja(s: str) -> str:
+    """産地名を図鑑の表記に揃える。知らない名前はそのまま通す。"""
+    return ORIGIN_JA.get((s or "").strip().lower(), (s or "").strip())
+
+
 # 1ロースターあたりフロントに載せる上限（巡回対象が増えても配信JSONが太らないように）
 MAX_LIVE_PER_ROASTER = 60   # いま買える豆
 MAX_PAST_PER_ROASTER = 12   # 売切・終了の履歴
@@ -293,7 +313,7 @@ def main() -> None:
             col, acc = PAL[(bid) % len(PAL)]
             bean = {
                 "id": bid, "r": key, "name": p.get("title") or "Lot",
-                "origin": p.get("origin") or "ブレンド", "process": p.get("process") or "Washed",
+                "origin": origin_ja(p.get("origin")) or "ブレンド", "process": p.get("process") or "Washed",
                 # 値段が取れなかったときに 1 を入れていた。通貨単位1（¥1・£1）の
                 # コーヒーは存在せず、レアロットの安い順の先頭を占めてしまう。
                 # 取れなければ 0 のままにして、価格順の一覧からは外す。

@@ -1,0 +1,37 @@
+name: 調査（手動）
+
+# 開発環境からは店にも Supabase にも到達できない（社内ポリシーで CONNECT が403）。
+# 原因の切り分けが要るときだけ、ネットワークのある runner で調べる。
+# 3つとも読むだけで、コミットもデプロイもしない。
+#
+#   platform … 豆が取れていない店が、どのECを使っているのか
+#   auth     … ログインが成立しない原因（キー / 戻り先URL / テーブル）
+#   price    … 取り込んだ価格が実売と合わない店の生レスポンス
+
+on:
+  workflow_dispatch:
+    inputs:
+      what:
+        description: "調べる対象"
+        required: true
+        type: choice
+        options: [platform, auth, price]
+        default: platform
+      args:
+        description: "追加の指定（platform は --shard 0/13、price は店のURL。空でよい）"
+        required: false
+        default: ""
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 依存インストール
+        run: pip install httpx pyyaml
+      - name: 調べる
+        run: python scripts/diag_${{ github.event.inputs.what }}.py ${{ github.event.inputs.args }}

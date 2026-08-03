@@ -27,12 +27,18 @@ const UTM = "utm_source=beantracker&utm_medium=referral&utm_campaign=go";
 /* 海外ECの検索に渡すとき、産地名の日本語を英語に置き換える。
    これが無いと "エチオピア Lot" が "Lot" だけになって検索が役に立たない。
    海外ロースターの銘柄名に出てくる日本語は産地名とブレンドだけなので、この表で足りる。 */
+// components/lib/constants.js の ORIGINS と同じ顔ぶれにしておく。
+// ここに無い産地は日本語のまま海外ECへ渡ってしまい、検索が0件になる。
 const JA_EN = {
-  "エチオピア": "Ethiopia", "ケニア": "Kenya", "コロンビア": "Colombia", "パナマ": "Panama",
-  "グアテマラ": "Guatemala", "ブラジル": "Brazil", "メキシコ": "Mexico", "ペルー": "Peru",
-  "コスタリカ": "Costa Rica", "ルワンダ": "Rwanda", "エクアドル": "Ecuador",
+  "エチオピア": "Ethiopia", "ケニア": "Kenya", "タンザニア": "Tanzania", "ルワンダ": "Rwanda",
+  "ブルンジ": "Burundi", "ウガンダ": "Uganda", "マダガスカル": "Madagascar",
+  "コロンビア": "Colombia", "ブラジル": "Brazil", "ペルー": "Peru", "ボリビア": "Bolivia",
+  "エクアドル": "Ecuador", "パナマ": "Panama", "グアテマラ": "Guatemala",
+  "コスタリカ": "Costa Rica", "ホンジュラス": "Honduras", "エルサルバドル": "El Salvador",
+  "ニカラグア": "Nicaragua", "メキシコ": "Mexico",
   "インドネシア": "Indonesia", "ベトナム": "Vietnam", "インド": "India", "中国": "China",
-  "台湾": "Taiwan", "タイ": "Thailand", "フィリピン": "Philippines", "ブレンド": "Blend",
+  "台湾": "Taiwan", "タイ": "Thailand", "フィリピン": "Philippines", "ミャンマー": "Myanmar",
+  "イエメン": "Yemen", "ブレンド": "Blend",
 };
 // 長い語から先に置換する（インドネシアがインドで切られないように）
 const JA_EN_RE = new RegExp(Object.keys(JA_EN).sort((a, b) => b.length - a.length).join("|"), "g");
