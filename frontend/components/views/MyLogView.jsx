@@ -160,8 +160,14 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const hasCard = (id) => BEANS.some((x) => x.id === id);   // 手入力の記録には図鑑のカードが無い
   const accountEmail = signed ? (session && session.user ? session.user.email : null) : (user ? user.email || null : null);
   const accountName = signed ? (session && session.user ? session.user.email : "アカウント") : (user ? user.name : "");
-  const doLogout = async () => { if (signed) { await signOut(); } else { logout(); } refresh(); };
-
+  /* ログアウトしたらプランも取り直す。これが無いと、共有の権限状態が
+     プレミアムのまま画面に残り、次に開いた人にプレミアム画面が見えてしまう
+     （読み直しは resolvePlan が未ログインを見て無料に戻し、端末の写しも消す）。 */
+  const doLogout = async () => {
+    if (signed) { await signOut(); } else { logout(); }
+    await refreshPlan();
+    refresh();
+  };
 
   // 記録のライブAI分析（保存不要・記録から即時算出）＋相性の良いロースター3件
   const tan = analyzeTastings(list);

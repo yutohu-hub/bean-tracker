@@ -51,10 +51,6 @@ export async function savePhotoDataUrl(beanId, dataUrl) {
   return dataUrl;
 }
 
-export async function savePhoto(beanId, file) {
-  return savePhotoDataUrl(beanId, await shrinkToDataUrl(file));
-}
-
 export async function getPhoto(beanId) {
   try { return (await tx("readonly", (s) => s.get(String(beanId)))) || null; } catch { return null; }
 }

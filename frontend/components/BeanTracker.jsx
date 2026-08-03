@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 // ---- データ / ロジック（分離済みモジュール） ----
 import { ROASTERS } from "./data/roasters";
 import { BEANS } from "./data/beans";
-import { RATES_TO_JPY, toJPY, perGrams, fetchLiveRates } from "./lib/currency";
+import { RATES_TO_JPY, fetchLiveRates } from "./lib/currency";
 import { INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGINS } from "./lib/constants";
 import { syncArchive } from "./lib/store";
@@ -16,7 +16,9 @@ import { purgeLegacyPlan } from "./lib/store";
 import { refreshPlan } from "./lib/usePlan";
 import { isReturningFromCheckout } from "./lib/billing";
 import { readUrlState, writeUrlState, onUrlChange } from "./lib/urlState";
-import { LEGEND, beanStyle, processKey } from "./lib/palette";
+import { LEGEND, beanStyle } from "./lib/palette";
+import { PRICE_BANDS, PROCESSES, priceBandLabel, filterBeans, filterRoasters,
+         countNowByRoaster, pageWindow } from "./lib/catalog";
 
 /* ============================================================
    BEAN TRACKER — プロトタイプ v0.1
@@ -47,18 +49,6 @@ import { AboutView } from "./views/AboutView";
 
 const ROWS_PER_PAGE = 10; // 1ページの行数（列数は可変）
 const COL_OPTIONS = [2, 3, 4, 5, 6];
-
-// ページャの表示（先頭・末尾・現在周辺＋省略）
-function pageWindow(cur, total) {
-  const out = []; let last = -1;
-  for (let p = 0; p < total; p++) {
-    if (p === 0 || p === total - 1 || (p >= cur - 1 && p <= cur + 1)) {
-      if (last >= 0 && p - last > 1) out.push("…");
-      out.push(p); last = p;
-    }
-  }
-  return out;
-}
 
 /* ---------- メイン ---------- */
 export default function BeanTracker() {
@@ -245,51 +235,18 @@ export default function BeanTracker() {
 
   const goRoaster = (rid, tab) => { setRoasterId(rid); setRoasterTab(tab || "now"); setView("roaster"); window.scrollTo(0, 0); };
 
-  const PRICE_BANDS = {
-    all: { label: displayCur === "JPY" ? "すべての価格" : "All prices", test: () => true },
-    low: { label: displayCur === "JPY" ? "〜¥2,000" : "〜$13", test: (jpy) => jpy < 2000 },
-    mid: { label: displayCur === "JPY" ? "¥2,000〜3,000" : "$13〜20", test: (jpy) => jpy >= 2000 && jpy < 3000 },
-    high: { label: displayCur === "JPY" ? "¥3,000〜" : "$20〜", test: (jpy) => jpy >= 3000 },
-  };
-
-  const PROCESSES = ["すべて", "Washed", "Natural", "Honey", "Anaerobic Natural", "Anaerobic Washed"];
   const COUNTRIES = useMemo(() => ["all", ...Array.from(new Set(Object.values(ROASTERS).map((r) => r.country))).sort()], []);
-  const per100JPY = (b) => (toJPY(b) / perGrams(b)) * 100;
   const minSel = { width: "100%", boxSizing: "border-box", padding: "8px 9px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, background: PAPER, color: INK };
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    let list = BEANS.filter((b) => {
-      const r = ROASTERS[b.r];
-      return (r && r.url) &&   // EC送客できる（該当ロースターにECサイトがある）豆だけを図鑑に表示
-        (origin === "すべて" || b.origin === origin) &&
-        (statusF === "all" ? b.status !== "sold" : b.status === statusF) &&
-        (processF === "すべて" || processKey(b.process) === processKey(processF)) &&
-        (country === "all" || r.country === country) &&
-        PRICE_BANDS[priceF].test(toJPY(b)) &&
-        (!q || b.name.toLowerCase().includes(q) || r.name.toLowerCase().includes(q) || (b.origin || "").toLowerCase().includes(q));
-    });
-    const ts = (b) => (b.updatedAt ? Date.parse(b.updatedAt) || 0 : 0);
-    if (sortBy === "p100asc") list = list.slice().sort((a, b) => per100JPY(a) - per100JPY(b));
-    else if (sortBy === "p100desc") list = list.slice().sort((a, b) => per100JPY(b) - per100JPY(a));
-    else if (sortBy === "new") list = list.slice().sort((a, b) => (ts(b) - ts(a)) || (b.id - a.id));
-    return list;
-  }, [origin, statusF, priceF, processF, country, query, sortBy, displayCur, fxVersion]);
+  // 為替が更新されると価格帯の判定も変わるので fxVersion を依存に入れている
+  const filtered = useMemo(
+    () => filterBeans(BEANS, ROASTERS, { query, origin, status: statusF, process: processF, country, price: priceF, sortBy }),
+    [origin, statusF, priceF, processF, country, query, sortBy, displayCur, fxVersion]);
 
-  // ロースター一覧（NOW在庫数つき・検索と国で絞り込み、在庫の多い順→名前順）
-  const nowCountByRoaster = useMemo(() => {
-    const m = {};
-    for (const b of BEANS) if (b.status === "now") m[b.r] = (m[b.r] || 0) + 1;
-    return m;
-  }, []);
-  const filteredRoasters = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return Object.entries(ROASTERS)
-      .filter(([, r]) =>
-        (country === "all" || r.country === country) &&
-        (!q || r.name.toLowerCase().includes(q) || (r.city || "").toLowerCase().includes(q)))
-      .sort((a, b) => (nowCountByRoaster[b[0]] || 0) - (nowCountByRoaster[a[0]] || 0) || a[1].name.localeCompare(b[1].name));
-  }, [query, country, nowCountByRoaster]);
+  const nowCountByRoaster = useMemo(() => countNowByRoaster(BEANS), []);
+  const filteredRoasters = useMemo(
+    () => filterRoasters(ROASTERS, nowCountByRoaster, { query, country }),
+    [query, country, nowCountByRoaster]);
 
   // ページング（実効列数 × 10行 = 1ページの件数）— モードで対象リストを切替
   const effCols = cols === "auto" ? autoCols : cols;
@@ -469,7 +426,7 @@ export default function BeanTracker() {
                 {PROCESSES.map((p) => <option key={p} value={p}>{p === "すべて" ? "精製：すべて" : p}</option>)}
               </select>
               <select value={priceF} onChange={(e) => setPriceF(e.target.value)} style={minSel} aria-label="価格帯">
-                {Object.entries(PRICE_BANDS).map(([k, band]) => <option key={k} value={k}>{band.label}</option>)}
+                {Object.keys(PRICE_BANDS).map((k) => <option key={k} value={k}>{priceBandLabel(k, displayCur)}</option>)}
               </select>
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={minSel} aria-label="並び替え">
                 <option value="default">並び：おすすめ順</option>

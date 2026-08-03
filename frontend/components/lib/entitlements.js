@@ -43,8 +43,6 @@ export const PLANS = [
   },
 ];
 
-export const PLAN_BY_ID = Object.fromEntries(PLANS.map((p) => [p.id, p]));
-
 // 無料プランの上限。プレミアムは Infinity。ここを1か所に集めて、
 // 画面ごとに違う数字が書かれる状態を作らない。
 export const LIMITS = {
@@ -67,8 +65,6 @@ function writeCache(p) {
     else localStorage.removeItem(CACHE_KEY);
   } catch {}
 }
-
-export function clearCachedPlan() { writeCache(null); }
 
 export function isPremiumPlan(plan) {
   if (!plan || !plan.id || !plan.id.startsWith("premium")) return false;
