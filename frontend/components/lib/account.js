@@ -135,6 +135,28 @@ export async function refreshSession() {
   } catch { return null; }
 }
 
+/* 起動時に呼ぶ。ログイン状態を維持するための手当て。
+
+   アクセストークンは1時間で切れる。これまでは「使おうとした時に気づいて更新」
+   だったので、久しぶりに開くと、画面はログイン済みなのに最初の操作だけ失敗して
+   いた。開いた時点で先に更新しておく。
+   更新できない（＝本当に期限切れ）ときは、中途半端に残さず片付けて理由を返す。
+
+   戻り値: null（そもそも未ログイン）/ {ok:true} / {ok:false, error} */
+export async function ensureFreshSession() {
+  if (!isCloud()) return null;
+  const s = readSession();
+  if (!s || !s.access_token) return null;
+  const soon = !s.expires_at || s.expires_at - Date.now() < 5 * 60 * 1000;
+  if (!soon) return { ok: true };
+  const next = await refreshSession();
+  if (next) return { ok: true };
+  // refreshSession は 400/401 のときだけセッションを捨てる。
+  // 通信できなかっただけなら残っているので、そのまま維持する（圏外で締め出さない）
+  if (readSession()) return { ok: true };
+  return { ok: false, error: "ログインの有効期限が切れました。もう一度メールでログインしてください。" };
+}
+
 /* 期限が近ければ先に更新し、それでも401なら1度だけ更新して再試行する */
 async function authFetch(path, init = {}) {
   let s = readSession();

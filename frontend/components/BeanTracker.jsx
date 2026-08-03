@@ -11,8 +11,8 @@ import { RATES_TO_JPY, fetchLiveRates } from "./lib/currency";
 import { INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGINS } from "./lib/constants";
 import { syncArchive } from "./lib/store";
-import { captureSessionFromUrl } from "./lib/account";
-import { purgeLegacyPlan } from "./lib/store";
+import { captureSessionFromUrl, ensureFreshSession } from "./lib/account";
+import { purgeLegacyPlan, keepForever } from "./lib/store";
 import { refreshPlan } from "./lib/usePlan";
 import { isReturningFromCheckout } from "./lib/billing";
 import { readUrlState, writeUrlState, onUrlChange } from "./lib/urlState";
@@ -185,12 +185,21 @@ export default function BeanTracker() {
          正しい権限は、このあと refreshPlan() が支払いの記録から取り直す。 */
       purgeLegacyPlan();
 
+      // 記録は消えては困るものなので、ブラウザに保持を申告しておく
+      keepForever();
+
       const r = await captureSessionFromUrl();
       if (r) {
         setAuthNotice(r.ok
           ? { ok: true, text: "ログインしました。この端末の記録を同期します。" }
           : { ok: false, text: `ログインできませんでした：${r.error}` });
         setView("me"); setMeTab("log"); window.scrollTo(0, 0);
+      } else {
+        /* リンク経由でないふつうの起動。前回のログインを続かせる。
+           トークンは1時間で切れるので、開いた時点で先に更新しておく
+           （使おうとした時に更新する作りだと、久しぶりに開いた最初の操作だけ失敗する）。 */
+        const s = await ensureFreshSession();
+        if (s && !s.ok) setAuthNotice({ ok: false, text: s.error });
       }
       // 決済から戻ってきたときは、反映待ちを見せるためプレミアム画面へ送る
       if (isReturningFromCheckout()) { setView("me"); setMeTab("premium"); window.scrollTo(0, 0); }

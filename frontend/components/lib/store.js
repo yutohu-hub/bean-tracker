@@ -1,5 +1,12 @@
-// ローカルアカウント & 味の記録（localStorage 保存・端末内のみ）
-// ※ 複数端末での本格ログインは将来 Supabase Auth 等のバックエンドに委譲する想定。
+// ローカルアカウント & 味の記録（localStorage 保存）
+//
+// 記録は消えてはいけないものなので、次の3つを守る:
+//   1. アカウントごとに別の引き出しに入れる（別の人がログインしても混ざらない）
+//   2. ログイン前に書いた記録は、初めてログインしたときにそのアカウントへ引き継ぐ
+//   3. ブラウザに「消さないでほしい」と申告する（persist）
+// クラウド同期は、この上に重ねる写しであって、原本はここ。
+import { currentUserId } from "./account";
+
 const USER_KEY = "bt_user";
 const TASTE_KEY = "bt_tastings";
 const ARCHIVE_KEY = "bt_archive";
@@ -14,6 +21,36 @@ function read(key, fallback) {
 }
 function write(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
+/* 記録の置き場所。ログインしていればアカウントごとに分ける。
+   分けないと、同じ端末で別のアカウントにログインした人に前の人の記録が見え、
+   同期でクラウドにも混ざってしまう。 */
+function tasteKey() {
+  let uid = null;
+  try { uid = currentUserId(); } catch { uid = null; }
+  if (!uid) return TASTE_KEY;
+  const key = `${TASTE_KEY}:${uid}`;
+  try {
+    // このアカウントで初めて開いたときだけ、ログイン前の記録を引き継ぐ。
+    // （引き継がないと「ログインしたら記録が消えた」ように見える）
+    if (localStorage.getItem(key) === null) {
+      const before = localStorage.getItem(TASTE_KEY);
+      if (before) localStorage.setItem(key, before);
+    }
+  } catch {}
+  return key;
+}
+
+/* 「この端末のデータを消さないでほしい」とブラウザに申告する。
+   iOS Safari は、しばらく開かれないサイトの保存領域を消すことがある。
+   許可されるかはブラウザ次第だが、申告しておかないと必ず消去対象になる。 */
+export async function keepForever() {
+  try {
+    if (!navigator.storage || !navigator.storage.persist) return null;
+    if (await navigator.storage.persisted()) return true;
+    return await navigator.storage.persist();
+  } catch { return null; }
+}
+
 export function getUser() { return read(USER_KEY, null); }
 // email は「この端末での本人の目印」。メール認証が済むまではサーバーには渡さない
 export function setUser(name, email = null) {
@@ -24,17 +61,17 @@ export function setUser(name, email = null) {
 }
 export function logout() { try { localStorage.removeItem(USER_KEY); } catch {} }
 
-export function getTastings() { const l = read(TASTE_KEY, []); return Array.isArray(l) ? l : []; }
+export function getTastings() { const l = read(tasteKey(), []); return Array.isArray(l) ? l : []; }
 export function getTasting(beanId) { return getTastings().find((t) => t.beanId === beanId) || null; }
 export function upsertTasting(rec) {
   const list = getTastings().filter((t) => t.beanId !== rec.beanId);
   list.unshift({ ...rec, at: Date.now() });
-  write(TASTE_KEY, list);
+  write(tasteKey(), list);
   return list;
 }
 export function removeTasting(beanId) {
   const list = getTastings().filter((t) => t.beanId !== beanId);
-  write(TASTE_KEY, list);
+  write(tasteKey(), list);
   return list;
 }
 // 診断結果の履歴（味の記録に残す）
@@ -74,8 +111,45 @@ export function mergeTastings(incoming) {
     if (!cur || (t.at || 0) >= (cur.at || 0)) map.set(t.beanId, { ...cur, ...t });
   }
   const list = [...map.values()].sort((a, b) => (b.at || 0) - (a.at || 0));
-  write(TASTE_KEY, list);
+  write(tasteKey(), list);
   return list;
+}
+
+/* ---- 書き出し / 読み込み ----
+   端末が変わっても、ブラウザのデータを消しても、記録だけは戻せるようにする。
+   クラウド同期は設定に依存するが、これはファイル1つで完結するので確実。 */
+export function exportBackup() {
+  return {
+    app: "bean-tracker", version: 1, at: Date.now(),
+    account: (getUser() && getUser().email) || null,
+    tastings: getTastings(),
+    diag: getDiagHistory(),
+    analysis: getAnalysisHistory(),
+    restocks: getRestocks(),
+  };
+}
+
+/* 読み込みは「足す」だけで、既にある記録は消さない。
+   取り違えて古いファイルを読んでも、いまの記録が失われないようにするため。 */
+export function importBackup(data) {
+  if (!data || data.app !== "bean-tracker" || !Array.isArray(data.tastings)) {
+    throw new Error("このファイルは BEAN TRACKER の書き出しではないようです");
+  }
+  const before = getTastings().length;
+  mergeTastings(data.tastings);
+  const mergeById = (cur, add, key, write_) => {
+    const seen = new Set(cur.map((x) => x[key]));
+    const merged = [...cur, ...(add || []).filter((x) => x && !seen.has(x[key]))]
+      .sort((a, b) => (b.at || 0) - (a.at || 0));
+    write_(merged.slice(0, 50));
+  };
+  mergeById(getDiagHistory(), data.diag, "at", (v) => write(DIAG_KEY, v));
+  mergeById(getAnalysisHistory(), data.analysis, "at", (v) => write(ANALYSIS_KEY, v));
+  if (Array.isArray(data.restocks)) {
+    const seen = new Set(getRestocks().map((x) => x.beanId));
+    write(RESTOCK_KEY, [...getRestocks(), ...data.restocks.filter((x) => x && !seen.has(x.beanId))]);
+  }
+  return { added: getTastings().length - before, total: getTastings().length };
 }
 
 // アーカイブの端末内永続化

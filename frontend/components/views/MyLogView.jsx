@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
-import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis } from "../lib/store";
+import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis, exportBackup, importBackup } from "../lib/store";
 import { usePlan, refreshPlan } from "../lib/usePlan";
 import { isCloud, isSignedIn, getSession, signInWithEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings } from "../lib/account";
 import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis";
@@ -31,6 +31,8 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [diags, setDiags] = useState([]);
   const [anas, setAnas] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [switching, setSwitching] = useState(false);   // 別のアカウントに切り替える欄
+  const [backupMsg, setBackupMsg] = useState("");
   const [form, setForm] = useState({ name: "", roaster: "", origin: "", rating: 0, notes: "", photo: null });
   const [photos, setPhotos] = useState({});   // beanId -> dataURL（一覧のサムネイル）
 
@@ -189,8 +191,42 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
             {premium && <span style={{ fontSize: 10, color: "#A87B2E", fontWeight: 700 }}>PREMIUM</span>}
           </div>
         </div>
-        <button onClick={doLogout} style={{ background: "none", border: "none", fontSize: 11, color: GRAY, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>ログアウト</button>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+          <button onClick={doLogout} style={{ background: "none", border: "none", fontSize: 11, color: GRAY, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>ログアウト</button>
+          {cloud && (
+            <button onClick={() => { setSwitching((v) => !v); setLoginMsg(""); setLoginErr(false); }}
+              style={{ background: "none", border: "none", fontSize: 11, color: GRAY, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>
+              {switching ? "やめる" : "別のアカウント"}
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* 別のアカウントに切り替える。ログアウトしてから入り直さなくても、
+          ここで認証メールを送れば、リンクを開いた時点でそのアカウントに変わる。
+          記録はアカウントごとに分けて保存しているので、混ざらない。 */}
+      {switching && cloud && (
+        <div style={{ marginTop: 10, padding: "13px 14px", border: `1px solid ${LINE}`, borderRadius: 10, background: "#F7F5EF" }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700 }}>別のアカウントでログイン</div>
+          <div style={{ fontSize: 10.5, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
+            メールを送ります。届いたリンクを開くと、そのアカウントに切り替わります。
+            いまの記録はこのアカウントのものとして残ります。
+          </div>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="other@example.com"
+            style={{ width: "100%", boxSizing: "border-box", marginTop: 9, padding: "9px 11px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 13, background: PAPER, color: INK }} />
+          <button onClick={async () => {
+              if (!validEmail(email)) return;
+              setLoginErr(false); setLoginMsg("送信中…");
+              try { await signInWithEmail(email.trim()); setLoginMsg("メールを送りました。リンクを開くと切り替わります。"); }
+              catch (e) { setLoginErr(true); setLoginMsg(e.message || "送信できませんでした"); }
+            }}
+            disabled={!validEmail(email)}
+            style={{ width: "100%", marginTop: 8, padding: "10px 0", background: validEmail(email) ? INK : "#EDEAE1", color: validEmail(email) ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: validEmail(email) ? "pointer" : "default" }}>
+            ✉ 認証メールを送る
+          </button>
+          {loginMsg && <div style={{ fontSize: 11, color: loginErr ? "#B8433A" : GREEN, marginTop: 7, lineHeight: 1.7 }}>{loginMsg}</div>}
+        </div>
+      )}
 
       {signed && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
@@ -216,6 +252,45 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
 
       {/* ポートフォリオ（記録から集計。件数・平均評価もここに含まれる） */}
       <Portfolio list={list} email={accountEmail} onOpen={onOpen} onRoaster={onRoaster} />
+
+      {/* 記録の持ち出し。クラウド同期は設定に依存するが、これはファイル1つで完結する。
+          端末を変えても、ブラウザのデータを消しても、これがあれば戻せる。 */}
+      <div style={{ marginTop: 12, padding: "12px 14px", border: `1px solid ${LINE}`, borderRadius: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 11.5, color: GRAY, lineHeight: 1.7 }}>
+            記録の控えをファイルに残せます（{list.length}件）
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => {
+                const blob = new Blob([JSON.stringify(exportBackup(), null, 2)], { type: "application/json" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `bean-tracker-${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+                setBackupMsg("書き出しました");
+              }}
+              style={{ padding: "7px 12px", background: PAPER, color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>
+              ⤓ 書き出す
+            </button>
+            <label style={{ padding: "7px 12px", background: PAPER, color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>
+              ⤒ 読み込む
+              <input type="file" accept="application/json,.json" style={{ display: "none" }}
+                onChange={async (e) => {
+                  const f = e.target.files && e.target.files[0];
+                  e.target.value = "";
+                  if (!f) return;
+                  try {
+                    const r = importBackup(JSON.parse(await f.text()));
+                    refresh();
+                    setBackupMsg(`${r.added}件を追加しました（合計${r.total}件）`);
+                  } catch (err) { setBackupMsg(err.message || "読み込めませんでした"); }
+                }} />
+            </label>
+          </div>
+        </div>
+        {backupMsg && <div style={{ fontSize: 11, color: GREEN, marginTop: 7 }}>{backupMsg}</div>}
+      </div>
 
       {/* 過去に飲んだ豆を手動で記録（図鑑に無い豆もカード化） */}
       <div style={{ marginTop: 12 }}>
