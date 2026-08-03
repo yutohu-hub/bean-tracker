@@ -37,6 +37,8 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [codeMsg, setCodeMsg] = useState("");
   const [codeErr, setCodeErr] = useState(false);
   const [backupMsg, setBackupMsg] = useState("");
+  const [folds, setFolds] = useState({});          // 普段は畳んでおく節
+  const [showAll, setShowAll] = useState(false);   // 記録一覧を全部出すか
   const [form, setForm] = useState({ name: "", roaster: "", origin: "", rating: 0, notes: "", photo: null });
   const [photos, setPhotos] = useState({});   // beanId -> dataURL（一覧のサムネイル）
 
@@ -93,6 +95,26 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   // メール認証済み、またはこの端末でメール/ニックネームを入れた人。
   // 認証の往復を待たずにポートフォリオを開けるよう、クラウド設定時もローカルの user を認める
   const authed = signed || !!user;
+
+  /* 普段は使わない節を畳む。マイページは「記録を見る場所」なので、
+     控えの持ち出しや過去の診断まで常時開いていると、本題が下に押し出される。 */
+  const foldBlock = (id, title, sub, body) => {
+    const open = !!folds[id];
+    return (
+      <div style={{ marginTop: 10, border: `1px solid ${LINE}`, borderRadius: 10, overflow: "hidden" }}>
+        <button onClick={() => setFolds({ ...folds, [id]: !open })}
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%",
+            padding: "10px 13px", background: PAPER, border: "none", cursor: "pointer", textAlign: "left" }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{title}</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {sub && <span style={{ fontSize: 10.5, color: GRAY }}>{sub}</span>}
+            <span style={{ fontSize: 12, color: GRAY, transform: open ? "rotate(180deg)" : "none" }}>⌄</span>
+          </span>
+        </button>
+        {open && <div style={{ padding: "0 13px 13px" }}>{body()}</div>}
+      </div>
+    );
+  };
 
   const accountEmailGuess = (user && user.email)
     || (session && session.user && session.user.email) || "";
@@ -321,11 +343,12 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
       <Portfolio list={list} email={accountEmail} onOpen={onOpen} onRoaster={onRoaster} />
 
       {/* 記録の持ち出し。クラウド同期は設定に依存するが、これはファイル1つで完結する。
-          端末を変えても、ブラウザのデータを消しても、これがあれば戻せる。 */}
-      <div style={{ marginTop: 12, padding: "12px 14px", border: `1px solid ${LINE}`, borderRadius: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ fontSize: 11.5, color: GRAY, lineHeight: 1.7 }}>
-            記録の控えをファイルに残せます（{list.length}件）
+          端末を変えても、ブラウザのデータを消しても、これがあれば戻せる。
+          ただし毎回使うものではないので畳んでおく。 */}
+      {foldBlock("backup", "記録の控え", `${list.length}件`, () => (
+        <div>
+          <div style={{ fontSize: 11, color: GRAY, lineHeight: 1.7, marginBottom: 8 }}>
+            ファイルに書き出しておけば、端末を変えても、ブラウザのデータを消しても戻せます。
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => {
@@ -355,9 +378,9 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
                 }} />
             </label>
           </div>
+          {backupMsg && <div style={{ fontSize: 11, color: GREEN, marginTop: 7 }}>{backupMsg}</div>}
         </div>
-        {backupMsg && <div style={{ fontSize: 11, color: GREEN, marginTop: 7 }}>{backupMsg}</div>}
-      </div>
+      ))}
 
       {/* 過去に飲んだ豆を手動で記録（図鑑に無い豆もカード化） */}
       <div style={{ marginTop: 12 }}>
@@ -441,10 +464,9 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
         </div>
       )}
 
-      {/* 保存した分析 */}
-      {anas.length > 0 && (
-        <div style={{ marginTop: 18 }}>
-          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.12em", color: GRAY }}>💾 保存した分析</div>
+      {/* 保存した分析（過去の控え。畳んでおく） */}
+      {anas.length > 0 && foldBlock("anas", "保存した分析", `${anas.length}件`, () => (
+        <div>
           {anas.map((a) => (
             <div key={a.at} style={{ borderBottom: `1px solid ${LINE}`, padding: "10px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
@@ -460,12 +482,11 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
             </div>
           ))}
         </div>
-      )}
+      ))}
 
-      {/* 診断の記録 */}
-      {diags.length > 0 && (
-        <div style={{ marginTop: 18 }}>
-          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.12em", color: GRAY }}>🧭 診断の記録</div>
+      {/* 診断の記録（過去の控え。畳んでおく） */}
+      {diags.length > 0 && foldBlock("diags", "診断の記録", `${diags.length}件`, () => (
+        <div>
           {diags.map((d) => (
             <div key={d.at} style={{ borderBottom: `1px solid ${LINE}`, padding: "10px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
@@ -488,12 +509,17 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
             </div>
           ))}
         </div>
-      )}
+      ))}
 
-      {/* 記録が無いときの案内はポートフォリオ側で出しているので、ここでは繰り返さない */}
+      {/* 記録が無いときの案内はポートフォリオ側で出しているので、ここでは繰り返さない。
+          一覧は新しい順に8件まで。全部並べると、下にあるものほど二度と見られない。 */}
       {list.length > 0 && (
-        <div style={{ marginTop: 6 }}>
-          {list.map((t) => (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, borderBottom: `1px solid ${LINE}`, paddingBottom: 6 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 800 }}>記録</span>
+            <span style={{ fontSize: 10, color: GRAY }}>{list.length}件</span>
+          </div>
+          {(showAll ? list : list.slice(0, 8)).map((t) => (
             <div key={t.beanId} style={{ borderBottom: `1px solid ${LINE}`, padding: "12px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
                 <button onClick={() => openBean(t.beanId)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
@@ -539,6 +565,12 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
               </div>
             </div>
           ))}
+          {list.length > 8 && (
+            <button onClick={() => setShowAll(!showAll)}
+              style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+              {showAll ? "たたむ" : `のこり${list.length - 8}件を見る`}
+            </button>
+          )}
         </div>
       )}
     </div>
