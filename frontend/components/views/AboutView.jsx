@@ -3,6 +3,7 @@ import { useState } from "react";
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
 
 import noteData from "../data/note.generated.json";
+import { AboutStats } from "./AboutStats";
 
 const NOTE_URL = "https://note.com/higghhffuigfdty";
 // 取り込み済みの記事。巡回ワークフローが note のRSSから更新する。
@@ -154,6 +155,9 @@ export function AboutView({ onNavigate }) {
           世界中のコーヒーから、<br />あなたにとっての「最高の一杯」を探してみてください。
         </p>
       </div>
+
+      {/* いま図鑑に入っているもの（実データを数えた内訳） */}
+      <AboutStats />
 
       <div style={{ height: 1, background: LINE, marginTop: 32 }} />
 
