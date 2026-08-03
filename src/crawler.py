@@ -567,8 +567,10 @@ def _product_from_ld(r: dict, url: str, html: str) -> Product | None:
 async def _fetch_generic(client: httpx.AsyncClient, r: dict) -> list[Product] | None:
     base = r["url"].rstrip("/")
     urls = await _sitemap_product_urls(client, base)
+    # 最後に試した経路の結果で上書きする。setdefault だと Shopify の理由が
+    # 残り続け、ログを見ても共通経路がどこで駄目だったのか分からなかった。
     if not urls:
-        LAST_REASON.setdefault(r["name"], "sitemapに商品ページが無い")
+        LAST_REASON[r["name"]] = "sitemapに商品ページが無い"
         return None
     products: list[Product] = []
     for u in urls:
