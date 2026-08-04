@@ -72,16 +72,42 @@ curl -X POST "$SUPABASE_URL/functions/v1/send-push" \
 `--no-verify-jwt` で公開する代わりに、合言葉（`PUSH_SEND_TOKEN`）で守っています。
 これが無いと、URLを知った人が全端末に通知を送れてしまいます。
 
-## 3. App Store に出す場合
+## 3. App Store 版（Capacitor・雛形は作成済み）
 
-静的書き出し（`frontend/out`）をそのまま包めるので、**Capacitor** が最短です。
+静的書き出し（`frontend/out`）をそのまま包む形にしてあります。
+
+| ファイル | 役割 |
+| --- | --- |
+| `capacitor.config.ts` | アプリID・名前・`webDir`・iOSの見た目 |
+| `package.json`（リポジトリ直下） | Capacitor の依存と `app:build` / `app:sync` / `app:ios` |
+| `scripts/build-app.sh` | **サブパス無しで**書き出し、中身を検査する |
+| `.github/workflows/ios-build.yml` | macOS ランナーで組み立て、署名なしでビルドが通るか見る |
+
+Mac での手順はこれだけです。
 
 ```bash
-npm i -D @capacitor/cli && npx cap init "BEAN TRACKER" com.example.beantracker
-npm i @capacitor/core @capacitor/ios
-# webDir を frontend/out に設定してから
-npx cap add ios && npx cap sync ios && npx cap open ios
+npm install
+npm run app:ios      # 書き出し → cap sync → Xcode が開く
 ```
+
+`ios/` はコミットしていません（Xcode の生成物で差分が大きく、`npx cap add ios` で
+作り直せるため）。`.gitignore` 済みです。
+
+### 気をつける点（すでに仕込んであります）
+
+- **基準パスを外す。** Web版は `/bean-tracker` の下に置くので `NEXT_PUBLIC_BASE_PATH` を
+  渡していますが、アプリの中では `capacitor://localhost` が起点です。同じものを入れると
+  `/bean-tracker/_next/...` を探しに行って**真っ白**になります。`build-app.sh` は基準パスを
+  空にして書き出し、書き出し結果に `/bean-tracker/_next` が残っていないか検査してから終わります。
+- **外部ECは外のブラウザで開く。** `allowNavigation` を空にしてあるので、豆を買うリンクは
+  アプリの中に閉じ込められず、外で開きます。
+
+### プッシュ通知は作り直しになります
+
+2 で実装した Web Push は **ブラウザ（およびホーム画面PWA）向け**の仕組みです。
+App Store 版では使えず、APNs（`@capacitor/push-notifications` + Apple の鍵）に
+置き換えが必要です。宛先の保管場所（`push_subscriptions`）と送信の呼び出し口は
+そのまま使えますが、送信部分は書き直しになります。
 
 **審査で必ず当たる2点**（先に決めておくべきこと）:
 
@@ -97,4 +123,5 @@ npx cap add ios && npx cap sync ios && npx cap open ios
 
 - 1 は完了。ホーム画面に追加すればアプリとして動きます
 - 2 はコードが入っています。上の①②③を設定すれば、その日から通知が届きます
-- 3 は未着手。Apple Developer Program の契約が要るため、判断してから着手します
+- 3 は雛形まで作成済み。あとは Apple Developer Program の契約と、Mac での署名・申請
+  （および審査に向けた APNs 対応）が残っています
