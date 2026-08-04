@@ -4,6 +4,7 @@ import { INK, PAPER, GRAY, LINE, GREEN, AMBER } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
 import { getNotify, setNotify, getRestocks } from "../lib/store";
+import { enablePush, disablePush, pushAvailability, pushSubscribed } from "../lib/push";
 import { PLANS, planLabel, LIMITS } from "../lib/entitlements";
 import { usePlan, refreshPlan } from "../lib/usePlan";
 import {
@@ -33,6 +34,8 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
   const [saved, setSaved] = useState(false);
   const [payMsg, setPayMsg] = useState("");
   const [pushMsg, setPushMsg] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+  const [pushOk, setPushOk] = useState({ ok: false, reason: "" });
   const [restocks, setRestocks] = useState([]);
   const [waiting, setWaiting] = useState(false);   // 決済後の反映待ち
   const [waitMsg, setWaitMsg] = useState("");
@@ -42,6 +45,9 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
     setNotifyState(getNotify());
     setRestocks(getRestocks());
     setReady(true);
+    // この端末で通知を受け取れるか（iPhoneはホーム画面に追加が要る）と、購読済みかを見る
+    setPushOk(pushAvailability());
+    pushSubscribed().then(setSubscribed);
   }, []);
 
   // Stripe から戻ってきたら、反映されるまで確認を続ける
@@ -95,22 +101,32 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
   const patch = (p) => setNotifyState((n) => ({ ...n, ...p }));
   const toggleCat = (k) => setNotifyState((n) => ({ ...n, cats: { ...n.cats, [k]: !n.cats[k] } }));
 
-  const enablePush = async () => {
-    if (typeof window === "undefined" || typeof Notification === "undefined") {
-      setPushMsg("この環境はブラウザ通知に対応していません。"); return;
-    }
+  /* 本物の購読。ブラウザに宛先を作ってもらい、サーバに預けるところまでやる。
+     iPhone はホーム画面に追加した状態でのみ購読できるので、その案内も返る。 */
+  const doEnablePush = async () => {
+    setPushMsg("設定中…");
     try {
-      const perm = await Notification.requestPermission();
-      if (perm === "granted") { patch({ push: true }); setPushMsg("ブラウザ通知を許可しました。"); }
-      else { patch({ push: false }); setPushMsg("ブラウザ通知が許可されませんでした（ブラウザ設定から変更できます）。"); }
-    } catch { setPushMsg("通知の許可を取得できませんでした。"); }
+      await enablePush();
+      setSubscribed(true);
+      patch({ push: true });
+      setPushMsg("この端末で通知を受け取れるようになりました。");
+    } catch (e) { setPushMsg(e.message || "通知を設定できませんでした"); }
   };
-
-  const testPush = () => {
-    if (typeof Notification === "undefined" || Notification.permission !== "granted") {
-      setPushMsg("先に「ブラウザ通知を許可」してください。"); return;
-    }
-    new Notification("BEAN TRACKER", { body: "新着レアロットが見つかったら、こんな通知が届きます。" });
+  const doDisablePush = async () => {
+    await disablePush();
+    setSubscribed(false);
+    patch({ push: false });
+    setPushMsg("この端末への通知を止めました。");
+  };
+  // 届く形そのままで1通出す（サーバを介さないので、見た目の確認用）
+  const testPush = async () => {
+    if (Notification.permission !== "granted") { setPushMsg("先に「通知を受け取る」を押してください。"); return; }
+    const reg = await navigator.serviceWorker.ready;
+    reg.showNotification("BEAN TRACKER", {
+      body: "再入荷や新着レアロットが見つかったら、こんな通知が届きます。",
+      icon: `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/icon-192.png`,
+      tag: "bean-tracker-test",
+    });
   };
 
   const saveNotify = () => { setNotifyState(setNotify(notify)); setSaved(true); setTimeout(() => setSaved(false), 2500); };
@@ -261,15 +277,33 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
         <input type="email" value={notify.email} onChange={(e) => patch({ email: e.target.value })} placeholder="you@example.com"
           style={{ width: "100%", boxSizing: "border-box", marginTop: 8, padding: "10px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 13, background: PAPER, color: INK }} />
 
-        <button onClick={() => patch({ push: !notify.push })} style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", padding: "12px 0 0", cursor: "pointer", textAlign: "left" }}>
-          <span style={chk(notify.push)}>{notify.push ? "✓" : ""}</span>
-          <span style={{ fontSize: 12.5, color: INK }}>ブラウザ通知（プッシュ）で受け取る</span>
-        </button>
-        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-          <button onClick={enablePush} style={{ flex: 1, padding: "9px 0", background: PAPER, color: INK, border: `1.5px solid ${INK}`, borderRadius: 8, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>ブラウザ通知を許可</button>
-          <button onClick={testPush} style={{ flex: 1, padding: "9px 0", background: PAPER, color: GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 11.5, cursor: "pointer" }}>通知をテスト</button>
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${LINE}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={chk(subscribed)}>{subscribed ? "✓" : ""}</span>
+            <span style={{ fontSize: 12.5, color: INK, flex: 1 }}>
+              この端末に通知を届ける{subscribed && <span style={{ fontSize: 10, color: GREEN, marginLeft: 6 }}>受け取り中</span>}
+            </span>
+          </div>
+          {/* 受け取れない理由があるときは、押せないボタンではなく理由を出す。
+              iPhone は「ホーム画面に追加すれば受け取れる」ので、諦めさせない */}
+          {!pushOk.ok ? (
+            <div style={{ fontSize: 11, color: GRAY, marginTop: 8, lineHeight: 1.8 }}>{pushOk.reason}</div>
+          ) : (
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <button onClick={subscribed ? doDisablePush : doEnablePush}
+                style={{ flex: 1, padding: "10px 0", background: subscribed ? PAPER : INK, color: subscribed ? INK : PAPER, border: subscribed ? `1.5px solid ${INK}` : "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                {subscribed ? "通知を止める" : "通知を受け取る"}
+              </button>
+              {subscribed && (
+                <button onClick={testPush}
+                  style={{ padding: "10px 14px", background: PAPER, color: GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  見本を出す
+                </button>
+              )}
+            </div>
+          )}
+          {pushMsg && <div style={{ fontSize: 10.5, color: GRAY, marginTop: 7, lineHeight: 1.7 }}>{pushMsg}</div>}
         </div>
-        {pushMsg && <div style={{ fontSize: 10.5, color: GRAY, marginTop: 6, lineHeight: 1.5 }}>{pushMsg}</div>}
 
         <button onClick={saveNotify} style={{ width: "100%", marginTop: 14, padding: "12px 0", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
           通知設定を保存

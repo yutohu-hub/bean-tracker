@@ -49,12 +49,35 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   themeColor: "#17150F",
+  /* ホーム画面から起動したとき、画面の隅まで使う。
+     これを入れないと iPhone のノッチ側と下端に黒い帯が残り、
+     「ブラウザを全画面にしただけ」に見える。
+     代わりに、中身が切り欠きに潜らないよう safe-area の余白を自分で足す。 */
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="ja">
       <body style={{ margin: 0, background: "#FAFAF7" }}>
+        {/* ホーム画面から起動したときだけ効く調整。ブラウザで見ているときは
+            display-mode が browser なので、いずれも当たらない。 */}
+        <style>{`
+          @media (display-mode: standalone) {
+            body {
+              padding-top: env(safe-area-inset-top);
+              padding-bottom: env(safe-area-inset-bottom);
+              padding-left: env(safe-area-inset-left);
+              padding-right: env(safe-area-inset-right);
+            }
+            /* 上に引っ張るとページ全体が跳ねてアプリらしくない。中身だけ動かす */
+            html { overscroll-behavior-y: none; }
+            /* 文字の長押しで選択メニューが出るのを、本文以外では止める */
+            button, .bt-card { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+          }
+          /* iOS はタップのたびに灰色の箱が出る。アプリとしては目障りなので消す */
+          * { -webkit-tap-highlight-color: transparent; }
+        `}</style>
         {children}
         <PWARegister />
       </body>
