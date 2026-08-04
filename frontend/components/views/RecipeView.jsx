@@ -11,7 +11,7 @@ const RECIPES = [
     bean: [["生産国", "パナマ"], ["農園", "Finca Nuguo（標高1,700m）"], ["品種", "Geisha"], ["精製", "アナエロビック・ナチュラル"], ["焙煎", "浅煎り（熱風焙煎・焙煎3日後に使用）"], ["ロースター", ""]],
     recipe: [["☕", "Coffee", "15g"], ["💧", "Water", "200g"], ["🌡", "Temperature", "92℃"], ["⚙", "Grind", "約700μm"]],
     pours: [["0:00", "100g 透過（円を描いて注湯）"], ["0:58", "スイッチを閉じる"], ["1:00", "100g 浸漬"], ["2:00", "スイッチを開く"]], total: "2:10",
-    note: "スイッチ付きの台に載せ、前半を透過、後半を浸漬にした一杯。ブリュッセル大会でマレーシア初の優勝。",
+    note: "スイッチ付きの台に載せ、前半を透過、後半を浸漬にした一杯。ブリュッセル大会でマレーシア初の優勝。オーストラリア・香港・チェコ・韓国・フランスの代表を抑えての結果だった。",
   },
   {
     comp: "World Brewers Cup", year: "2025", flag: "🇨🇳", winner: "George Jinyang Peng",
@@ -27,7 +27,11 @@ const RECIPES = [
     bean: [["生産国", "パナマ"], ["農園", "Finca Maya（Lost Origin Coffee Lab）"], ["品種", "Gesha"], ["精製", "ナチュラル・アナエロビック"], ["焙煎", "浅煎り"], ["ロースター", "Wildkaffee（オーストリア）"]],
     recipe: [["☕", "Coffee", "17g"], ["💧", "Water", "270g"], ["🌡", "Temperature", "93℃"], ["⚙", "Grind", "630μm"]],
     pours: [["0:00", "60g 蒸らし"], ["0:40", "60g 追加"], ["1:20", "50g 追加"], ["2:00", "100g 追加"]], total: "2:00",
-    note: "平底の Orea に抜けの速い Sibarist の紙を合わせ、細挽き（630μm）でも詰まらせずに落としきる組み合わせ。",
+    gear: "Melodrip（注湯の勢いを殺す道具）",
+    water: "Apax（抽出用に組成を調整した水）",
+    taste: "ハネーデュー・ローズヒップ・チェリー",
+    note: "平底の Orea に抜けの速い Sibarist の紙を合わせ、細挽き（630μm）でも詰まらせずに落としきる組み合わせ。"
+      + "さらに Melodrip で湯を面で落とし、粉を掘らずに濡らしている。",
   },
   {
     comp: "World Brewers Cup", year: "2023", flag: "🇨🇱", winner: "Carlos Medina",
@@ -42,8 +46,10 @@ const RECIPES = [
     dripper: "Orea V3 + Kalita 185（1Zpresso K-Pro）",
     bean: [["生産国", "コロンビア"], ["農園", "Finca Mikava（Santuario Gesha）"], ["品種", "Geisha"], ["精製", "カーボニックマセレーション・ナチュラル"], ["焙煎", "浅煎り"], ["ロースター", "Mikava"]],
     recipe: [["☕", "Coffee", "14g"], ["💧", "Water", "200g"], ["🌡", "Temperature", "70℃ → 95℃"], ["⚙", "Grind", "1000μm 75% + 800μm 25%"]],
-    pours: [], total: "",
-    note: "低温70℃から入り、途中で95℃に切り替える二温度の抽出。挽き目も粗さの違う2種を混ぜている。",
+    pours: [["0:00", "50g 注湯（70℃）"], ["0:30", "50g 追加（95℃）"], ["1:00", "50g 追加（95℃）"], ["1:30", "50g 追加（95℃）"]], total: "",
+    gear: "Kalita 185（台形の紙をV60形の Orea に敷く）",
+    note: "50gを30秒ごとに4回。1投目だけ70℃で、残り3投を95℃にする二温度の抽出。"
+      + "低温で入ると最初に出る強い酸を抑えられ、そのあと高温で甘みと厚みを足せる。挽き目も粗さの違う2種を混ぜている。",
   },
   {
     comp: "World Brewers Cup", year: "2021", flag: "🇨🇭", winner: "Matt Winton",
@@ -91,7 +97,10 @@ const RECIPES = [
     bean: [["生産国", "エチオピア / Sidamo"], ["農園", "Ninety Plus Maker Series（Maker: Semeon Abbay）"], ["品種", "Nekisse（在来種）"], ["精製", "ナチュラル"], ["焙煎", "浅煎り"], ["ロースター", "Supreme Roastworks"]],
     recipe: [["☕", "Coffee", "20g"], ["💧", "Water", "300g"], ["🌡", "Temperature", "92℃"], ["⚙", "Grind", ""]],
     pours: [["0:00", "蒸らし（45秒）"]], total: "3:30",
-    note: "水にノルウェー西海岸の天然水を使用。ミネラルが少なく口当たりが柔らかくなるものを選んだと語っている。",
+    water: "ノルウェー西海岸の天然水（低ミネラル）",
+    taste: "完熟トロピカルフルーツ・アプリコット・マンゴー・パッションフルーツ・苺",
+    note: "水にノルウェー西海岸の天然水を使用。ミネラルが少なく口当たりが柔らかくなるものを選んだと語っている。"
+      + "比率は 1:15、蒸らし45秒で総抽出3分30秒と、いまの競技レシピと比べるとゆっくりめ。",
   },
 ];
 
@@ -170,6 +179,25 @@ function Recipe({ r }) {
           </div>
         )}
 
+        {/* 数値だけでは分からない条件。判明した回だけ出す（無い回は行ごと出さない） */}
+        {(r.gear || r.water || r.taste) && (
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>SETUP</div>
+            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 6 }}>
+              <tbody>
+                {[["補助道具", r.gear], ["水", r.water], ["申告した味わい", r.taste]]
+                  .filter(([, v]) => v)
+                  .map(([k, v]) => (
+                    <tr key={k} style={{ borderTop: `1px solid ${LINE}` }}>
+                      <td style={{ padding: "7px 0", fontSize: 11.5, color: GRAY, width: 92, verticalAlign: "top" }}>{k}</td>
+                      <td style={{ padding: "7px 0", fontSize: 12.5, color: INK }}>{v}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {/* その一杯の勘所。読み物としてはここが本体なので、数値の下に置く */}
         {r.note && (
           <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${LINE}` }}>
@@ -191,6 +219,31 @@ export function RecipeView() {
         World Brewers Cup 過去11大会の優勝者が使った豆と抽出レシピ。同じ一杯を、あなたの手で。<br />
         ※ 2020年は新型コロナのため中止。
       </p>
+
+      {/* 数値をそのまま真似ても、豆も水も器具も違えば同じ味にはならない。
+          「どの数字を動かすと味がどちらへ動くか」を先に置いて、読み替えられるようにする。
+          4:6 の配分の効き方は、考案者（2016年優勝の粕谷哲）の説明に基づく。 */}
+      <div style={{ marginTop: 20, padding: "16px 18px", background: "#F7F5EF", borderRadius: 14 }}>
+        <div style={{ fontSize: 14, fontWeight: 800 }}>レシピの読み方</div>
+        <p style={{ fontSize: 12, color: GRAY, lineHeight: 1.9, margin: "6px 0 0" }}>
+          豆も水も器具も違えば、同じ数字でも同じ味にはなりません。
+          真似るより、<strong style={{ color: INK }}>どの数字を動かすと味がどちらへ動くか</strong>を掴むほうが早いはずです。
+        </p>
+        <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+          {[
+            ["比率", "豆1に対する湯の量。1:15 は濃く、1:17 は軽い。まず1:16から始めて、濃さの好みで前後させる。"],
+            ["湯温", "高いほど成分が早く出る。浅煎りは93〜96℃で立ち上げ、渋みが出るなら下げる。90℃を切ると酸が立ちやすい。"],
+            ["挽き目", "細かいほど濃く、詰まると渋くなる。落ちきる時間が予定より長ければ粗く、短ければ細かく。"],
+            ["注ぐ回数", "回数が多いほど濃く出る。総量が同じでも、3回に分ければ1回で注ぐより濃い。"],
+            ["前半の配分", "4:6メソッドでは、最初の40%の2投で味の方向が決まる。1投目を少なくすると甘く、多くすると明るくなる。"],
+          ].map(([k, v]) => (
+            <div key={k} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <span style={{ flexShrink: 0, width: 62, fontSize: 11.5, fontWeight: 800, color: INK, paddingTop: 1 }}>{k}</span>
+              <span style={{ fontSize: 12, color: INK, lineHeight: 1.8 }}>{v}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {RECIPES.map((r, i) => <Recipe key={i} r={r} />)}
 
