@@ -1,0 +1,56 @@
+name: iOSアプリをビルドして確かめる
+
+# Capacitor の殻に Web の中身を入れて、iOS プロジェクトが実際に組み上がるかを見る。
+# 署名はしない（証明書が要るため）。シミュレータ向けにビルドが通るところまでを確認する。
+# これが通っていれば、Mac で開いたときに詰まるのは署名と申請だけになる。
+#
+# 手元の Mac で同じことをする場合:
+#   npm install && npm run app:ios
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "capacitor.config.ts"
+      - "package.json"
+      - "scripts/build-app.sh"
+      - ".github/workflows/ios-build.yml"
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 中身を書き出す（サブパス無し）
+        run: bash scripts/build-app.sh
+
+      - name: Capacitor を入れる
+        run: npm install
+
+      - name: iOS プロジェクトを作る
+        run: |
+          # ios/ はコミットしていない（Xcode の生成物で差分が大きいため）。
+          # 毎回ここで作り直す。作り直しても capacitor.config.ts の内容は反映される。
+          npx cap add ios
+          npx cap sync ios
+
+      - name: シミュレータ向けにビルド（署名なし）
+        run: |
+          cd ios/App
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tail -40
+
+      - name: 結果
+        run: echo "iOS プロジェクトの組み立てとビルドが通りました（署名・申請は Mac 側で）"
