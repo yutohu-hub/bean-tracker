@@ -1,5 +1,9 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
+// この設定を .ts のまま読むために typescript が要る（package.json の devDependencies）。
+// 入っていないと npx cap add ios が
+// 「Could not find installation of TypeScript」で止まる。
+
 /* iOSアプリの殻の設定。中身は frontend の静的書き出しをそのまま入れる。
    注意: アプリの中では capacitor://localhost が起点になるので、
    GitHub Pages 用の /bean-tracker というサブパスは付けない
