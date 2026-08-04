@@ -61,13 +61,24 @@ env:
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
 ```
 
-送るときは、巡回ワークフローから Edge Function を叩きます。
+**送信は巡回に組み込み済み**（`src/push_notify.py`）。設定さえ入れば自動で飛びます。
 
-```bash
-curl -X POST "$SUPABASE_URL/functions/v1/send-push" \
-  -H "x-push-token: $PUSH_SEND_TOKEN" -H "content-type: application/json" \
-  -d '{"title":"再入荷しました","body":"Onyx / Colombia Gesha","url":"?b=3500","tag":"restock-3500"}'
+送りすぎないことがいちばん大事なので、次の2つだけに絞り、**1回の巡回につき1通**にまとめます。
+
+| 送る | 送らない |
+| --- | --- |
+| 再入荷（待っていた人がいる） | ふつうの新着（1回で数十件出る） |
+| 新着のレアロット（ゲイシャ / シドラ / COE） | 売り切れ（買えないものを知らせても仕方がない） |
+
+ワークフローに渡す値:
+
+```yaml
+# .github/workflows/track.yml（設定済み）
+SUPABASE_URL:    ${{ vars.SUPABASE_URL }}
+PUSH_SEND_TOKEN: ${{ secrets.PUSH_SEND_TOKEN }}
 ```
+
+未設定なら送信そのものを行いません（巡回は止まりません）。
 
 `--no-verify-jwt` で公開する代わりに、合言葉（`PUSH_SEND_TOKEN`）で守っています。
 これが無いと、URLを知った人が全端末に通知を送れてしまいます。
@@ -102,12 +113,23 @@ npm run app:ios      # 書き出し → cap sync → Xcode が開く
 - **外部ECは外のブラウザで開く。** `allowNavigation` を空にしてあるので、豆を買うリンクは
   アプリの中に閉じ込められず、外で開きます。
 
+### 課金の出し分け（実装済み）
+
+Apple は「アプリの中でデジタルな権利を売るなら自社の課金を使え」と定めています
+（3.1.1）。手数料15〜30%を払って Apple の課金を実装するか、アプリの中では売らないかの
+二択です。**後者を採っています。**
+
+`lib/native.js` が App Store 版かどうかを判定し、アプリの中では申し込みボタンを出さず
+「お申し込みはウェブサイトから／契約済みならこのアプリでもそのまま使えます」と表示します。
+豆を買うリンク（物理商品・外部EC）は 3.1.1 の対象外なので、そのまま出します。
+
 ### プッシュ通知は作り直しになります
 
 2 で実装した Web Push は **ブラウザ（およびホーム画面PWA）向け**の仕組みです。
 App Store 版では使えず、APNs（`@capacitor/push-notifications` + Apple の鍵）に
 置き換えが必要です。宛先の保管場所（`push_subscriptions`）と送信の呼び出し口は
 そのまま使えますが、送信部分は書き直しになります。
+これは Apple Developer Program の契約後でないと鍵が作れないため、契約後に着手します。
 
 **審査で必ず当たる2点**（先に決めておくべきこと）:
 

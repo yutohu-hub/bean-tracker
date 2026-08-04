@@ -19,6 +19,7 @@ from crawler import (crawl_all, products_to_dicts, Product, _guess_origin,  # no
 from state import open_db, apply_snapshot, export_for_site  # noqa: E402
 from build_site import build  # noqa: E402
 from notify import notify  # noqa: E402
+from push_notify import push  # noqa: E402
 
 ROOT = Path(__file__).parent
 
@@ -105,6 +106,8 @@ def main() -> None:
     fresh = [e for e in site_data["events"]
              if e["ts"] > t0 and e["type"] in ("new", "restock")]
     notify(fresh)
+    # 端末への通知。再入荷と新着レアロットだけを1通にまとめて送る
+    push(fresh)
 
     print(f"完了（{round(time.time()-t0, 1)}秒）")
 

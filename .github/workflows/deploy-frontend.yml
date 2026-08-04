@@ -61,6 +61,9 @@ jobs:
       - name: 静的ビルド（out/ を生成）
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          # プッシュ通知の公開鍵。公開してよい鍵なので secrets ではなく変数で渡す。
+          # 未設定のときは通知の欄が「配信設定がまだ」と出るだけで、他は変わらない
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
         run: npm run build
 
       - name: Jekyll 無効化（_next を配信させる）
