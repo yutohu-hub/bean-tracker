@@ -47,3 +47,34 @@ alter table public.stripe_events enable row level security;
 -- on conflict (user_id) do update
 --   set plan = excluded.plan, status = excluded.status,
 --       current_period_end = excluded.current_period_end, updated_at = now();
+
+
+-- ---- プッシュ通知の宛先 ----------------------------------------------
+-- ブラウザが発行する購読（endpoint + 鍵）を預かる場所。
+-- ログイン前でも再入荷を受け取れるよう、user_id は空でもよい。
+create table if not exists public.push_subscriptions (
+  endpoint      text primary key,           -- ブラウザごとに一意。これが宛先そのもの
+  subscription  jsonb not null,             -- endpoint と keys を含む購読全体
+  user_id       uuid references auth.users(id) on delete cascade,
+  ua            text,
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists push_subscriptions_user_idx
+  on public.push_subscriptions (user_id);
+
+alter table public.push_subscriptions enable row level security;
+
+-- 登録は誰でもできる（未ログインの端末も受け取れるようにするため）。
+-- ただし読み出しは誰にも許さない＝他人の宛先を集められない。
+drop policy if exists "anyone can register a device" on public.push_subscriptions;
+create policy "anyone can register a device" on public.push_subscriptions
+  for insert with check (true);
+
+-- 自分の端末は自分で解除できる。未ログインの端末は endpoint を知っている本人だけが消せる
+drop policy if exists "own device can be removed" on public.push_subscriptions;
+create policy "own device can be removed" on public.push_subscriptions
+  for delete using (user_id is null or auth.uid() = user_id);
+
+-- 送信は service_role（Edge Function）だけが行う。select ポリシーを作らないので、
+-- anon からは1行も読めない。

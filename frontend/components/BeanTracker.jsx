@@ -30,6 +30,7 @@ import { PRICE_BANDS, PROCESSES, priceBandLabel, filterBeans, filterRoasters,
 import { BeanCard } from "./ui/BeanCard";
 import { DetailSheet } from "./ui/DetailSheet";
 import { Splash } from "./ui/Splash";
+import { InstallHint } from "./ui/InstallHint";
 import { RoasterPage } from "./views/RoasterPage";
 // 地球儀は three.js を使うので、地球タブを開いたときだけ読み込む（初回表示を軽く保つ）
 const GlobeView = dynamic(() => import("./views/GlobeView").then((m) => m.GlobeView), {
@@ -564,6 +565,9 @@ export default function BeanTracker() {
           </div>
         </div>
       </footer>
+
+      {/* ホーム画面に追加すると使い勝手が変わるので、1回だけ案内する */}
+      <InstallHint />
 
       <DetailSheet bean={open} onClose={() => setOpen(null)} onRoaster={goRoaster} onFlavor={goFlavor} cur={displayCur} />
     </div>
