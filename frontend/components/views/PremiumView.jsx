@@ -13,6 +13,7 @@ import {
   isReturningFromCheckout, clearCheckoutFlag,
 } from "../lib/billing";
 import { isCloud, isSignedIn, getSession, currentUserId } from "../lib/account";
+import { isNativeApp } from "../lib/native";
 import { beanHref } from "../lib/utils";
 
 const CATS = [
@@ -78,6 +79,7 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
 
   if (!ready || !notify) return null;
 
+  const native = isNativeApp();     // App Store 版かどうか（課金導線の出し分け）
   const signedIn = isCloud() && isSignedIn();
   const session = getSession();
   const email = (session && session.user && session.user.email) || notify.email || "";
@@ -209,6 +211,14 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
               ) : active ? (
                 <div style={{ marginTop: 12, padding: "11px 0", textAlign: "center", borderRadius: 8, background: "#EDEAE1", color: GRAY, fontSize: 12.5, fontWeight: 700 }}>
                   ご利用中
+                </div>
+              ) : native ? (
+                /* App Store 版では、アプリの中から外部の決済へ誘導できない
+                   （Apple の課金規則 3.1.1）。契約済みの人はそのまま使えるので、
+                   使えないボタンではなく、どこで申し込めるかを書く。 */
+                <div style={{ marginTop: 12, padding: "11px 12px", textAlign: "center", borderRadius: 8, background: "#F7F5EF", color: GRAY, fontSize: 11.5, lineHeight: 1.7 }}>
+                  お申し込みはウェブサイトから承っています。<br />
+                  契約済みのアカウントでログインすれば、このアプリでもそのまま使えます。
                 </div>
               ) : (
                 <button onClick={() => startCheckout(p.id)}

@@ -68,6 +68,9 @@ jobs:
       - name: 巡回と差分検知
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          # 端末へのプッシュ通知。未設定なら送信そのものを行わない（巡回は止まらない）
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          PUSH_SEND_TOKEN: ${{ secrets.PUSH_SEND_TOKEN }}
           RUN_NUMBER: ${{ github.run_number }}
           SHARDS: "13"
         run: |
