@@ -104,45 +104,17 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
     steps:
-      # 詰まった配信を先に流す。
-      #
-      # Pages の配信は1本ずつしか進まない。前の1本が終わらないまま居座ると、
-      # 後続は deployment_queued のまま10分待って諦める（実測: 08-06 12:56 の
-      # 2本とも、10分間ずっと deployment_queued）。こうなると新しい中身が
-      # 一切公開されず、サイトは開けないままになる。
-      #
-      # そこで配信前に、github-pages 環境のまだ終わっていない配信を取り消す。
-      # 取り消しの相手はコミットの sha（Pages の配信IDはこれ）。
-      #
-      # ただし今回の sha は絶対に触らない。Pages の配信IDは sha そのものなので、
-      # 自分の分を取り消すと、そのあと何度配信しても
-      # 「Deployment cancelled.」で即座に弾かれる（実測: 08-06 13:17 の 4c9cfe81）。
+      # 中身は scripts/unstick-pages-deploy.sh に書いてある（なぜ要るのかも）
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/unstick-pages-deploy.sh
+          sparse-checkout-cone-mode: false
+
       - name: 詰まっている配信を取り消す
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          repo="$GITHUB_REPOSITORY"
-          found=0
-          while IFS=$'\t' read -r id sha; do
-            [ -n "$id" ] || continue
-            [ "$sha" = "$GITHUB_SHA" ] && continue      # 自分の分は残す
-            state=$(gh api "repos/$repo/deployments/$id/statuses?per_page=1" --jq '.[0].state // "none"' 2>/dev/null || echo none)
-            case "$state" in
-              queued|in_progress|pending)
-                echo "居座っている配信: $sha ($state) → 取り消す"
-                gh api -X POST "repos/$repo/pages/deployments/$sha/cancel" 2>&1 || true
-                found=1
-                ;;
-            esac
-          done < <(gh api "repos/$repo/deployments?environment=github-pages&per_page=30" \
-                     --jq '.[] | [.id, .sha] | @tsv' 2>/dev/null || true)
-          if [ "$found" = "0" ]; then
-            echo "詰まっている配信はありません"
-          else
-            echo "取り消したので、少し待ってから配信します"
-            sleep 20
-          fi
+        run: bash scripts/unstick-pages-deploy.sh 20
 
       - name: Pages へデプロイ
         id: deployment
@@ -153,33 +125,30 @@ jobs:
         if: steps.deployment.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          repo="$GITHUB_REPOSITORY"
-          echo "失敗した。残っている配信を取り消してからやり直します"
-          while IFS=$'\t' read -r id sha; do
-            [ -n "$id" ] || continue
-            [ "$sha" = "$GITHUB_SHA" ] && continue      # 自分の分は残す
-            state=$(gh api "repos/$repo/deployments/$id/statuses?per_page=1" --jq '.[0].state // "none"' 2>/dev/null || echo none)
-            case "$state" in
-              queued|in_progress|pending)
-                echo "取り消す: $sha ($state)"
-                gh api -X POST "repos/$repo/pages/deployments/$sha/cancel" 2>&1 || true
-                ;;
-            esac
-          done < <(gh api "repos/$repo/deployments?environment=github-pages&per_page=30" \
-                     --jq '.[] | [.id, .sha] | @tsv' 2>/dev/null || true)
-          sleep 60
+        run: bash scripts/unstick-pages-deploy.sh 60
 
+      # やり直しが効くのは、配信が数秒で弾かれた場合だけ
+      # （前の配信と重なった 400 など）。
+      #
+      # 10分待って諦めた場合には効かない。deploy-pages は諦めるときに自分の配信を
+      # 取り消すが、Pages の配信IDはコミットの sha そのものなので、同じ sha で
+      # 作り直しても「すでに取り消し済み」の扱いになり、即 Deployment cancelled で
+      # 返ってくる（実測: 08-06 13:35 の 9a835c02）。無駄に見えるので条件を分ける。
       - name: Pages へデプロイ（やり直し）
         id: retry
-        if: steps.deployment.outcome == 'failure'
+        if: steps.deployment.outcome == 'failure' && steps.deployment.conclusion != 'timed_out'
         uses: actions/deploy-pages@v4
 
       # 実際に開けるかを外から確かめる。ここが唯一、公開後のサイトに触れる場所。
       # 配信直後は CDN が追いつかないことがあるので、少し間を空けて数回試す。
+      # 配信が失敗していても確かめる。前の中身がまだ生きているかどうかは別の話で、
+      # 「公開は落ちたがサイトは開ける」と「サイトごと死んでいる」は区別したい。
       - name: 開けるか確かめる
+        id: reach
+        if: always()
+        continue-on-error: true
         env:
-          URL: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
+          URL: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url || 'https://yutohu-hub.github.io/bean-tracker/' }}
         run: |
           echo "確認先: $URL"
           for i in 1 2 3 4 5 6; do
@@ -195,4 +164,32 @@ jobs:
           head -c 800 /tmp/page.html || true
           echo
           echo "サイトが開けません"
+          exit 1
+
+      # 配信が進まないときに、次に何を見ればいいかをログに残す。
+      # ここが無いと「deployment_queued が並んで終わり」で手がかりが消える。
+      - name: 開けないときの手がかり
+        if: steps.reach.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "── Pages の状態 ──"
+          gh api "repos/$GITHUB_REPOSITORY/pages" || true
+          cat <<'MSG'
+
+          読み方:
+            "status": "built"    … 正常。配信が届いている
+            "status": "errored"  … Pages 側が受け付けていない
+            "build_type"         … "workflow" ならこのワークフローが公開元
+            "source"             … ブランチ公開の名残。build_type が workflow なら本来無視される
+
+          配信が deployment_queued のまま10分続いた場合、順番待ちの相手はいない
+          （その前の手順で確かめている）。Pages 側が配信を拾っていない状態で、
+          リポジトリからは直せない。
+
+          Settings → Pages → Build and deployment → Source を
+          「GitHub Actions」で保存し直してください。ここを保存すると Pages の
+          設定が作り直され、errored から復帰します。
+          この変更は GITHUB_TOKEN では行えません（PUT /repos/../pages は 403）。
+          MSG
           exit 1

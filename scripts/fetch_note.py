@@ -15,7 +15,6 @@ About から記事一覧が消えるほうが困る。
 from __future__ import annotations
 import json
 import re
-import sys
 from pathlib import Path
 from xml.etree import ElementTree
 

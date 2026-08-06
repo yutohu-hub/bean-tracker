@@ -42,15 +42,24 @@ export async function fetchLiveRates() {
 }
 
 export function toJPY(bean) { return bean.amount * RATES_TO_JPY[bean.cur]; }
-export function fmtPrice(bean, disp) {
-  const jpy = toJPY(bean);
+
+/* 円の額を、表示通貨（JPY か USD）の文字にする。
+   同じ「¥1,234 / $8.23」の組み立てが5か所に散らばっていて、しかもドルの
+   小数桁が場所によって 0 桁だったり 2 桁だったりしていた。ここに集める。 */
+export function fmtJPY(jpy, disp, { usdDigits = 2 } = {}) {
   if (disp === "JPY") return `¥${Math.round(jpy).toLocaleString()}`;
-  return `$${(jpy / RATES_TO_JPY.USD).toFixed(2)}`;
+  return `$${(jpy / RATES_TO_JPY.USD).toFixed(usdDigits)}`;
 }
+
+export function fmtPrice(bean, disp) { return fmtJPY(toJPY(bean), disp); }
 export function perGrams(bean) {
   if (bean.per.endsWith("oz")) return Math.round(parseFloat(bean.per) * 28.35);
   return parseInt(bean.per);
 }
+
+/* 100gあたりの円。袋の大きさが 100g / 250g / 12oz とばらばらなので、
+   値段を比べるときは必ずこの単位に直す。 */
+export function per100JPY(bean) { return (toJPY(bean) / perGrams(bean)) * 100; }
 export function fmtLocal(bean) {
   return `${CUR_SYMBOL[bean.cur]}${bean.amount.toLocaleString()}${bean.cur !== "JPY" && bean.cur !== "USD" ? ` ${bean.cur}` : ""}`;
 }

@@ -1,7 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
-import { RATES_TO_JPY, toJPY, perGrams } from "../lib/currency";
+import { RATES_TO_JPY, per100JPY } from "../lib/currency";
 import { usePlan } from "../lib/usePlan";
 import { beanHref } from "../lib/utils";
 import { ROASTERS } from "../data/roasters";
@@ -14,19 +13,18 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
   // 値段が取れなかった豆（amount=0）は最初から除く
   const live = BEANS.filter((b) => b.status === "now" && match(b)
     && ROASTERS[b.r] && ROASTERS[b.r].url && Number(b.amount) > 0);
-  const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
   // 整数まるめだと $9.2 と $9.6 が同じに見える。桁が下がるぶんだけ小数を伸ばす。
   const fmtUsd = (v) => v.toFixed(v < 1 ? 2 : v < 10 ? 1 : 0);
   // 換算して1円に満たない額は、値段として使える数字ではない（取得できていないか、
   // 桁が落ちている）。0円と表示して最安の席に座らせず、末尾に「価格不明」で置く。
-  const priced = (b) => per100(b) >= 1;
+  const priced = (b) => per100JPY(b) >= 1;
   const fmt100 = (b) => !priced(b) ? "価格不明"
     : cur === "JPY"
-      ? `¥${Math.round(per100(b)).toLocaleString()}`
-      : `$${fmtUsd(per100(b) / RATES_TO_JPY.USD)}`;
+      ? `¥${Math.round(per100JPY(b)).toLocaleString()}`
+      : `$${fmtUsd(per100JPY(b) / RATES_TO_JPY.USD)}`;
   const sorted = live.slice().sort((a, b) => {
     if (priced(a) !== priced(b)) return priced(a) ? -1 : 1;
-    return per100(a) - per100(b);
+    return per100JPY(a) - per100JPY(b);
   });
   const ladder = sorted.slice(0, limit);
   const locked = Math.max(0, sorted.length - ladder.length);
@@ -70,7 +68,7 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
               <div style={{ height: 6, background: "#F0EDE4", borderRadius: 3, marginTop: 5, overflow: "hidden" }}>
                 <div className="bt-bar" style={{
                   height: "100%", borderRadius: 3,
-                  width: `${(per100(b) / maxP) * 100}%`,
+                  width: `${(per100JPY(b) / maxP) * 100}%`,
                   background: `linear-gradient(90deg, ${GREEN}, #6B8F3C)`,
                   animationDelay: `${0.15 + i * 0.09}s`,
                 }} />
@@ -103,7 +101,7 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
   );
 }
 
-export function GeishaView({ onOpen, onRoaster, cur, onPremium }) {
+export function GeishaView({ onOpen, cur, onPremium }) {
   const { premium, limits } = usePlan();
   const limit = limits.rareLots;
   const secProps = { onOpen, cur, limit, premium, onPremium };

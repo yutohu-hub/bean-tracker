@@ -1,0 +1,72 @@
+name: 点検
+
+# 変更するたびに、壊れていないかを機械に見てもらう。
+#
+# tests/ には前から2本テストがあったが、動かす場所がどこにも無く、
+# 手で `python tests/test_push_notify.py` と打つ以外に走る機会が無かった。
+# 走らないテストは、通っているのか壊れているのか誰も知らない状態で腐る。
+# ここで毎回走らせる。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Python（巡回まわり）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 依存インストール
+        run: |
+          pip install -r requirements.txt
+          pip install pyflakes
+
+      # 使っていない import や未定義の名前を拾う。型検査まではしない
+      - name: 静的チェック
+        run: python -m pyflakes main.py src/*.py scripts/*.py tests/*.py
+
+      - name: テスト
+        run: |
+          python tests/test_push_notify.py
+          python tests/test_generic_adapter.py
+
+      # ネットに出ずに一巡できるかを見る。ECの仕様変更とは無関係に、
+      # 差分検知と書き出しの配線が生きているかの確認
+      - name: 手元のデータで一巡
+        run: python main.py --mock fixtures
+
+  frontend:
+    name: フロント（Next.js）
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 依存インストール
+        run: npm ci
+
+      - name: eslint
+        run: npm run lint
+
+      # 公開と同じ条件（サブパスあり）で書き出せるところまで確かめる
+      - name: 静的ビルド
+        env:
+          NEXT_PUBLIC_BASE_PATH: /bean-tracker
+        run: npm run build

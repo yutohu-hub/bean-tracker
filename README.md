@@ -7,7 +7,7 @@
 このリポジトリには2つの実装が共存しています。
 
 - **ルート（Python版クローラー）** — GitHub Actionsで各ECを巡回し、差分検知して `frontend/components/data/live.generated.json` を更新する本体（下記「仕組み」以降）。確認用の簡易サイトは `build/site/` にも書き出します。
-- **`frontend/`（Next.js版UIプロトタイプ）** — 図鑑・地球・診断・味わい・レアロットの5画面を持つ閲覧用UI。現時点はサンプルデータで動作。詳細は `frontend/README.md` を参照。
+- **`frontend/`（Next.js版UI）** — 公開しているサイト本体。図鑑・地球・診断・味わい・レアロット・味の記録などの画面を持つ。巡回した実データで動きます。詳細は `frontend/README.md` を参照。
   ```bash
   cd frontend
   npm install

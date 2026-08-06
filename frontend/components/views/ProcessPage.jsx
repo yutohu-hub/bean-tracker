@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
-import { RATES_TO_JPY, toJPY, perGrams } from "../lib/currency";
+import { fmtJPY, per100JPY } from "../lib/currency";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
 import { PROC, processKey } from "../lib/palette";
@@ -24,8 +24,7 @@ export function ProcessPage({ pkey = "washed", onOpen, onRoaster, onBack, onProc
   const [sort, setSort] = useState("price");
   const [mode, setMode] = useState("list");  // list | map
   const now = BEANS.filter((b) => b.status === "now" && ROASTERS[b.r] && ROASTERS[b.r].url);
-  const per100 = (b) => (toJPY(b) / perGrams(b)) * 100;
-  const fmt = (jpy) => cur === "JPY" ? `¥${Math.round(jpy).toLocaleString()}` : `$${(jpy / RATES_TO_JPY.USD).toFixed(0)}`;
+  const fmt = (jpy) => fmtJPY(jpy, cur, { usdDigits: 0 });
 
   // 全精製の件数（チップ表示用）
   const counts = {};
@@ -35,8 +34,8 @@ export function ProcessPage({ pkey = "washed", onOpen, onRoaster, onBack, onProc
   const st = PROC[key];
 
   let list = now.filter((b) => processKey(b.process) === key);
-  const avg = list.length ? list.reduce((s, b) => s + per100(b), 0) / list.length : 0;
-  list = list.slice().sort((a, b) => sort === "price" ? per100(a) - per100(b) : (b.updatedAt ? Date.parse(b.updatedAt) || 0 : 0) - (a.updatedAt ? Date.parse(a.updatedAt) || 0 : 0) || b.id - a.id);
+  const avg = list.length ? list.reduce((s, b) => s + per100JPY(b), 0) / list.length : 0;
+  list = list.slice().sort((a, b) => sort === "price" ? per100JPY(a) - per100JPY(b) : (b.updatedAt ? Date.parse(b.updatedAt) || 0 : 0) - (a.updatedAt ? Date.parse(a.updatedAt) || 0 : 0) || b.id - a.id);
 
   const selStyle = { padding: "7px 10px", borderRadius: 8, border: `1px solid ${LINE}`, background: PAPER, color: INK, fontSize: 12 };
 
@@ -88,7 +87,7 @@ export function ProcessPage({ pkey = "washed", onOpen, onRoaster, onBack, onProc
 
       {mode === "map" ? (
         <div style={{ marginTop: 14, maxWidth: 560, marginLeft: "auto", marginRight: "auto" }}>
-          <FlavorMapView onOpen={onOpen} cur={cur} procOnly={key} embedded />
+          <FlavorMapView onOpen={onOpen} procOnly={key} />
         </div>
       ) : (
         <>

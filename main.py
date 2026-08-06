@@ -14,7 +14,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
-from crawler import (crawl_all, products_to_dicts, Product, _guess_origin,  # noqa: E402
+from crawler import (crawl_all, products_to_dicts, _guess_origin,  # noqa: E402
                      _guess_process, extract_notes, html_to_text)
 from state import open_db, apply_snapshot, export_for_site  # noqa: E402
 from build_site import build  # noqa: E402
