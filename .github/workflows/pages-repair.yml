@@ -1,0 +1,96 @@
+name: Pages を作り直す
+
+# サイトが開けず、配信が deployment_queued のまま進まなくなったときの復旧手順。
+#
+# 2026-08-06 に起きた状態:
+#
+#   {"status":"errored","build_type":"workflow","source":{"branch":"main","path":"/docs"}}
+#   Current status: deployment_queued   （10分間ずっとこれ → Timeout reached, aborting!）
+#
+# 順番待ちの相手はいない（deploy 側で確かめている）のに配信が拾われない。
+# Pages の設定そのものが errored に落ちていて、配信を受け付けなくなっている。
+# この場合は設定を作り直すしかない。
+#
+# 普段は動かさない。手で実行したときだけ走る。
+# 消えたままにはならない: 次の「フロント公開」の configure-pages が
+# enablement: true で作り直す。作り直したあとは公開をもう一度回すこと。
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Pages の設定を作り直す。よければ rebuild と入力'
+        required: true
+        default: ""
+
+permissions:
+  contents: read
+  pages: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 入力を確かめる
+        run: |
+          if [ "${{ inputs.confirm }}" != "rebuild" ]; then
+            echo "confirm に rebuild と入力してください。何もしません。"
+            exit 1
+          fi
+
+      - name: いまの状態
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pages" 2>&1 || echo "（設定を読めません）"
+
+      # まず穏当な方: 公開元を書き換えるだけ。これで直るなら消さずに済む。
+      # 実測では administration 権限が無く 403 になるが、環境によっては通る。
+      - name: 公開元をワークフローに揃える
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X PUT "repos/$GITHUB_REPOSITORY/pages" -f build_type=workflow 2>&1 \
+            && echo "揃えました" || echo "変えられませんでした（403 なら権限不足）"
+
+      # それでも errored のままなら、設定を消して作り直す。
+      # URL は同じリポジトリなら変わらない。
+      - name: errored なら作り直す
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq '.status // "none"' 2>/dev/null || echo none)
+          echo "状態: $status"
+          if [ "$status" != "errored" ]; then
+            echo "errored ではないので、作り直しません。"
+            exit 0
+          fi
+
+          echo "── 消す ──"
+          if gh api -X DELETE "repos/$GITHUB_REPOSITORY/pages" 2>&1; then
+            echo "消しました"
+          else
+            echo "消せませんでした。GITHUB_TOKEN には administration の権限が無いためです。"
+            echo "この場合はリポジトリ側から直せません。"
+            echo "Settings → Pages → Source を「GitHub Actions」で保存し直してください。"
+            exit 1
+          fi
+
+          sleep 10
+          echo "── 作る ──"
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages" \
+            -f 'build_type=workflow' 2>&1 || {
+              echo "作り直せませんでした。次の「フロント公開」の configure-pages が"
+              echo "enablement: true で作ります。Actions から手動実行してください。"
+              exit 1
+            }
+
+      - name: 作り直したあとの状態
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pages" 2>&1 || echo "（まだ設定がありません）"
+          echo
+          echo "このあと Actions →「フロント公開 (GitHub Pages)」→ Run workflow で公開し直してください。"
