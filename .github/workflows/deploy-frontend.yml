@@ -135,13 +135,18 @@ jobs:
       # やり直しが効くのは、配信が数秒で弾かれた場合だけ
       # （前の配信と重なった 400 など）。
       #
-      # 10分待って諦めた場合には効かない。deploy-pages は諦めるときに自分の配信を
+      # 時間切れで諦めた場合には効かない。deploy-pages は諦めるときに自分の配信を
       # 取り消すが、Pages の配信IDはコミットの sha そのものなので、同じ sha で
       # 作り直しても「すでに取り消し済み」の扱いになり、即 Deployment cancelled で
-      # 返ってくる（実測: 08-06 13:35 の 9a835c02）。無駄に見えるので条件を分ける。
+      # 返ってくる（実測: 08-06 13:35 の 9a835c02）。
+      #
+      # その場合を条件で外そうとしたが、できなかった。continue-on-error を付けた
+      # 手順は、中で失敗しても conclusion が success になる（失敗は outcome にしか
+      # 出ない）ため、時間切れかどうかを条件式から見分けられない。
+      # 効かないときも6秒で終わるので、そのまま毎回試す。
       - name: Pages へデプロイ（やり直し）
         id: retry
-        if: steps.deployment.outcome == 'failure' && steps.deployment.conclusion != 'timed_out'
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
 
       # 実際に開けるかを外から確かめる。ここが唯一、公開後のサイトに触れる場所。
@@ -173,8 +178,11 @@ jobs:
 
       # 配信が進まないときに、次に何を見ればいいかをログに残す。
       # ここが無いと「deployment_queued が並んで終わり」で手がかりが消える。
+      # always() が要る。条件式に always()/failure() を書かないと success() が
+      # 暗黙で and される。ここまでに「やり直し」が落ちていると job は失敗扱いなので、
+      # steps.reach.outcome だけ見ても手順ごと飛ばされる（実測: 08-06 13:54 は skipped）。
       - name: 開けないときの手がかり
-        if: steps.reach.outcome == 'failure'
+        if: always() && steps.reach.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
