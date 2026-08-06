@@ -9,6 +9,9 @@ on:
     paths:
       - "frontend/**"
       - ".github/workflows/deploy-frontend.yml"
+      # 配信の詰まりを外す処理。この中身を直しても公開が走らないと、
+      # 直したものが試されないまま次の巡回まで待つことになる（実測: PR #150）
+      - "scripts/unstick-pages-deploy.sh"
   workflow_dispatch:
   # 巡回が live.generated.json を更新しても、その push は GITHUB_TOKEN によるものなので
   # GitHub は上の push トリガーを発火させない（ワークフローの無限ループ防止の仕様）。
