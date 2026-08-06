@@ -9,8 +9,3 @@ data/site.json
 data/state.db
 build/
 
-
-# Capacitor が毎回生成する iOS プロジェクト。Xcode の生成物で差分が大きく、
-# npx cap add ios で作り直せるのでコミットしない。
-/ios/
-/node_modules/
