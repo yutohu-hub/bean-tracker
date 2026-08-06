@@ -3,7 +3,22 @@
 
 module.exports = {
   extends: "next/core-web-vitals",
+
+  // no-undef を効かせるために、どこで動くコードなのかを教える必要がある。
+  // これが無いと window や console まで「未定義」と言われて使い物にならない。
+  env: { browser: true, node: true, es2022: true },
+  parserOptions: { ecmaVersion: 2022, sourceType: "module" },
+
   rules: {
+    // 存在しない名前を書いたら止める。
+    //
+    // 2026-08-06、レアロットの画面が開かなくなった。
+    //   const maxP = Math.max(...ladder.map(per100));   ← per100 はもう無い
+    // 整理のときに per100( を per100JPY( へ文字列置換したが、括弧が続かない
+    // map(per100) だけが取り残された。ビルドは通る（最初に描く画面には
+    // 含まれないため）。この規則があれば書いた時点で分かる。
+    "no-undef": "error",
+
     // 使っていない変数・引数は消す。残すなら _ で始める（意図が読める）
     "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
 
