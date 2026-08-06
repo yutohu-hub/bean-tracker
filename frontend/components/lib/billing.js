@@ -1,6 +1,6 @@
 // Stripe 決済への導線（静的サイトのまま・サーバー不要・秘密鍵不要）
 //
-// 有効化手順は docs/premium.md。ここに置くのは公開URLだけで、
+// 有効化手順は documents/premium.md。ここに置くのは公開URLだけで、
 // 秘密鍵(sk_...)や Webhook シークレットは絶対に置かない。
 //
 // 重要: 決済を「誰の支払いか」に結びつけるのは client_reference_id。

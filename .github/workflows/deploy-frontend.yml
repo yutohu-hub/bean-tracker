@@ -50,34 +50,23 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # 公開元（Settings → Pages → Source）を確かめ、ワークフローに寄せる。
+      # 公開の設定をログに残す。
       #
-      # ここが「ブランチ」のままだと、push のたびに GitHub 側の
-      # "pages build and deployment" がリポジトリ直下をそのまま公開する。
-      # 直下には index.html が無いので File not found になり、しかも
-      # こちらの配信と数秒差で競合して、後に終わった方が残る。
-      # configure-pages は「未設定なら有効化」しかしないので、ここで明示する。
+      # 08-06 に見えたもの:
+      #   {"status":"errored","build_type":"workflow","source":{"branch":"main","path":"/docs"}}
+      # ブランチ公開の設定（main の /docs）が残っていて、push のたびに
+      # GitHub 側の "pages build and deployment" が docs/ をそのまま公開しに来ていた。
+      # docs/ には .md しか無く index.html が無いので File not found になる。
+      # さらにこちらの配信と数秒差で競合し、両方が順番待ちのまま10分で諦めていた。
       #
-      # 権限が足りず変更できない場合もある（GITHUB_TOKEN には administration が無い）。
-      # そのときは失敗させず、いまの設定をログに出して先へ進む。
-      - name: 公開元を確かめる
-        id: source
+      # docs/ は documents/ に改名して、ブランチ公開が拾える中身を無くした。
+      # 設定そのもの（Source を GitHub Actions にする）は GITHUB_TOKEN では変えられない
+      # ため（administration 権限が要る／PUT は 403）、状態を見えるようにしておく。
+      - name: 公開の設定を確かめる
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          echo "── いまの公開元 ──"
-          gh api "repos/${GITHUB_REPOSITORY}" --hostname github.com >/dev/null 2>&1 || true
-          before=$(gh api "repos/${GITHUB_REPOSITORY}/pages" 2>&1 || true)
-          echo "$before"
-          echo "── ワークフローに変更を試みる ──"
-          if gh api -X PUT "repos/${GITHUB_REPOSITORY}/pages" -f build_type=workflow 2>&1; then
-            echo "変更できました"
-          else
-            echo "変更できませんでした（Settings → Pages → Source を手で切り替える必要があります）"
-          fi
-          echo "── 変更後 ──"
-          gh api "repos/${GITHUB_REPOSITORY}/pages" 2>&1 || true
+        run: gh api "repos/${GITHUB_REPOSITORY}/pages" 2>&1 || true
 
       # Pages を自動で有効化し、配信先の base_path（例: /bean-tracker）を取得
       - name: Configure Pages

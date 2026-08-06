@@ -7,8 +7,8 @@ frontend/public/cesium/
 # state.db は実行間で保持が必要だが、派生キャッシュなので git ではなく Actions のキャッシュに置く。
 data/site.json
 data/state.db
-docs/data.json
-docs/index.html
+build/
+
 
 # Capacitor が毎回生成する iOS プロジェクト。Xcode の生成物で差分が大きく、
 # npx cap add ios で作り直せるのでコミットしない。

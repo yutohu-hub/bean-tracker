@@ -6,7 +6,7 @@
   1. プロジェクトが止まっている／URLやキーが違う   → account.js の SUPABASE
   2. メールログイン(magic link)が無効になっている   → Authentication → Providers
   3. 戻り先URLが許可されていない                    → Authentication → URL Configuration
-  4. テーブル(tastings / entitlements)が無い        → docs/account-sync.md の SQL
+  4. テーブル(tastings / entitlements)が無い        → documents/account-sync.md の SQL
   5. メール送信の回数制限に当たっている              → 時間をおく／SMTPを設定
 
 開発環境からは supabase.co に到達できない（社内ポリシーで 403）ため、
@@ -100,7 +100,7 @@ def main() -> None:
                 print(f"   {table:<13} ある（RLSで拒否＝設計どおり）")
             elif r.status_code == 404:
                 ok = False
-                print(f"   {table:<13} 無い ← docs/account-sync.md の SQL を実行する")
+                print(f"   {table:<13} 無い ← documents/account-sync.md の SQL を実行する")
             else:
                 print(f"   {table:<13} HTTP {r.status_code} {r.text[:100]}")
         except httpx.HTTPError as e:

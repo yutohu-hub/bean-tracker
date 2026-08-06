@@ -93,7 +93,7 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
     }
     const url = checkoutUrl(planId, { userId: currentUserId(), email });
     if (!url) {
-      setPayMsg("決済リンクが未設定です。docs/premium.md の手順で Stripe の Payment Link を lib/billing.js に貼ると、このボタンから申し込めるようになります。");
+      setPayMsg("決済リンクが未設定です。documents/premium.md の手順で Stripe の Payment Link を lib/billing.js に貼ると、このボタンから申し込めるようになります。");
       return;
     }
     window.open(url, "_blank", "noopener,noreferrer");

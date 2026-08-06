@@ -91,7 +91,7 @@ jobs:
           git config user.name "bean-tracker-bot"
           git config user.email "actions@users.noreply.github.com"
           # コミットするのはサイトが読む1ファイルだけ。
-          # data/site.json と docs/ の生成物は同じジョブ内で使い切る中間成果物なので追跡しない。
+          # data/site.json と build/site/ の生成物は同じジョブ内で使い切る中間成果物なので追跡しない。
           # 座標のキャッシュも残す。これを捨てると毎回 Nominatim に問い合わせ直すことになり、
           # 相手の利用規約にも反する（同じ街を何度も引かないための蓄積）。
           git add frontend/components/data/live.generated.json frontend/components/data/note.generated.json config/citycoords.json

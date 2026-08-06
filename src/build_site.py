@@ -1,4 +1,12 @@
-"""docs/ に静的サイト（index.html + data.json）を書き出す。GitHub Pagesで公開する想定。"""
+"""build/site/ に静的サイト（index.html + data.json）を書き出す。
+
+いまサイトとして公開しているのは frontend/（Next.js）の方で、ここの出力は
+巡回結果を目で確かめるための控えとして残している。書き出し先は build/site。
+
+docs/ には置かない。GitHub Pages はブランチ公開のとき /docs を配信元に選べる
+仕様があり、その設定が残っていると、こちらの意図と無関係に docs/ の中身が
+サイトとして配信されてしまう（2026-08-06 の File not found はこれが原因）。
+"""
 from __future__ import annotations
 import json
 import shutil
@@ -8,9 +16,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def build(site_data: dict, failed: list[str], out_dir: str = "docs") -> None:
+def build(site_data: dict, failed: list[str], out_dir: str = "build/site") -> None:
     out = ROOT / out_dir
-    out.mkdir(exist_ok=True)
+    out.mkdir(parents=True, exist_ok=True)
 
     products = site_data["products"]
     payload = {

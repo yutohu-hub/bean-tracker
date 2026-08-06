@@ -6,7 +6,7 @@
 
 このリポジトリには2つの実装が共存しています。
 
-- **ルート（Python版クローラー）** — GitHub Actionsで各ECを巡回し、差分検知して `docs/` に静的サイトを生成する本体（下記「仕組み」以降）。
+- **ルート（Python版クローラー）** — GitHub Actionsで各ECを巡回し、差分検知して `frontend/components/data/live.generated.json` を更新する本体（下記「仕組み」以降）。確認用の簡易サイトは `build/site/` にも書き出します。
 - **`frontend/`（Next.js版UIプロトタイプ）** — 図鑑・地球・診断・味わい・レアロットの5画面を持つ閲覧用UI。現時点はサンプルデータで動作。詳細は `frontend/README.md` を参照。
   ```bash
   cd frontend
@@ -28,7 +28,8 @@ state.py が前回のDBと比較して差分を検知
    ・12時間以上欠品→復活 → 再入荷（欠品期間つき）
    ・在庫あり→なし → 売り切れ
    ↓
-build_site.py が docs/ にサイトを生成 → GitHub Pagesで公開
+巡回結果を frontend/ のデータに反映 → GitHub Actions が Pages へ公開
+   （build_site.py は確認用の簡易サイトを build/site/ に書き出す）
    （任意）notify.py がDiscordに通知
 ```
 
@@ -51,9 +52,12 @@ build_site.py が docs/ にサイトを生成 → GitHub Pagesで公開
    左の「Bean Tracker 巡回」→「Run workflow」で初回を手動実行。
 
 4. **Pagesを有効化**
-   「Settings」→「Pages」→ Source: `Deploy from a branch`、
-   Branch: `main` / フォルダ: `/docs` → Save。
+   「Settings」→「Pages」→ Source: **`GitHub Actions`** → Save。
    数分後 `https://あなたのID.github.io/bean-tracker/` でサイトが見られます。
+
+   `Deploy from a branch` は選ばないでください。ブランチ公開とワークフロー公開が
+   両方走ると、公開のたびに互いの順番待ちで詰まり、どちらが最後に終わったかで
+   中身が入れ替わります（2026-08-06 の File not found はこれが原因でした）。
 
 以降は**6時間ごとに自動巡回**され、サイトが勝手に更新されます。
 
@@ -84,7 +88,7 @@ ShopifyかWooCommerceの店ならそのまま動きます（世界のスペシ�
 pip install -r requirements.txt
 python main.py --mock fixtures   # ネット不要のテストデータで一巡
 python main.py                   # 実際に巡回（数分かかります）
-open docs/index.html             # 生成されたサイトを確認
+open build/site/index.html       # 確認用の簡易サイトを見る
 ```
 
 ## 設定値（config/roasters.yaml の settings）

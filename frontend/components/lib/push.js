@@ -13,7 +13,7 @@
 
 import { SUPABASE, isCloud, getSession } from "./account";
 
-// VAPID の公開鍵。秘密鍵はサーバだけが持つ（docs/ios-app.md の手順で作る）。
+// VAPID の公開鍵。秘密鍵はサーバだけが持つ（documents/ios-app.md の手順で作る）。
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 
 export const pushConfigured = () => !!VAPID_PUBLIC_KEY && isCloud();
@@ -47,7 +47,7 @@ export function pushAvailability() {
     return { ok: false, reason: "iPhone では、ホーム画面に追加してから開くと通知を受け取れます（Safari下部の共有 →「ホーム画面に追加」）。" };
   }
   if (!pushConfigured()) {
-    return { ok: false, reason: "通知の配信設定がまだ済んでいません（管理者向け: docs/ios-app.md）。" };
+    return { ok: false, reason: "通知の配信設定がまだ済んでいません（管理者向け: documents/ios-app.md）。" };
   }
   return { ok: true, reason: "" };
 }

@@ -238,7 +238,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
               ログイン（この端末に保存）
             </button>
             <div style={{ fontSize: 10, color: GRAY, marginTop: 10, lineHeight: 1.7 }}>
-              ※ 現在この端末はクラウド未設定のため端末内保存のみ。メール同期は Supabase 設定後に有効化されます（docs/account-sync.md）。
+              ※ 現在この端末はクラウド未設定のため端末内保存のみ。メール同期は Supabase 設定後に有効化されます（documents/account-sync.md）。
             </div>
           </>
         )}
