@@ -120,6 +120,11 @@ jobs:
         id: deployment
         continue-on-error: true
         uses: actions/deploy-pages@v4
+        with:
+          # 既定は10分。正常なら配信は1分もかからないので、そこまで待つ意味がない。
+          # Pages が受け付けない状態だと、巡回のたびに10分ぶん待って赤くなる。
+          # 5分あれば遅い日でも足りる。
+          timeout: 300000
 
       - name: 前の配信を片付けてから待つ
         if: steps.deployment.outcome == 'failure'
