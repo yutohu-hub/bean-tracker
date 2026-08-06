@@ -1,5 +1,5 @@
 // BEAN TRACKER Service Worker — オフライン対応（stale-while-revalidate）
-const CACHE = "bean-tracker-v2";
+const CACHE = "bean-tracker-v3";
 
 self.addEventListener("install", () => { self.skipWaiting(); });
 
@@ -16,6 +16,28 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // 同一オリジンのみキャッシュ
+
+  /* ページそのもの（アドレスを開く操作）は、つながっていれば必ず取りに行く。
+     ここをキャッシュ優先にしていると、前に保存したHTMLを返し続けるため、
+     配信し直して中のファイル名が変わったあとは、そのHTMLが指す先が
+     見つからず真っ白になることがある。落ちたときだけ保存したページを出す。 */
+  if (req.mode === "navigate") {
+    e.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const res = await fetch(req);
+        if (res && res.status === 200) cache.put(req, res.clone());
+        return res;
+      } catch {
+        return (await cache.match(req))
+          || (await cache.match("./"))
+          || Response.error();
+      }
+    })());
+    return;
+  }
+
+  // それ以外（JS・画像など）は、まず保存したものを返して裏で更新する
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(req);
