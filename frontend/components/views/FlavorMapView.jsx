@@ -11,7 +11,7 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const MIN = 1, MAX = 5;
 const PROC_ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"];
 
-export function FlavorMapView({ onOpen, cur, initialFam = null, focusId = null, procOnly = null, embedded = false }) {
+export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procOnly = null }) {
   const [famF, setFamF] = useState(initialFam);  // 系統ハイライト
   const [notesOnly, setNotesOnly] = useState(false);  // 店のノートで座標を決めた豆だけに絞る
   const [procF, setProcF] = useState(null);       // 精製ハイライト

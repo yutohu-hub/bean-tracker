@@ -73,7 +73,6 @@ export default function BeanTracker() {
   const [priceF, setPriceF] = useState("all");
   const [processF, setProcessF] = useState("すべて");
   const [query, setQuery] = useState("");
-  const [country, setCountry] = useState("all");
   const [sortBy, setSortBy] = useState("default"); // default | p100asc | p100desc
   const [splashDone, setSplashDone] = useState(false);
   const [splashGone, setSplashGone] = useState(false);
@@ -104,7 +103,7 @@ export default function BeanTracker() {
     return () => window.removeEventListener("resize", calc);
   }, []);
   // フィルタ・列数・モード変更時は1ページ目に戻す
-  useEffect(() => { setPage(0); }, [origin, statusF, priceF, processF, country, query, sortBy, cols, zukanMode]);
+  useEffect(() => { setPage(0); }, [origin, statusF, priceF, processF, query, sortBy, cols, zukanMode]);
 
   // アーカイブを端末に永続化（更新してもカタログから消えず残る）
   useEffect(() => {
@@ -161,12 +160,16 @@ export default function BeanTracker() {
     // 戻る/進むで戻した直後は、その反映で履歴をもう1つ積まない
     if (restoringRef.current) { restoringRef.current = false; writeUrlState(urlState()); return; }
     writeUrlState(urlState(), { push: true });
+    // urlState は毎回作り直される関数。依存に入れると毎描画で走り、履歴が溢れる
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, open, roasterId, roasterTab, procKey, meTab]);
 
   useEffect(() => {
     if (!filterWroteRef.current) { filterWroteRef.current = true; return; }
     if (restoringRef.current) return;
     writeUrlState(urlState());
+    // 同上
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, origin, statusF]);
 
   useEffect(() => {
@@ -245,18 +248,18 @@ export default function BeanTracker() {
 
   const goRoaster = (rid, tab) => { setRoasterId(rid); setRoasterTab(tab || "now"); setView("roaster"); window.scrollTo(0, 0); };
 
-  const COUNTRIES = useMemo(() => ["all", ...Array.from(new Set(Object.values(ROASTERS).map((r) => r.country))).sort()], []);
   const minSel = { width: "100%", boxSizing: "border-box", padding: "8px 9px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, background: PAPER, color: INK };
 
   // 為替が更新されると価格帯の判定も変わるので fxVersion を依存に入れている
   const filtered = useMemo(
-    () => filterBeans(BEANS, ROASTERS, { query, origin, status: statusF, process: processF, country, price: priceF, sortBy }),
-    [origin, statusF, priceF, processF, country, query, sortBy, displayCur, fxVersion]);
+    () => filterBeans(BEANS, ROASTERS, { query, origin, status: statusF, process: processF, price: priceF, sortBy }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [origin, statusF, priceF, processF, query, sortBy, fxVersion]);
 
   const nowCountByRoaster = useMemo(() => countNowByRoaster(BEANS), []);
   const filteredRoasters = useMemo(
-    () => filterRoasters(ROASTERS, nowCountByRoaster, { query, country }),
-    [query, country, nowCountByRoaster]);
+    () => filterRoasters(ROASTERS, nowCountByRoaster, { query }),
+    [query, nowCountByRoaster]);
 
   // ページング（実効列数 × 10行 = 1ページの件数）— モードで対象リストを切替
   const effCols = cols === "auto" ? autoCols : cols;
@@ -388,13 +391,13 @@ export default function BeanTracker() {
           <DiagnosisView onRoaster={goRoaster} />
         ) : view === "flavor" ? (
           <>
-            <FlavorMapView onOpen={setOpen} cur={displayCur} initialFam={flavorFocus.fam} focusId={flavorFocus.id} />
+            <FlavorMapView onOpen={setOpen} initialFam={flavorFocus.fam} focusId={flavorFocus.id} />
             <ProcessChart cur={displayCur} onProcess={goProcess} />
           </>
         ) : view === "process" ? (
           <ProcessPage pkey={procKey} onOpen={setOpen} onRoaster={goRoaster} onProcess={goProcess} onBack={() => { setView("flavor"); window.scrollTo(0, 0); }} cur={displayCur} />
         ) : view === "geisha" ? (
-          <GeishaView onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} onPremium={() => { setView("me"); setMeTab("premium"); window.scrollTo(0, 0); }} />
+          <GeishaView onOpen={setOpen} cur={displayCur} onPremium={() => { setView("me"); setMeTab("premium"); window.scrollTo(0, 0); }} />
         ) : view === "me" ? (
           <>
             {/* マイページ内サブ切替：記録 / プレミアム */}

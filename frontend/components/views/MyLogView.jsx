@@ -81,11 +81,15 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
       setReady(true);
       if (isCloud() && isSignedIn()) syncNow();
     })();
+    // 起動時に1回だけ。syncNow は毎描画で作り直されるので依存に入れない
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // メールリンクでログインが成立した直後は、その場で同期して結果を見せる
   useEffect(() => {
     if (authNotice && authNotice.ok) { refresh(); syncNow(); }
+    // 同上
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authNotice]);
 
   if (!ready) return null;

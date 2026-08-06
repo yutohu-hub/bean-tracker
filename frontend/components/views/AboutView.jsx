@@ -83,7 +83,7 @@ function Article({ a, open, onToggle }) {
   );
 }
 
-export function AboutView({ onNavigate }) {
+export function AboutView() {
   const [open, setOpen] = useState(0);
   return (
     <div>

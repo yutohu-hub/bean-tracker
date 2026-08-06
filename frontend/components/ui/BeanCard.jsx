@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { INK, PAPER, GRAY, STATUS } from "../lib/theme";
-import { fmtPrice, perGrams, toJPY, RATES_TO_JPY } from "../lib/currency";
+import { fmtPrice, fmtJPY, per100JPY, perGrams } from "../lib/currency";
 import { ROASTERS } from "../data/roasters";
 import { isNew, beanHref } from "../lib/utils";
 import { Package } from "./Package";
@@ -12,8 +12,7 @@ export function BeanCard({ bean, onOpen, onRoaster, cur }) {
   // いま買える豆は、詳細シートを開かずカードから直接ECへ行けるようにする
   const buyable = bean.status === "now" && roaster && roaster.url;
   const [tap, setTap] = useState(false);
-  const per100 = (toJPY(bean) / perGrams(bean)) * 100;
-  const per100Str = cur === "JPY" ? `¥${Math.round(per100).toLocaleString()}` : `$${(per100 / RATES_TO_JPY.USD).toFixed(2)}`;
+  const per100Str = fmtJPY(per100JPY(bean), cur);
   const handleTap = () => { setTap(true); setTimeout(() => { setTap(false); onOpen(bean); }, 200); };
   return (
     <div className={`bt-card${tap ? " bt-card-tap" : ""}`} style={{ cursor: "pointer", position: "relative" }} onClick={handleTap}>

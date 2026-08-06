@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN, AMBER, STATUS } from "../lib/theme";
-import { RATES_TO_JPY, toJPY, fmtPrice, perGrams, fmtLocal } from "../lib/currency";
+import { fmtPrice, fmtJPY, per100JPY, perGrams, fmtLocal } from "../lib/currency";
 import { beanHref, beanLinkKind } from "../lib/utils";
 import { getTasting, upsertTasting, removeTasting, isRestock, toggleRestock, getRestocks } from "../lib/store";
 import { usePlan } from "../lib/usePlan";
@@ -33,6 +33,9 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
     setPhoto(null);
     setCopied("");
     getPhoto(bean.id).then((p) => setPhoto(p));   // 写真は IndexedDB から後追いで読む
+    // 見ている豆が変わったときだけ読み直す。bean そのものを依存にすると
+    // 親が作り直すたびに走り、写真の読み込みが何度も走る
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bean ? bean.id : null]);
   // Esc で閉じる。背景タップしか閉じる手段が無いと、開いたあと戻れなくなる
   useEffect(() => {
@@ -79,10 +82,7 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
     ...(bean.notes ? [["風味", bean.notes]] : []),
     ["現地価格", `${fmtLocal(bean)} / ${bean.per}`],
     [cur === "JPY" ? "円換算" : "ドル換算", `${fmtPrice(bean, cur)} / ${perGrams(bean)}g`],
-    ["100gあたり", (() => {
-      const jpy100 = (toJPY(bean) / perGrams(bean)) * 100;
-      return cur === "JPY" ? `¥${Math.round(jpy100).toLocaleString()}` : `$${(jpy100 / RATES_TO_JPY.USD).toFixed(2)}`;
-    })()],
+    ["100gあたり", fmtJPY(per100JPY(bean), cur)],
     ["初出", bean.year],
   ];
   return (

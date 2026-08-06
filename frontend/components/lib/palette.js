@@ -1,5 +1,5 @@
 // 図鑑カードの色を「精製方法」で統一。100gあたり¥5,000以上は別色（レア）に統一。
-import { toJPY, perGrams } from "./currency";
+import { per100JPY } from "./currency";
 
 export const PREMIUM = { key: "premium", bg: "#2A2018", accent: "#E4B84A", label: "¥5,000+/100g" };
 export const MIDHIGH = { key: "midhigh", bg: "#6E4356", accent: "#F3E7EC", label: "¥3,000–5,000/100g" };
@@ -11,8 +11,6 @@ export const PROC = {
   awashed: { key: "awashed", bg: "#4A4A9E", accent: "#E9E9F6", label: "Anaerobic Washed" },
   other: { key: "other", bg: "#6E655A", accent: "#F2ECE2", label: "その他" },
 };
-
-export function per100JPY(b) { return (toJPY(b) / perGrams(b)) * 100; }
 
 export function processKey(proc = "") {
   if (/Anaerobic\s*Natural/i.test(proc)) return "anatural";

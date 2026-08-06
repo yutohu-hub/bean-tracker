@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { INK, PAPER, GRAY, LINE } from "../lib/theme";
+import { INK, GRAY, LINE } from "../lib/theme";
 import { shrinkToDataUrl } from "../lib/photos";
 
 /* 味の記録に添える写真の選択・プレビュー。

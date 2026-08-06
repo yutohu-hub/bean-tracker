@@ -12,7 +12,8 @@
 
 import { useMemo } from "react";
 import { INK, PAPER, GRAY, LINE } from "../lib/theme";
-import { PROC, processKey, per100JPY } from "../lib/palette";
+import { PROC, processKey } from "../lib/palette";
+import { per100JPY } from "../lib/currency";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
 
