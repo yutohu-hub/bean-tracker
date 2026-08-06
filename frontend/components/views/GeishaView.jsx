@@ -28,7 +28,7 @@ function VarietySection({ match, title, sub, onOpen, cur, limit, premium, onPrem
   });
   const ladder = sorted.slice(0, limit);
   const locked = Math.max(0, sorted.length - ladder.length);
-  const maxP = ladder.length ? Math.max(...ladder.map(per100)) : 1;
+  const maxP = ladder.length ? Math.max(...ladder.map(per100JPY)) : 1;
 
   return (
     <div style={{ marginTop: 26 }}>
