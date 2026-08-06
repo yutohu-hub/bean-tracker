@@ -104,9 +104,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
     steps:
-      # 巡回が毎時走り、そのたびに公開し直すため、前の配信がまだ終わっていない
-      # ことがある。その場合 GitHub は 400 で弾く（in progress deployment）。
-      # 実測: 08-06 10:18 の配信がこれで落ちた。少し待って1度だけやり直す。
       # 詰まった配信を先に流す。
       #
       # Pages の配信は1本ずつしか進まない。前の1本が終わらないまま居座ると、
@@ -116,7 +113,10 @@ jobs:
       #
       # そこで配信前に、github-pages 環境のまだ終わっていない配信を取り消す。
       # 取り消しの相手はコミットの sha（Pages の配信IDはこれ）。
-      # 取り消せなくても止めない。
+      #
+      # ただし今回の sha は絶対に触らない。Pages の配信IDは sha そのものなので、
+      # 自分の分を取り消すと、そのあと何度配信しても
+      # 「Deployment cancelled.」で即座に弾かれる（実測: 08-06 13:17 の 4c9cfe81）。
       - name: 詰まっている配信を取り消す
         continue-on-error: true
         env:
@@ -126,6 +126,7 @@ jobs:
           found=0
           while IFS=$'\t' read -r id sha; do
             [ -n "$id" ] || continue
+            [ "$sha" = "$GITHUB_SHA" ] && continue      # 自分の分は残す
             state=$(gh api "repos/$repo/deployments/$id/statuses?per_page=1" --jq '.[0].state // "none"' 2>/dev/null || echo none)
             case "$state" in
               queued|in_progress|pending)
@@ -157,6 +158,7 @@ jobs:
           echo "失敗した。残っている配信を取り消してからやり直します"
           while IFS=$'\t' read -r id sha; do
             [ -n "$id" ] || continue
+            [ "$sha" = "$GITHUB_SHA" ] && continue      # 自分の分は残す
             state=$(gh api "repos/$repo/deployments/$id/statuses?per_page=1" --jq '.[0].state // "none"' 2>/dev/null || echo none)
             case "$state" in
               queued|in_progress|pending)
