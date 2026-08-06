@@ -22,6 +22,8 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # 詰まった配信を見つけるために、github-pages 環境の履歴を読む
+  deployments: read
 
 # 同時実行は1本に（進行中はキャンセルしない）
 concurrency:
@@ -116,16 +118,66 @@ jobs:
       # 巡回が毎時走り、そのたびに公開し直すため、前の配信がまだ終わっていない
       # ことがある。その場合 GitHub は 400 で弾く（in progress deployment）。
       # 実測: 08-06 10:18 の配信がこれで落ちた。少し待って1度だけやり直す。
+      # 詰まった配信を先に流す。
+      #
+      # Pages の配信は1本ずつしか進まない。前の1本が終わらないまま居座ると、
+      # 後続は deployment_queued のまま10分待って諦める（実測: 08-06 12:56 の
+      # 2本とも、10分間ずっと deployment_queued）。こうなると新しい中身が
+      # 一切公開されず、サイトは開けないままになる。
+      #
+      # そこで配信前に、github-pages 環境のまだ終わっていない配信を取り消す。
+      # 取り消しの相手はコミットの sha（Pages の配信IDはこれ）。
+      # 取り消せなくても止めない。
+      - name: 詰まっている配信を取り消す
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          repo="$GITHUB_REPOSITORY"
+          found=0
+          while IFS=$'\t' read -r id sha; do
+            [ -n "$id" ] || continue
+            state=$(gh api "repos/$repo/deployments/$id/statuses?per_page=1" --jq '.[0].state // "none"' 2>/dev/null || echo none)
+            case "$state" in
+              queued|in_progress|pending)
+                echo "居座っている配信: $sha ($state) → 取り消す"
+                gh api -X POST "repos/$repo/pages/deployments/$sha/cancel" 2>&1 || true
+                found=1
+                ;;
+            esac
+          done < <(gh api "repos/$repo/deployments?environment=github-pages&per_page=30" \
+                     --jq '.[] | [.id, .sha] | @tsv' 2>/dev/null || true)
+          if [ "$found" = "0" ]; then
+            echo "詰まっている配信はありません"
+          else
+            echo "取り消したので、少し待ってから配信します"
+            sleep 20
+          fi
+
       - name: Pages へデプロイ
         id: deployment
         continue-on-error: true
         uses: actions/deploy-pages@v4
 
-      - name: 前の配信の完了を待つ
+      - name: 前の配信を片付けてから待つ
         if: steps.deployment.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "配信が重なったため 90 秒待ってやり直します"
-          sleep 90
+          repo="$GITHUB_REPOSITORY"
+          echo "失敗した。残っている配信を取り消してからやり直します"
+          while IFS=$'\t' read -r id sha; do
+            [ -n "$id" ] || continue
+            state=$(gh api "repos/$repo/deployments/$id/statuses?per_page=1" --jq '.[0].state // "none"' 2>/dev/null || echo none)
+            case "$state" in
+              queued|in_progress|pending)
+                echo "取り消す: $sha ($state)"
+                gh api -X POST "repos/$repo/pages/deployments/$sha/cancel" 2>&1 || true
+                ;;
+            esac
+          done < <(gh api "repos/$repo/deployments?environment=github-pages&per_page=30" \
+                     --jq '.[] | [.id, .sha] | @tsv' 2>/dev/null || true)
+          sleep 60
 
       - name: Pages へデプロイ（やり直し）
         id: retry
