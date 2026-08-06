@@ -22,6 +22,8 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # 詰まった配信を見つけるために、github-pages 環境の履歴を読む
+  deployments: read
 
 # 同時実行は1本に（進行中はキャンセルしない）
 concurrency:
@@ -48,12 +50,33 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      # 公開の設定をログに残す。
+      #
+      # 08-06 に見えたもの:
+      #   {"status":"errored","build_type":"workflow","source":{"branch":"main","path":"/docs"}}
+      # ブランチ公開の設定（main の /docs）が残っていて、push のたびに
+      # GitHub 側の "pages build and deployment" が docs/ をそのまま公開しに来ていた。
+      # docs/ には .md しか無く index.html が無いので File not found になる。
+      # さらにこちらの配信と数秒差で競合し、両方が順番待ちのまま10分で諦めていた。
+      #
+      # docs/ は documents/ に改名して、ブランチ公開が拾える中身を無くした。
+      # 設定そのもの（Source を GitHub Actions にする）は GITHUB_TOKEN では変えられない
+      # ため（administration 権限が要る／PUT は 403）、状態を見えるようにしておく。
+      - name: 公開の設定を確かめる
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/${GITHUB_REPOSITORY}/pages" 2>&1 || true
+
       # Pages を自動で有効化し、配信先の base_path（例: /bean-tracker）を取得
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
+      - name: 配信先を表示
+        run: echo "base_path=${{ steps.pages.outputs.base_path }} origin=${{ steps.pages.outputs.origin }}"
 
       - name: 依存インストール
         run: npm ci
@@ -84,18 +107,90 @@ jobs:
       # 巡回が毎時走り、そのたびに公開し直すため、前の配信がまだ終わっていない
       # ことがある。その場合 GitHub は 400 で弾く（in progress deployment）。
       # 実測: 08-06 10:18 の配信がこれで落ちた。少し待って1度だけやり直す。
+      # 詰まった配信を先に流す。
+      #
+      # Pages の配信は1本ずつしか進まない。前の1本が終わらないまま居座ると、
+      # 後続は deployment_queued のまま10分待って諦める（実測: 08-06 12:56 の
+      # 2本とも、10分間ずっと deployment_queued）。こうなると新しい中身が
+      # 一切公開されず、サイトは開けないままになる。
+      #
+      # そこで配信前に、github-pages 環境のまだ終わっていない配信を取り消す。
+      # 取り消しの相手はコミットの sha（Pages の配信IDはこれ）。
+      # 取り消せなくても止めない。
+      - name: 詰まっている配信を取り消す
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          repo="$GITHUB_REPOSITORY"
+          found=0
+          while IFS=$'\t' read -r id sha; do
+            [ -n "$id" ] || continue
+            state=$(gh api "repos/$repo/deployments/$id/statuses?per_page=1" --jq '.[0].state // "none"' 2>/dev/null || echo none)
+            case "$state" in
+              queued|in_progress|pending)
+                echo "居座っている配信: $sha ($state) → 取り消す"
+                gh api -X POST "repos/$repo/pages/deployments/$sha/cancel" 2>&1 || true
+                found=1
+                ;;
+            esac
+          done < <(gh api "repos/$repo/deployments?environment=github-pages&per_page=30" \
+                     --jq '.[] | [.id, .sha] | @tsv' 2>/dev/null || true)
+          if [ "$found" = "0" ]; then
+            echo "詰まっている配信はありません"
+          else
+            echo "取り消したので、少し待ってから配信します"
+            sleep 20
+          fi
+
       - name: Pages へデプロイ
         id: deployment
         continue-on-error: true
         uses: actions/deploy-pages@v4
 
-      - name: 前の配信の完了を待つ
+      - name: 前の配信を片付けてから待つ
         if: steps.deployment.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "配信が重なったため 90 秒待ってやり直します"
-          sleep 90
+          repo="$GITHUB_REPOSITORY"
+          echo "失敗した。残っている配信を取り消してからやり直します"
+          while IFS=$'\t' read -r id sha; do
+            [ -n "$id" ] || continue
+            state=$(gh api "repos/$repo/deployments/$id/statuses?per_page=1" --jq '.[0].state // "none"' 2>/dev/null || echo none)
+            case "$state" in
+              queued|in_progress|pending)
+                echo "取り消す: $sha ($state)"
+                gh api -X POST "repos/$repo/pages/deployments/$sha/cancel" 2>&1 || true
+                ;;
+            esac
+          done < <(gh api "repos/$repo/deployments?environment=github-pages&per_page=30" \
+                     --jq '.[] | [.id, .sha] | @tsv' 2>/dev/null || true)
+          sleep 60
 
       - name: Pages へデプロイ（やり直し）
         id: retry
         if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
+
+      # 実際に開けるかを外から確かめる。ここが唯一、公開後のサイトに触れる場所。
+      # 配信直後は CDN が追いつかないことがあるので、少し間を空けて数回試す。
+      - name: 開けるか確かめる
+        env:
+          URL: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
+        run: |
+          echo "確認先: $URL"
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -sS -o /tmp/page.html -w '%{http_code}' -L "$URL" || echo 000)
+            echo "$i 回目: HTTP $code"
+            if [ "$code" = "200" ] && grep -q "BEAN TRACKER" /tmp/page.html; then
+              echo "開けました"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "── 返ってきた中身の先頭 ──"
+          head -c 800 /tmp/page.html || true
+          echo
+          echo "サイトが開けません"
+          exit 1

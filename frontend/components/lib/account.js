@@ -6,7 +6,7 @@
 //   3. 下の SUPABASE に貼り付けてコミット（anon キーは公開して良い鍵。秘密の
 //      service_role キーは絶対に貼らないこと）
 //   4. Authentication → URL Configuration に本サイトのURLを Redirect に追加
-//   5. docs/account-sync.md の SQL でテーブル(tastings / entitlements)と RLS を作成
+//   5. documents/account-sync.md の SQL でテーブル(tastings / entitlements)と RLS を作成
 //   → 「味の記録」タブにメールログインが出現し、端末間で同期＆プレミアム連動します
 //
 // 未設定の間は、これらは何もせず（isCloud()=false）、従来どおり端末内保存で動きます。
@@ -85,7 +85,7 @@ export async function signInWithEmail(email) {
    「ほかの端末と同期する」ためのログインなので、こちらのほうが素直でもある。
 
    ※ 送信メールの本文に {{ .Token }} を入れておく必要がある
-      （Supabase の Authentication → Email Templates。docs/account-sync.md 参照）。 */
+      （Supabase の Authentication → Email Templates。documents/account-sync.md 参照）。 */
 export async function signInWithCode(email, code) {
   if (!isCloud()) throw new Error("cloud-not-configured");
   const token = String(code || "").replace(/\D/g, "");
@@ -252,7 +252,7 @@ export async function signOut() {
 function syncError(status, what) {
   if (status === 404) {
     return new Error(`${what}用のテーブルがまだ作られていません`
-      + "（Supabase の SQL Editor で docs/account-sync.md の SQL を実行してください）");
+      + "（Supabase の SQL Editor で documents/account-sync.md の SQL を実行してください）");
   }
   if (status === 401 || status === 403) {
     return new Error("ログインの有効期限が切れています。もう一度ログインしてください");
@@ -283,7 +283,7 @@ export async function cloudPushTastings(list) {
 }
 
 // ---- プレミアム連動（entitlements） ----
-// Stripe 入金 → Edge Function(Webhook) が entitlements を更新（docs/premium.md）。
+// Stripe 入金 → Edge Function(Webhook) が entitlements を更新（documents/premium.md）。
 // フロントは読むだけ。RLS で自分の行しか見えないため、他人の権限は取得できない。
 //
 // 行そのものを返す。判定に必要なのはプラン名だけでなく status と期限で、
