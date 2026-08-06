@@ -188,6 +188,19 @@ jobs:
         run: |
           echo "── Pages の状態 ──"
           gh api "repos/$GITHUB_REPOSITORY/pages" || true
+
+          # GitHub 側の障害かどうかを先に切り分ける。障害なら設定をいじっても直らないし、
+          # 設定をいじったせいだと勘違いして別の場所を壊しに行くことになる。
+          echo
+          echo "── GitHub Pages に障害が出ていないか ──"
+          curl -sS --max-time 20 https://www.githubstatus.com/api/v2/summary.json 2>/dev/null \
+            | jq -r '
+                (.components[] | select(.name | test("Pages"; "i"))
+                  | "  \(.name): \(.status)"),
+                (if (.incidents | length) == 0 then "  進行中の障害情報なし"
+                 else (.incidents[] | "  障害: \(.name) [\(.status)]") end)
+              ' 2>/dev/null || echo "  （状態を取得できませんでした）"
+
           cat <<'MSG'
 
           読み方:
@@ -196,13 +209,15 @@ jobs:
             "build_type"         … "workflow" ならこのワークフローが公開元
             "source"             … ブランチ公開の名残。build_type が workflow なら本来無視される
 
-          配信が deployment_queued のまま10分続いた場合、順番待ちの相手はいない
-          （その前の手順で確かめている）。Pages 側が配信を拾っていない状態で、
-          リポジトリからは直せない。
+          上の Pages が operational で、それでも配信が deployment_queued のまま
+          時間切れになるなら、障害ではなく、この repo の Pages 設定が errored に
+          落ちている。順番待ちの相手はいないことは、その前の手順で確かめている。
 
-          Settings → Pages → Build and deployment → Source を
-          「GitHub Actions」で保存し直してください。ここを保存すると Pages の
-          設定が作り直され、errored から復帰します。
-          この変更は GITHUB_TOKEN では行えません（PUT /repos/../pages は 403）。
+          直し方（リポジトリ側からは行えない。PUT/DELETE /repos/../pages は
+          どちらも 403 Resource not accessible by integration）:
+
+            Settings → Pages → Build and deployment → Source を
+            「GitHub Actions」で保存し直す。すでにそう表示されていても
+            選び直して保存すると設定が作り直され、errored から復帰する。
           MSG
           exit 1
