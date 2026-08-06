@@ -79,8 +79,23 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
     steps:
+      # 巡回が毎時走り、そのたびに公開し直すため、前の配信がまだ終わっていない
+      # ことがある。その場合 GitHub は 400 で弾く（in progress deployment）。
+      # 実測: 08-06 10:18 の配信がこれで落ちた。少し待って1度だけやり直す。
       - name: Pages へデプロイ
         id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: 前の配信の完了を待つ
+        if: steps.deployment.outcome == 'failure'
+        run: |
+          echo "配信が重なったため 90 秒待ってやり直します"
+          sleep 90
+
+      - name: Pages へデプロイ（やり直し）
+        id: retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
