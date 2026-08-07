@@ -10,8 +10,11 @@
 // 静的書き出し（output: export）なので、実体は index.html 1枚のまま。
 // クエリだけを読み書きして、起動時にそこから画面を組み立て直す。
 
-// URLに出す状態。ここに無いもの（並び順や列数など、その人の見た目の好み）は
+// URLに出す状態。ここに無いもの（列数など、その人の見た目の好み）は
 // 共有する意味が薄いので載せない。リンクは短いほうが貼りやすい。
+//
+// 並び順は載せる。「高い順の先頭を見て」と送るときに、
+// 相手が同じ並びで開けないと話が噛み合わないため。
 const KEYS = {
   v: "view",        // タブ
   b: "bean",        // 開いている豆
@@ -21,12 +24,13 @@ const KEYS = {
   q: "query",       // 検索語
   o: "origin",      // 産地
   s: "status",      // 在庫
+  sb: "sortBy",     // 並び替え
   me: "meTab",      // マイページの中のタブ
 };
 
 const DEFAULTS = {
   view: "zukan", bean: null, roaster: null, roasterTab: "now",
-  process: null, query: "", origin: "すべて", status: "all", meTab: "log",
+  process: null, query: "", origin: "すべて", status: "all", sortBy: "default", meTab: "log",
 };
 
 export function readUrlState() {
