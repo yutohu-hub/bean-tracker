@@ -139,6 +139,27 @@ const NON_COFFEE = [
   // ドリップバッグ（中国語圏の表記）
   /濾掛|掛耳|滤挂|咖啡包/,
 
+  // 並び替えを入れて値段順に見たときに、両端を占めていたもの。
+  // smagspakke はデンマーク語の「テイスティングパック」。
+  // Production- / 客製商品 は店内用の仮の商品行で、豆の実体が無い。
+  /smagspakke|bootcamp|shipping ?protection|packing ?box|客製商品|^production-/,
+
+  // 全自動機・グラインダーの機種名。高い順の先頭を占めていた。
+  /\bjura\b|\bmazzer\b|\bmythos\b|\bvbm\b|domobar|\bconti\b|\bsynesso\b/,
+
+  // 機材の部品（ノルウェー語・ドイツ語）。新しい順の先頭を占めていた。
+  // kniver=刃 / dusjhode=シャワーヘッド / lampe=ランプ / knapp=ボタン
+  /dusjhode|\bkniver\b|\blampe\b|\bknapp\b|monofase|\bpakning\b/,
+
+  // 発送方法の変更（商品ではない行）
+  /発送|ネコポス|配送方法|レターパック|宅急便|耳掛/,
+
+  // 機材・部品の残り。kvern=グラインダー / vekt=はかり / børste=ブラシ
+  /kitchenaid|compak|subminimal|subscale|\btorani\b|\bvekt\b|b[øo]rste|\bkvern\b|espresso ?station|build your own|tamp ?station|\bapollo \d|oracle ?jet/,
+
+  // 講習（ノルウェー語）と、綴りの違う茶
+  /kaffeopplevelse|\bkurs\b|pr[øo]vesmaking|hojitcha|\btaller\b|atom excellence|papirfilter|teposer/,
+
   // 紙フィルター・浄水フィルター（仏語）。
   // 英語の "Filter" は焙煎/抽出の区分（"Bookkisa Filter"）なので落とさない。
   // 仏語の複数形 filtres、または filtre + 対象語のときだけ器具とみなす。

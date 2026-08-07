@@ -73,7 +73,7 @@ export default function BeanTracker() {
   const [priceF, setPriceF] = useState("all");
   const [processF, setProcessF] = useState("すべて");
   const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState("default"); // default | p100asc | p100desc
+  const [sortBy, setSortBy] = useState("default"); // default | p100asc | p100desc | new | old
   const [splashDone, setSplashDone] = useState(false);
   const [splashGone, setSplashGone] = useState(false);
   const [fx, setFx] = useState({ live: false, loading: true, error: false, at: null, date: null, source: null });
@@ -125,6 +125,7 @@ export default function BeanTracker() {
     if (u.query) setQuery(u.query);
     if (u.origin) setOrigin(u.origin);
     if (u.status) setStatusF(u.status);
+    if (u.sortBy) setSortBy(u.sortBy);
     if (u.meTab) setMeTab(u.meTab);
     // 豆は id から実体を引く。消えた豆のリンクを踏んでも落ちないよう存在確認する
     setOpen(u.bean ? BEANS.find((b) => b.id === u.bean) || null : null);
@@ -144,7 +145,7 @@ export default function BeanTracker() {
   const urlState = () => ({
     view, bean: open ? open.id : null, roaster: roasterId,
     roasterTab, process: view === "process" ? procKey : null,
-    query, origin, status: statusF, meTab,
+    query, origin, status: statusF, sortBy, meTab,
   });
   const navWroteRef = useRef(false);
   const filterWroteRef = useRef(false);
@@ -170,7 +171,7 @@ export default function BeanTracker() {
     writeUrlState(urlState());
     // 同上
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, origin, statusF]);
+  }, [query, origin, statusF, sortBy]);
 
   useEffect(() => {
     const t1 = setTimeout(() => setSplashDone(true), 1700);   // 表示を終えてフェード開始
@@ -441,11 +442,17 @@ export default function BeanTracker() {
               <select value={priceF} onChange={(e) => setPriceF(e.target.value)} style={minSel} aria-label="価格帯">
                 {Object.keys(PRICE_BANDS).map((k) => <option key={k} value={k}>{priceBandLabel(k, displayCur)}</option>)}
               </select>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={minSel} aria-label="並び替え">
-                <option value="default">並び：おすすめ順</option>
-                <option value="new">新着順</option>
-                <option value="p100asc">価格/100g 安い順</option>
-                <option value="p100desc">価格/100g 高い順</option>
+            </div>
+            {/* 並び替えは絞り込みとは別の操作なので、同じ升目に混ぜず1行に分けて出す。
+                4つの升の1つに紛れていたころは、並べ替えられること自体が気づかれにくかった。 */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: 11, color: GRAY, flexShrink: 0 }}>並び替え</span>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ ...minSel, flex: 1 }} aria-label="並び替え">
+                <option value="default">おすすめ順</option>
+                <option value="p100desc">値段が高い順（100gあたり）</option>
+                <option value="p100asc">値段が安い順（100gあたり）</option>
+                <option value="new">新しい順（図鑑に入った日）</option>
+                <option value="old">古い順（図鑑に入った日）</option>
               </select>
             </div>
             <div style={{ display: "flex", gap: 14, marginTop: 12, borderBottom: `1px solid ${LINE}`, paddingBottom: 8 }}>

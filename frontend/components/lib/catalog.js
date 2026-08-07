@@ -21,7 +21,49 @@ export const PROCESSES = ["すべて", "Washed", "Natural", "Honey", "Anaerobic 
 export const priceBandLabel = (key, cur) =>
   cur === "JPY" ? PRICE_BANDS[key].jp : PRICE_BANDS[key].en;
 
+// 図鑑に入った日。取れていないものは 0 になる
 const ts = (b) => (b.updatedAt ? Date.parse(b.updatedAt) || 0 : 0);
+
+/* 日付の並べ替え。dir=-1 で新しい順、dir=1 で古い順。
+   日付が取れていない豆は、どちらの向きでも末尾へ送る。
+   古い順のときに素直に昇順にすると、日付の無いものが 0 として先頭に居座り、
+   いちばん目立つ場所が「日付が分からない豆」で埋まる。 */
+const byDate = (dir) => (a, b) => {
+  const ta = ts(a), tb = ts(b);
+  if (!ta !== !tb) return ta ? -1 : 1;      // 日付なしは後ろ
+  return (ta - tb) * dir || (a.id - b.id) * dir;
+};
+
+/* 100gあたりの値段として、ありえる範囲。
+   ECの表記から値段と内容量を読み取る過程で取り違えが起きる。並び替えを入れて
+   実際に端から見たところ、両端はほぼ取り違えだった。
+
+     ¥2,607,000/100g   1185 DKK / 1g      内容量を 1g と読んでいる
+     ¥1,074,304/100g   23980 SGD / 250g   エスプレッソマシン
+     ¥1/100g           2 INR / 250g       送料保険の行
+
+   下限 ¥100/100g（¥1,000/kg）は生豆の相場を下回る。
+   上限 ¥150,000/100g は競売の世界記録に並ぶ額（およそ $1,000/100g）。
+   どちらも店頭の値段としては成立しないので、取れなかったものと同じ扱いにする。
+
+   上限に引っかかるものの中身も見た。エスプレッソマシンのほかに、ある1店
+   （apollonsgold・24銘柄）が値段をセント単位のまま出していて、実勢の約100倍に
+   なっている（中央値 ¥405,000/100g。全体の中央値は ¥1,113）。
+   これは巡回側の取り違えなので、本来はそちらで直すべきもの。
+
+   消しはしない。本物の高額ロットを巻き込む恐れがあるのと、値段以外は
+   正しい豆もあるため。並びの末尾へ送るだけにとどめる。 */
+const P_MIN = 100, P_MAX = 150000;
+const priced = (b) => { const p = per100JPY(b); return p >= P_MIN && p <= P_MAX; };
+
+/* 値段の並べ替え。dir=1 で安い順、dir=-1 で高い順。
+   値段が読めなかった豆は、どちらの向きでも末尾へ送る。
+   安い順の先頭が「¥1」で埋まると、いちばん安い豆を探せない。 */
+const byPrice = (dir) => (a, b) => {
+  const oka = priced(a), okb = priced(b);
+  if (oka !== okb) return oka ? -1 : 1;
+  return (per100JPY(a) - per100JPY(b)) * dir || a.id - b.id;
+};
 
 /* 図鑑に並ぶ豆。ECサイトのあるロースターの豆だけを対象にする
    （送客が目的なので、買いに行けない豆を並べても意味がない）。
@@ -43,9 +85,11 @@ export function filterBeans(beans, roasters, f) {
         || (b.origin || "").toLowerCase().includes(q)
         || (r.country || "").toLowerCase().includes(q));
   });
-  if (f.sortBy === "p100asc") return list.slice().sort((a, b) => per100JPY(a) - per100JPY(b));
-  if (f.sortBy === "p100desc") return list.slice().sort((a, b) => per100JPY(b) - per100JPY(a));
-  if (f.sortBy === "new") return list.slice().sort((a, b) => (ts(b) - ts(a)) || (b.id - a.id));
+  // 値段が取れていない豆（0円）は、安い順の先頭を占めないよう末尾へ送る
+  if (f.sortBy === "p100asc") return list.slice().sort(byPrice(1));
+  if (f.sortBy === "p100desc") return list.slice().sort(byPrice(-1));
+  if (f.sortBy === "new") return list.slice().sort(byDate(-1));
+  if (f.sortBy === "old") return list.slice().sort(byDate(1));
   return list;
 }
 

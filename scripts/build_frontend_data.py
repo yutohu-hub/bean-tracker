@@ -156,6 +156,24 @@ def origin_ja(s: str) -> str:
     return ORIGIN_JA.get((s or "").strip().lower(), (s or "").strip())
 
 
+def first_seen_date(p: dict, fallback: str) -> str:
+    """その豆を初めて見つけた日（YYYY-MM-DD）。
+
+    図鑑の「新しい順 / 古い順」がこれを見る。巡回した日を入れると全銘柄が
+    同じ日付になり、並べ替えが意味を持たなくなる。first_seen は state.db が
+    商品ごとに持っていて、export_for_site が SELECT * でそのまま返している。
+
+    まだ一度も巡回していない豆や、値が壊れている場合は今日にする。
+    """
+    ts = p.get("first_seen")
+    try:
+        if ts:
+            return datetime.date.fromtimestamp(float(ts)).isoformat()
+    except (ValueError, OSError, OverflowError):
+        pass
+    return fallback
+
+
 # 1ロースターあたりフロントに載せる上限（巡回対象が増えても配信JSONが太らないように）
 MAX_LIVE_PER_ROASTER = 60   # いま買える豆
 MAX_PAST_PER_ROASTER = 12   # 売切・終了の履歴
@@ -261,7 +279,6 @@ def main() -> None:
 
     bid = 100000
     today = datetime.date.today().isoformat()
-    year = today[:4]
     # 豆名の重複判定用（日本語も残すため、区切り記号だけ除去）
     bnorm = lambda s: re.sub(r"[\s　_\-\[\]（）()／/|、。,.:：!！’'\"]", "", (s or "").lower())
     for rname, prods in by_roaster.items():
@@ -311,6 +328,7 @@ def main() -> None:
         for i, p in enumerate(prods):
             grams = int(p.get("grams") or 0)
             col, acc = PAL[(bid) % len(PAL)]
+            seen = first_seen_date(p, today)
             bean = {
                 "id": bid, "r": key, "name": p.get("title") or "Lot",
                 "origin": origin_ja(p.get("origin")) or "ブレンド", "process": p.get("process") or "Washed",
@@ -320,7 +338,11 @@ def main() -> None:
                 "amount": round(float(p.get("price") or 0)), "cur": p.get("currency") or "JPY",
                 "per": f"{grams}g" if grams else "250g",
                 "status": p.get("status") or ("now" if p.get("available") else "sold"),
-                "color": col, "accent": acc, "year": year, "updatedAt": today,
+                # 「いつ図鑑に入ったか」。巡回した日ではなく、その豆を初めて見つけた日を使う。
+                # 巡回した日を入れていたころは全銘柄が同じ日付になり、新着順が
+                # 実質ID順（＝並べ替えとして意味を持たない）だった。
+                # first_seen は state.db が持っている（export_for_site が SELECT * で返す）。
+                "color": col, "accent": acc, "year": seen[:4], "updatedAt": seen,
             }
             if p.get("image"):
                 bean["img"] = p["image"]
