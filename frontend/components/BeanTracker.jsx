@@ -9,7 +9,7 @@ import { ROASTERS } from "./data/roasters";
 import { BEANS } from "./data/beans";
 import { RATES_TO_JPY, fetchLiveRates } from "./lib/currency";
 import { INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
-import { ORIGINS } from "./lib/constants";
+import { ORIGIN_GROUPS } from "./lib/constants";
 import { syncArchive } from "./lib/store";
 import { captureSessionFromUrl, ensureFreshSession } from "./lib/account";
 import { purgeLegacyPlan, keepForever } from "./lib/store";
@@ -450,8 +450,15 @@ export default function BeanTracker() {
                 grid ではなく flex にしているのは、行に1つしか載らないときに
                 その1つを幅いっぱいに伸ばすため。 */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+              {/* 産地は29個ある。平らに並べると目当てに着くまで延々スクロールするので、
+                  地域ごとにまとめる（iPhone でも Android でも見出し付きで出る）。 */}
               <select value={origin} onChange={(e) => setOrigin(e.target.value)} style={{ ...minSel, flex: "1 1 150px", width: "auto" }} aria-label="産地">
-                {ORIGINS.map((o) => <option key={o} value={o}>{o === "すべて" ? "産地：すべて" : o}</option>)}
+                <option value="すべて">産地：すべて</option>
+                {ORIGIN_GROUPS.map(([label, list]) => (
+                  <optgroup key={label} label={label}>
+                    {list.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </optgroup>
+                ))}
               </select>
               <select value={processF} onChange={(e) => setProcessF(e.target.value)} style={{ ...minSel, flex: "1 1 150px", width: "auto" }} aria-label="精製">
                 {PROCESSES.map((p) => <option key={p} value={p}>{p === "すべて" ? "精製：すべて" : p}</option>)}

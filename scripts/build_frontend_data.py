@@ -373,6 +373,60 @@ def main() -> None:
 
     OUT.write_text(json.dumps({"roasters": roasters, "beans": beans}, ensure_ascii=False), encoding="utf-8")
     print(f"live overlay: {len(roasters)} new roasters, {len(beans)} beans -> {OUT.relative_to(ROOT)}")
+    report_odd_prices(roasters, beans)
+
+
+# 100gあたりの円。ここでの並びは巡回のログに出すだけなので、為替は固定値で足りる。
+_FX = {"JPY": 1, "USD": 150, "EUR": 165, "GBP": 195, "AUD": 100, "CAD": 108, "NZD": 90,
+       "SGD": 112, "HKD": 19, "TWD": 4.7, "KRW": 0.11, "CNY": 21, "THB": 4.3, "VND": 0.006,
+       "IDR": 0.0092, "MYR": 33, "PHP": 2.6, "INR": 1.8, "NOK": 14.5, "DKK": 22, "SEK": 14,
+       "ISK": 1.1, "CHF": 185, "PLN": 41, "CZK": 6.8, "HUF": 0.43, "BRL": 27, "MXN": 8.3,
+       "COP": 0.037, "CRC": 0.29, "ZAR": 8.2, "ETB": 1.25, "KES": 1.15, "RWF": 0.11,
+       "AED": 41, "TRY": 3.75, "PEN": 40, "GTQ": 19.5, "SAR": 40, "ILS": 40}
+
+
+def report_odd_prices(roasters: dict, beans: list, low: float = 200, high: float = 30000) -> list:
+    """値段がおかしい店を巡回のログに出す。
+
+    通貨や内容量の取り違えは、1銘柄ではなく店ごとにまとめて起きる。
+    実例: Apollon's Gold は設定ファイルの通貨が USD になっていて、¥11,000 の
+    ゲイシャが $11,000（¥1,650,000）として並んでいた。24銘柄すべてが同じずれ方を
+    していたのに、誰も気づかないまま公開されていた。
+
+    見分けには中央値ではなく両端を使う。中央値だと、機材と豆を一緒に売っている店
+    （Tiong Hoe など）が引っかかってしまう。取り違えは全銘柄が同じ向きに同じだけ
+    ずれるので、「いちばん安いものまで高すぎる」「いちばん高いものまで安すぎる」で
+    見る。機材が混ざっているだけの店には安い豆もあるので、これなら鳴らない。
+
+    止めはしない（本当に高い店もある）。気づける状態にするのが目的。
+    """
+    per_shop: dict = {}
+    for b in beans:
+        amt, cur = float(b.get("amount") or 0), b.get("cur") or "JPY"
+        if amt <= 0 or b.get("status") != "now":
+            continue
+        g = b.get("per") or ""
+        grams = round(float(g[:-2]) * 28.35) if g.endswith("oz") else int(re.sub(r"\D", "", g) or 0)
+        if grams <= 0:
+            continue
+        per_shop.setdefault(b["r"], []).append(amt * _FX.get(cur, 1) / grams * 100)
+
+    odd = []
+    for key, vals in per_shop.items():
+        if len(vals) < 3:
+            continue                      # 数が少ないと両端の判断が効かない
+        vals.sort()
+        lo_end = vals[len(vals) // 10]            # 下から1割の位置
+        hi_end = vals[-(len(vals) // 10) - 1]     # 上から1割の位置
+        mid = vals[len(vals) // 2]
+        if lo_end > high or hi_end < low:
+            name = (roasters.get(key) or {}).get("name", key)
+            odd.append((key, name, round(mid), len(vals)))
+    for key, name, mid, n in sorted(odd, key=lambda x: -x[2]):
+        print(f"  [値段を確認] {name}（{key}）中央値 ¥{mid:,}/100g・{n}銘柄"
+              f" — 全銘柄が同じ向きにずれている。通貨か内容量の取り違えの疑い",
+              file=sys.stderr)
+    return odd
 
 
 if __name__ == "__main__":
