@@ -15,10 +15,12 @@ settings:
 
 roasters:
   # ---- 日本 ----
+  # 日本の店で、値段も円。USD と書かれていたため、¥11,000 のゲイシャが
+  # $11,000（¥1,650,000）として図鑑に並んでいた。
   - name: Apollon's Gold
     country: JP
     url: https://shop.apollons-gold.com
-    currency: USD
+    currency: JPY
   - name: Coffee County
     country: JP
     url: https://coffeecounty.cc
