@@ -84,6 +84,7 @@ export default function BeanTracker() {
   const [autoCols, setAutoCols] = useState(4); // 自動時の実効列数（画面幅から算出）
   const [zukanMode, setZukanMode] = useState("beans"); // beans | roasters
   const [meTab, setMeTab] = useState("log"); // マイページ内: log | premium
+  const [legendOpen, setLegendOpen] = useState(false); // 色の凡例を開いているか
   const [authNotice, setAuthNotice] = useState(null); // メールリンクからのログイン結果
   // 列数を端末に保存・復元
   useEffect(() => {
@@ -92,6 +93,9 @@ export default function BeanTracker() {
     else { const c = Number(s); if (c >= 2 && c <= 6) setCols(c); }
   }, []);
   useEffect(() => { try { localStorage.setItem("bt_cols", String(cols)); } catch {} }, [cols]);
+  // 色の凡例を開いているか。既定は畳んだ状態（豆を早く見せる）
+  useEffect(() => { if (localStorage.getItem("bt_legend") === "1") setLegendOpen(true); }, []);
+  useEffect(() => { try { localStorage.setItem("bt_legend", legendOpen ? "1" : "0"); } catch {} }, [legendOpen]);
   // 自動列数：画面幅（最大640・左右16pxパディング）から最小カード幅で割って算出
   useEffect(() => {
     const calc = () => {
@@ -250,6 +254,16 @@ export default function BeanTracker() {
   const goRoaster = (rid, tab) => { setRoasterId(rid); setRoasterTab(tab || "now"); setView("roaster"); window.scrollTo(0, 0); };
 
   const minSel = { width: "100%", boxSizing: "border-box", padding: "8px 9px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, background: PAPER, color: INK };
+
+  /* いま効いている絞り込み。既定値のものは入らない。
+     在庫（NOW / SOLD OUT）は下のタブで常に見えているので、ここには出さない。 */
+  const activeFilters = [
+    query && { key: "q", label: `「${query}」`, clear: () => setQuery("") },
+    origin !== "すべて" && { key: "o", label: `産地：${origin}`, clear: () => setOrigin("すべて") },
+    processF !== "すべて" && { key: "p", label: `精製：${processF}`, clear: () => setProcessF("すべて") },
+    priceF !== "all" && { key: "pr", label: priceBandLabel(priceF, displayCur), clear: () => setPriceF("all") },
+  ].filter(Boolean);
+  const clearFilters = () => { setQuery(""); setOrigin("すべて"); setProcessF("すべて"); setPriceF("all"); };
 
   // 為替が更新されると価格帯の判定も変わるので fxVersion を依存に入れている
   const filtered = useMemo(
@@ -431,15 +445,18 @@ export default function BeanTracker() {
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={zukanMode === "roasters" ? "ロースター名・都市で検索" : "ロースター名・農園名・豆名で検索"}
               style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 13, marginBottom: 8, background: PAPER, color: INK }} />
             {zukanMode === "beans" && (<>
-            {/* フィルタ（ミニマル：産地・価格・精製・国をセレクトに集約） */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-              <select value={origin} onChange={(e) => setOrigin(e.target.value)} style={minSel} aria-label="産地">
+            {/* 絞り込み。3つあるので、幅に応じて2列にも3列にもなる。
+                固定2列だと3つ目が半分の幅で1つだけ残り、空き升がある見た目になっていた。
+                grid ではなく flex にしているのは、行に1つしか載らないときに
+                その1つを幅いっぱいに伸ばすため。 */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+              <select value={origin} onChange={(e) => setOrigin(e.target.value)} style={{ ...minSel, flex: "1 1 150px", width: "auto" }} aria-label="産地">
                 {ORIGINS.map((o) => <option key={o} value={o}>{o === "すべて" ? "産地：すべて" : o}</option>)}
               </select>
-              <select value={processF} onChange={(e) => setProcessF(e.target.value)} style={minSel} aria-label="精製">
+              <select value={processF} onChange={(e) => setProcessF(e.target.value)} style={{ ...minSel, flex: "1 1 150px", width: "auto" }} aria-label="精製">
                 {PROCESSES.map((p) => <option key={p} value={p}>{p === "すべて" ? "精製：すべて" : p}</option>)}
               </select>
-              <select value={priceF} onChange={(e) => setPriceF(e.target.value)} style={minSel} aria-label="価格帯">
+              <select value={priceF} onChange={(e) => setPriceF(e.target.value)} style={{ ...minSel, flex: "1 1 150px", width: "auto" }} aria-label="価格帯">
                 {Object.keys(PRICE_BANDS).map((k) => <option key={k} value={k}>{priceBandLabel(k, displayCur)}</option>)}
               </select>
             </div>
@@ -455,6 +472,30 @@ export default function BeanTracker() {
                 <option value="old">古い順（図鑑に入った日）</option>
               </select>
             </div>
+            {/* いま効いている絞り込み。
+                絞り込みは4か所（検索・産地・精製・価格）に分かれていて、1つ掛けたまま
+                忘れると「豆が出てこない」と見える。何が効いているかを1行にまとめ、
+                その場で外せるようにする。何も掛かっていないときは出さない。 */}
+            {activeFilters.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                {activeFilters.map((f) => (
+                  <button key={f.key} onClick={f.clear} title={`${f.label}を外す`}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 8px 5px 10px",
+                      borderRadius: 999, border: `1px solid ${INK}`, background: PAPER, color: INK,
+                      fontSize: 11.5, cursor: "pointer", maxWidth: "100%" }}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.label}</span>
+                    <span style={{ color: GRAY, fontSize: 13, lineHeight: 1 }}>✕</span>
+                  </button>
+                ))}
+                {activeFilters.length > 1 && (
+                  <button onClick={clearFilters}
+                    style={{ background: "none", border: "none", padding: "5px 4px", cursor: "pointer",
+                      fontSize: 11.5, color: GRAY, textDecoration: "underline", textUnderlineOffset: 2 }}>
+                    すべて外す
+                  </button>
+                )}
+              </div>
+            )}
             <div style={{ display: "flex", gap: 14, marginTop: 12, borderBottom: `1px solid ${LINE}`, paddingBottom: 8 }}>
               {[["all", "すべて"], ["now", "NOW"], ["sold", "SOLD OUT"], ["archive", "ARCHIVE"]].map(([k, l]) => (
                 <button key={k} onClick={() => setStatusF(k)}
@@ -467,13 +508,30 @@ export default function BeanTracker() {
               ))}
               <div style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, alignSelf: "center" }}>{/* アーカイブはロースターのカードが並ぶため、枚数と件数が食い違って見えないよう軒数も出す */}{statusF === "archive" ? `${Object.keys(archiveByRoaster).length} 店 / ${archiveBeans.length} 銘柄` : `${filtered.length} 銘柄`}</div>
             </div>
-            {/* 色の凡例（精製方法／レア） */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 12px", marginTop: 10, fontSize: 10, color: GRAY }}>
-              {LEGEND.map((l) => (
-                <span key={l.key} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: 3, background: l.bg }} />{l.label}
+            {/* 色の凡例（精製方法／レア）。
+                7つで2行を占め、操作系と豆の間に常に居座っていた。画面の狭い端末では、
+                この2行のぶんだけ豆が下に押し出される。一度読めば足りる説明なので、
+                畳めるようにして、開いたかどうかを端末に覚えさせる。 */}
+            <div style={{ marginTop: 10 }}>
+              <button onClick={() => setLegendOpen((v) => !v)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none",
+                  padding: 0, cursor: "pointer", fontSize: 10.5, color: GRAY }}>
+                <span style={{ display: "inline-flex", gap: 2 }}>
+                  {LEGEND.slice(0, 5).map((l) => (
+                    <span key={l.key} style={{ width: 8, height: 8, borderRadius: 2, background: l.bg }} />
+                  ))}
                 </span>
-              ))}
+                色の見かた {legendOpen ? "▲" : "▼"}
+              </button>
+              {legendOpen && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 12px", marginTop: 8, fontSize: 10, color: GRAY }}>
+                  {LEGEND.map((l) => (
+                    <span key={l.key} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 3, background: l.bg }} />{l.label}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             </>)}
             </div>{/* /640集約 */}
