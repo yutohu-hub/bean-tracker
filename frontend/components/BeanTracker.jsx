@@ -39,6 +39,7 @@ const GlobeView = dynamic(() => import("./views/GlobeView").then((m) => m.GlobeV
 });
 import { DiagnosisView } from "./views/DiagnosisView";
 import { FlavorMapView } from "./views/FlavorMapView";
+import { FlavorByProcess } from "./views/FlavorByProcess";
 import { ProcessChart } from "./views/ProcessChart";
 import { ProcessPage } from "./views/ProcessPage";
 import { flavorOf } from "./data/flavors";
@@ -85,6 +86,7 @@ export default function BeanTracker() {
   const [zukanMode, setZukanMode] = useState("beans"); // beans | roasters
   const [meTab, setMeTab] = useState("log"); // マイページ内: log | premium
   const [legendOpen, setLegendOpen] = useState(false); // 色の凡例を開いているか
+  const [flavorMode, setFlavorMode] = useState("one"); // 味わいマップ: one | proc
   const [authNotice, setAuthNotice] = useState(null); // メールリンクからのログイン結果
   // 列数を端末に保存・復元
   useEffect(() => {
@@ -406,7 +408,18 @@ export default function BeanTracker() {
           <DiagnosisView onRoaster={goRoaster} />
         ) : view === "flavor" ? (
           <>
-            <FlavorMapView onOpen={setOpen} initialFam={flavorFocus.fam} focusId={flavorFocus.id} />
+            {/* 1枚に全部載せると Washed が73%を占めて他が埋もれる。
+                精製ごとに分けて並べる見かたも選べるようにする。 */}
+            <div style={{ display: "inline-flex", border: `1px solid ${INK}`, borderRadius: 8, overflow: "hidden", marginBottom: 12 }}>
+              {[["one", "1枚で見る"], ["proc", "精製ごとに見る"]].map(([k, l]) => (
+                <button key={k} onClick={() => setFlavorMode(k)}
+                  style={{ padding: "6px 14px", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700,
+                    background: flavorMode === k ? INK : PAPER, color: flavorMode === k ? PAPER : INK }}>{l}</button>
+              ))}
+            </div>
+            {flavorMode === "proc"
+              ? <FlavorByProcess onOpen={setOpen} />
+              : <FlavorMapView onOpen={setOpen} initialFam={flavorFocus.fam} focusId={flavorFocus.id} />}
             <ProcessChart cur={displayCur} onProcess={goProcess} />
           </>
         ) : view === "process" ? (
