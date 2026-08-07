@@ -1,6 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { INK, PAPER, GRAY, LINE, GREEN, AMBER, STATUS } from "../lib/theme";
+import { nextCupFor } from "../lib/recommend";
+import { flavorOf, FLAVORS } from "../data/flavors";
 import { fmtPrice, fmtJPY, per100JPY, perGrams, fmtLocal } from "../lib/currency";
 import { beanHref, beanLinkKind } from "../lib/utils";
 import { getTasting, upsertTasting, removeTasting, isRestock, toggleRestock, getRestocks } from "../lib/store";
@@ -11,7 +13,7 @@ import { ROASTERS } from "../data/roasters";
 import { Package } from "./Package";
 import { shareUrl } from "../lib/urlState";
 
-export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
+export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur }) {
   const [rating, setRating] = useState(0);
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
@@ -20,7 +22,10 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
   const [watchMsg, setWatchMsg] = useState("");
   const [photo, setPhoto] = useState(null);
   const [copied, setCopied] = useState("");
+  const sheetRef = useRef(null);
   const { premium, limits } = usePlan();
+  // 次の一杯の候補。6,000件を毎描画で走査しないよう、豆が変わったときだけ出す
+  const nextCup = useMemo(() => nextCupFor(bean), [bean]);
   // 上限判定は「いま登録済みの件数」で見る。この豆が未登録のときだけ追加を止める。
   const watchFull = watchCount >= limits.watchlist;
   useEffect(() => {
@@ -32,6 +37,9 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
     setWatchMsg("");
     setPhoto(null);
     setCopied("");
+    // おすすめから移ってきたときは下の方を見ているので、先頭に戻す。
+    // そのままだと、新しい豆の名前も値段も見えないまま次のおすすめが目に入る。
+    if (sheetRef.current) sheetRef.current.scrollTop = 0;
     getPhoto(bean.id).then((p) => setPhoto(p));   // 写真は IndexedDB から後追いで読む
     // 見ている豆が変わったときだけ読み直す。bean そのものを依存にすると
     // 親が作り直すたびに走り、写真の読み込みが何度も走る
@@ -87,7 +95,7 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
   ];
   return (
     <div onClick={onClose} className="bt-overlay" style={{ position: "fixed", inset: 0, background: "rgba(23,21,15,0.45)", zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div className="bt-sheet" onClick={(e) => e.stopPropagation()} style={{ background: PAPER, width: "100%", maxWidth: 480, borderRadius: "14px 14px 0 0", padding: "18px 20px 26px", maxHeight: "82vh", overflowY: "auto" }}>
+      <div className="bt-sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()} style={{ background: PAPER, width: "100%", maxWidth: 480, borderRadius: "14px 14px 0 0", padding: "18px 20px 26px", maxHeight: "82vh", overflowY: "auto" }}>
         <div style={{ position: "relative" }}>
           <div style={{ width: 34, height: 4, borderRadius: 999, background: LINE, margin: "0 auto 16px" }} />
           <button onClick={onClose} aria-label="閉じる"
@@ -204,7 +212,50 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, cur }) {
           </div>
           <div style={{ fontSize: 9.5, color: GRAY, marginTop: 6 }}>記録はこの端末に保存されます（「記録」タブで一覧）。</div>
         </div>
+
+        {/* 次の一杯。記録を書いた直後は、次に何を買うか決めるのに都合がいい */}
+        {onOpen && (nextCup.sameOrigin || nextCup.similar) && (
+          <div style={{ marginTop: 18, borderTop: `1px solid ${LINE}`, paddingTop: 14 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700 }}>次の一杯に</div>
+            <div style={{ fontSize: 10, color: GRAY, marginTop: 3, lineHeight: 1.6 }}>
+              いま買えるものから選んでいます。
+            </div>
+            <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
+              {nextCup.sameOrigin && (
+                <RecoCard label={`同じ産地から — ${bean.origin}`} bean={nextCup.sameOrigin} cur={cur} onOpen={onOpen} />
+              )}
+              {nextCup.similar && (
+                <RecoCard label="似た味わいで、別の産地" bean={nextCup.similar} cur={cur} onOpen={onOpen} />
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+/* おすすめの1件。押すとその豆の詳細に移る（URLも切り替わるので共有できる）。
+   買う導線をここに並べると、記録を書き終えた人が押す先が3つになって迷う。
+   ここは「見に行く」だけにして、買うかどうかは移った先で決めてもらう。 */
+function RecoCard({ label, bean, cur, onOpen }) {
+  const roaster = ROASTERS[bean.r];
+  const f = flavorOf(bean);
+  return (
+    <button onClick={() => onOpen(bean)}
+      style={{ display: "block", width: "100%", textAlign: "left", cursor: "pointer",
+        background: "#F7F5EF", border: `1px solid ${LINE}`, borderRadius: 10, padding: "10px 12px" }}>
+      <div style={{ fontSize: 9.5, color: GRAY, letterSpacing: "0.04em" }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 4 }}>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: INK }}>{bean.name}</span>
+        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: INK, flexShrink: 0 }}>
+          {fmtJPY(per100JPY(bean), cur)}/100g
+        </span>
+      </div>
+      <div style={{ fontSize: 10.5, color: GRAY, marginTop: 2 }}>
+        {roaster.name} ・ {roaster.city} ・ {bean.process}
+        {f && f.fam && FLAVORS[f.fam] ? ` ・ ${FLAVORS[f.fam].label}` : ""}
+      </div>
+    </button>
   );
 }

@@ -572,7 +572,7 @@ export default function BeanTracker() {
       {/* ホーム画面に追加すると使い勝手が変わるので、1回だけ案内する */}
       <InstallHint />
 
-      <DetailSheet bean={open} onClose={() => setOpen(null)} onRoaster={goRoaster} onFlavor={goFlavor} cur={displayCur} />
+      <DetailSheet bean={open} onClose={() => setOpen(null)} onRoaster={goRoaster} onFlavor={goFlavor} onOpen={setOpen} cur={displayCur} />
     </div>
   );
 }
