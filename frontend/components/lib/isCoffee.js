@@ -71,6 +71,90 @@ const NON_COFFEE = [
   /\bpins?\b|\bpatch(es)?\b|\bkeyring\b|\bbadges?\b/,
   // 商品ではない行（送料・チップ等）と、コーヒー以外の飲料
   /^shipping$|^timer$|^donation$|配送料|送料|coke ?case|sprite ?case|soda ?case/,
+
+  // ───────────────────────────────────────────────────────────────
+  // ここから追補。図鑑に残っていた非コーヒーを、巡回の実データから拾った。
+  // どれも「いま買える・EC送客できる豆」として棚に並んでいたもの。
+  // ───────────────────────────────────────────────────────────────
+
+  // 器（カップ・ボウル・受け皿・蓋・ストロー・トレー・布巾）。
+  // KeepCup / ACME / ORIGAMI / LAMILL / Boram Um など。
+  // "Cup of Excellence" は判定の先頭で先に true を返しているので巻き込まない。
+  /\bcups?\b|\bbowls?\b|\bsaucers?\b|\blids?\b|keepcup|\btazas?\b|filiżanek|sugerør|termokopp|\bstraws?\b|\btrays?\b|\btowels?\b|tenugui/,
+
+  // 詰め合わせ。複数の豆をまとめた商品で、1銘柄としての産地も値段も決まらない。
+  // 既にある セット / assort / sampler / box of N と同じ扱いで図鑑には出さない。
+  /\bbundles?\b|set of \d+|pack of \d+|\d+ ?\/ ?case\b|variety ?pack|\bcombo\b/,
+
+  // 器具・機材・部品
+  /bialetti|moka ?express|new ?moka|kawiarka|cafetera|aero ?press|thermometer|温度計|dispenser|\bbracket\b|dispersion ?disc|golden ?disc|pump(er|hendel)|spieniacz|frother|milk ?system|airscape|refill ?jar|puq ?press|puqpress|rhinowares?\b|turbo ?chef/,
+
+  // 講座・サービス・修理・販促物
+  /barista ?(fundamentals|basics|standards)|brewing ?fundamentals|espresso ?making|consult(ing|ancy|ation)|installation ?service|\brepair\b|gift ?certificate|machine ?demonstration|stamp ?card|brewing ?guides?/,
+
+  // 茶。既にある \btea\b では拾えない書き方（アールグレイ等）
+  /earl ?grey|darjeeling|th[ée] ?noir|tykkitee/,
+
+  // チョコレート製品。コーヒーの風味表記まで落とさないよう、％表記・covered・mix が
+  // 付くものだけに限る。"Vienna Roast - Dark Roast - Dark Chocolate, Smoke" は豆なので残す。
+  /hot ?chocolate|chocolate ?mix|chocolate ?covered|chocolate ?\(\d+ ?%\)|\d+ ?% ?[a-z ]*chocolate|\(\d+ ?% ?dark\)|land ?chocolate|askinosie|vending ?chocolate/,
+
+  // レコード（店頭で物販しているもの）
+  /\bvinyl\b/,
+
+  // 清涼飲料・食品・洗剤
+  /coke ?zero|sparkling ?water|coconut ?water|pizza ?box|\bcleaner\b/,
+
+  // 抽出用の水と計測器。
+  // 精製方法の "Mountain Water Process"（水を使う脱カフェイン）は豆なので落とさない。
+  /brewing ?water|third ?wave ?water|\(\d+ ?gal\)|tds ?meter/,
+
+  // 複数本の詰め合わせ（○本パック・テイスターパック等）。
+  // 1銘柄として値段も産地も決まらないので、bundle と同じ扱いで出さない。
+  /\bpacks?\b|\d+-in-\d+|pack ?size|classic ?set|caffeine ?box|mixed ?box|4'l[üu]/,
+
+  // 定期便（各国語）
+  /abonnement|\babo\b|gaveabonnement|kaffeabonnement|suscripci[óo]n|assinatura/,
+
+  // 商品券・ギフト箱（各国語）
+  /gutschein|carte ?cadeau|\bcoffret\b|geschenk/,
+
+  // 書籍・教本
+  /\blivre\b|\blibro\b|handbook|\bmanuel\b|nez du caf[ée]|physics of espresso/,
+
+  // 全自動機・スケール・洗浄剤・部品（豆ではないのに高額で、価格順の一覧を荒らす）
+  /\bscales?\b|automatic (coffee )?machine|machine [àa] caf[ée]|d[ée]tartrant|\bcartridge\b|\bespro\b|coffee ?press|microbalance|felicita|difluid|\beureka\b|cafetto|rensepulver|espresso ?clean|brew ?clean|blind ?filter|brewtool|\bkits?\b/,
+
+  // 食品（チョコ菓子・クッキー・グラノーラ等）。
+  // コーヒーの風味表記（"Dark Chocolate, Smoke & Wood"）は落とさないよう、
+  // 菓子そのものを指す語だけに限る。
+  /chocolate ?chips?|\bcookies?\b|\bbrownie\b|cremeux|tahini|\bcashews?\b|chocolate ?powder|granola|[çc]ikolatal|[çc]ilolatal|cheese ?cake/,
+
+  // 雑貨・バッジ・鍵まわり
+  /\bbuttons?\b|\bshopper\b|key ?ring|\bplates?\b|\bspoons?\b/,
+
+  // 瓶詰めのRTD飲料
+  /bottled ?chilled|chilled ?beverages?|iced ?classic/,
+
+  // ドリップバッグ（中国語圏の表記）
+  /濾掛|掛耳|滤挂|咖啡包/,
+
+  // 紙フィルター・浄水フィルター（仏語）。
+  // 英語の "Filter" は焙煎/抽出の区分（"Bookkisa Filter"）なので落とさない。
+  // 仏語の複数形 filtres、または filtre + 対象語のときだけ器具とみなす。
+  /\bfiltres\b|filtre ?eau|mineralizer/,
+
+  // 講習（仏語）。ただし "Atelier Crenn Blend" は料理人との共同開発の豆なので残す。
+  // 先頭が Atelier で、名前のどこにも blend が無いものだけを講習とみなす。
+  /^atelier\b(?!.*blend)/,
+
+  // 器（独語・仏語）
+  /\btasses?\b|espressotasse|cappuccinotasse|\bbecher\b|\bglas\b|\bbottles?\b/,
+
+  // チョコレート製品の残り。
+  // 先頭の％は "100% Arabica" のような豆名にも付きうるので、
+  // カカオ含有量の書き方（％＋濃さの語）に限る。
+  /^\d+ ?% ?(sweet|classic|dark|milk|white)\b|chocolate ?duo|coffee ?x ?chocolate|^coated:|\(\d+ ?% ?milk\)/,
 ];
 
 // コーヒー豆（＝図鑑に載せる）なら true
