@@ -1323,6 +1323,31 @@ roasters:
     country: "PT"
     url: https://fabricacoffeeroasters.com
     currency: EUR
+  # 以下5店は scripts/probe_roasters.py で実際に商品が取れることを確かめた分。
+  # 候補10店のうち、SO Coffee / Olisipo / 7g Roaster / Al-Gharb / Senzu は
+  # ECが商品APIを持っておらず（sitemapに商品ページが無い）、加えても図鑑には
+  # 1点も並ばないので入れていない。候補は config/candidates.yaml に残してある。
+  - name: "Buraca Roasters"
+    country: "PT"
+    url: https://buracaroasters.com
+    currency: EUR
+  - name: "Booínga"
+    country: "PT"
+    url: https://www.booinga.com
+    currency: EUR
+  - name: "Combi Coffee"
+    country: "PT"
+    url: https://combi-coffee.com
+    currency: EUR
+  - name: "Torra Roasting & Coffee"
+    country: "PT"
+    url: https://torra.pt
+    currency: EUR
+  # 下見の時点で在庫0（全4点が売切）。巡回は毎時走るので、入荷したら図鑑に出る。
+  - name: "Comete Coffee Roasters"
+    country: "PT"
+    url: https://www.cometecoffeeroasters.com
+    currency: EUR
   - name: "Bourbon Coffee"
     country: "RW"
     url: https://bourboncoffee.rw
