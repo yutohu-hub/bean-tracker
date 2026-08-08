@@ -196,6 +196,22 @@ const NON_COFFEE = [
 
   // 書籍（James Hoffmann の本。版ごとに何度も出てくる）
   /world atlas of coffee/,
+
+  /* 注文に付ける行や販促品。値段が付いているので豆として並んでしまう。
+     Buraca の「Handwritten Note」(€2)、Rosso の「Message」(¥0)、
+     Rumble の「FREE SHIPPING!」など。25件が図鑑に混ざっていた。 */
+  // 送料・配送の行。英語の Shipping は先頭か、対象語が続くときだけ
+  /^free ?shipping|^shipping\b|shipping ?(carrier|usa|fee|upgrade|option)|custom shipping/,
+  // 寄付
+  /\bdonations?\b|\bdonate\b|寄付|寄附/,
+  /* ノート・葉書・カード類。"card" 単体は "Wildcard" のような豆名に
+     当たりうるので、続く語まで見て絞る。 */
+  /\bnotebooks?\b|post ?card|greeting|\bmagnet\b|card ?case|カードケース|mother'?s day card/,
+  /* 手書きメッセージ。"note" は "Love Notes Espresso"（豆名）や
+     "Jinotega"（産地）に含まれるので、単独の message か決まった言い回しだけ。 */
+  /handwritten note|^messages?$|メッセージカード/,
+  // フィルターバスケット（portafilter とは別の語）
+  /filter ?baskets?/,
 ];
 
 // コーヒー豆（＝図鑑に載せる）なら true

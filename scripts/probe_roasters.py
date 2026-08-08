@@ -53,8 +53,12 @@ def main() -> None:
         print(f"✓ {name:<28} {len(got):>3}件（在庫{len(avail):>3} / 値段と内容量あり{len(priced):>3}）"
               f"  通貨 {'/'.join(sorted(cur)) or '不明'}"
               f"  所在 {place.get('city', '?')} {place.get('country', '')}")
-        for p in got[:2]:
-            print(f"     例: {p.title[:44]:<46} {p.price} {p.currency} {p.grams or '?'}g")
+        # 商品名は全部出す。2件だけ出していたころは、Buraca が20件取れているのに
+        # 図鑑には1件しか並ばない理由（残りが器具や付帯だったのか、落としすぎか）が
+        # ログから分からなかった。
+        for p in got:
+            mark = " " if p.available else "×"
+            print(f"    {mark} {p.title[:52]:<54} {p.price:>8} {p.currency} {str(p.grams or '?'):>5}g")
         ok.append(name)
 
     print("=" * 68)
