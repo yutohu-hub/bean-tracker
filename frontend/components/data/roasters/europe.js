@@ -108,6 +108,26 @@ export const europe = {
   fabrica: { name: "Fábrica Coffee Roasters", city: "Lisbon", country: "PT", region: "europe", platform: "Shopify", note: "エチオピアの名店", coord: [-9.14, 38.72], url: "fabricacoffeeroasters.com",
     founded: "2014", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Lisbonを拠点とするポルトガルのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
+  /* ポルトガルの5店。scripts/probe_roasters.py で実際に商品が取れることを確かめてから加えた。
+     都市は各店が /meta.json で名乗っている値をそのまま使っている。
+     style（焙煎度）は、どの店も公開情報から確かめられなかったので空にしてある。
+     ここを埋めると診断の浅煎り/中煎りの判定に効いてしまうため、推測では書かない。
+     focus は下見で実際に並んでいた豆から書いた。巡回が回れば増える。 */
+  buraca: { name: "Buraca Roasters", city: "Cascais", country: "PT", region: "europe", platform: "Shopify", note: "3代続く焙煎所", coord: [-9.42, 38.70], url: "buracaroasters.com",
+    founded: "—", style: "—", ship: "欧州域内発送", focus: "コロンビア・中南米",
+    bio: "リスボン近郊カスカイスの焙煎所。3代・30年以上にわたって焙煎を続け、生産者との直接取引で豆を集める。焙煎機のある店内でそのまま飲める。" },
+  booinga: { name: "Booínga", city: "Matosinhos", country: "PT", region: "europe", platform: "Shopify", note: "港町の海辺から", coord: [-8.69, 41.18], url: "booinga.com",
+    founded: "—", style: "—", ship: "海外発送", focus: "ルワンダ・ペルー",
+    bio: "ポルト近郊の港町マトジニョシュにある焙煎所兼カフェ。アフリカにルーツを持つ店主が、産地とのつながりを名前に込めた。SCAの訓練を受けた作り手が焙煎する。" },
+  combi: { name: "Combi Coffee", city: "Porto", country: "PT", region: "europe", platform: "Shopify", note: "ポルトを動かした兄弟", coord: [-8.61, 41.15], url: "combi-coffee.com",
+    founded: "2014", style: "—", ship: "—", focus: "中南米（ホンジュラス・コスタリカ）",
+    bio: "2014年、ゴンサロとフランシスコのカルドーゾ兄弟が古いメルセデスのバンで始めた。2年間フェスや市場を回ったのち、2017年からボンフィンに店を構え、自家焙煎を始めた。ポルトのスペシャルティを動かした一軒。" },
+  torra: { name: "Torra Roasting & Coffee", city: "Lisboa", country: "PT", region: "europe", platform: "Shopify", note: "リスボンの自家焙煎", coord: [-9.14, 38.72], url: "torra.pt",
+    founded: "—", style: "—", ship: "—", focus: "—",
+    bio: "リスボンで自ら焙煎するスペシャルティの店。抽出のワークショップも開いている。" },
+  comete: { name: "Comete Coffee Roasters", city: "Matosinhos", country: "PT", region: "europe", platform: "Shopify", note: "2022年からの新顔", coord: [-8.69, 41.18], url: "cometecoffeeroasters.com",
+    founded: "2022", style: "—", ship: "—", focus: "コロンビア",
+    bio: "2022年に始まったポルトガルの焙煎所。シングルオリジンをオンラインで扱う。" },
   mame: { name: "MAME", city: "Zurich", country: "CH", region: "europe", platform: "Shopify", note: "エチオピアの名店", coord: [8.54, 47.37], url: "mame.coffee",
     founded: "2017", style: "浅〜中浅煎り・季節替わり", ship: "海外発送(1〜2週間)", focus: "エチオピア・コロンビア",
     bio: "Zurichを拠点とするスイスのスペシャルティロースター。エチオピア・コロンビアを軸に、素材感を活かした焙煎で知られる。" },
