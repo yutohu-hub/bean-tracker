@@ -28,6 +28,10 @@ SITEMAP_PRODUCTS = """<?xml version="1.0" encoding="UTF-8"?>
   <url><loc>https://shop.example/collections/all</loc></url>
   <url><loc>https://shop.example/pages/about</loc></url>
   <url><loc>https://shop.example/products/drip-kettle</loc></url>
+  <!-- 仕様では絶対URLだが、相対パスを書いている店が実在する。
+       そのまま httpx に渡すと ValueError で巡回そのものが止まっていた。 -->
+  <url><loc>/products/compostable-coffee-capsules-fivr</loc></url>
+  <url><loc>mailto:shop@example.com</loc></url>
 </urlset>"""
 
 # 単体の Product（Squarespace / BASE などによくある形）
@@ -112,6 +116,27 @@ def main() -> None:
     # 一覧・固定ページは開かない（無駄な往復を増やさない）
     assert "https://shop.example/collections/all" not in client.seen
     assert "https://shop.example/pages/about" not in client.seen
+
+    # 相対パスの <loc> は店のドメインに繋いでから開く。生のまま渡すと
+    # httpx が ValueError を投げ、httpx.HTTPError では捕まらないので巡回が止まる。
+    assert "/products/compostable-coffee-capsules-fivr" not in client.seen, "相対パスを生のまま開いている"
+    assert "https://shop.example/products/compostable-coffee-capsules-fivr" in client.seen, \
+        "相対パスの商品ページを開けていない"
+    # http(s) でないものは開かない
+    assert not any(u.startswith("mailto:") for u in client.seen), client.seen
+
+    # 1店で例外が出ても、その店の失敗として返る（他の店の結果を道連れにしない）
+    async def boom(*a, **k):
+        raise ValueError("unknown url type: '/products/x'")
+
+    orig, crawler._fetch_any = crawler._fetch_any, boom
+    try:
+        _, res = asyncio.run(crawler.crawl_roaster(
+            None, {"name": "壊れた店", "url": "https://x.example"}, 2, asyncio.Semaphore(1)))
+    finally:
+        crawler._fetch_any = orig
+    assert res is None, "例外を投げた店が成功扱いになっている"
+    assert "ValueError" in crawler.LAST_REASON["壊れた店"], crawler.LAST_REASON["壊れた店"]
 
     # sitemap が無い店は、理由を残して None を返す
     class Empty(FakeClient):

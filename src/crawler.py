@@ -6,6 +6,7 @@ import json
 import random
 import re
 from dataclasses import dataclass, asdict
+from urllib.parse import urljoin
 
 import httpx
 
@@ -514,7 +515,14 @@ async def _sitemap_product_urls(client: httpx.AsyncClient, base: str) -> list[st
             continue
         if resp.status_code != 200 or "<loc" not in resp.text:
             continue
-        for loc in _LOC.findall(resp.text):
+        for raw in _LOC.findall(resp.text):
+            # sitemap の <loc> は仕様上は絶対URLだが、相対パスを書いている店がある。
+            # そのまま httpx に渡すと ValueError で落ち、httpx.HTTPError では
+            # 捕まらないので巡回そのものが止まる（実測: 34店ぶんの結果が
+            # "/products/compostable-coffee-capsules-fivr" 1つで消えた）。
+            loc = urljoin(target, raw.strip())
+            if not loc.startswith(("http://", "https://")):
+                continue
             if loc in seen:
                 continue
             seen.add(loc)
@@ -623,6 +631,23 @@ def _alt_host(url: str) -> str:
 
 
 async def crawl_roaster(client, r, max_pages, sem) -> tuple[dict, list[Product] | None]:
+    """1店ぶん。何が起きてもこの店の失敗として返し、外へ例外を出さない。
+
+    数百の他所のサイトを回るので、想定外の作りのデータはいつか必ず来る。
+    1店で例外が上がると crawl_all の await がそこで落ち、その回に取れていた
+    他の店の結果ごと失われる（実測: 相対URLの sitemap 1店で、34店ぶんが消えた）。
+    取れない店は「取れない店」として数え、巡回は最後まで走らせる。
+    """
+    try:
+        return await _crawl_roaster(client, r, max_pages, sem)
+    except asyncio.CancelledError:
+        raise                       # 打ち切りは握りつぶさない
+    except Exception as e:          # noqa: BLE001 — 店ごとに握るのが目的
+        LAST_REASON[r["name"]] = f"想定外のエラー: {type(e).__name__}: {e}"[:160]
+        return r, None
+
+
+async def _crawl_roaster(client, r, max_pages, sem) -> tuple[dict, list[Product] | None]:
     async with sem:
         await asyncio.sleep(random.uniform(0.3, 1.2))  # 一斉アクセスを避けて間隔をあける
         res = await _fetch_any(client, r, max_pages)
