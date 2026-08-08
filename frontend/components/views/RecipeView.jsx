@@ -1,5 +1,6 @@
 "use client";
-import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
+import { useState } from "react";
+import { INK, GRAY, LINE, GREEN } from "../lib/theme";
 
 // 競技会（World Brewers Cup）優勝者の抽出レシピ。追加は RECIPES に1件足すだけ。
 // 数値・豆情報は公開情報に基づく。判明しない項目は空欄("")にして「情報準備中」を表示（捏造しない）。
@@ -104,151 +105,185 @@ const RECIPES = [
   },
 ];
 
-function Recipe({ r }) {
+/* 数値から比率（豆1に対する湯）を出す。11杯を見比べるとき、いちばん効く1つの数字。
+   「レシピの読み方」でも最初に挙げているのに、これまでは自分で割り算する必要があった。
+   湯量は "240g（Ca 4ppm / Mg 15ppm）" のように但し書きが付く回があるので、先頭の数だけ読む。 */
+function ratioOf(recipe) {
+  const num = (label) => {
+    const row = recipe.find(([, l]) => l === label);
+    const m = row && String(row[2]).match(/[\d.]+/);
+    return m ? parseFloat(m[0]) : 0;
+  };
+  const c = num("Coffee"), w = num("Water");
+  if (!c || !w) return null;
+  return `1:${(w / c).toFixed(1).replace(/\.0$/, "")}`;
+}
+
+const MONO = "ui-monospace, monospace";
+
+/* 升の見出しは横4つに収まる長さにする。"Temperature" だけ2行に折れて、
+   その升だけ背が高くなっていた。元データは触らず、表示名だけ短くする。 */
+const SHORT = { Temperature: "Temp" };
+const cap = { fontFamily: MONO, fontSize: 10, letterSpacing: "0.15em", color: GRAY };
+
+/* 一覧の1行。開くまでは、見比べるのに要る分だけ出す。
+   11杯ぶんを全部開いたまま並べると 10,500px（携帯で12画面）になり、
+   目当ての回に辿り着くまで延々スクロールすることになっていた。 */
+function Row({ r, open, onToggle }) {
+  const ratio = ratioOf(r.recipe);
+  const country = (r.bean.find(([k]) => k === "生産国") || [])[1];
+  const variety = (r.bean.find(([k]) => k === "品種") || [])[1];
   return (
-    <div style={{ border: `1.5px solid ${INK}`, borderRadius: 16, overflow: "hidden", marginTop: 18 }}>
-      {/* ヘッダー */}
-      <div style={{ padding: "18px 20px", background: "#141210", color: PAPER }}>
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.18em", color: "#E4B84A" }}>
-          {r.comp.toUpperCase()} · {r.year}
-        </div>
-        <div style={{ fontSize: 21, fontWeight: 800, marginTop: 8, lineHeight: 1.3 }}>
-          <span style={{ marginRight: 8 }}>{r.flag}</span>{r.winner}
-        </div>
-        {r.dripper && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
-            <span style={{ fontSize: 10, color: "#B8AE9E" }}>DRIPPER</span>
-            <span style={{ fontSize: 13, fontWeight: 700 }}>{r.dripper}</span>
+    <div style={{ borderTop: `1px solid ${LINE}` }}>
+      <button onClick={onToggle} aria-expanded={open}
+        style={{ display: "flex", alignItems: "flex-start", gap: 12, width: "100%", textAlign: "left",
+          background: "none", border: "none", padding: "14px 2px", cursor: "pointer" }}>
+        <span style={{ fontFamily: MONO, fontSize: 12, color: GRAY, width: 34, flexShrink: 0, paddingTop: 2 }}>{r.year}</span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: "block", fontSize: 14, fontWeight: 700, color: INK }}>
+            <span style={{ marginRight: 6 }}>{r.flag}</span>{r.winner}
+          </span>
+          <span style={{ display: "block", fontSize: 11.5, color: GRAY, marginTop: 3, lineHeight: 1.6 }}>
+            {r.dripper}
+          </span>
+          <span style={{ display: "block", fontSize: 11, color: GRAY, marginTop: 2 }}>
+            {[country, variety].filter(Boolean).join(" · ")}
+          </span>
+        </span>
+        <span style={{ flexShrink: 0, textAlign: "right", paddingTop: 1 }}>
+          {ratio && <span style={{ display: "block", fontFamily: MONO, fontSize: 14, fontWeight: 800, color: INK }}>{ratio}</span>}
+          {/* 11行すべてに「開く」と書くと、その文字だけで一覧が埋まる。
+              行ごと押せることは見出しの一文で伝えてあるので、印は記号だけにする。 */}
+          <span aria-label={open ? "閉じる" : "開く"}
+            style={{ display: "block", fontSize: 11, color: GRAY, marginTop: 5 }}>{open ? "▲" : "▼"}</span>
+        </span>
+      </button>
+      {open && <Detail r={r} />}
+    </div>
+  );
+}
+
+function Detail({ r }) {
+  const rows = (list) => (
+    <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 6 }}>
+      <tbody>
+        {list.map(([k, v]) => (
+          <tr key={k} style={{ borderTop: `1px solid ${LINE}` }}>
+            <td style={{ padding: "7px 0", fontSize: 11.5, color: GRAY, width: 92, verticalAlign: "top" }}>{k}</td>
+            <td style={{ padding: "7px 0", fontSize: 12.5, color: v ? INK : GRAY }}>{v || "情報準備中"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+  return (
+    <div style={{ padding: "2px 2px 22px" }}>
+      {/* 4指標。見比べる数字なので等幅で揃える */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(88px, 1fr))", gap: 8 }}>
+        {r.recipe.map(([icon, label, val]) => (
+          <div key={label} style={{ padding: "10px 12px", background: "#F7F5EF", borderRadius: 10 }}>
+            <div style={{ fontSize: 10, color: GRAY }}>{icon} {SHORT[label] || label}</div>
+            <div style={{ fontFamily: MONO, fontSize: val && val.length > 10 ? 11.5 : 15, fontWeight: 800,
+              color: val ? INK : GRAY, marginTop: 3, lineHeight: 1.3 }}>{val || "情報準備中"}</div>
           </div>
-        )}
+        ))}
       </div>
 
-      <div style={{ padding: "16px 20px 22px", background: PAPER }}>
-        {/* 豆情報 */}
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>BEAN</div>
-        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 6 }}>
-          <tbody>
-            {r.bean.map(([k, v]) => (
-              <tr key={k} style={{ borderTop: `1px solid ${LINE}` }}>
-                <td style={{ padding: "7px 0", fontSize: 11.5, color: GRAY, width: 92, verticalAlign: "top" }}>{k}</td>
-                <td style={{ padding: "7px 0", fontSize: 12.5, color: v ? INK : GRAY, fontWeight: v ? 600 : 400 }}>
-                  {v || "情報準備中"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* レシピ（4指標） */}
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY, marginTop: 20 }}>RECIPE</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
-          {r.recipe.map(([icon, label, val]) => (
-            <div key={label} style={{ padding: "12px 14px", background: "#F7F5EF", borderRadius: 10 }}>
-              <div style={{ fontSize: 10.5, color: GRAY }}>{icon} {label}</div>
-              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: val && val.length > 10 ? 12 : 16, fontWeight: 800, color: val ? INK : GRAY, marginTop: 3, lineHeight: 1.3 }}>
-                {val || "情報準備中"}
-              </div>
+      {/* 注ぎ方。時刻と量だけの並びなので、線と点は引かず素の行にする */}
+      <div style={{ ...cap, marginTop: 18 }}>POUR</div>
+      {r.pours.length === 0 ? (
+        <div style={{ fontSize: 12, color: GRAY, marginTop: 6, lineHeight: 1.8 }}>
+          注湯の時刻と配分は公開されていません。
+          {r.total && <span style={{ fontFamily: MONO, color: INK, fontWeight: 700 }}> 総抽出 {r.total}</span>}
+        </div>
+      ) : (
+        <div style={{ marginTop: 6 }}>
+          {r.pours.map(([t, note], i) => (
+            <div key={i} style={{ display: "flex", gap: 12, padding: "6px 0", borderTop: i ? `1px solid ${LINE}` : "none" }}>
+              <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 700, color: GREEN, width: 46, flexShrink: 0 }}>{t}</span>
+              <span style={{ fontSize: 12.5, color: INK, lineHeight: 1.6 }}>{note}</span>
             </div>
           ))}
+          {r.total && (
+            <div style={{ display: "flex", gap: 12, padding: "8px 0 0", marginTop: 4, borderTop: `1px solid ${INK}` }}>
+              <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: GRAY, width: 46, flexShrink: 0 }}>TOTAL</span>
+              <span style={{ fontFamily: MONO, fontSize: 13.5, fontWeight: 800, color: INK }}>{r.total}</span>
+            </div>
+          )}
         </div>
+      )}
 
-        {/* 注湯タイムライン */}
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY, marginTop: 20 }}>POUR</div>
-        {r.pours.length === 0 ? (
-          <div style={{ fontSize: 12, color: GRAY, marginTop: 8, lineHeight: 1.8 }}>
-            注湯の時刻と配分は公開されていません。
-            {r.total && <span style={{ fontFamily: "ui-monospace, monospace", color: INK, fontWeight: 700 }}> 総抽出 {r.total}</span>}
-          </div>
-        ) : (
-          <div style={{ marginTop: 8, position: "relative", paddingLeft: 18 }}>
-            <div style={{ position: "absolute", left: 4, top: 6, bottom: r.total ? 22 : 6, width: 2, background: LINE }} />
-            {r.pours.map(([t, note], i) => (
-              <div key={i} style={{ position: "relative", display: "flex", alignItems: "baseline", gap: 12, padding: "6px 0" }}>
-                <span style={{ position: "absolute", left: -18, top: 9, width: 10, height: 10, borderRadius: 999, background: GREEN, border: `2px solid ${PAPER}` }} />
-                <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 13, fontWeight: 800, color: INK, width: 44, flexShrink: 0 }}>{t}</span>
-                <span style={{ fontSize: 13, color: INK }}>{note}</span>
-              </div>
-            ))}
-            {r.total && (
-              <div style={{ position: "relative", display: "flex", alignItems: "baseline", gap: 12, paddingTop: 8, marginTop: 4, borderTop: `1px solid ${LINE}` }}>
-                <span style={{ position: "absolute", left: -18, top: 12, width: 10, height: 10, borderRadius: 999, background: INK, border: `2px solid ${PAPER}` }} />
-                <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, fontWeight: 700, color: GRAY, width: 44, flexShrink: 0 }}>TOTAL</span>
-                <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 15, fontWeight: 800, color: INK }}>{r.total}</span>
-              </div>
-            )}
-          </div>
-        )}
+      <div style={{ ...cap, marginTop: 18 }}>BEAN</div>
+      {rows(r.bean)}
 
-        {/* 数値だけでは分からない条件。判明した回だけ出す（無い回は行ごと出さない） */}
-        {(r.gear || r.water || r.taste) && (
-          <div style={{ marginTop: 18 }}>
-            <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>SETUP</div>
-            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 6 }}>
-              <tbody>
-                {[["補助道具", r.gear], ["水", r.water], ["申告した味わい", r.taste]]
-                  .filter(([, v]) => v)
-                  .map(([k, v]) => (
-                    <tr key={k} style={{ borderTop: `1px solid ${LINE}` }}>
-                      <td style={{ padding: "7px 0", fontSize: 11.5, color: GRAY, width: 92, verticalAlign: "top" }}>{k}</td>
-                      <td style={{ padding: "7px 0", fontSize: 12.5, color: INK }}>{v}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {(r.gear || r.water || r.taste) && (
+        <>
+          <div style={{ ...cap, marginTop: 18 }}>SETUP</div>
+          {rows([["補助道具", r.gear], ["水", r.water], ["申告した味わい", r.taste]].filter(([, v]) => v))}
+        </>
+      )}
 
-        {/* その一杯の勘所。読み物としてはここが本体なので、数値の下に置く */}
-        {r.note && (
-          <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${LINE}` }}>
-            <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.15em", color: GRAY }}>NOTE</div>
-            <p style={{ fontSize: 12.5, color: INK, lineHeight: 1.9, margin: "7px 0 0" }}>{r.note}</p>
-          </div>
-        )}
-      </div>
+      {r.note && (
+        <p style={{ fontSize: 12.5, color: INK, lineHeight: 1.9, margin: "18px 0 0",
+          paddingTop: 14, borderTop: `1px solid ${LINE}` }}>{r.note}</p>
+      )}
     </div>
   );
 }
 
 export function RecipeView() {
+  // 開くのは1つずつ。複数開けると、結局もとの長さに戻ってしまう
+  const [open, setOpen] = useState(0);
+  const [guide, setGuide] = useState(false);
+
   return (
     <div>
-      <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.2em", color: GRAY }}>BREW RECIPES</div>
+      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.2em", color: GRAY }}>BREW RECIPES</div>
       <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6, lineHeight: 1.35 }}>チャンピオンの抽出レシピ</div>
       <p style={{ fontSize: 12.5, color: GRAY, lineHeight: 1.9, marginTop: 8, marginBottom: 0 }}>
-        World Brewers Cup 過去11大会の優勝者が使った豆と抽出レシピ。同じ一杯を、あなたの手で。<br />
-        ※ 2020年は新型コロナのため中止。
+        World Brewers Cup 過去11大会の優勝者が使った豆と抽出レシピ。
+        右の数字は豆1に対する湯の量です。行をタップすると全部出ます。
       </p>
 
-      {/* 数値をそのまま真似ても、豆も水も器具も違えば同じ味にはならない。
-          「どの数字を動かすと味がどちらへ動くか」を先に置いて、読み替えられるようにする。
-          4:6 の配分の効き方は、考案者（2016年優勝の粕谷哲）の説明に基づく。 */}
-      <div style={{ marginTop: 20, padding: "16px 18px", background: "#F7F5EF", borderRadius: 14 }}>
-        <div style={{ fontSize: 14, fontWeight: 800 }}>レシピの読み方</div>
-        <p style={{ fontSize: 12, color: GRAY, lineHeight: 1.9, margin: "6px 0 0" }}>
-          豆も水も器具も違えば、同じ数字でも同じ味にはなりません。
-          真似るより、<strong style={{ color: INK }}>どの数字を動かすと味がどちらへ動くか</strong>を掴むほうが早いはずです。
-        </p>
-        <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-          {[
-            ["比率", "豆1に対する湯の量。1:15 は濃く、1:17 は軽い。まず1:16から始めて、濃さの好みで前後させる。"],
-            ["湯温", "高いほど成分が早く出る。浅煎りは93〜96℃で立ち上げ、渋みが出るなら下げる。90℃を切ると酸が立ちやすい。"],
-            ["挽き目", "細かいほど濃く、詰まると渋くなる。落ちきる時間が予定より長ければ粗く、短ければ細かく。"],
-            ["注ぐ回数", "回数が多いほど濃く出る。総量が同じでも、3回に分ければ1回で注ぐより濃い。"],
-            ["前半の配分", "4:6メソッドでは、最初の40%の2投で味の方向が決まる。1投目を少なくすると甘く、多くすると明るくなる。"],
-          ].map(([k, v]) => (
-            <div key={k} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <span style={{ flexShrink: 0, width: 62, fontSize: 11.5, fontWeight: 800, color: INK, paddingTop: 1 }}>{k}</span>
-              <span style={{ fontSize: 12, color: INK, lineHeight: 1.8 }}>{v}</span>
-            </div>
-          ))}
+      {/* 読み方は一度読めば足りる説明なので畳んでおく。一覧より先に長文が来ると、
+          目的のレシピに辿り着く前に画面が埋まる。 */}
+      <button onClick={() => setGuide(!guide)}
+        style={{ display: "block", marginTop: 14, background: "none", border: "none", padding: 0,
+          cursor: "pointer", fontSize: 12, color: INK, fontWeight: 700 }}>
+        レシピの読み方 {guide ? "▲" : "▼"}
+      </button>
+      {guide && (
+        <div style={{ marginTop: 10, padding: "14px 16px", background: "#F7F5EF", borderRadius: 12 }}>
+          <p style={{ fontSize: 12, color: GRAY, lineHeight: 1.9, margin: 0 }}>
+            豆も水も器具も違えば、同じ数字でも同じ味にはなりません。
+            真似るより、<strong style={{ color: INK }}>どの数字を動かすと味がどちらへ動くか</strong>を掴むほうが早いはずです。
+          </p>
+          <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+            {[
+              ["比率", "豆1に対する湯の量。1:15 は濃く、1:17 は軽い。まず1:16から始めて、濃さの好みで前後させる。"],
+              ["湯温", "高いほど成分が早く出る。浅煎りは93〜96℃で立ち上げ、渋みが出るなら下げる。90℃を切ると酸が立ちやすい。"],
+              ["挽き目", "細かいほど濃く、詰まると渋くなる。落ちきる時間が予定より長ければ粗く、短ければ細かく。"],
+              ["注ぐ回数", "回数が多いほど濃く出る。総量が同じでも、3回に分ければ1回で注ぐより濃い。"],
+              ["前半の配分", "4:6メソッドでは、最初の40%の2投で味の方向が決まる。1投目を少なくすると甘く、多くすると明るくなる。"],
+            ].map(([k, v]) => (
+              <div key={k} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <span style={{ flexShrink: 0, width: 62, fontSize: 11.5, fontWeight: 800, color: INK, paddingTop: 1 }}>{k}</span>
+                <span style={{ fontSize: 12, color: INK, lineHeight: 1.8 }}>{v}</span>
+              </div>
+            ))}
+          </div>
         </div>
+      )}
+
+      <div style={{ marginTop: 18, borderBottom: `1px solid ${LINE}` }}>
+        {RECIPES.map((r, i) => (
+          <Row key={i} r={r} open={open === i} onToggle={() => setOpen(open === i ? -1 : i)} />
+        ))}
       </div>
 
-      {RECIPES.map((r, i) => <Recipe key={i} r={r} />)}
-
-      <div style={{ marginTop: 22, padding: "12px 14px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 11, color: GRAY, lineHeight: 1.8 }}>
-        ※ 数値・豆情報は大会レポートや本人インタビューなどの公開情報に基づきます。裏の取れなかった項目は埋めずに「情報準備中」と表示しています（推測では書きません）。
+      <div style={{ marginTop: 18, fontSize: 11, color: GRAY, lineHeight: 1.8 }}>
+        ※ 2020年は新型コロナのため中止。数値・豆情報は大会レポートや本人インタビューなどの
+        公開情報に基づきます。裏の取れなかった項目は埋めずに「情報準備中」と表示しています。
       </div>
     </div>
   );
