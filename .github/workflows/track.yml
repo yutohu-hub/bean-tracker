@@ -106,6 +106,33 @@ jobs:
           # data/site.json と build/site/ の生成物は同じジョブ内で使い切る中間成果物なので追跡しない。
           # 座標のキャッシュも残す。これを捨てると毎回 Nominatim に問い合わせ直すことになり、
           # 相手の利用規約にも反する（同じ街を何度も引かないための蓄積）。
-          git add frontend/components/data/live.generated.json frontend/components/data/note.generated.json config/citycoords.json
-          git diff --cached --quiet || git commit -m "crawl: $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push
+          FILES="frontend/components/data/live.generated.json frontend/components/data/note.generated.json config/citycoords.json"
+          git add $FILES
+          if git diff --cached --quiet; then
+            echo "変わったものが無いので、コミットしない"
+            exit 0
+          fi
+          git commit -m "crawl: $(date -u +'%Y-%m-%d %H:%M UTC')"
+
+          # 走っている間に別の実行が main を進めていることがある。そのまま push すると
+          # 弾かれ、4分かけて取った巡回結果を丸ごと捨てていた（実測: run #85）。
+          # 最新の main を土台にして、この回の成果物を載せ直してから押す。
+          # 生成物は data/state.db から作り直せるので、テキストとして混ぜる必要はない。
+          for i in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "他の実行が先に push していた（$i 回目）。取り込んで載せ直す。"
+            MINE="$(git rev-parse HEAD)"
+            git fetch origin main
+            git reset --hard origin/main
+            git checkout "$MINE" -- $FILES
+            git add $FILES
+            if git diff --cached --quiet; then
+              echo "取り込んだ内容と同じだったので、コミットしない"
+              exit 0
+            fi
+            git commit -m "crawl: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          done
+          echo "3回試しても push できなかった"
+          exit 1
