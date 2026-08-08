@@ -1,0 +1,30 @@
+name: 候補の店から商品が取れるか確かめる
+
+# 巡回対象に加える前の下見。config/candidates.yaml の店を実際に叩いて、
+# 商品が取れるか・値段と内容量がそろうかを見る。
+# 開発環境からは外に出られないので、ネットのある runner で確かめる
+# （座標の照合を verify-positions.yml でやっているのと同じ理由）。
+
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: "候補ファイル"
+        default: "config/candidates.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 依存インストール
+        run: pip install httpx pyyaml
+      - name: 候補を叩く
+        run: python scripts/probe_roasters.py "${{ inputs.file }}"

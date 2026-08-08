@@ -1,0 +1,53 @@
+# 巡回に加える前の候補。scripts/probe_roasters.py で実際に商品が取れるか確かめ、
+# 取れた店だけを config/roasters.yaml に写す。
+#
+# ここに残しておくのは、次に国を足すときに同じ手順を踏めるようにするため。
+# 名前・所在地・ドメインは調べた実在の店で、取れるかどうかは runner で確かめる。
+
+settings:
+  max_pages: 2
+  timeout_sec: 20
+  concurrency: 4
+
+roasters:
+  # ---- ポルトガル ----
+  - name: "SO Coffee Roasters"
+    country: "PT"
+    url: https://www.soroasters.com
+    currency: EUR
+  - name: "Buraca Roasters"
+    country: "PT"
+    url: https://buracaroasters.com
+    currency: EUR
+  - name: "Comete Coffee Roasters"
+    country: "PT"
+    url: https://www.cometecoffeeroasters.com
+    currency: EUR
+  - name: "Olisipo Coffee Roasters"
+    country: "PT"
+    url: https://olisipo.coffee
+    currency: EUR
+  - name: "Torra Roasting & Coffee"
+    country: "PT"
+    url: https://torra.pt
+    currency: EUR
+  - name: "7g Roaster"
+    country: "PT"
+    url: https://7groaster.pt
+    currency: EUR
+  - name: "Combi Coffee"
+    country: "PT"
+    url: https://combi-coffee.com
+    currency: EUR
+  - name: "Al-Gharb Coffee Roasters"
+    country: "PT"
+    url: https://www.al-gharb.coffee
+    currency: EUR
+  - name: "Booínga"
+    country: "PT"
+    url: https://www.booinga.com
+    currency: EUR
+  - name: "Senzu Coffee Roasters"
+    country: "PT"
+    url: https://www.senzucoffee.com
+    currency: EUR
