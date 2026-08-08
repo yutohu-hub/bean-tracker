@@ -1,31 +1,27 @@
-// 味の記録の分析・ロースター特徴量・おすすめ算出（オンデバイス・診断/マイページ共用）
+// 味の記録の分析とおすすめ（オンデバイス・診断/マイページ共用）
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
 import { flavorOf } from "../data/flavors";
+import { roasterProfiles, FEATURES } from "./roasterProfile";
+import { ORIGIN_GROUP, GROUP_LABEL } from "./originGroup";
 
-// ロースターの特徴量（style / focus / region / ship から算出）
-export function featureOf(r) {
-  const s = r.style || "", f = r.focus || "", reg = r.region || "";
-  const light = /極浅/.test(s) ? 1 : /浅煎り/.test(s) ? (/中/.test(s) ? 0.7 : 0.9) : /中深|深/.test(s) ? 0 : 0.4;
-  const medium = /中浅|中煎り/.test(s) ? 1 : /浅〜中|浅\/中/.test(s) ? 0.7 : 0.4;
-  const africa = /エチオピア|ケニア|ルワンダ/.test(f) || reg === "africaMideast" ? 1 : 0;
-  const latam = /コロンビア|ブラジル|グアテマラ|コスタリカ|メキシコ|ペルー|パナマ/.test(f) || reg === "latinAmerica" ? 1 : 0;
-  const asia = reg === "eastAsia" || reg === "seAsiaIndia" ? 1 : 0;
-  const geisha = /ゲイシャ|希少/.test(f) ? 1 : 0;
-  const experimental = geisha ? 1 : /実験|アナエロビック|anaerobic/i.test(s + f) ? 1 : 0;
-  const domestic = /国内/.test(r.ship || "") ? 1 : 0;
-  return { light, medium, africa, latam, asia, geisha, experimental, domestic, natural: geisha ? 0.6 : 0.4, clean: 0.6 };
+// 読み込み元を1か所にしたいので、ここからも出しておく（既存の import を壊さない）
+export { ORIGIN_GROUP, GROUP_LABEL };
+
+/* 店の特徴量。以前はここで紹介文から作っていたが、いま並んでいる豆から
+   数えるように変えた（理由と実測は roasterProfile.js に書いてある）。 */
+export function featureOf(rOrKey) {
+  const { feats } = roasterProfiles();
+  const key = typeof rOrKey === "string" ? rOrKey
+    : Object.keys(ROASTERS).find((k) => ROASTERS[k] === rOrKey);
+  return feats[key] || Object.fromEntries(FEATURES.map((f) => [f, 0]));
 }
 
-export const ORIGIN_GROUP = (o = "") => {
-  if (/エチオピア|ケニア|ルワンダ|ブルンジ|タンザニア/.test(o)) return "africa";
-  if (/コロンビア|ブラジル|グアテマラ|コスタリカ|メキシコ|ペルー|パナマ|エルサルバドル|ホンジュラス|ボリビア|ニカラグア|エクアドル/.test(o)) return "latam";
-  if (/インドネシア|ベトナム|インド|中国|タイ|東ティモール|パプア/.test(o)) return "asia";
-  return null;
-};
-export const GROUP_LABEL = { africa: "アフリカ系", latam: "中南米系", asia: "アジア系" };
-
-// 高評価ほど正、低評価ほど負の重みで、記録から好み特徴量・ロースター親和・要約を作る
+/* 記録から好みのベクトルを作る。高評価ほど正、低評価ほど負。
+ *
+ * 最後に長さをそろえているのが要点。以前は記録が増えるほどベクトルが
+ * 際限なく伸びて、200件も付けた人は今日の回答（重み合計で 5〜8 程度）が
+ * 完全に埋もれた。向きだけを受け取り、強さは呼ぶ側が決める。 */
 export function analyzeTastings(tastings) {
   const attr = {}, aff = {}, proc = {}, fam = {}, grp = {};
   const add = (o, k, v) => { o[k] = (o[k] || 0) + v; };
@@ -45,9 +41,9 @@ export function analyzeTastings(tastings) {
     if (bean && (bean.vt === "geisha" || bean.vt === "sidra")) add(attr, "geisha", w);
     const r = t.r && ROASTERS[t.r];
     if (r) {
-      if (/国内/.test(r.ship || "")) add(attr, "domestic", w * 0.6);
+      if (r.country === "JP") add(attr, "domestic", w * 0.6);
       if (r.region === "eastAsia" || r.region === "seAsiaIndia") add(attr, "asia", w * 0.5);
-      const rf = featureOf(r);
+      const rf = featureOf(t.r);
       if (rf.light > 0.7) add(attr, "light", w * 0.6); else if (rf.medium > 0.7) add(attr, "medium", w * 0.5);
       if (w > 0) add(aff, t.r, w * 0.8);
     }
@@ -55,23 +51,40 @@ export function analyzeTastings(tastings) {
     if (fm && w > 0) add(fam, fm.fam, w);
   }
   const top = (o) => Object.entries(o).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
-  return { attr, aff, rated, topGroup: top(grp), topProc: top(proc), topFam: top(fam) };
+  return { attr: unit(attr), aff, rated, topGroup: top(grp), topProc: top(proc), topFam: top(fam) };
 }
 
-// 分析(attr/aff)から、いま買える豆のあるロースターを相性順に上位n件
-export function recommendRoasters(analysis, n = 3) {
-  if (!analysis || !analysis.rated) return [];
-  const liveKeys = new Set(BEANS.filter((b) => b.status === "now").map((b) => b.r));
-  return Object.keys(ROASTERS)
-    .filter((k) => liveKeys.has(k))
+/* ベクトルの長さを1にする（向きだけ残す）。すべて0なら触らない。 */
+function unit(v) {
+  const len = Math.sqrt(Object.values(v).reduce((a, b) => a + b * b, 0));
+  if (!len) return v;
+  const out = {};
+  for (const [k, x] of Object.entries(v)) out[k] = x / len;
+  return out;
+}
+
+/* 好みのベクトルで、いま買える豆のある店を相性順に並べる。
+   店ごとの好み(aff)は、記録が増えても効きすぎないよう頭打ちにする。
+
+   onlyJP は点数ではなく絞り込み。「国内でさっと届いてほしい」は好みの強弱では
+   なく条件で、どれだけ味が合っても海外の店では答えにならない。 */
+export function scoreRoasters(attr, aff = {}, { onlyJP = false, affWeight = 1.2 } = {}) {
+  const { keys, feats } = roasterProfiles();
+  return keys
+    .filter((k) => !onlyJP || ROASTERS[k].country === "JP")
     .map((k) => {
-      const rf = featureOf(ROASTERS[k]);
       let s = 0;
-      for (const [f, v] of Object.entries(analysis.attr)) s += v * (rf[f] || 0);
-      s += (analysis.aff[k] || 0) * 1.0;
+      for (const [f, v] of Object.entries(attr)) s += v * (feats[k][f] || 0);
+      s += Math.tanh((aff[k] || 0) / 3) * affWeight;
       return [k, s];
     })
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, n)
-    .map((x) => x[0]);
+    .sort((a, b) => b[1] - a[1]);
+}
+
+export function recommendRoasters(analysis, n = 3) {
+  if (!analysis || !analysis.rated) return [];
+  // 記録だけで並べるので、向きだけのベクトルを診断の回答と同じ強さまで伸ばす
+  const attr = {};
+  for (const [f, v] of Object.entries(analysis.attr)) attr[f] = v * 6;
+  return scoreRoasters(attr, analysis.aff).slice(0, n).map((x) => x[0]);
 }
