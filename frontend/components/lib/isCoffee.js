@@ -176,6 +176,26 @@ const NON_COFFEE = [
   // 先頭の％は "100% Arabica" のような豆名にも付きうるので、
   // カカオ含有量の書き方（％＋濃さの語）に限る。
   /^\d+ ?% ?(sweet|classic|dark|milk|white)\b|chocolate ?duo|coffee ?x ?chocolate|^coated:|\(\d+ ?% ?milk\)/,
+
+  /* 診断の精度を測っていて見つかった残り。店の在庫の割合を数えるので、
+     器具が混ざるとその店の性格そのものがずれる。
+     デンマーク語・ノルウェー語の器と雑貨。
+     kaffekande=コーヒーポット / emaljekrus=ホーローマグ / kaffedåse=豆缶
+     håndbryg=ハンドドリップ / plakat=ポスター / vandfilter=浄水フィルター */
+  /kaffekande|emaljekrus|kaffed[åa]se|h[åa]ndbryg|\bplakat\b|vandfilter|filterkande|\bkrus\b/,
+
+  // カプセル・ポッド（豆でも粉でもない）
+  /\bkapsler\b|\bcapsules?\b|カプセル|coffee ?pods?|\bnespresso\b/,
+
+  /* スペイン語の衣類・化粧品。
+     bolsa（袋）は "Guatemala Finca La Bolsa" という農園名なので入れない。 */
+  /camiseta|sudadera|exfoliante/,
+
+  // ミルクピッチャーの言い換えと、器具屋の小物
+  /\bpitcher\b|egg ?cracker/,
+
+  // 書籍（James Hoffmann の本。版ごとに何度も出てくる）
+  /world atlas of coffee/,
 ];
 
 // コーヒー豆（＝図鑑に載せる）なら true
