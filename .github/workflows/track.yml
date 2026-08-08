@@ -6,6 +6,13 @@ on:
     # 一度に全店を叩くと Shopify の共有IP制限(429)でほぼ全滅するため、量を分けて回す。
     - cron: "0 * * * *"
   workflow_dispatch:         # 手動実行ボタン
+    inputs:
+      shard:
+        # スライスは通常 run 番号から決まるので、手で走らせても狙った店には当たらない。
+        # 店を足した直後は、その店の入っているスライスだけ先に回したい。
+        # 空なら今までどおり run 番号から決める。
+        description: "回すスライス（例: 3 / 空なら実行番号から自動）"
+        default: ""
 
 permissions:
   contents: write
@@ -73,9 +80,14 @@ jobs:
           PUSH_SEND_TOKEN: ${{ secrets.PUSH_SEND_TOKEN }}
           RUN_NUMBER: ${{ github.run_number }}
           SHARDS: "13"
+          PICK: ${{ inputs.shard }}
         run: |
-          # run ごとにスライスをずらし、13回で全店を一周する
-          "$RUNPY" main.py --shard "$(( RUN_NUMBER % SHARDS ))/$SHARDS"
+          # run ごとにスライスをずらし、13回で全店を一周する。
+          # 手動実行でスライスを指定したときはそれを使う（店を足した直後に、
+          # その店の入っているスライスだけ先に回すため）。
+          SLICE="$(( RUN_NUMBER % SHARDS ))"
+          [ -n "$PICK" ] && SLICE="$(( PICK % SHARDS ))"
+          "$RUNPY" main.py --shard "$SLICE/$SHARDS"
 
       - name: note の記事を取り込む（About に見出しを出す）
         run: |
