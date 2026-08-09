@@ -25,6 +25,32 @@ from crawler import REQ_HEADERS, _SITEMAPS, _PROD_URL, _LD_BLOCK  # noqa: E402
 _HREF = re.compile(r'href="([^"]+)"')
 
 
+def allowed(robots: str, path: str) -> str:
+    """User-agent: * の Disallow に照らして、その道を通っていいか。
+
+    店が robots.txt で断っているものを、こちらの都合で取りに行かない。
+    技術的に取れるかどうかより先に、取っていいかどうかを見る。 """
+    rules, applies = [], False
+    for line in robots.splitlines():
+        line = line.split("#")[0].strip()
+        if not line:
+            continue
+        k, _, v = line.partition(":")
+        k, v = k.strip().lower(), v.strip()
+        if k == "user-agent":
+            applies = v == "*"
+        elif applies and k in ("disallow", "allow") and v:
+            rules.append((k, v))
+    # 長く一致する規則が勝つ（Allow が同じ長さなら Allow が勝つ）
+    best = ("", "")
+    for k, v in rules:
+        if path.startswith(v) and (len(v) > len(best[1]) or (len(v) == len(best[1]) and k == "allow")):
+            best = (k, v)
+    if not best[0]:
+        return "断られていない（規則に当たらない）"
+    return f"許されている（Allow: {best[1]}）" if best[0] == "allow" else f"★断られている（Disallow: {best[1]}）"
+
+
 def show(label: str, resp: httpx.Response | None, head: int = 220) -> None:
     if resp is None:
         print(f"  {label:<34} 届かない")
@@ -49,13 +75,17 @@ def main() -> None:
     print(f"調べる店: {base}\n")
 
     with httpx.Client(headers=REQ_HEADERS, timeout=20, follow_redirects=True) as c:
-        print("■ robots.txt（sitemap の在りかが書いてあることがある）")
+        print("■ robots.txt")
         r = get(c, f"{base}/robots.txt")
-        show("robots.txt", r, 400)
-        if r is not None and r.status_code == 200:
+        if r is None or r.status_code != 200:
+            show("robots.txt", r, 200)
+        else:
+            # 全文を出す。店が何を断っているかは、こちらの都合で要約してはいけない
+            print(f"  {r.status_code} / {len(r.content)} bytes")
             for line in r.text.splitlines():
-                if line.lower().startswith("sitemap"):
-                    print(f"    → {line.strip()}")
+                if line.strip():
+                    print(f"    {line.rstrip()}")
+            print(f"\n  → 商品ページ (/items/…) は {allowed(r.text, '/items/x')}")
 
         print("\n■ 巡回がいま試している sitemap")
         for p in _SITEMAPS:
@@ -73,6 +103,7 @@ def main() -> None:
 
         print("\n■ トップページの中身")
         top = get(c, base)
+        show("/", top, 120)
         if top is not None and top.status_code == 200:
             html = top.text
             hrefs = [h for h in _HREF.findall(html)]
