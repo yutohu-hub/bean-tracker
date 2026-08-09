@@ -10,6 +10,7 @@ import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis
 import { beanHref } from "../lib/utils";
 import { Portfolio } from "../ui/Portfolio";
 import { PhotoPicker } from "../ui/PhotoPicker";
+import { PrintSheet } from "../ui/PrintSheet";
 import { savePhotoDataUrl, deletePhoto, getPhotos } from "../lib/photos";
 
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
@@ -349,12 +350,27 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
       {/* 記録の持ち出し。クラウド同期は設定に依存するが、これはファイル1つで完結する。
           端末を変えても、ブラウザのデータを消しても、これがあれば戻せる。
           ただし毎回使うものではないので畳んでおく。 */}
-      {foldBlock("backup", "記録の控え", `${list.length}件`, () => (
+      {foldBlock("backup", "書き出す・戻す", `${list.length}件`, () => (
         <div>
-          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginBottom: 8 }}>
-            ファイルに書き出しておけば、端末を変えても、ブラウザのデータを消しても戻せます。
+          {/* PDF と JSON は用途が違う。片方だけにすると、読めるが戻せない／
+              戻せるが読めない、のどちらかになる。両方置いて、名前で分ける。 */}
+          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginBottom: 4 }}>
+            <b style={{ color: INK }}>PDF</b> は読むため、<b style={{ color: INK }}>控え</b>は戻すためのものです。
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+
+          <button onClick={() => { setBackupMsg(""); window.print(); }}
+            disabled={list.length === 0}
+            style={{ width: "100%", marginTop: 8, padding: "11px 0", background: list.length ? INK : "#EDEAE1",
+              color: list.length ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700,
+              cursor: list.length ? "pointer" : "default" }}>
+            PDFで書き出す
+          </button>
+          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 5 }}>
+            産地・精製方法・焙煎所・評価ごとにまとめて、全記録の一覧を付けます。
+            印刷の画面が開くので、送信先で「PDFとして保存」を選んでください。
+          </div>
+
+          <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
             <button onClick={() => {
                 const blob = new Blob([JSON.stringify(exportBackup(), null, 2)], { type: "application/json" });
                 const a = document.createElement("a");
@@ -362,13 +378,13 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
                 a.download = `bean-tracker-${new Date().toISOString().slice(0, 10)}.json`;
                 a.click();
                 URL.revokeObjectURL(a.href);
-                setBackupMsg("書き出しました");
+                setBackupMsg("控えを保存しました");
               }}
-              style={{ padding: "7px 12px", background: PAPER, color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.meta, fontWeight: 700, cursor: "pointer" }}>
-              ⤓ 書き出す
+              style={{ flex: 1, padding: "9px 10px", background: PAPER, color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.meta, fontWeight: 700, cursor: "pointer" }}>
+              ⤓ 控えを保存
             </button>
-            <label style={{ padding: "7px 12px", background: PAPER, color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.meta, fontWeight: 700, cursor: "pointer" }}>
-              ⤒ 読み込む
+            <label style={{ flex: 1, textAlign: "center", padding: "9px 10px", background: PAPER, color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.meta, fontWeight: 700, cursor: "pointer" }}>
+              ⤒ 控えから戻す
               <input type="file" accept="application/json,.json" style={{ display: "none" }}
                 onChange={async (e) => {
                   const f = e.target.files && e.target.files[0];
@@ -382,9 +398,17 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
                 }} />
             </label>
           </div>
+          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 5 }}>
+            控えは <code>.json</code> のファイルです。ここで保存したものを「控えから戻す」で読みます。
+            端末を変えても、ブラウザのデータを消しても戻せます。
+            戻すときは<b style={{ color: INK }}>足すだけ</b>で、いまの記録は消しません。
+          </div>
           {backupMsg && <div style={{ fontSize: FS.meta, color: GREEN, marginTop: 7 }}>{backupMsg}</div>}
         </div>
       ))}
+
+      {/* 印刷のときだけ現れる。画面には出ない */}
+      <PrintSheet list={list} email={accountEmail} />
 
       {/* 過去に飲んだ豆を手動で記録（図鑑に無い豆もカード化） */}
       <div style={{ marginTop: 12 }}>
