@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { FS, INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
@@ -13,7 +13,11 @@ const PROC_ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"
 
 export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procOnly = null }) {
   const [famF, setFamF] = useState(initialFam);  // 系統ハイライト
-  const [notesOnly, setNotesOnly] = useState(false);  // 店のノートで座標を決めた豆だけに絞る
+  /* 既定で「店のノートで座標を決めた豆」だけにする。
+     全部出すと 6,031 点になり、点の面積だけで枠の 14 倍になって必ず重なる。
+     しかも 73% は産地と精製から推定した座標で、重なった塊はコーヒーの性質では
+     なく仕組みの影。少ないほうが読めるし、正しい。 */
+  const [notesOnly, setNotesOnly] = useState(true);  // 店のノートで座標を決めた豆だけに絞る
   const [procF, setProcF] = useState(null);       // 精製ハイライト
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(0);
@@ -104,6 +108,94 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
     if (pointers.current.size === 0) { pan.current = null; if (scale === 1) { setTx(0); setTy(0); } }
   };
 
+  /* ---- 点を描く / 触れた場所からいちばん近い豆を拾う ---- */
+  const cvRef = useRef(null);
+  const [box, setBox] = useState(360);   // 図の一辺（px）
+
+  // 図の大きさを測る。canvas は中身の解像度を自分で持つので、実寸が要る
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const measure = () => setBox(Math.max(200, el.clientWidth));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  /* 豆 → 図の中の位置。拡大と移動をそのまま座標に掛ける
+     （要素を transform していたころと同じ見え方になる）。 */
+  const at = (m) => {
+    const c = box / 2;
+    return [(m.fx / 100 * box - c) * scale + c + tx, (m.fy / 100 * box - c) * scale + c + ty];
+  };
+
+  // 描画対象。系統や精製で絞ったものは薄く残す（消すと分布が分からなくなる）
+  const pts = useMemo(() => beans.map((b) => {
+    const m = flavorOf(b);
+    const pk = processKey(b.process);
+    // 真偽値にしておく。null のままだと下の描画で pass(true/false) と一致せず、
+    // 全部の点が読み飛ばされて図が空になる
+    return { b, m, color: (FLAVORS[m.fam] || FLAVORS.citrus).color,
+             dim: Boolean((famF && famF !== m.fam) || (procF && procF !== pk)) };
+  }), [beans, famF, procF]);
+
+  useEffect(() => {
+    const cv = cvRef.current;
+    if (!cv) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = box * dpr; cv.height = box * dpr;
+    const g = cv.getContext("2d");
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, box, box);
+
+    // 十字の補助線。図と一緒に動く
+    g.strokeStyle = LINE; g.lineWidth = 1;
+    const [cx, cy] = at({ fx: 50, fy: 50 });
+    g.beginPath();
+    g.moveTo(cx, 0); g.lineTo(cx, box);
+    g.moveTo(0, cy); g.lineTo(box, cy);
+    g.stroke();
+
+    // 薄いものを先に描いて、目立たせるものを上に重ねる
+    const r = 5.5;
+    for (const pass of [true, false]) {
+      for (const p of pts) {
+        if (p.dim !== pass) continue;
+        const [x, y] = at(p.m);
+        if (x < -20 || y < -20 || x > box + 20 || y > box + 20) continue;
+        /* 薄くする側は無彩色にする。自分の色のまま薄くすると、密なところで
+           何十個も重なって結局その色が濃く出てしまい、絞り込んだ意味が消える。 */
+        g.globalAlpha = p.dim ? 0.10 : 0.75;
+        g.fillStyle = p.dim ? GRAY : p.color;
+        g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+        if (focusId && p.b.id === focusId) {
+          g.globalAlpha = 1; g.strokeStyle = INK; g.lineWidth = 2.4;
+          g.beginPath(); g.arc(x, y, r * 1.8, 0, Math.PI * 2); g.stroke();
+        }
+      }
+    }
+    g.globalAlpha = 1;
+    // at() は box/scale/tx/ty だけから作られるので、依存はその4つで足りている
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pts, box, scale, tx, ty, focusId]);
+
+  // 触れた場所にいちばん近い豆。細かい点を正確に狙わせない
+  const HIT = 26;
+  const pick = (e) => {
+    if (moved.current) return;
+    const rect = cvRef.current.getBoundingClientRect();
+    const px = e.clientX - rect.left, py = e.clientY - rect.top;
+    let best = null, bd = HIT;
+    for (const p of pts) {
+      if (p.dim) continue;                 // 薄くしたものは拾わない
+      const [x, y] = at(p.m);
+      const d = Math.hypot(x - px, y - py);
+      if (d < bd) { bd = d; best = p; }
+    }
+    if (best) onOpen(best.b);
+  };
+
   const zbtn = { width: 30, height: 30, borderRadius: 8, border: `1px solid ${LINE}`, background: "rgba(250,250,247,0.92)", color: INK, fontSize: FS.lead, fontWeight: 700, cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" };
 
   return (
@@ -118,7 +210,7 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
       {!procOnly && (
         <>
           <div style={{ fontSize: FS.meta, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>精製方法</div>
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingBottom: 8 }}>
             {presentProc.map((k) => (
               <button key={k} onClick={() => setProcF(procF === k ? null : k)}
                 style={{
@@ -152,7 +244,7 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
 
       {/* 系統の凡例（タップでハイライト） */}
       <div style={{ fontSize: FS.meta, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>系統</div>
-      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingBottom: 8 }}>
         {Object.entries(FLAVORS).map(([k, f]) => (
           <button key={k} onClick={() => setFamF(famF === k ? null : k)}
             style={{
@@ -182,69 +274,44 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
             radial-gradient(at 15% 88%, rgba(122,82,50,0.13), transparent 55%),
             #FCFBF8` }}>
 
-        {/* 拡大・移動するレイヤー（補助線＋ドット） */}
-        <div style={{ position: "absolute", inset: 0, transform: `translate(${tx}px, ${ty}px) scale(${scale})`, transformOrigin: "center center" }}>
-          {/* 十字の補助線 */}
-          <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: LINE }} />
-          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: LINE }} />
-          {/* 豆のドット */}
-          {beans.map((b, i) => {
-            const m = flavorOf(b);
-            const f = FLAVORS[m.fam] || FLAVORS.citrus;
-            const pk = processKey(b.process);
-            const isFocus = focusId && b.id === focusId;
-            const dimmed = !isFocus && ((famF && famF !== m.fam) || (procF && procF !== pk));
-            const base = 11 / Math.sqrt(scale); // 拡大時はドットが大きくなりすぎないよう調整
-            const r = isFocus ? base * 1.55 : base;
-            return (
-              <button key={b.id} onClick={() => { if (moved.current) return; onOpen(b); }} title={b.name}
-                className={isFocus ? "bt-live" : "bt-dot"}
-                style={{
-                  position: "absolute", left: `${m.fx}%`, top: `${m.fy}%`,
-                  width: 26, height: 26, marginLeft: -13, marginTop: -13,
-                  background: "transparent", border: "none", cursor: "pointer", padding: 0,
-                  animationDelay: `${0.2 + (i % 40) * 0.02}s`,
-                  opacity: dimmed ? 0.1 : 0.92,
-                  transition: "opacity 0.25s ease", zIndex: isFocus ? 3 : 1,
-                }}>
-                <span
-                  style={{
-                    display: "block", width: r, height: r, margin: `${(26 - r) / 2}px auto`,
-                    borderRadius: 999, background: f.color,
-                    border: `${(isFocus ? 2.4 : 2) / Math.sqrt(scale)}px solid ${isFocus ? INK : f.color}`,
-                    boxShadow: isFocus ? `0 0 0 ${3 / Math.sqrt(scale)}px rgba(23,21,15,0.18)` : "0 1px 2px rgba(23,21,15,0.18)",
-                  }} />
-              </button>
-            );
-          })}
-        </div>
+        {/* 点は canvas に描く。
+            要素として置いていたころは、1画面に <button> が 6,054 個・DOM が
+            12,209 個あった。キーボードで送ると次の見出しまで 6,054 回押すことに
+            なり、開くだけで重い。精製ごとのマップは既に canvas で描いていて
+            成立しているので、こちらも同じにする。
+            触れた場所からいちばん近い豆を拾うので、細かい点を狙わせない。 */}
+        <canvas ref={cvRef} onClick={pick}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }} />
 
         {/* 軸ラベル（固定・拡大しない） */}
         <span style={{ position: "absolute", top: 6, left: "50%", transform: "translateX(-50%)", fontSize: FS.meta, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>明るい・すっきり</span>
         <span style={{ position: "absolute", bottom: 6, left: "50%", transform: "translateX(-50%)", fontSize: FS.meta, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>深い・コク</span>
-        <span style={{ position: "absolute", left: 8, top: "50%", transform: "translate(-30%, -50%) rotate(-90deg)", fontSize: FS.meta, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>クリーン</span>
-        <span style={{ position: "absolute", right: 8, top: "50%", transform: "translate(30%, -50%) rotate(90deg)", fontSize: FS.meta, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>個性派</span>
+        {/* よこ軸の名前は図の外（下）に出す。中に置くと縦書きになり、
+            rotate でも writing-mode でも右側が枠に当たって潰れた（実測 15×5px）。
+            たて軸は上下に横書きで収まるので、そのまま図の中に置く。 */}
 
-        {/* ズーム操作 */}
-        <div style={{ position: "absolute", right: 8, bottom: 8, display: "flex", flexDirection: "column", gap: 6 }}>
-          <button aria-label="拡大" onClick={() => zoomBy(1.3)} style={zbtn}>＋</button>
-          <button aria-label="縮小" onClick={() => zoomBy(1 / 1.3)} style={zbtn}>−</button>
-          <button aria-label="リセット" onClick={reset} style={{ ...zbtn, fontSize: FS.body }}>⟲</button>
-        </div>
-        {scale > 1 && (
-          <div style={{ position: "absolute", left: 8, bottom: 8, fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, background: "rgba(250,250,247,0.8)", padding: "2px 6px", borderRadius: 6, pointerEvents: "none" }}>
-            ×{scale.toFixed(1)}
-          </div>
-        )}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: FS.meta, color: GRAY, marginTop: 6 }}>
-        <span>● いま買える豆（タップで詳細へ）</span>
-        <span>系統は豆ごとの風味（無ければ産地・精製）で分類</span>
+      {/* よこ軸の名前 */}
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: FS.meta, color: GRAY, marginTop: 6, letterSpacing: "0.1em" }}>
+        <span>← クリーン</span>
+        <span>個性派 →</span>
       </div>
 
-      <div style={{ textAlign: "center", fontSize: FS.meta, color: GRAY, marginTop: 14 }}>
-        右上ほど個性的で明るく、左下ほどクラシックで深い味わいです
+      {/* ズームは図の外に出す。中に置いていたころは、右下の点の上に重なっていた */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+        <button aria-label="縮小" onClick={() => zoomBy(1 / 1.3)} style={zbtn}>−</button>
+        <button aria-label="拡大" onClick={() => zoomBy(1.3)} style={zbtn}>＋</button>
+        <button onClick={reset} style={{ ...zbtn, width: "auto", padding: "0 12px", fontSize: FS.meta }}>もとの大きさ</button>
+        <span style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY }}>
+          {beans.length} 点{scale > 1 ? ` ・ ×${scale.toFixed(1)}` : ""}
+        </span>
+      </div>
+
+      {/* 説明は1つにまとめる。2つを左右に並べていたころは、11pxの2行が
+          折り返して互いに重なっていた */}
+      <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 8, lineHeight: 1.7 }}>
+        右上ほど個性的で明るく、左下ほどクラシックで深い味わいです。色は豆ごとの風味の系統です。
       </div>
     </div>
   );
