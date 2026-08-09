@@ -85,11 +85,27 @@ export default function BeanTracker() {
   const [meTab, setMeTab] = useState("log"); // マイページ内: log | premium
   const [legendOpen, setLegendOpen] = useState(false); // 色の凡例を開いているか
   const [filtersOpen, setFiltersOpen] = useState(false); // 絞り込みを開いているか
+  const [tabsOverflow, setTabsOverflow] = useState(false); // タブが画面に収まらないか
+  const tabsRef = useRef(null);
   const [flavorMode, setFlavorMode] = useState("one"); // 味わいマップ: one | proc
   const [authNotice, setAuthNotice] = useState(null); // メールリンクからのログイン結果
   // 色の凡例を開いているか。既定は畳んだ状態（豆を早く見せる）
   useEffect(() => { if (localStorage.getItem("bt_legend") === "1") setLegendOpen(true); }, []);
   useEffect(() => { try { localStorage.setItem("bt_legend", legendOpen ? "1" : "0"); } catch {} }, [legendOpen]);
+  /* タブが画面に収まっているか。収まらないときだけ右端に影を出す。
+     いつも出していると、送れるものが無いのに「まだ続く」と言うことになる。
+     幅の狭い端末（320〜390px）では「マイページ」が外に出る。 */
+  useEffect(() => {
+    const el = tabsRef.current;
+    if (!el) return;
+    const check = () => setTabsOverflow(el.scrollWidth > el.clientWidth + 1);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    window.addEventListener("resize", check);
+    return () => { ro.disconnect(); window.removeEventListener("resize", check); };
+  }, []);
+
   // 自動列数：画面幅（最大640・左右16pxパディング）から最小カード幅で割って算出
   useEffect(() => {
     const calc = () => {
@@ -370,8 +386,12 @@ export default function BeanTracker() {
           {/* 8つのうち「マイページ」と「About」が画面の外にあり、横に送れることを
               示すものが無かった。字間と間隔を詰めたうえで、右端に影を出す。 */}
           <div style={{ position: "relative", marginTop: 10 }}>
-          <div style={{ display: "flex", gap: 11, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
-            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["recipe", "レシピ"], ["me", "マイページ"], ["about", "About"]].map(([k, l]) => (
+          <div ref={tabsRef} style={{ display: "flex", gap: 11, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+            {/* About はここから外して、下のフッターに置いた。
+                8つだと必要な幅が 415px で、画面の帯（382px）に収まらない。
+                字を小さくすれば収まるが、それは読みやすさの話と衝突する。
+                About は一度読めば足りる説明なので、法務のリンクと同じ場所でいい。 */}
+            {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["recipe", "レシピ"], ["me", "マイページ"]].map(([k, l]) => (
               <button key={k} onClick={() => { setView(k); setFlavorFocus({ fam: null, id: null }); }}
                 style={{
                   background: "none", border: "none", padding: "0 0 6px", cursor: "pointer",
@@ -382,8 +402,10 @@ export default function BeanTracker() {
                 }}>{l}</button>
             ))}
           </div>
-          <div aria-hidden style={{ position: "absolute", right: 0, top: 0, bottom: 6, width: 24, pointerEvents: "none",
-            background: `linear-gradient(to right, rgba(250,250,247,0), ${PAPER})` }} />
+          {tabsOverflow && (
+            <div aria-hidden style={{ position: "absolute", right: 0, top: 0, bottom: 6, width: 24, pointerEvents: "none",
+              background: `linear-gradient(to right, rgba(250,250,247,0), ${PAPER})` }} />
+          )}
           </div>
         </div>
       </header>
@@ -646,6 +668,12 @@ export default function BeanTracker() {
       <footer style={{ borderTop: `1px solid ${LINE}`, background: PAPER }}>
         <div style={{ maxWidth: 640, margin: "0 auto", padding: "18px 16px 30px" }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 16px", justifyContent: "center" }}>
+            <button onClick={() => { setView("about"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
+                fontSize: FS.meta, color: view === "about" ? INK : GRAY,
+                fontWeight: view === "about" ? 700 : 400 }}>
+              この図鑑について
+            </button>
             <Link href="/legal/tokushoho/" style={{ fontSize: FS.meta, color: GRAY, textDecoration: "none" }}>特定商取引法に基づく表記</Link>
             <Link href="/legal/terms/" style={{ fontSize: FS.meta, color: GRAY, textDecoration: "none" }}>利用規約</Link>
             <Link href="/legal/privacy/" style={{ fontSize: FS.meta, color: GRAY, textDecoration: "none" }}>プライバシーポリシー</Link>
