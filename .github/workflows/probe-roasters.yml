@@ -11,6 +11,9 @@ on:
       file:
         description: "候補ファイル"
         default: "config/candidates.yaml"
+      diagnose:
+        description: "1店だけ詳しく調べる（URL。指定すると候補ファイルは見ない）"
+        default: ""
 
 permissions:
   contents: read
@@ -27,4 +30,10 @@ jobs:
       - name: 依存インストール
         run: pip install httpx pyyaml
       - name: 候補を叩く
+        if: inputs.diagnose == ''
         run: python scripts/probe_roasters.py "${{ inputs.file }}"
+
+      # 取れない店について、何が足りないのかを応答から調べる
+      - name: 1店を詳しく調べる
+        if: inputs.diagnose != ''
+        run: python scripts/diagnose_shop.py "${{ inputs.diagnose }}"
