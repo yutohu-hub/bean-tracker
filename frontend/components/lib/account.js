@@ -183,7 +183,21 @@ export async function captureSessionFromUrl() {
 
 /* アクセストークンは既定1時間で失効する。更新処理が無かったため、
    ログインした当日でも時間が経つと同期が黙って401になっていた。 */
-export async function refreshSession() {
+/* 更新は同時に1本だけ。
+   Supabase の refresh_token は使うたびに新しいものへ入れ替わる（rotation）。
+   2か所から同時に更新すると、後から届いたほうは使い済みのトークンを出すことに
+   なり 400 が返る。下の分岐はそれを「期限切れ」とみなしてセッションを捨てるので、
+   ログインしていたのに突然ログアウトされる。走っている更新があれば、その結果を
+   共有する。 */
+let inflight = null;
+
+export function refreshSession() {
+  if (inflight) return inflight;
+  inflight = _refreshSession().finally(() => { inflight = null; });
+  return inflight;
+}
+
+async function _refreshSession() {
   const s = readSession();
   if (!s || !s.refresh_token) return null;
   try {

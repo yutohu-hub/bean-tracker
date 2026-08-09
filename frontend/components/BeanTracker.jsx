@@ -226,6 +226,30 @@ export default function BeanTracker() {
     })();
   }, []);
 
+  /* ログイン状態を保ち続ける。
+     アクセストークンは1時間で切れる。起動時に1度だけ更新していたので、開いたまま
+     1時間を越えたり、ホーム画面のアプリを読み込み直さずに再開したりすると、
+     画面はログイン済みなのに操作だけ失敗する状態になっていた。
+     為替と同じ手当てをする（5分ごと＋タブ復帰＋フォーカス）。
+     ensureFreshSession は期限が近くないときは何もしないので、何度呼んでも軽い。 */
+  useEffect(() => {
+    let alive = true;
+    const keep = async () => {
+      const r = await ensureFreshSession();
+      if (alive && r && !r.ok) setAuthNotice({ ok: false, text: r.error });
+    };
+    const id = setInterval(keep, 5 * 60 * 1000);
+    const onVis = () => { if (document.visibilityState === "visible") keep(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", keep);
+    return () => {
+      alive = false;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", keep);
+    };
+  }, []);
+
   // ライブ為替: 起動時に取得 → 10分ごと＋タブ復帰/フォーカス時に再取得して変動を自動反映
   useEffect(() => {
     let alive = true;
