@@ -83,6 +83,26 @@ function Article({ a, open, onToggle }) {
   );
 }
 
+/* 見出しを押すと開く節。
+   About は 4,363px（携帯の4.8画面）あって、下の5つは一度読めば足りる説明。
+   最初に読みたい「これは何か」と「いま何が入っているか」の前に置かれていると、
+   そこへ着くまでが遠い。畳んで、必要なときだけ開く。 */
+function Section({ label, title, children }) {
+  const [on, setOn] = useState(false);
+  return (
+    <div style={{ borderTop: `1px solid ${LINE}` }}>
+      <button onClick={() => setOn(!on)}
+        style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "14px 2px",
+          background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.15em", color: GRAY, flexShrink: 0 }}>{label}</span>
+        <span style={{ fontSize: FS.body, fontWeight: 700, color: INK }}>{title}</span>
+        <span style={{ marginLeft: "auto", color: GRAY, flexShrink: 0 }} aria-label={on ? "閉じる" : "開く"}>{on ? "▲" : "▼"}</span>
+      </button>
+      {on && <div style={{ paddingBottom: 18 }}>{children}</div>}
+    </div>
+  );
+}
+
 export function AboutView() {
   const [open, setOpen] = useState(0);
   return (
@@ -118,9 +138,9 @@ export function AboutView() {
       </p>
 
       {/* 評価は、あなたのためだけに */}
-      <div style={{ marginTop: 32, padding: "22px", background: "#F2F0E9", borderRadius: 14 }}>
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.2em", color: GRAY }}>PRIVACY</div>
-        <div style={{ fontSize: FS.head, fontWeight: 800, color: INK, marginTop: 8, lineHeight: 1.5 }}>評価は、あなたのためだけに。</div>
+      <div style={{ marginTop: 32 }} />
+      <Section label="PRIVACY" title="評価は、あなたのためだけに。">
+      <div style={{ padding: "22px", background: "#F2F0E9", borderRadius: 14 }}>
         <p style={{ fontSize: FS.body, color: INK, lineHeight: 2.1, marginTop: 12, marginBottom: 0 }}>
           Bean Tracker では、あなたの評価を他の人が見ることはできません。
         </p>
@@ -133,11 +153,11 @@ export function AboutView() {
           自分だけのコーヒーの歴史を、少しずつ作っていきましょう。
         </p>
       </div>
+      </Section>
 
       {/* PREMIUM */}
-      <div style={{ marginTop: 22, padding: "24px 22px", background: "#141210", color: PAPER, borderRadius: 16 }}>
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.24em", color: "#E4B84A" }}>PREMIUM</div>
-        <div style={{ fontSize: FS.head, fontWeight: 800, marginTop: 8, lineHeight: 1.5 }}>希少なコーヒーを、誰よりも早く。</div>
+      <Section label="PREMIUM" title="希少なコーヒーを、誰よりも早く。">
+      <div style={{ padding: "24px 22px", background: "#141210", color: PAPER, borderRadius: 16 }}>
         <p style={{ fontSize: FS.body, color: "#D8D2C6", lineHeight: 2.1, marginTop: 12, marginBottom: 0 }}>
           Premium では、希少豆や限定豆の入荷情報をいち早く受け取れます。
           気になる豆が入荷したら通知を受け取り、そのまま購入へ。
@@ -155,16 +175,15 @@ export function AboutView() {
           世界中のコーヒーから、<br />あなたにとっての「最高の一杯」を探してみてください。
         </p>
       </div>
+      </Section>
 
-      {/* いま図鑑に入っているもの（実データを数えた内訳） */}
-      <AboutStats />
-
-      <div style={{ height: 1, background: LINE, marginTop: 32 }} />
+      {/* いま図鑑に入っているもの（実データを数えた内訳）。
+          ここは読み物ではなく現在の中身なので、畳まずに出す。 */}
+      <div style={{ marginTop: 26 }}><AboutStats /></div>
 
       {/* 使い方 */}
-      <div style={{ marginTop: 24 }}>
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.15em", color: GRAY }}>HOW IT WORKS</div>
-        <div style={{ marginTop: 8 }}>
+      <Section label="HOW IT WORKS" title="使い方">
+        <div>
           {HOWTO.map(([t, d]) => (
             <div key={t} style={{ display: "flex", gap: 12, padding: "10px 0", borderTop: `1px solid ${LINE}` }}>
               <div style={{ fontSize: FS.body, fontWeight: 800, color: INK, width: 78, flexShrink: 0 }}>{t}</div>
@@ -172,17 +191,16 @@ export function AboutView() {
             </div>
           ))}
         </div>
-      </div>
+      </Section>
 
       {/* 記事 */}
-      <div style={{ marginTop: 26 }}>
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.15em", color: GRAY }}>JOURNAL — 記事</div>
-        <div style={{ marginTop: 6 }}>
+      <Section label="JOURNAL" title={`記事（${ARTICLES.length}本）`}>
+        <div>
           {ARTICLES.map((a, i) => (
             <Article key={a.t} a={a} open={open === i} onToggle={() => setOpen(open === i ? -1 : i)} />
           ))}
         </div>
-      </div>
+      </Section>
 
       {/* note — 記事はワークフローがRSSから取り込む（ブラウザからは CORS で読めない）。
           取れていなければ、これまでどおりリンク1本だけを出す。 */}
