@@ -238,9 +238,6 @@ export default function BeanTracker() {
     };
   }, []);
 
-  const fxTime = fx.at
-    ? `${String(fx.at.getHours()).padStart(2, "0")}:${String(fx.at.getMinutes()).padStart(2, "0")}`
-    : "";
   const fxTitle = fx.live
     ? `1 USD = ¥${RATES_TO_JPY.USD.toFixed(1)} / 1 EUR = ¥${RATES_TO_JPY.EUR.toFixed(1)} / 1 AUD = ¥${RATES_TO_JPY.AUD.toFixed(1)}（出典: ${fx.source}${fx.date ? " · " + fx.date : ""}）`
     : "為替APIに接続できないため固定値で表示中";
@@ -355,30 +352,38 @@ export default function BeanTracker() {
                     }}>{sym}</button>
                 ))}
               </div>
-              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY }}>v0.1</div>
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 2 }}>
-            <div>
-              <div style={{ fontSize: FS.meta, color: GRAY }}>Find any bean, anywhere.</div>
-              <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 1 }}>Log your coffees, find your perfect cup.</div>
-            </div>
-            <div title={fxTitle} style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, whiteSpace: "nowrap" }}>
-              <span className={fx.live ? "bt-live" : ""} style={{ width: 6, height: 6, borderRadius: 999, background: fx.live ? GREEN : (fx.error ? "#B8433A" : "#C8B36A") }} />
-              {fx.live ? `為替LIVE · ${fxTime}更新` : fx.loading ? "為替 取得中…" : "為替 固定値"}
-            </div>
+            {/* 惹句は1つ。2行あっても言っていることは同じで、豆に着くのが遅くなるだけ */}
+            <div style={{ fontSize: FS.meta, color: GRAY }}>Find any bean, anywhere.</div>
+            {/* 為替は、ふつうでないときだけ出す。取れているのが当たり前の状態なので、
+                「LIVE · 12:34更新」を常に出しても読む人には使い道がない。
+                固定値で出しているときだけは、ドル表示がずれるので知らせる。 */}
+            {!fx.live && (
+              <div title={fxTitle} style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, whiteSpace: "nowrap" }}>
+                <span style={{ width: 6, height: 6, borderRadius: 999, background: fx.error ? "#B8433A" : "#C8B36A" }} />
+                {fx.loading ? "為替 取得中…" : "為替 固定値"}
+              </div>
+            )}
           </div>
-          <div style={{ display: "flex", gap: 16, marginTop: 10, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          {/* 8つのうち「マイページ」と「About」が画面の外にあり、横に送れることを
+              示すものが無かった。字間と間隔を詰めたうえで、右端に影を出す。 */}
+          <div style={{ position: "relative", marginTop: 10 }}>
+          <div style={{ display: "flex", gap: 11, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
             {[["zukan", "図鑑"], ["map", "地球"], ["shindan", "診断"], ["flavor", "味わい"], ["geisha", "レアロット"], ["recipe", "レシピ"], ["me", "マイページ"], ["about", "About"]].map(([k, l]) => (
               <button key={k} onClick={() => { setView(k); setFlavorFocus({ fam: null, id: null }); }}
                 style={{
                   background: "none", border: "none", padding: "0 0 6px", cursor: "pointer",
-                  fontSize: FS.body, letterSpacing: "0.12em", whiteSpace: "nowrap", flexShrink: 0,
+                  fontSize: FS.body, letterSpacing: "0.04em", whiteSpace: "nowrap", flexShrink: 0,
                   color: view === k || (k === "zukan" && view === "roaster") ? INK : GRAY,
                   fontWeight: view === k || (k === "zukan" && view === "roaster") ? 700 : 400,
                   borderBottom: view === k || (k === "zukan" && view === "roaster") ? `2px solid ${INK}` : "2px solid transparent",
                 }}>{l}</button>
             ))}
+          </div>
+          <div aria-hidden style={{ position: "absolute", right: 0, top: 0, bottom: 6, width: 24, pointerEvents: "none",
+            background: `linear-gradient(to right, rgba(250,250,247,0), ${PAPER})` }} />
           </div>
         </div>
       </header>
