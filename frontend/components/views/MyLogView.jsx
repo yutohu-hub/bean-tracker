@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { FS, INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
-import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis, exportBackup, importBackup } from "../lib/store";
+import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis } from "../lib/store";
 import { usePlan, refreshPlan } from "../lib/usePlan";
 import { isCloud, isSignedIn, getSession, signInWithEmail, signInWithCode, lastEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings } from "../lib/account";
 import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis";
@@ -350,58 +350,25 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
       {/* 記録の持ち出し。クラウド同期は設定に依存するが、これはファイル1つで完結する。
           端末を変えても、ブラウザのデータを消しても、これがあれば戻せる。
           ただし毎回使うものではないので畳んでおく。 */}
-      {foldBlock("backup", "書き出す・戻す", `${list.length}件`, () => (
+      {foldBlock("backup", "記録を書き出す", `${list.length}件`, () => (
         <div>
-          {/* PDF と JSON は用途が違う。片方だけにすると、読めるが戻せない／
-              戻せるが読めない、のどちらかになる。両方置いて、名前で分ける。 */}
-          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginBottom: 4 }}>
-            <b style={{ color: INK }}>PDF</b> は読むため、<b style={{ color: INK }}>控え</b>は戻すためのものです。
-          </div>
-
           <button onClick={() => { setBackupMsg(""); window.print(); }}
             disabled={list.length === 0}
-            style={{ width: "100%", marginTop: 8, padding: "11px 0", background: list.length ? INK : "#EDEAE1",
+            style={{ width: "100%", padding: "11px 0", background: list.length ? INK : "#EDEAE1",
               color: list.length ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700,
               cursor: list.length ? "pointer" : "default" }}>
             PDFで書き出す
           </button>
-          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 5 }}>
+          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 6 }}>
             産地・精製方法・焙煎所・評価ごとにまとめて、全記録の一覧を付けます。
             印刷の画面が開くので、送信先で「PDFとして保存」を選んでください。
           </div>
-
-          <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-            <button onClick={() => {
-                const blob = new Blob([JSON.stringify(exportBackup(), null, 2)], { type: "application/json" });
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = `bean-tracker-${new Date().toISOString().slice(0, 10)}.json`;
-                a.click();
-                URL.revokeObjectURL(a.href);
-                setBackupMsg("控えを保存しました");
-              }}
-              style={{ flex: 1, padding: "9px 10px", background: PAPER, color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.meta, fontWeight: 700, cursor: "pointer" }}>
-              ⤓ 控えを保存
-            </button>
-            <label style={{ flex: 1, textAlign: "center", padding: "9px 10px", background: PAPER, color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.meta, fontWeight: 700, cursor: "pointer" }}>
-              ⤒ 控えから戻す
-              <input type="file" accept="application/json,.json" style={{ display: "none" }}
-                onChange={async (e) => {
-                  const f = e.target.files && e.target.files[0];
-                  e.target.value = "";
-                  if (!f) return;
-                  try {
-                    const r = importBackup(JSON.parse(await f.text()));
-                    refresh();
-                    setBackupMsg(`${r.added}件を追加しました（合計${r.total}件）`);
-                  } catch (err) { setBackupMsg(err.message || "読み込めませんでした"); }
-                }} />
-            </label>
-          </div>
-          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 5 }}>
-            控えは <code>.json</code> のファイルです。ここで保存したものを「控えから戻す」で読みます。
-            端末を変えても、ブラウザのデータを消しても戻せます。
-            戻すときは<b style={{ color: INK }}>足すだけ</b>で、いまの記録は消しません。
+          {/* PDF は読むためのもので、読み戻せない。端末を変えたときに記録を持って
+              いけるのは、いまはクラウド同期だけになる。黙っていると、書き出して
+              あるから大丈夫だと思ったまま記録を失うので、ここに書いておく。 */}
+          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${LINE}` }}>
+            PDF は読むためのもので、ここに読み戻すことはできません。
+            端末を変えても記録を引き継ぐには、上の<b style={{ color: INK }}>他の端末とも同期する</b>をお使いください。
           </div>
           {backupMsg && <div style={{ fontSize: FS.meta, color: GREEN, marginTop: 7 }}>{backupMsg}</div>}
         </div>

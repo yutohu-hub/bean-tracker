@@ -118,40 +118,6 @@ export function mergeTastings(incoming) {
 /* ---- 書き出し / 読み込み ----
    端末が変わっても、ブラウザのデータを消しても、記録だけは戻せるようにする。
    クラウド同期は設定に依存するが、これはファイル1つで完結するので確実。 */
-export function exportBackup() {
-  return {
-    app: "bean-tracker", version: 1, at: Date.now(),
-    account: (getUser() && getUser().email) || null,
-    tastings: getTastings(),
-    diag: getDiagHistory(),
-    analysis: getAnalysisHistory(),
-    restocks: getRestocks(),
-  };
-}
-
-/* 読み込みは「足す」だけで、既にある記録は消さない。
-   取り違えて古いファイルを読んでも、いまの記録が失われないようにするため。 */
-export function importBackup(data) {
-  if (!data || data.app !== "bean-tracker" || !Array.isArray(data.tastings)) {
-    throw new Error("このファイルは BEAN TRACKER の書き出しではないようです");
-  }
-  const before = getTastings().length;
-  mergeTastings(data.tastings);
-  const mergeById = (cur, add, key, write_) => {
-    const seen = new Set(cur.map((x) => x[key]));
-    const merged = [...cur, ...(add || []).filter((x) => x && !seen.has(x[key]))]
-      .sort((a, b) => (b.at || 0) - (a.at || 0));
-    write_(merged.slice(0, 50));
-  };
-  mergeById(getDiagHistory(), data.diag, "at", (v) => write(DIAG_KEY, v));
-  mergeById(getAnalysisHistory(), data.analysis, "at", (v) => write(ANALYSIS_KEY, v));
-  if (Array.isArray(data.restocks)) {
-    const seen = new Set(getRestocks().map((x) => x.beanId));
-    write(RESTOCK_KEY, [...getRestocks(), ...data.restocks.filter((x) => x && !seen.has(x.beanId))]);
-  }
-  return { added: getTastings().length - before, total: getTastings().length };
-}
-
 // アーカイブの端末内永続化
 // 一度アーカイブになった豆のスナップショットを保存し、データ更新（再デプロイ）で
 // カタログから消えても残り続けるようにする。既存スナップショットは上書きしない
