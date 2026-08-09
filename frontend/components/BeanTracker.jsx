@@ -8,7 +8,7 @@ import dynamic from "next/dynamic";
 import { ROASTERS } from "./data/roasters";
 import { BEANS } from "./data/beans";
 import { RATES_TO_JPY, fetchLiveRates } from "./lib/currency";
-import { INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
+import { FS, INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGIN_GROUPS } from "./lib/constants";
 import { syncArchive } from "./lib/store";
 import { captureSessionFromUrl, ensureFreshSession } from "./lib/account";
@@ -35,7 +35,7 @@ import { RoasterPage } from "./views/RoasterPage";
 // 地球儀は three.js を使うので、地球タブを開いたときだけ読み込む（初回表示を軽く保つ）
 const GlobeView = dynamic(() => import("./views/GlobeView").then((m) => m.GlobeView), {
   ssr: false,
-  loading: () => <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "60px 0" }}>地球を読み込み中…</div>,
+  loading: () => <div style={{ textAlign: "center", color: GRAY, fontSize: FS.body, padding: "60px 0" }}>地球を読み込み中…</div>,
 });
 import { DiagnosisView } from "./views/DiagnosisView";
 import { FlavorMapView } from "./views/FlavorMapView";
@@ -255,7 +255,7 @@ export default function BeanTracker() {
 
   const goRoaster = (rid, tab) => { setRoasterId(rid); setRoasterTab(tab || "now"); setView("roaster"); window.scrollTo(0, 0); };
 
-  const minSel = { width: "100%", boxSizing: "border-box", padding: "8px 9px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12, background: PAPER, color: INK };
+  const minSel = { width: "100%", boxSizing: "border-box", padding: "8px 9px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: FS.body, background: PAPER, color: INK };
 
   /* いま効いている絞り込み。既定値のものは入らない。
      在庫（NOW / SOLD OUT）は下のタブで常に見えているので、ここには出さない。 */
@@ -287,16 +287,16 @@ export default function BeanTracker() {
   const curPage = Math.min(page, pageCount - 1);
   const pageItems = activeList.slice(curPage * perPage, curPage * perPage + perPage);
   const goPage = (p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  const pgStyle = (active, disabled) => ({ minWidth: 30, height: 30, padding: "0 8px", borderRadius: 8, border: `1px solid ${active ? INK : LINE}`, background: active ? INK : PAPER, color: active ? PAPER : INK, fontSize: 12, fontWeight: 700, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center" });
+  const pgStyle = (active, disabled) => ({ minWidth: 30, height: 30, padding: "0 8px", borderRadius: 8, border: `1px solid ${active ? INK : LINE}`, background: active ? INK : PAPER, color: active ? PAPER : INK, fontSize: FS.body, fontWeight: 700, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center" });
   const unit = zukanMode === "roasters" ? "店" : "銘柄";
   const colSelectorEl = (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 16 }}>
-      <span style={{ fontSize: 10.5, color: GRAY }}>列数</span>
+      <span style={{ fontSize: FS.meta, color: GRAY }}>列数</span>
       <button onClick={() => setCols("auto")}
-        style={{ height: 26, padding: "0 9px", borderRadius: 7, border: `1px solid ${cols === "auto" ? INK : LINE}`, background: cols === "auto" ? INK : PAPER, color: cols === "auto" ? PAPER : INK, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>自動{cols === "auto" ? `(${autoCols})` : ""}</button>
+        style={{ height: 26, padding: "0 9px", borderRadius: 7, border: `1px solid ${cols === "auto" ? INK : LINE}`, background: cols === "auto" ? INK : PAPER, color: cols === "auto" ? PAPER : INK, fontSize: FS.meta, fontWeight: 700, cursor: "pointer" }}>自動{cols === "auto" ? `(${autoCols})` : ""}</button>
       {COL_OPTIONS.map((c) => (
         <button key={c} onClick={() => setCols(c)}
-          style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${cols === c ? INK : LINE}`, background: cols === c ? INK : PAPER, color: cols === c ? PAPER : INK, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "ui-monospace, monospace" }}>{c}</button>
+          style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${cols === c ? INK : LINE}`, background: cols === c ? INK : PAPER, color: cols === c ? PAPER : INK, fontSize: FS.meta, fontWeight: 700, cursor: "pointer", fontFamily: "ui-monospace, monospace" }}>{c}</button>
       ))}
     </div>
   );
@@ -306,13 +306,13 @@ export default function BeanTracker() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 22, flexWrap: "wrap" }}>
           <button disabled={curPage === 0} onClick={() => goPage(curPage - 1)} style={pgStyle(false, curPage === 0)}>‹</button>
           {pageWindow(curPage, pageCount).map((p, i) => p === "…"
-            ? <span key={"e" + i} style={{ color: GRAY, fontSize: 12, padding: "0 2px" }}>…</span>
+            ? <span key={"e" + i} style={{ color: GRAY, fontSize: FS.body, padding: "0 2px" }}>…</span>
             : <button key={p} onClick={() => goPage(p)} style={pgStyle(p === curPage, false)}>{p + 1}</button>)}
           <button disabled={curPage === pageCount - 1} onClick={() => goPage(curPage + 1)} style={pgStyle(false, curPage === pageCount - 1)}>›</button>
         </div>
       )}
       {activeList.length > 0 && (
-        <div style={{ textAlign: "center", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, marginTop: 10 }}>
+        <div style={{ textAlign: "center", fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, marginTop: 10 }}>
           {curPage * perPage + 1}–{Math.min((curPage + 1) * perPage, activeList.length)} / {activeList.length}{unit}（{pageCount}ページ）
         </div>
       )}
@@ -358,28 +358,28 @@ export default function BeanTracker() {
       <header style={{ position: "sticky", top: 0, zIndex: 40, background: PAPER, borderBottom: `2px solid ${INK}` }}>
         <div style={{ maxWidth: 640, margin: "0 auto", padding: "14px 16px 10px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: "0.12em" }}>BEAN&nbsp;TRACKER</div>
+            <div style={{ fontWeight: 800, fontSize: FS.head, letterSpacing: "0.12em" }}>BEAN&nbsp;TRACKER</div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ display: "flex", border: `1px solid ${INK}`, borderRadius: 6, overflow: "hidden" }}>
                 {[["JPY", "¥"], ["USD", "$"]].map(([k, sym]) => (
                   <button key={k} onClick={() => setDisplayCur(k)}
                     style={{
                       padding: "3px 10px", border: "none", cursor: "pointer",
-                      fontFamily: "ui-monospace, monospace", fontSize: 11, fontWeight: 700,
+                      fontFamily: "ui-monospace, monospace", fontSize: FS.meta, fontWeight: 700,
                       background: displayCur === k ? INK : "transparent",
                       color: displayCur === k ? PAPER : INK,
                     }}>{sym}</button>
                 ))}
               </div>
-              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9, color: GRAY }}>v0.1</div>
+              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY }}>v0.1</div>
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 2 }}>
             <div>
-              <div style={{ fontSize: 10, color: GRAY }}>Find any bean, anywhere.</div>
-              <div style={{ fontSize: 10, color: GRAY, marginTop: 1 }}>Log your coffees, find your perfect cup.</div>
+              <div style={{ fontSize: FS.meta, color: GRAY }}>Find any bean, anywhere.</div>
+              <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 1 }}>Log your coffees, find your perfect cup.</div>
             </div>
-            <div title={fxTitle} style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontFamily: "ui-monospace, monospace", fontSize: 9, color: GRAY, whiteSpace: "nowrap" }}>
+            <div title={fxTitle} style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, whiteSpace: "nowrap" }}>
               <span className={fx.live ? "bt-live" : ""} style={{ width: 6, height: 6, borderRadius: 999, background: fx.live ? GREEN : (fx.error ? "#B8433A" : "#C8B36A") }} />
               {fx.live ? `為替LIVE · ${fxTime}更新` : fx.loading ? "為替 取得中…" : "為替 固定値"}
             </div>
@@ -389,7 +389,7 @@ export default function BeanTracker() {
               <button key={k} onClick={() => { setView(k); setFlavorFocus({ fam: null, id: null }); }}
                 style={{
                   background: "none", border: "none", padding: "0 0 6px", cursor: "pointer",
-                  fontSize: 12.5, letterSpacing: "0.12em", whiteSpace: "nowrap", flexShrink: 0,
+                  fontSize: FS.body, letterSpacing: "0.12em", whiteSpace: "nowrap", flexShrink: 0,
                   color: view === k || (k === "zukan" && view === "roaster") ? INK : GRAY,
                   fontWeight: view === k || (k === "zukan" && view === "roaster") ? 700 : 400,
                   borderBottom: view === k || (k === "zukan" && view === "roaster") ? `2px solid ${INK}` : "2px solid transparent",
@@ -413,7 +413,7 @@ export default function BeanTracker() {
             <div style={{ display: "inline-flex", border: `1px solid ${INK}`, borderRadius: 8, overflow: "hidden", marginBottom: 12 }}>
               {[["one", "1枚で見る"], ["proc", "精製ごとに見る"]].map(([k, l]) => (
                 <button key={k} onClick={() => setFlavorMode(k)}
-                  style={{ padding: "6px 14px", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700,
+                  style={{ padding: "6px 14px", border: "none", cursor: "pointer", fontSize: FS.body, fontWeight: 700,
                     background: flavorMode === k ? INK : PAPER, color: flavorMode === k ? PAPER : INK }}>{l}</button>
               ))}
             </div>
@@ -432,7 +432,7 @@ export default function BeanTracker() {
             <div style={{ display: "flex", gap: 0, marginBottom: 16, border: `1px solid ${INK}`, borderRadius: 8, overflow: "hidden", maxWidth: 360 }}>
               {[["log", "☕ 味の記録"], ["premium", "★ プレミアム"]].map(([k, l]) => (
                 <button key={k} onClick={() => setMeTab(k)}
-                  style={{ flex: 1, padding: "9px 0", border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 700, background: meTab === k ? INK : PAPER, color: meTab === k ? PAPER : INK }}>{l}</button>
+                  style={{ flex: 1, padding: "9px 0", border: "none", cursor: "pointer", fontSize: FS.body, fontWeight: 700, background: meTab === k ? INK : PAPER, color: meTab === k ? PAPER : INK }}>{l}</button>
               ))}
             </div>
             {meTab === "premium"
@@ -451,12 +451,12 @@ export default function BeanTracker() {
             <div style={{ display: "inline-flex", border: `1px solid ${INK}`, borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
               {[["beans", "豆"], ["roasters", "ロースター"]].map(([k, l]) => (
                 <button key={k} onClick={() => setZukanMode(k)}
-                  style={{ padding: "6px 16px", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, background: zukanMode === k ? INK : PAPER, color: zukanMode === k ? PAPER : INK }}>{l}</button>
+                  style={{ padding: "6px 16px", border: "none", cursor: "pointer", fontSize: FS.body, fontWeight: 700, background: zukanMode === k ? INK : PAPER, color: zukanMode === k ? PAPER : INK }}>{l}</button>
               ))}
             </div>
             {/* フリーワード検索 */}
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={zukanMode === "roasters" ? "ロースター名・都市で検索" : "ロースター名・農園名・豆名で検索"}
-              style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 13, marginBottom: 8, background: PAPER, color: INK }} />
+              style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: FS.body, marginBottom: 8, background: PAPER, color: INK }} />
             {zukanMode === "beans" && (<>
             {/* 絞り込み。3つあるので、幅に応じて2列にも3列にもなる。
                 固定2列だと3つ目が半分の幅で1つだけ残り、空き升がある見た目になっていた。
@@ -483,7 +483,7 @@ export default function BeanTracker() {
             {/* 並び替えは絞り込みとは別の操作なので、同じ升目に混ぜず1行に分けて出す。
                 4つの升の1つに紛れていたころは、並べ替えられること自体が気づかれにくかった。 */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: 11, color: GRAY, flexShrink: 0 }}>並び替え</span>
+              <span style={{ fontSize: FS.meta, color: GRAY, flexShrink: 0 }}>並び替え</span>
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ ...minSel, flex: 1 }} aria-label="並び替え">
                 <option value="default">おすすめ順</option>
                 <option value="p100desc">値段が高い順（100gあたり）</option>
@@ -502,15 +502,15 @@ export default function BeanTracker() {
                   <button key={f.key} onClick={f.clear} title={`${f.label}を外す`}
                     style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 8px 5px 10px",
                       borderRadius: 999, border: `1px solid ${INK}`, background: PAPER, color: INK,
-                      fontSize: 11.5, cursor: "pointer", maxWidth: "100%" }}>
+                      fontSize: FS.meta, cursor: "pointer", maxWidth: "100%" }}>
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.label}</span>
-                    <span style={{ color: GRAY, fontSize: 13, lineHeight: 1 }}>✕</span>
+                    <span style={{ color: GRAY, fontSize: FS.body, lineHeight: 1 }}>✕</span>
                   </button>
                 ))}
                 {activeFilters.length > 1 && (
                   <button onClick={clearFilters}
                     style={{ background: "none", border: "none", padding: "5px 4px", cursor: "pointer",
-                      fontSize: 11.5, color: GRAY, textDecoration: "underline", textUnderlineOffset: 2 }}>
+                      fontSize: FS.meta, color: GRAY, textDecoration: "underline", textUnderlineOffset: 2 }}>
                     すべて外す
                   </button>
                 )}
@@ -521,12 +521,12 @@ export default function BeanTracker() {
                 <button key={k} onClick={() => setStatusF(k)}
                   style={{
                     background: "none", border: "none", padding: 0, cursor: "pointer",
-                    fontFamily: "ui-monospace, monospace", fontSize: 10.5, letterSpacing: "0.05em",
+                    fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.05em",
                     color: statusF === k ? INK : GRAY, fontWeight: statusF === k ? 700 : 400,
                     borderBottom: statusF === k ? `2px solid ${INK}` : "2px solid transparent", paddingBottom: 6,
                   }}>{l}</button>
               ))}
-              <div style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, alignSelf: "center" }}>{/* アーカイブはロースターのカードが並ぶため、枚数と件数が食い違って見えないよう軒数も出す */}{statusF === "archive" ? `${Object.keys(archiveByRoaster).length} 店 / ${archiveBeans.length} 銘柄` : `${filtered.length} 銘柄`}</div>
+              <div style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, alignSelf: "center" }}>{/* アーカイブはロースターのカードが並ぶため、枚数と件数が食い違って見えないよう軒数も出す */}{statusF === "archive" ? `${Object.keys(archiveByRoaster).length} 店 / ${archiveBeans.length} 銘柄` : `${filtered.length} 銘柄`}</div>
             </div>
             {/* 色の凡例（精製方法／レア）。
                 7つで2行を占め、操作系と豆の間に常に居座っていた。画面の狭い端末では、
@@ -535,7 +535,7 @@ export default function BeanTracker() {
             <div style={{ marginTop: 10 }}>
               <button onClick={() => setLegendOpen((v) => !v)}
                 style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none",
-                  padding: 0, cursor: "pointer", fontSize: 10.5, color: GRAY }}>
+                  padding: 0, cursor: "pointer", fontSize: FS.meta, color: GRAY }}>
                 <span style={{ display: "inline-flex", gap: 2 }}>
                   {LEGEND.slice(0, 5).map((l) => (
                     <span key={l.key} style={{ width: 8, height: 8, borderRadius: 2, background: l.bg }} />
@@ -544,7 +544,7 @@ export default function BeanTracker() {
                 色の見かた {legendOpen ? "▲" : "▼"}
               </button>
               {legendOpen && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 12px", marginTop: 8, fontSize: 10, color: GRAY }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 12px", marginTop: 8, fontSize: FS.meta, color: GRAY }}>
                   {LEGEND.map((l) => (
                     <span key={l.key} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
                       <span style={{ width: 10, height: 10, borderRadius: 3, background: l.bg }} />{l.label}
@@ -563,23 +563,23 @@ export default function BeanTracker() {
                   {pageItems.map(([rid, r]) => (
                     <button key={rid} onClick={() => goRoaster(rid, "now")} className="bt-card"
                       style={{ display: "flex", flexDirection: "column", gap: 5, background: PAPER, border: `1px solid ${LINE}`, borderRadius: 10, padding: "11px 11px", cursor: "pointer", textAlign: "left" }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
-                      <div style={{ fontSize: 9.5, color: GRAY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.city} · {r.country}</div>
-                      <div style={{ marginTop: 2, fontFamily: "ui-monospace, monospace", fontSize: 9.5 }}>
+                      <div style={{ fontSize: FS.body, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                      <div style={{ fontSize: FS.meta, color: GRAY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.city} · {r.country}</div>
+                      <div style={{ marginTop: 2, fontFamily: "ui-monospace, monospace", fontSize: FS.meta }}>
                         <span style={{ color: (nowCountByRoaster[rid] || 0) ? GREEN : GRAY }}>NOW {nowCountByRoaster[rid] || 0}</span>
                       </div>
                     </button>
                   ))}
                 </div>
                 {activeList.length === 0 && (
-                  <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "50px 0" }}>該当するロースターがありません。</div>
+                  <div style={{ textAlign: "center", color: GRAY, fontSize: FS.body, padding: "50px 0" }}>該当するロースターがありません。</div>
                 )}
                 {pagerEl}
               </>
             ) : statusF === "archive" ? (
               /* ARCHIVE: ロースターを選んで歴代ポートフォリオへ */
               <div style={{ marginTop: 18 }}>
-                <div style={{ fontSize: 11, color: GRAY, marginBottom: 14 }}>
+                <div style={{ fontSize: FS.meta, color: GRAY, marginBottom: 14 }}>
                   ロースターを選ぶと、その店の歴代ポートフォリオが開きます。
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
@@ -602,10 +602,10 @@ export default function BeanTracker() {
                           ))}
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: INK, lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                          <div style={{ fontSize: FS.meta, fontWeight: 700, color: INK, lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
                           {/* 年と件数は必ず別行にする。1行にすると年の桁数で折り返しが起き、
                               カードの高さが1枚だけ変わって列が乱れる */}
-                          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 8.5, color: GRAY, marginTop: 2, lineHeight: 1.5 }}>
+                          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, marginTop: 2, lineHeight: 1.5 }}>
                             {/* 単年なら "2025–2025" ではなく "2025" と書く */}
                             <div>{Math.min(...years) === Math.max(...years)
                               ? Math.min(...years)
@@ -626,13 +626,13 @@ export default function BeanTracker() {
                   {pageItems.map((b) => <BeanCard key={b.id} bean={b} onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} />)}
                 </div>
                 {filtered.length === 0 && (
-                  <div style={{ textAlign: "center", color: GRAY, fontSize: 12, padding: "50px 0" }}>該当する豆がありません。フィルタを変えてみてください。</div>
+                  <div style={{ textAlign: "center", color: GRAY, fontSize: FS.body, padding: "50px 0" }}>該当する豆がありません。フィルタを変えてみてください。</div>
                 )}
                 {pagerEl}
               </>
             )}
             {/* フッター注記 */}
-            <div style={{ maxWidth: 640, margin: "0 auto", marginTop: 36, borderTop: `1px solid ${LINE}`, paddingTop: 14, fontSize: 10.5, color: GRAY, lineHeight: 1.7 }}>
+            <div style={{ maxWidth: 640, margin: "0 auto", marginTop: 36, borderTop: `1px solid ${LINE}`, paddingTop: 14, fontSize: FS.meta, color: GRAY, lineHeight: 1.7 }}>
               カードは各ロースターの実ロゴを表示します。巡回システムが商品画像URL（bean.img）を取得すると、その豆の実際のECパッケージ写真に自動で切り替わります（未取得・読み込み失敗時は標本カードにフォールバック）。
               評価機能はありません — この図鑑は探して辿り着くためのインフラです。 円⇄ドル換算はライブ為替（対応時）を用い、変動を自動反映します。取得できない環境では固定値にフォールバックします。
             </div>
@@ -644,11 +644,11 @@ export default function BeanTracker() {
       <footer style={{ borderTop: `1px solid ${LINE}`, background: PAPER }}>
         <div style={{ maxWidth: 640, margin: "0 auto", padding: "18px 16px 30px" }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 16px", justifyContent: "center" }}>
-            <Link href="/legal/tokushoho/" style={{ fontSize: 11, color: GRAY, textDecoration: "none" }}>特定商取引法に基づく表記</Link>
-            <Link href="/legal/terms/" style={{ fontSize: 11, color: GRAY, textDecoration: "none" }}>利用規約</Link>
-            <Link href="/legal/privacy/" style={{ fontSize: 11, color: GRAY, textDecoration: "none" }}>プライバシーポリシー</Link>
+            <Link href="/legal/tokushoho/" style={{ fontSize: FS.meta, color: GRAY, textDecoration: "none" }}>特定商取引法に基づく表記</Link>
+            <Link href="/legal/terms/" style={{ fontSize: FS.meta, color: GRAY, textDecoration: "none" }}>利用規約</Link>
+            <Link href="/legal/privacy/" style={{ fontSize: FS.meta, color: GRAY, textDecoration: "none" }}>プライバシーポリシー</Link>
           </div>
-          <div style={{ textAlign: "center", fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY, marginTop: 12 }}>
+          <div style={{ textAlign: "center", fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, marginTop: 12 }}>
             © 2026 BEAN TRACKER
           </div>
         </div>

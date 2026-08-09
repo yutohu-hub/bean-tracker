@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { INK, GRAY, LINE } from "../lib/theme";
+import { FS, INK, GRAY, LINE } from "../lib/theme";
 import { shrinkToDataUrl } from "../lib/photos";
 
 /* 味の記録に添える写真の選択・プレビュー。
@@ -31,22 +31,22 @@ export function PhotoPicker({ value, onChange, label = "写真を追加" }) {
             style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, display: "block", background: "#F0EDE4" }} />
           <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
             <button onClick={() => ref.current && ref.current.click()}
-              style={{ flex: 1, padding: "8px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}>
+              style={{ flex: 1, padding: "8px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.meta, fontWeight: 700, cursor: "pointer" }}>
               撮り直す
             </button>
             <button onClick={() => onChange(null)}
-              style={{ padding: "8px 14px", background: "none", color: GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 11.5, cursor: "pointer" }}>
+              style={{ padding: "8px 14px", background: "none", color: GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.meta, cursor: "pointer" }}>
               削除
             </button>
           </div>
         </div>
       ) : (
         <button onClick={() => ref.current && ref.current.click()} disabled={busy}
-          style={{ width: "100%", padding: "11px 0", background: "none", color: busy ? GRAY : INK, border: `1px dashed ${LINE}`, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: busy ? "default" : "pointer" }}>
+          style={{ width: "100%", padding: "11px 0", background: "none", color: busy ? GRAY : INK, border: `1px dashed ${LINE}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: busy ? "default" : "pointer" }}>
           {busy ? "読み込み中…" : `📷 ${label}`}
         </button>
       )}
-      {err && <div style={{ fontSize: 10.5, color: "#B8433A", marginTop: 5 }}>{err}</div>}
+      {err && <div style={{ fontSize: FS.meta, color: "#B8433A", marginTop: 5 }}>{err}</div>}
     </div>
   );
 }

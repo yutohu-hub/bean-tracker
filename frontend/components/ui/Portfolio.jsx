@@ -10,7 +10,7 @@
 //   * 行き先のあるもの（ロースター・お気に入り）だけ従来どおり一覧
 
 import { useState } from "react";
-import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
+import { FS, INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { toJPY } from "../lib/currency";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
@@ -27,8 +27,8 @@ function Section({ title, sub, children, right }) {
     <div style={{ marginTop: 18 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-          <span style={{ fontSize: 12.5, fontWeight: 800 }}>{title}</span>
-          {sub && <span style={{ fontSize: 10, color: GRAY }}>{sub}</span>}
+          <span style={{ fontSize: FS.body, fontWeight: 800 }}>{title}</span>
+          {sub && <span style={{ fontSize: FS.meta, color: GRAY }}>{sub}</span>}
         </div>
         {right}
       </div>
@@ -42,8 +42,8 @@ function Bar({ label, n, max, color = INK, onClick }) {
   const inner = (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 6 }}>
-        <span style={{ fontSize: 11, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
-        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, flexShrink: 0 }}>{n}</span>
+        <span style={{ fontSize: FS.meta, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, flexShrink: 0 }}>{n}</span>
       </div>
       <div style={{ height: 5, background: "#F0EDE4", borderRadius: 3, marginTop: 3 }}>
         <div style={{ height: "100%", width: `${Math.max(n > 0 ? 4 : 0, (n / max) * 100)}%`, background: color, borderRadius: 3 }} />
@@ -101,7 +101,7 @@ function Calendar({ list }) {
       </div>
       <div style={{ display: "flex", gap: 3, marginTop: 4 }}>
         {Array.from({ length: WEEKS }, (_, w) => (
-          <div key={w} style={{ flex: 1, fontSize: 8.5, color: GRAY, whiteSpace: "nowrap" }}>{monthLabel(w)}</div>
+          <div key={w} style={{ flex: 1, fontSize: FS.meta, color: GRAY, whiteSpace: "nowrap" }}>{monthLabel(w)}</div>
         ))}
       </div>
     </div>
@@ -144,19 +144,19 @@ function FlavorScatter({ pts, onOpen }) {
               }} />
           );
         })}
-        <span style={{ position: "absolute", left: 8, top: 6, fontSize: 9, color: GRAY }}>明るい</span>
-        <span style={{ position: "absolute", left: 8, bottom: 6, fontSize: 9, color: GRAY }}>深い</span>
-        <span style={{ position: "absolute", right: 8, bottom: 6, fontSize: 9, color: GRAY }}>個性派 →</span>
+        <span style={{ position: "absolute", left: 8, top: 6, fontSize: FS.meta, color: GRAY }}>明るい</span>
+        <span style={{ position: "absolute", left: 8, bottom: 6, fontSize: FS.meta, color: GRAY }}>深い</span>
+        <span style={{ position: "absolute", right: 8, bottom: 6, fontSize: FS.meta, color: GRAY }}>個性派 →</span>
       </div>
       {/* 系統を色だけで分からせない。凡例を必ず添える */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 7 }}>
         {fams.map((f) => (
-          <span key={f} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: GRAY }}>
+          <span key={f} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: FS.meta, color: GRAY }}>
             <span style={{ width: 7, height: 7, borderRadius: 999, background: (FLAVORS[f] || {}).color || GRAY }} />
             {(FLAVORS[f] || {}).label || f}
           </span>
         ))}
-        <span style={{ fontSize: 10, color: GRAY }}>大きい点＝★4以上</span>
+        <span style={{ fontSize: FS.meta, color: GRAY }}>大きい点＝★4以上</span>
       </div>
     </div>
   );
@@ -205,8 +205,8 @@ export function Portfolio({ list, email, onOpen, onRoaster }) {
   if (list.length === 0) {
     return (
       <div style={{ marginTop: 14, padding: "20px 18px", border: `1px dashed ${LINE}`, borderRadius: 12, textAlign: "center" }}>
-        <div style={{ fontSize: 13, fontWeight: 700 }}>ポートフォリオはまだ空です</div>
-        <div style={{ fontSize: 11.5, color: GRAY, marginTop: 6, lineHeight: 1.8 }}>
+        <div style={{ fontSize: FS.body, fontWeight: 700 }}>ポートフォリオはまだ空です</div>
+        <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 6, lineHeight: 1.8 }}>
           図鑑で豆を開いて「☕ 飲んだ味を記録」から追加するか、<br />
           下の「＋ 過去に飲んだ豆を記録」でこれまでの一杯を入れてください。
         </div>
@@ -225,20 +225,20 @@ export function Portfolio({ list, email, onOpen, onRoaster }) {
       {/* 見出し。数字は1行に畳む */}
       <div style={{ marginTop: 14, padding: "13px 15px", background: "#141210", color: PAPER, borderRadius: 12 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-          <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, letterSpacing: "0.18em", color: "#B8AE9E" }}>PORTFOLIO</span>
-          {email && <span style={{ fontSize: 10, color: "#B8AE9E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{email}</span>}
+          <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.18em", color: "#B8AE9E" }}>PORTFOLIO</span>
+          {email && <span style={{ fontSize: FS.meta, color: "#B8AE9E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{email}</span>}
         </div>
         <div style={{ display: "flex", gap: 16, marginTop: 9 }}>
           {tiles.map(([k, v]) => (
             <div key={k}>
-              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 19, fontWeight: 800, lineHeight: 1.1 }}>{v}</div>
-              <div style={{ fontSize: 9, color: "#B8AE9E", marginTop: 2 }}>{k}</div>
+              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.head, fontWeight: 800, lineHeight: 1.1 }}>{v}</div>
+              <div style={{ fontSize: FS.meta, color: "#B8AE9E", marginTop: 2 }}>{k}</div>
             </div>
           ))}
           {priced > 0 && (
             <div style={{ marginLeft: "auto", textAlign: "right" }}>
-              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 19, fontWeight: 800, lineHeight: 1.1 }}>¥{Math.round(spend).toLocaleString()}</div>
-              <div style={{ fontSize: 9, color: "#B8AE9E", marginTop: 2 }}>豆代（{priced}件）</div>
+              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.head, fontWeight: 800, lineHeight: 1.1 }}>¥{Math.round(spend).toLocaleString()}</div>
+              <div style={{ fontSize: FS.meta, color: "#B8AE9E", marginTop: 2 }}>豆代（{priced}件）</div>
             </div>
           )}
         </div>
@@ -261,7 +261,7 @@ export function Portfolio({ list, email, onOpen, onRoaster }) {
               {TABS.map(([k, l]) => (
                 <button key={k} onClick={() => setTab(k)}
                   style={{ padding: "3px 9px", borderRadius: 999, border: `1px solid ${tab === k ? INK : LINE}`,
-                    background: tab === k ? INK : PAPER, color: tab === k ? PAPER : GRAY, fontSize: 10.5, cursor: "pointer" }}>
+                    background: tab === k ? INK : PAPER, color: tab === k ? PAPER : GRAY, fontSize: FS.meta, cursor: "pointer" }}>
                   {l}
                 </button>
               ))}
@@ -272,7 +272,7 @@ export function Portfolio({ list, email, onOpen, onRoaster }) {
               {Object.keys(groups).length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
                   {Object.entries(groups).sort((a, b) => b[1] - a[1]).map(([g, n]) => (
-                    <span key={g} style={{ fontSize: 10.5, color: PAPER, background: GREEN, borderRadius: 999, padding: "3px 10px" }}>
+                    <span key={g} style={{ fontSize: FS.meta, color: PAPER, background: GREEN, borderRadius: 999, padding: "3px 10px" }}>
                       {GROUP_LABEL[g] || g} {n}
                     </span>
                   ))}
@@ -318,15 +318,15 @@ export function Portfolio({ list, email, onOpen, onRoaster }) {
               <div key={t.beanId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: `1px solid ${LINE}` }}>
                 <button onClick={() => b && onOpen(b)} disabled={!b}
                   style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, textAlign: "left", cursor: b ? "pointer" : "default" }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
-                  <div style={{ fontSize: 9.5, color: GRAY, marginTop: 2 }}>
+                  <div style={{ fontSize: FS.body, fontWeight: 700, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                  <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 2 }}>
                     <span style={{ color: "#E4A11B" }}>{"★".repeat(t.rating)}</span>
                     {t.roaster ? ` ・ ${t.roaster}` : ""}{t.origin ? ` ・ ${t.origin}` : ""}
                   </div>
                 </button>
                 {buyable && (
                   <a href={beanHref(r, b)} target="_blank" rel="noopener noreferrer"
-                    style={{ flexShrink: 0, textDecoration: "none", padding: "5px 11px", background: INK, color: PAPER, borderRadius: 6, fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>
+                    style={{ flexShrink: 0, textDecoration: "none", padding: "5px 11px", background: INK, color: PAPER, borderRadius: 6, fontSize: FS.meta, fontWeight: 700, whiteSpace: "nowrap" }}>
                     また買う ↗
                   </a>
                 )}

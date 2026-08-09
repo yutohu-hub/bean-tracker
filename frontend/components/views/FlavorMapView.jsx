@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { INK, PAPER, GRAY, LINE } from "../lib/theme";
+import { FS, INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
 import { FLAVORS, flavorOf } from "../data/flavors";
@@ -104,11 +104,11 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
     if (pointers.current.size === 0) { pan.current = null; if (scale === 1) { setTx(0); setTy(0); } }
   };
 
-  const zbtn = { width: 30, height: 30, borderRadius: 8, border: `1px solid ${LINE}`, background: "rgba(250,250,247,0.92)", color: INK, fontSize: 16, fontWeight: 700, cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" };
+  const zbtn = { width: 30, height: 30, borderRadius: 8, border: `1px solid ${LINE}`, background: "rgba(250,250,247,0.92)", color: INK, fontSize: FS.lead, fontWeight: 700, cursor: "pointer", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" };
 
   return (
     <div>
-      <div style={{ fontSize: 11, color: GRAY, marginBottom: 10 }}>
+      <div style={{ fontSize: FS.meta, color: GRAY, marginBottom: 10 }}>
         {procOnly
           ? `${PROC[procOnly] ? PROC[procOnly].label : ""}の豆だけを味わいの座標で。●をタップで詳細、系統でさらに絞り込めます。`
           : "いま買える豆を、味わいの座標で。ピンチ／ホイールで拡大、ドラッグで移動。●をタップするとその豆の詳細へ移動します。"}
@@ -117,13 +117,13 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
       {/* 精製方法（柑橘などの系統の「上」に提示・タップでハイライト）。精製ごとのマップでは非表示 */}
       {!procOnly && (
         <>
-          <div style={{ fontSize: 9.5, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>精製方法</div>
+          <div style={{ fontSize: FS.meta, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>精製方法</div>
           <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch" }}>
             {presentProc.map((k) => (
               <button key={k} onClick={() => setProcF(procF === k ? null : k)}
                 style={{
                   flexShrink: 0, display: "flex", alignItems: "center", gap: 5,
-                  padding: "5px 11px", borderRadius: 999, fontSize: 11, cursor: "pointer",
+                  padding: "5px 11px", borderRadius: 999, fontSize: FS.meta, cursor: "pointer",
                   border: `1px solid ${procF === k ? PROC[k].bg : LINE}`,
                   background: procF === k ? PROC[k].bg : "transparent",
                   color: procF === k ? "#fff" : INK, transition: "all 0.2s ease",
@@ -141,23 +141,23 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
       <button onClick={() => setNotesOnly(!notesOnly)}
         style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%",
           marginBottom: 10, padding: "9px 12px", background: notesOnly ? INK : "none", color: notesOnly ? PAPER : INK,
-          border: `1px solid ${notesOnly ? INK : LINE}`, borderRadius: 8, fontSize: 11.5, cursor: "pointer", textAlign: "left" }}>
+          border: `1px solid ${notesOnly ? INK : LINE}`, borderRadius: 8, fontSize: FS.meta, cursor: "pointer", textAlign: "left" }}>
         <span style={{ fontWeight: 700 }}>
           {notesOnly ? "✓ 店のノートで置いた豆だけ" : "店のノートで置いた豆だけを見る"}
         </span>
-        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10.5, opacity: 0.8 }}>
+        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, opacity: 0.8 }}>
           {noted.length} / {all.length}
         </span>
       </button>
 
       {/* 系統の凡例（タップでハイライト） */}
-      <div style={{ fontSize: 9.5, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>系統</div>
+      <div style={{ fontSize: FS.meta, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>系統</div>
       <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch" }}>
         {Object.entries(FLAVORS).map(([k, f]) => (
           <button key={k} onClick={() => setFamF(famF === k ? null : k)}
             style={{
               flexShrink: 0, display: "flex", alignItems: "center", gap: 5,
-              padding: "5px 11px", borderRadius: 999, fontSize: 11, cursor: "pointer",
+              padding: "5px 11px", borderRadius: 999, fontSize: FS.meta, cursor: "pointer",
               border: `1px solid ${famF === k ? f.color : LINE}`,
               background: famF === k ? f.color : "transparent",
               color: famF === k ? "#fff" : INK,
@@ -220,30 +220,30 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
         </div>
 
         {/* 軸ラベル（固定・拡大しない） */}
-        <span style={{ position: "absolute", top: 6, left: "50%", transform: "translateX(-50%)", fontSize: 9, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>明るい・すっきり</span>
-        <span style={{ position: "absolute", bottom: 6, left: "50%", transform: "translateX(-50%)", fontSize: 9, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>深い・コク</span>
-        <span style={{ position: "absolute", left: 8, top: "50%", transform: "translate(-30%, -50%) rotate(-90deg)", fontSize: 9, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>クリーン</span>
-        <span style={{ position: "absolute", right: 8, top: "50%", transform: "translate(30%, -50%) rotate(90deg)", fontSize: 9, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>個性派</span>
+        <span style={{ position: "absolute", top: 6, left: "50%", transform: "translateX(-50%)", fontSize: FS.meta, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>明るい・すっきり</span>
+        <span style={{ position: "absolute", bottom: 6, left: "50%", transform: "translateX(-50%)", fontSize: FS.meta, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>深い・コク</span>
+        <span style={{ position: "absolute", left: 8, top: "50%", transform: "translate(-30%, -50%) rotate(-90deg)", fontSize: FS.meta, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>クリーン</span>
+        <span style={{ position: "absolute", right: 8, top: "50%", transform: "translate(30%, -50%) rotate(90deg)", fontSize: FS.meta, color: GRAY, letterSpacing: "0.15em", pointerEvents: "none" }}>個性派</span>
 
         {/* ズーム操作 */}
         <div style={{ position: "absolute", right: 8, bottom: 8, display: "flex", flexDirection: "column", gap: 6 }}>
           <button aria-label="拡大" onClick={() => zoomBy(1.3)} style={zbtn}>＋</button>
           <button aria-label="縮小" onClick={() => zoomBy(1 / 1.3)} style={zbtn}>−</button>
-          <button aria-label="リセット" onClick={reset} style={{ ...zbtn, fontSize: 12 }}>⟲</button>
+          <button aria-label="リセット" onClick={reset} style={{ ...zbtn, fontSize: FS.body }}>⟲</button>
         </div>
         {scale > 1 && (
-          <div style={{ position: "absolute", left: 8, bottom: 8, fontFamily: "ui-monospace, monospace", fontSize: 9.5, color: GRAY, background: "rgba(250,250,247,0.8)", padding: "2px 6px", borderRadius: 6, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", left: 8, bottom: 8, fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, background: "rgba(250,250,247,0.8)", padding: "2px 6px", borderRadius: 6, pointerEvents: "none" }}>
             ×{scale.toFixed(1)}
           </div>
         )}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: GRAY, marginTop: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: FS.meta, color: GRAY, marginTop: 6 }}>
         <span>● いま買える豆（タップで詳細へ）</span>
         <span>系統は豆ごとの風味（無ければ産地・精製）で分類</span>
       </div>
 
-      <div style={{ textAlign: "center", fontSize: 10.5, color: GRAY, marginTop: 14 }}>
+      <div style={{ textAlign: "center", fontSize: FS.meta, color: GRAY, marginTop: 14 }}>
         右上ほど個性的で明るく、左下ほどクラシックで深い味わいです
       </div>
     </div>

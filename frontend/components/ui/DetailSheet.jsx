@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
-import { INK, PAPER, GRAY, LINE, GREEN, AMBER, STATUS } from "../lib/theme";
+import { FS, INK, PAPER, GRAY, LINE, GREEN, AMBER, STATUS } from "../lib/theme";
 import { nextCupFor } from "../lib/recommend";
 import { flavorOf, FLAVORS } from "../data/flavors";
 import { fmtPrice, fmtJPY, per100JPY, perGrams, fmtLocal } from "../lib/currency";
@@ -99,28 +99,28 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
         <div style={{ position: "relative" }}>
           <div style={{ width: 34, height: 4, borderRadius: 999, background: LINE, margin: "0 auto 16px" }} />
           <button onClick={onClose} aria-label="閉じる"
-            style={{ position: "absolute", top: -4, right: -4, width: 30, height: 30, borderRadius: 999, border: "none", background: "#F2F0E9", color: GRAY, fontSize: 15, lineHeight: 1, cursor: "pointer" }}>✕</button>
+            style={{ position: "absolute", top: -4, right: -4, width: 30, height: 30, borderRadius: 999, border: "none", background: "#F2F0E9", color: GRAY, fontSize: FS.lead, lineHeight: 1, cursor: "pointer" }}>✕</button>
           <button onClick={copyLink} aria-label="この豆のリンクをコピー" title="この豆のリンクをコピー"
-            style={{ position: "absolute", top: -4, right: 30, height: 30, padding: "0 10px", borderRadius: 999, border: "none", background: "#F2F0E9", color: GRAY, fontSize: 11, lineHeight: 1, cursor: "pointer" }}>🔗</button>
+            style={{ position: "absolute", top: -4, right: 30, height: 30, padding: "0 10px", borderRadius: 999, border: "none", background: "#F2F0E9", color: GRAY, fontSize: FS.meta, lineHeight: 1, cursor: "pointer" }}>🔗</button>
         </div>
-        {copied && <div style={{ textAlign: "center", fontSize: 10.5, color: GREEN, marginTop: -8, marginBottom: 6 }}>{copied}</div>}
+        {copied && <div style={{ textAlign: "center", fontSize: FS.meta, color: GREEN, marginTop: -8, marginBottom: 6 }}>{copied}</div>}
         <div style={{ display: "flex", gap: 16 }}>
           <div className="bt-detail-pkg" style={{ width: 120, flexShrink: 0 }}><Package bean={bean} /></div>
           <div className="bt-detail-info" style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <span style={{ width: 7, height: 7, borderRadius: 999, background: s.dot }} />
-              <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: s.dot === GRAY ? GRAY : s.dot }}>{s.label} — {s.jp}</span>
+              <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: s.dot === GRAY ? GRAY : s.dot }}>{s.label} — {s.jp}</span>
             </div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: INK, marginTop: 6, lineHeight: 1.25 }}>{bean.name}</div>
-            <button onClick={() => { onClose(); onRoaster(bean.r); }} style={{ fontSize: 12, color: GRAY, marginTop: 3, background: "none", border: "none", padding: 0, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>
+            <div style={{ fontSize: FS.head, fontWeight: 700, color: INK, marginTop: 6, lineHeight: 1.25 }}>{bean.name}</div>
+            <button onClick={() => { onClose(); onRoaster(bean.r); }} style={{ fontSize: FS.body, color: GRAY, marginTop: 3, background: "none", border: "none", padding: 0, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>
               {roaster.name} — {roaster.city}
             </button>
-            <table style={{ marginTop: 12, fontSize: 12, color: INK, borderCollapse: "collapse", width: "100%" }}>
+            <table style={{ marginTop: 12, fontSize: FS.body, color: INK, borderCollapse: "collapse", width: "100%" }}>
               <tbody>
                 {rows.map(([k, v]) => (
                   <tr key={k} style={{ borderTop: `1px solid ${LINE}` }}>
-                    <td style={{ padding: "6px 0", color: GRAY, fontSize: 11, width: 62 }}>{k}</td>
-                    <td style={{ padding: "6px 0", fontFamily: "ui-monospace, monospace", fontSize: 11.5 }}>{v}</td>
+                    <td style={{ padding: "6px 0", color: GRAY, fontSize: FS.meta, width: 62 }}>{k}</td>
+                    <td style={{ padding: "6px 0", fontFamily: "ui-monospace, monospace", fontSize: FS.meta }}>{v}</td>
                   </tr>
                 ))}
               </tbody>
@@ -132,13 +132,13 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
             roaster.url ? (
               <a href={beanHref(roaster, bean)} target="_blank" rel="noopener noreferrer" style={{ display: "block", textDecoration: "none", width: "100%", padding: "13px 14px", boxSizing: "border-box", background: INK, color: PAPER, borderRadius: 8, cursor: "pointer" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                  <span style={{ fontSize: 15, fontWeight: 800 }}>この豆を買う ↗</span>
-                  <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 12.5, opacity: 0.9 }}>{fmtPrice(bean, cur)} / {perGrams(bean)}g</span>
+                  <span style={{ fontSize: FS.lead, fontWeight: 800 }}>この豆を買う ↗</span>
+                  <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.body, opacity: 0.9 }}>{fmtPrice(bean, cur)} / {perGrams(bean)}g</span>
                 </div>
-                <div style={{ fontSize: 10.5, opacity: 0.75, marginTop: 3 }}>{roaster.name} の公式ECへ</div>
+                <div style={{ fontSize: FS.meta, opacity: 0.75, marginTop: 3 }}>{roaster.name} の公式ECへ</div>
               </a>
             ) : (
-              <div style={{ width: "100%", padding: "13px 0", background: "#EDEAE1", color: GRAY, borderRadius: 8, fontSize: 13, fontWeight: 700, textAlign: "center" }}>ECサイト準備中</div>
+              <div style={{ width: "100%", padding: "13px 0", background: "#EDEAE1", color: GRAY, borderRadius: 8, fontSize: FS.body, fontWeight: 700, textAlign: "center" }}>ECサイト準備中</div>
             )
           )}
           {bean.status === "sold" && (
@@ -151,10 +151,10 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
                   setWatchCount(getRestocks().length);
                   setWatchMsg("");
                 }}
-                style={{ width: "100%", padding: "13px 0", background: watching ? INK : PAPER, color: watching ? PAPER : INK, border: `1.5px solid ${INK}`, borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: watching || !watchFull ? "pointer" : "not-allowed", opacity: !watching && watchFull ? 0.55 : 1 }}>
+                style={{ width: "100%", padding: "13px 0", background: watching ? INK : PAPER, color: watching ? PAPER : INK, border: `1.5px solid ${INK}`, borderRadius: 8, fontSize: FS.lead, fontWeight: 700, cursor: watching || !watchFull ? "pointer" : "not-allowed", opacity: !watching && watchFull ? 0.55 : 1 }}>
                 {watching ? "✓ 再入荷ウォッチ中" : "🔔 再入荷を待つ"}
               </button>
-              <div style={{ textAlign: "center", fontSize: 10, color: watchMsg ? AMBER : GRAY, marginTop: 8, lineHeight: 1.6 }}>
+              <div style={{ textAlign: "center", fontSize: FS.meta, color: watchMsg ? AMBER : GRAY, marginTop: 8, lineHeight: 1.6 }}>
                 {watchMsg
                   ? watchMsg
                   : watching
@@ -166,24 +166,24 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
             </>
           )}
           {bean.status === "archive" && (
-            <div style={{ textAlign: "center", fontSize: 11.5, color: GRAY, padding: "10px 0", borderTop: `1px solid ${LINE}` }}>
+            <div style={{ textAlign: "center", fontSize: FS.meta, color: GRAY, padding: "10px 0", borderTop: `1px solid ${LINE}` }}>
               この豆は販売を終了しています。図鑑の記録として保存されています。
             </div>
           )}
           {bean.status === "now" && roaster.url && (
             // 連動レベルを隠さず出す。直リンクなのか店内検索なのかで、押したあとの体験が変わるため。
-            <div style={{ textAlign: "center", fontSize: 10, color: GRAY, marginTop: 8, lineHeight: 1.6 }}>
+            <div style={{ textAlign: "center", fontSize: FS.meta, color: GRAY, marginTop: 8, lineHeight: 1.6 }}>
               {beanLinkKind(roaster, bean) === "direct"
                 ? <>この豆の商品ページへ直接ひらきます</>
                 : beanLinkKind(roaster, bean) === "search"
                   ? <>{roaster.url} 内でこの豆を検索した結果をひらきます</>
                   : <>{roaster.url} のトップページをひらきます</>}
-              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9.5, marginTop: 2 }}>↗ {roaster.url}</div>
+              <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, marginTop: 2 }}>↗ {roaster.url}</div>
             </div>
           )}
           {bean.status === "now" && onFlavor && (
             <button onClick={() => { onClose(); onFlavor(bean); }}
-              style={{ width: "100%", marginTop: 10, padding: "11px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+              style={{ width: "100%", marginTop: 10, padding: "11px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer" }}>
               🗺 味わいマップでこの豆を見る →
             </button>
           )}
@@ -191,33 +191,33 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
 
         {/* 飲んだ味を記録（ローカル保存） */}
         <div style={{ marginTop: 18, borderTop: `1px solid ${LINE}`, paddingTop: 14 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700 }}>
-            ☕ 飲んだ味を記録{saved && <span style={{ fontSize: 10, color: GREEN, marginLeft: 8 }}>保存済み</span>}
+          <div style={{ fontSize: FS.body, fontWeight: 700 }}>
+            ☕ 飲んだ味を記録{saved && <span style={{ fontSize: FS.meta, color: GREEN, marginLeft: 8 }}>保存済み</span>}
           </div>
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
             {[1, 2, 3, 4, 5].map((n) => (
               <button key={n} onClick={() => setRating(n)} aria-label={`${n}点`}
-                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 24, lineHeight: 1, padding: 0, color: n <= rating ? "#E4A11B" : LINE }}>★</button>
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: FS.title, lineHeight: 1, padding: 0, color: n <= rating ? "#E4A11B" : LINE }}>★</button>
             ))}
           </div>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="香り・酸味・甘み・余韻など、感じた味をメモ"
-            style={{ width: "100%", boxSizing: "border-box", marginTop: 8, minHeight: 60, padding: "8px 10px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 12.5, resize: "vertical", background: PAPER, color: INK, fontFamily: "inherit" }} />
+            style={{ width: "100%", boxSizing: "border-box", marginTop: 8, minHeight: 60, padding: "8px 10px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: FS.body, resize: "vertical", background: PAPER, color: INK, fontFamily: "inherit" }} />
           <PhotoPicker value={photo} onChange={setPhoto} />
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             <button onClick={saveTasting} disabled={!rating}
-              style={{ flex: 1, padding: "10px 0", background: rating ? INK : "#EDEAE1", color: rating ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: rating ? "pointer" : "default" }}>
+              style={{ flex: 1, padding: "10px 0", background: rating ? INK : "#EDEAE1", color: rating ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: rating ? "pointer" : "default" }}>
               {saved ? "記録を更新" : "記録する"}
             </button>
-            {saved && <button onClick={delTasting} style={{ padding: "10px 14px", background: "none", color: GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 12, cursor: "pointer" }}>削除</button>}
+            {saved && <button onClick={delTasting} style={{ padding: "10px 14px", background: "none", color: GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.body, cursor: "pointer" }}>削除</button>}
           </div>
-          <div style={{ fontSize: 9.5, color: GRAY, marginTop: 6 }}>記録はこの端末に保存されます（「記録」タブで一覧）。</div>
+          <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 6 }}>記録はこの端末に保存されます（「記録」タブで一覧）。</div>
         </div>
 
         {/* 次の一杯。記録を書いた直後は、次に何を買うか決めるのに都合がいい */}
         {onOpen && (nextCup.sameOrigin || nextCup.similar) && (
           <div style={{ marginTop: 18, borderTop: `1px solid ${LINE}`, paddingTop: 14 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700 }}>次の一杯に</div>
-            <div style={{ fontSize: 10, color: GRAY, marginTop: 3, lineHeight: 1.6 }}>
+            <div style={{ fontSize: FS.body, fontWeight: 700 }}>次の一杯に</div>
+            <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 3, lineHeight: 1.6 }}>
               いま買えるものから選んでいます。
             </div>
             <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
@@ -245,14 +245,14 @@ function RecoCard({ label, bean, cur, onOpen }) {
     <button onClick={() => onOpen(bean)}
       style={{ display: "block", width: "100%", textAlign: "left", cursor: "pointer",
         background: "#F7F5EF", border: `1px solid ${LINE}`, borderRadius: 10, padding: "10px 12px" }}>
-      <div style={{ fontSize: 9.5, color: GRAY, letterSpacing: "0.04em" }}>{label}</div>
+      <div style={{ fontSize: FS.meta, color: GRAY, letterSpacing: "0.04em" }}>{label}</div>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 4 }}>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: INK }}>{bean.name}</span>
-        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: INK, flexShrink: 0 }}>
+        <span style={{ fontSize: FS.body, fontWeight: 700, color: INK }}>{bean.name}</span>
+        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: INK, flexShrink: 0 }}>
           {fmtJPY(per100JPY(bean), cur)}/100g
         </span>
       </div>
-      <div style={{ fontSize: 10.5, color: GRAY, marginTop: 2 }}>
+      <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 2 }}>
         {roaster.name} ・ {roaster.city} ・ {bean.process}
         {f && f.fam && FLAVORS[f.fam] ? ` ・ ${FLAVORS[f.fam].label}` : ""}
       </div>

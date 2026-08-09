@@ -12,7 +12,7 @@
 //   * 起動直後には出さない（まず中身を見てもらう）
 
 import { useEffect, useState } from "react";
-import { INK, PAPER, GRAY, LINE } from "../lib/theme";
+import { FS, INK, PAPER, GRAY, LINE } from "../lib/theme";
 
 const KEY = "bt_install_hint";
 const DELAY = 12000;        // 12秒。ひととおり眺めたころ
@@ -52,8 +52,8 @@ export function InstallHint() {
     }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: INK }}>アプリとして使えます</div>
-          <div style={{ fontSize: 11.5, color: GRAY, marginTop: 4, lineHeight: 1.75 }}>
+          <div style={{ fontSize: FS.body, fontWeight: 800, color: INK }}>アプリとして使えます</div>
+          <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 4, lineHeight: 1.75 }}>
             {prompt
               ? "ホーム画面に置くと、次からすぐ開けて、圏外でも図鑑を見られます。"
               : <>ホーム画面に置くと、次からすぐ開けて、圏外でも図鑑を見られます。<br />
@@ -64,11 +64,11 @@ export function InstallHint() {
           </div>
         </div>
         <button onClick={close} aria-label="閉じる"
-          style={{ background: "none", border: "none", fontSize: 14, color: GRAY, cursor: "pointer", lineHeight: 1, padding: 2 }}>✕</button>
+          style={{ background: "none", border: "none", fontSize: FS.lead, color: GRAY, cursor: "pointer", lineHeight: 1, padding: 2 }}>✕</button>
       </div>
       {prompt && (
         <button onClick={async () => { prompt.prompt(); await prompt.userChoice.catch(() => {}); close(); }}
-          style={{ width: "100%", marginTop: 10, padding: "10px 0", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+          style={{ width: "100%", marginTop: 10, padding: "10px 0", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer" }}>
           ホーム画面に追加
         </button>
       )}

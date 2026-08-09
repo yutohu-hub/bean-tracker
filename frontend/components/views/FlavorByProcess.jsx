@@ -15,7 +15,7 @@
  * そのときは何を見ているのかを画面に書く。
  */
 import { useMemo, useRef, useEffect, useState } from "react";
-import { INK, PAPER, GRAY, LINE } from "../lib/theme";
+import { FS, INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
 import { flavorOf } from "../data/flavors";
@@ -55,7 +55,7 @@ export function FlavorByProcess({ onOpen }) {
 
   return (
     <div>
-      <div style={{ fontSize: 11, color: GRAY, marginBottom: 10, lineHeight: 1.7 }}>
+      <div style={{ fontSize: FS.meta, color: GRAY, marginBottom: 10, lineHeight: 1.7 }}>
         同じ座標軸で、精製方法ごとに分けて並べています。図の中をタップすると、
         いちばん近い豆の詳細が開きます。
       </div>
@@ -71,7 +71,7 @@ export function FlavorByProcess({ onOpen }) {
       </div>
 
       {!notesOnly && (
-        <div style={{ fontSize: 10.5, color: INK, background: "#F7F0E4", border: `1px solid ${LINE}`,
+        <div style={{ fontSize: FS.meta, color: INK, background: "#F7F0E4", border: `1px solid ${LINE}`,
           borderRadius: 8, padding: "9px 11px", marginBottom: 12, lineHeight: 1.7 }}>
           いま出しているうち {all.length - noted} 銘柄は、店のノートが無いため
           <strong>産地と精製から座標を推定</strong>しています。精製で分けたこの図では、
@@ -87,14 +87,14 @@ export function FlavorByProcess({ onOpen }) {
       </div>
 
       {/* 軸の意味は1度だけ書く。図ごとに繰り返すと小さい図が文字で埋まる */}
-      <div style={{ fontSize: 10, color: GRAY, marginTop: 10, lineHeight: 1.8 }}>
+      <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 10, lineHeight: 1.8 }}>
         よこ軸：左ほどクリーン、右ほど個性派　／　たて軸：上ほど明るい、下ほど深い
       </div>
 
       {/* 図が読めない場合のための表。色だけに頼らせない */}
       <button onClick={() => setTable(!table)}
         style={{ marginTop: 12, background: "none", border: "none", padding: 0, cursor: "pointer",
-          fontSize: 11, color: GRAY, textDecoration: "underline", textUnderlineOffset: 2 }}>
+          fontSize: FS.meta, color: GRAY, textDecoration: "underline", textUnderlineOffset: 2 }}>
         数字で見る {table ? "▲" : "▼"}
       </button>
       {table && <Table byProc={byProc} panels={panels} />}
@@ -103,7 +103,7 @@ export function FlavorByProcess({ onOpen }) {
 }
 
 const tab = (on) => ({
-  padding: "6px 12px", borderRadius: 999, cursor: "pointer", fontSize: 11.5,
+  padding: "6px 12px", borderRadius: 999, cursor: "pointer", fontSize: FS.meta,
   border: `1px solid ${on ? INK : LINE}`, background: on ? INK : PAPER, color: on ? PAPER : INK,
 });
 
@@ -167,8 +167,8 @@ function Panel({ pkey, pts, onOpen }) {
     <div ref={boxRef}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
         <span style={{ width: 9, height: 9, borderRadius: 2, background: DOT[pkey], flexShrink: 0 }} />
-        <span style={{ fontSize: 11, fontWeight: 700, color: INK }}>{meta.label}</span>
-        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, marginLeft: "auto" }}>
+        <span style={{ fontSize: FS.meta, fontWeight: 700, color: INK }}>{meta.label}</span>
+        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, marginLeft: "auto" }}>
           {pts.length}
         </span>
       </div>
@@ -197,7 +197,7 @@ const xy = (p, size) => {
 
 function Table({ byProc, panels }) {
   const med = (a) => { if (!a.length) return 0; const s = a.slice().sort((x, y) => x - y); return Math.round(s[Math.floor(s.length / 2)]); };
-  const cell = { padding: "6px 8px", fontSize: 11, borderTop: `1px solid ${LINE}`, textAlign: "right", fontFamily: "ui-monospace, monospace" };
+  const cell = { padding: "6px 8px", fontSize: FS.meta, borderTop: `1px solid ${LINE}`, textAlign: "right", fontFamily: "ui-monospace, monospace" };
   return (
     <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
       <thead>

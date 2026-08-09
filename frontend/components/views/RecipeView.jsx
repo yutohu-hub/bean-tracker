@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { INK, GRAY, LINE, GREEN } from "../lib/theme";
+import { FS, INK, GRAY, LINE, GREEN } from "../lib/theme";
 
 // 競技会（World Brewers Cup）優勝者の抽出レシピ。追加は RECIPES に1件足すだけ。
 // 数値・豆情報は公開情報に基づく。判明しない項目は空欄("")にして「情報準備中」を表示（捏造しない）。
@@ -124,7 +124,7 @@ const MONO = "ui-monospace, monospace";
 /* 升の見出しは横4つに収まる長さにする。"Temperature" だけ2行に折れて、
    その升だけ背が高くなっていた。元データは触らず、表示名だけ短くする。 */
 const SHORT = { Temperature: "Temp" };
-const cap = { fontFamily: MONO, fontSize: 10, letterSpacing: "0.15em", color: GRAY };
+const cap = { fontFamily: MONO, fontSize: FS.meta, letterSpacing: "0.15em", color: GRAY };
 
 /* 一覧の1行。開くまでは、見比べるのに要る分だけ出す。
    11杯ぶんを全部開いたまま並べると 10,500px（携帯で12画面）になり、
@@ -138,24 +138,24 @@ function Row({ r, open, onToggle }) {
       <button onClick={onToggle} aria-expanded={open}
         style={{ display: "flex", alignItems: "flex-start", gap: 12, width: "100%", textAlign: "left",
           background: "none", border: "none", padding: "14px 2px", cursor: "pointer" }}>
-        <span style={{ fontFamily: MONO, fontSize: 12, color: GRAY, width: 34, flexShrink: 0, paddingTop: 2 }}>{r.year}</span>
+        <span style={{ fontFamily: MONO, fontSize: FS.body, color: GRAY, width: 34, flexShrink: 0, paddingTop: 2 }}>{r.year}</span>
         <span style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ display: "block", fontSize: 14, fontWeight: 700, color: INK }}>
+          <span style={{ display: "block", fontSize: FS.lead, fontWeight: 700, color: INK }}>
             <span style={{ marginRight: 6 }}>{r.flag}</span>{r.winner}
           </span>
-          <span style={{ display: "block", fontSize: 11.5, color: GRAY, marginTop: 3, lineHeight: 1.6 }}>
+          <span style={{ display: "block", fontSize: FS.meta, color: GRAY, marginTop: 3, lineHeight: 1.6 }}>
             {r.dripper}
           </span>
-          <span style={{ display: "block", fontSize: 11, color: GRAY, marginTop: 2 }}>
+          <span style={{ display: "block", fontSize: FS.meta, color: GRAY, marginTop: 2 }}>
             {[country, variety].filter(Boolean).join(" · ")}
           </span>
         </span>
         <span style={{ flexShrink: 0, textAlign: "right", paddingTop: 1 }}>
-          {ratio && <span style={{ display: "block", fontFamily: MONO, fontSize: 14, fontWeight: 800, color: INK }}>{ratio}</span>}
+          {ratio && <span style={{ display: "block", fontFamily: MONO, fontSize: FS.lead, fontWeight: 800, color: INK }}>{ratio}</span>}
           {/* 11行すべてに「開く」と書くと、その文字だけで一覧が埋まる。
               行ごと押せることは見出しの一文で伝えてあるので、印は記号だけにする。 */}
           <span aria-label={open ? "閉じる" : "開く"}
-            style={{ display: "block", fontSize: 11, color: GRAY, marginTop: 5 }}>{open ? "▲" : "▼"}</span>
+            style={{ display: "block", fontSize: FS.meta, color: GRAY, marginTop: 5 }}>{open ? "▲" : "▼"}</span>
         </span>
       </button>
       {open && <Detail r={r} />}
@@ -169,8 +169,8 @@ function Detail({ r }) {
       <tbody>
         {list.map(([k, v]) => (
           <tr key={k} style={{ borderTop: `1px solid ${LINE}` }}>
-            <td style={{ padding: "7px 0", fontSize: 11.5, color: GRAY, width: 92, verticalAlign: "top" }}>{k}</td>
-            <td style={{ padding: "7px 0", fontSize: 12.5, color: v ? INK : GRAY }}>{v || "情報準備中"}</td>
+            <td style={{ padding: "7px 0", fontSize: FS.meta, color: GRAY, width: 92, verticalAlign: "top" }}>{k}</td>
+            <td style={{ padding: "7px 0", fontSize: FS.body, color: v ? INK : GRAY }}>{v || "情報準備中"}</td>
           </tr>
         ))}
       </tbody>
@@ -182,8 +182,8 @@ function Detail({ r }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(88px, 1fr))", gap: 8 }}>
         {r.recipe.map(([icon, label, val]) => (
           <div key={label} style={{ padding: "10px 12px", background: "#F7F5EF", borderRadius: 10 }}>
-            <div style={{ fontSize: 10, color: GRAY }}>{icon} {SHORT[label] || label}</div>
-            <div style={{ fontFamily: MONO, fontSize: val && val.length > 10 ? 11.5 : 15, fontWeight: 800,
+            <div style={{ fontSize: FS.meta, color: GRAY }}>{icon} {SHORT[label] || label}</div>
+            <div style={{ fontFamily: MONO, fontSize: val && val.length > FS.meta ? FS.meta : FS.lead, fontWeight: 800,
               color: val ? INK : GRAY, marginTop: 3, lineHeight: 1.3 }}>{val || "情報準備中"}</div>
           </div>
         ))}
@@ -192,7 +192,7 @@ function Detail({ r }) {
       {/* 注ぎ方。時刻と量だけの並びなので、線と点は引かず素の行にする */}
       <div style={{ ...cap, marginTop: 18 }}>POUR</div>
       {r.pours.length === 0 ? (
-        <div style={{ fontSize: 12, color: GRAY, marginTop: 6, lineHeight: 1.8 }}>
+        <div style={{ fontSize: FS.body, color: GRAY, marginTop: 6, lineHeight: 1.8 }}>
           注湯の時刻と配分は公開されていません。
           {r.total && <span style={{ fontFamily: MONO, color: INK, fontWeight: 700 }}> 総抽出 {r.total}</span>}
         </div>
@@ -200,14 +200,14 @@ function Detail({ r }) {
         <div style={{ marginTop: 6 }}>
           {r.pours.map(([t, note], i) => (
             <div key={i} style={{ display: "flex", gap: 12, padding: "6px 0", borderTop: i ? `1px solid ${LINE}` : "none" }}>
-              <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 700, color: GREEN, width: 46, flexShrink: 0 }}>{t}</span>
-              <span style={{ fontSize: 12.5, color: INK, lineHeight: 1.6 }}>{note}</span>
+              <span style={{ fontFamily: MONO, fontSize: FS.body, fontWeight: 700, color: GREEN, width: 46, flexShrink: 0 }}>{t}</span>
+              <span style={{ fontSize: FS.body, color: INK, lineHeight: 1.6 }}>{note}</span>
             </div>
           ))}
           {r.total && (
             <div style={{ display: "flex", gap: 12, padding: "8px 0 0", marginTop: 4, borderTop: `1px solid ${INK}` }}>
-              <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: GRAY, width: 46, flexShrink: 0 }}>TOTAL</span>
-              <span style={{ fontFamily: MONO, fontSize: 13.5, fontWeight: 800, color: INK }}>{r.total}</span>
+              <span style={{ fontFamily: MONO, fontSize: FS.meta, fontWeight: 700, color: GRAY, width: 46, flexShrink: 0 }}>TOTAL</span>
+              <span style={{ fontFamily: MONO, fontSize: FS.body, fontWeight: 800, color: INK }}>{r.total}</span>
             </div>
           )}
         </div>
@@ -224,7 +224,7 @@ function Detail({ r }) {
       )}
 
       {r.note && (
-        <p style={{ fontSize: 12.5, color: INK, lineHeight: 1.9, margin: "18px 0 0",
+        <p style={{ fontSize: FS.body, color: INK, lineHeight: 1.9, margin: "18px 0 0",
           paddingTop: 14, borderTop: `1px solid ${LINE}` }}>{r.note}</p>
       )}
     </div>
@@ -238,9 +238,9 @@ export function RecipeView() {
 
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.2em", color: GRAY }}>BREW RECIPES</div>
-      <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6, lineHeight: 1.35 }}>チャンピオンの抽出レシピ</div>
-      <p style={{ fontSize: 12.5, color: GRAY, lineHeight: 1.9, marginTop: 8, marginBottom: 0 }}>
+      <div style={{ fontFamily: MONO, fontSize: FS.meta, letterSpacing: "0.2em", color: GRAY }}>BREW RECIPES</div>
+      <div style={{ fontSize: FS.title, fontWeight: 800, marginTop: 6, lineHeight: 1.35 }}>チャンピオンの抽出レシピ</div>
+      <p style={{ fontSize: FS.body, color: GRAY, lineHeight: 1.9, marginTop: 8, marginBottom: 0 }}>
         World Brewers Cup 過去11大会の優勝者が使った豆と抽出レシピ。
         右の数字は豆1に対する湯の量です。行をタップすると全部出ます。
       </p>
@@ -249,12 +249,12 @@ export function RecipeView() {
           目的のレシピに辿り着く前に画面が埋まる。 */}
       <button onClick={() => setGuide(!guide)}
         style={{ display: "block", marginTop: 14, background: "none", border: "none", padding: 0,
-          cursor: "pointer", fontSize: 12, color: INK, fontWeight: 700 }}>
+          cursor: "pointer", fontSize: FS.body, color: INK, fontWeight: 700 }}>
         レシピの読み方 {guide ? "▲" : "▼"}
       </button>
       {guide && (
         <div style={{ marginTop: 10, padding: "14px 16px", background: "#F7F5EF", borderRadius: 12 }}>
-          <p style={{ fontSize: 12, color: GRAY, lineHeight: 1.9, margin: 0 }}>
+          <p style={{ fontSize: FS.body, color: GRAY, lineHeight: 1.9, margin: 0 }}>
             豆も水も器具も違えば、同じ数字でも同じ味にはなりません。
             真似るより、<strong style={{ color: INK }}>どの数字を動かすと味がどちらへ動くか</strong>を掴むほうが早いはずです。
           </p>
@@ -267,8 +267,8 @@ export function RecipeView() {
               ["前半の配分", "4:6メソッドでは、最初の40%の2投で味の方向が決まる。1投目を少なくすると甘く、多くすると明るくなる。"],
             ].map(([k, v]) => (
               <div key={k} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <span style={{ flexShrink: 0, width: 62, fontSize: 11.5, fontWeight: 800, color: INK, paddingTop: 1 }}>{k}</span>
-                <span style={{ fontSize: 12, color: INK, lineHeight: 1.8 }}>{v}</span>
+                <span style={{ flexShrink: 0, width: 62, fontSize: FS.meta, fontWeight: 800, color: INK, paddingTop: 1 }}>{k}</span>
+                <span style={{ fontSize: FS.body, color: INK, lineHeight: 1.8 }}>{v}</span>
               </div>
             ))}
           </div>
@@ -281,7 +281,7 @@ export function RecipeView() {
         ))}
       </div>
 
-      <div style={{ marginTop: 18, fontSize: 11, color: GRAY, lineHeight: 1.8 }}>
+      <div style={{ marginTop: 18, fontSize: FS.meta, color: GRAY, lineHeight: 1.8 }}>
         ※ 2020年は新型コロナのため中止。数値・豆情報は大会レポートや本人インタビューなどの
         公開情報に基づきます。裏の取れなかった項目は埋めずに「情報準備中」と表示しています。
       </div>
