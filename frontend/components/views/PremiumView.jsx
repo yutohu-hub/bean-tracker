@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { INK, PAPER, GRAY, LINE, GREEN, AMBER } from "../lib/theme";
+import { FS, INK, PAPER, GRAY, LINE, GREEN, AMBER } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
 import { getNotify, setNotify, getRestocks } from "../lib/store";
@@ -132,24 +132,24 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
   const saveNotify = () => { setNotifyState(setNotify(notify)); setSaved(true); setTimeout(() => setSaved(false), 2500); };
 
   const card = { border: `1px solid ${LINE}`, borderRadius: 12, padding: "16px 16px" };
-  const chk = (on) => ({ width: 18, height: 18, borderRadius: 5, border: `1.5px solid ${on ? INK : LINE}`, background: on ? INK : "transparent", color: PAPER, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 });
+  const chk = (on) => ({ width: 18, height: 18, borderRadius: 5, border: `1.5px solid ${on ? INK : LINE}`, background: on ? INK : "transparent", color: PAPER, display: "flex", alignItems: "center", justifyContent: "center", fontSize: FS.body, flexShrink: 0 });
 
   return (
     <div>
       {/* ヘッダー */}
       <div>
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.2em", color: GRAY }}>PREMIUM</div>
-        <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4 }}>レアロットを、取りこぼさない</div>
-        <div style={{ fontSize: 12, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
+        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.2em", color: GRAY }}>PREMIUM</div>
+        <div style={{ fontSize: FS.head, fontWeight: 800, marginTop: 4 }}>レアロットを、取りこぼさない</div>
+        <div style={{ fontSize: FS.body, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
           {/* 軒数は巡回で増える。書き換え忘れで古い数字が残らないよう、実データから数える */}
           巡回が世界 {Object.values(ROASTERS).filter((r) => r.url).length} 軒の在庫を追い続けています。プレミアムは、その全部を見られるプランです。
         </div>
-        <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 12px", borderRadius: 999, background: premium ? GREEN : "#F2F0E9", color: premium ? PAPER : GRAY, fontSize: 11, fontWeight: 700 }}>
+        <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 12px", borderRadius: 999, background: premium ? GREEN : "#F2F0E9", color: premium ? PAPER : GRAY, fontSize: FS.meta, fontWeight: 700 }}>
           <span style={{ width: 7, height: 7, borderRadius: 999, background: premium ? PAPER : AMBER }} />
           現在のプラン：{checked ? planLabel(plan) : "確認中…"}
         </div>
         {premium && plan.periodEnd && (
-          <div style={{ fontSize: 10.5, color: GRAY, marginTop: 6 }}>
+          <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 6 }}>
             {new Date(plan.periodEnd).toLocaleDateString("ja-JP")} まで有効
           </div>
         )}
@@ -158,7 +158,7 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
       {/* 決済後の反映待ち */}
       {(waiting || waitMsg) && (
         <div style={{ ...card, marginTop: 14, background: "#F2F0E9", border: "none" }}>
-          <div style={{ fontSize: 12.5, color: INK, lineHeight: 1.8 }}>
+          <div style={{ fontSize: FS.body, color: INK, lineHeight: 1.8 }}>
             {waiting && <span style={{ marginRight: 8 }}>●</span>}{waitMsg}
           </div>
         </div>
@@ -167,15 +167,15 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
       {/* ログイン必須の説明 */}
       {!signedIn && (
         <div style={{ ...card, marginTop: 14, borderStyle: "dashed" }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700 }}>先にログインしてください</div>
-          <div style={{ fontSize: 11, color: GRAY, marginTop: 5, lineHeight: 1.8 }}>
+          <div style={{ fontSize: FS.body, fontWeight: 700 }}>先にログインしてください</div>
+          <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 5, lineHeight: 1.8 }}>
             プレミアムは端末ではなくアカウントに付きます。ログインしておくと、
             スマホで申し込んだものをパソコンでもそのまま使えます。
             「☕ 味の記録」タブからメールアドレスでログインできます。
           </div>
           {onNeedSignIn && (
             <button onClick={onNeedSignIn}
-              style={{ width: "100%", marginTop: 12, padding: "11px 0", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+              style={{ width: "100%", marginTop: 12, padding: "11px 0", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer" }}>
               ログインへ
             </button>
           )}
@@ -189,30 +189,30 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
           const active = isFree ? !premium : plan.id === p.id;
           return (
             <div key={p.id} style={{ ...card, borderColor: active ? INK : LINE, borderWidth: active ? 2 : 1, position: "relative" }}>
-              {p.badge && <span style={{ position: "absolute", top: -9, right: 14, background: AMBER, color: PAPER, fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 999 }}>{p.badge}</span>}
+              {p.badge && <span style={{ position: "absolute", top: -9, right: 14, background: AMBER, color: PAPER, fontSize: FS.meta, fontWeight: 700, padding: "2px 9px", borderRadius: 999 }}>{p.badge}</span>}
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-                <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: "0.06em" }}>{p.name}</div>
-                <div><span style={{ fontFamily: "ui-monospace, monospace", fontSize: 20, fontWeight: 800 }}>{p.price}</span><span style={{ fontSize: 11, color: GRAY }}> {p.per}</span></div>
+                <div style={{ fontSize: FS.lead, fontWeight: 800, letterSpacing: "0.06em" }}>{p.name}</div>
+                <div><span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.head, fontWeight: 800 }}>{p.price}</span><span style={{ fontSize: FS.meta, color: GRAY }}> {p.per}</span></div>
               </div>
-              <div style={{ fontSize: 11, color: GRAY, marginTop: 2 }}>{p.tagline}</div>
+              <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 2 }}>{p.tagline}</div>
               <ul style={{ margin: "10px 0 0", padding: 0, listStyle: "none" }}>
                 {p.features.map((f) => (
-                  <li key={f} style={{ display: "flex", gap: 7, fontSize: 11.5, color: INK, padding: "3px 0", lineHeight: 1.5 }}>
+                  <li key={f} style={{ display: "flex", gap: 7, fontSize: FS.meta, color: INK, padding: "3px 0", lineHeight: 1.5 }}>
                     <span style={{ color: GREEN, flexShrink: 0 }}>✓</span>{f}
                   </li>
                 ))}
               </ul>
               {isFree ? (
-                <div style={{ marginTop: 12, padding: "11px 0", textAlign: "center", borderRadius: 8, background: "#F7F5EF", color: GRAY, fontSize: 12 }}>
+                <div style={{ marginTop: 12, padding: "11px 0", textAlign: "center", borderRadius: 8, background: "#F7F5EF", color: GRAY, fontSize: FS.body }}>
                   {active ? "いま利用中のプラン" : "プレミアムを解約すると戻ります"}
                 </div>
               ) : active ? (
-                <div style={{ marginTop: 12, padding: "11px 0", textAlign: "center", borderRadius: 8, background: "#EDEAE1", color: GRAY, fontSize: 12.5, fontWeight: 700 }}>
+                <div style={{ marginTop: 12, padding: "11px 0", textAlign: "center", borderRadius: 8, background: "#EDEAE1", color: GRAY, fontSize: FS.body, fontWeight: 700 }}>
                   ご利用中
                 </div>
               ) : (
                 <button onClick={() => startCheckout(p.id)}
-                  style={{ width: "100%", marginTop: 12, padding: "11px 0", borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: "pointer", background: INK, color: PAPER, border: "none" }}>
+                  style={{ width: "100%", marginTop: 12, padding: "11px 0", borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer", background: INK, color: PAPER, border: "none" }}>
                   {premium ? "このプランに変更" : "申し込む"}
                 </button>
               )}
@@ -221,12 +221,12 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
         })}
       </div>
 
-      {payMsg && <div style={{ fontSize: 11, color: GREEN, marginTop: 10, lineHeight: 1.7 }}>{payMsg}</div>}
+      {payMsg && <div style={{ fontSize: FS.meta, color: GREEN, marginTop: 10, lineHeight: 1.7 }}>{payMsg}</div>}
 
       {/* 支払いの状態 */}
       <div style={{ ...card, marginTop: 14, background: "#F7F5EF", border: "none" }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700 }}>お支払いについて</div>
-        <div style={{ fontSize: 11, color: GRAY, marginTop: 5, lineHeight: 1.8 }}>
+        <div style={{ fontSize: FS.body, fontWeight: 700 }}>お支払いについて</div>
+        <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 5, lineHeight: 1.8 }}>
           カード決済は Stripe が処理します。カード番号がこのサイトに渡ることはありません。
           {isBillingConfigured() && isTestMode() && (
             <><br /><span style={{ color: AMBER, fontWeight: 700 }}>現在テストモードです。実際の請求は発生しません。</span></>
@@ -238,11 +238,11 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
         {premium && (
           hasCustomerPortal() ? (
             <a href={CUSTOMER_PORTAL_URL} target="_blank" rel="noopener noreferrer"
-              style={{ display: "block", textAlign: "center", marginTop: 12, padding: "11px 0", background: PAPER, color: INK, border: `1.5px solid ${INK}`, borderRadius: 8, fontSize: 12.5, fontWeight: 700, textDecoration: "none" }}>
+              style={{ display: "block", textAlign: "center", marginTop: 12, padding: "11px 0", background: PAPER, color: INK, border: `1.5px solid ${INK}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700, textDecoration: "none" }}>
               解約・カードの変更 ↗
             </a>
           ) : (
-            <div style={{ fontSize: 11, color: GRAY, marginTop: 10, lineHeight: 1.7 }}>
+            <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 10, lineHeight: 1.7 }}>
               解約は Stripe から届いた領収書メールのリンク、またはお問い合わせから承ります。
             </div>
           )
@@ -252,10 +252,10 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
       {/* 通知センター（配信基盤は未接続。ここでは設定だけ預かる） */}
       <div style={{ ...card, marginTop: 20 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-          <div style={{ fontSize: 14, fontWeight: 800 }}>🔔 新着レアロット通知</div>
-          <span style={{ fontSize: 9.5, fontWeight: 700, color: AMBER, border: `1px solid ${AMBER}`, borderRadius: 999, padding: "2px 8px", whiteSpace: "nowrap" }}>準備中</span>
+          <div style={{ fontSize: FS.lead, fontWeight: 800 }}>🔔 新着レアロット通知</div>
+          <span style={{ fontSize: FS.meta, fontWeight: 700, color: AMBER, border: `1px solid ${AMBER}`, borderRadius: 999, padding: "2px 8px", whiteSpace: "nowrap" }}>準備中</span>
         </div>
-        <div style={{ fontSize: 11, color: GRAY, marginTop: 5, lineHeight: 1.8 }}>
+        <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 5, lineHeight: 1.8 }}>
           配信の仕組みはまだ動いていません。ここで預かった設定は、配信を始めるときにそのまま使います。
           プレミアムの料金には含めていません。
         </div>
@@ -264,63 +264,63 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
           {CATS.map(([k, label]) => (
             <button key={k} onClick={() => toggleCat(k)} style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
               <span style={chk(notify.cats[k])}>{notify.cats[k] ? "✓" : ""}</span>
-              <span style={{ fontSize: 12.5, color: INK }}>{label}</span>
+              <span style={{ fontSize: FS.body, color: INK }}>{label}</span>
             </button>
           ))}
         </div>
 
-        <div style={{ marginTop: 16, fontSize: 12, fontWeight: 700 }}>届け先</div>
+        <div style={{ marginTop: 16, fontSize: FS.body, fontWeight: 700 }}>届け先</div>
         <button onClick={() => patch({ mail: !notify.mail })} style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", padding: "8px 0 0", cursor: "pointer", textAlign: "left" }}>
           <span style={chk(notify.mail)}>{notify.mail ? "✓" : ""}</span>
-          <span style={{ fontSize: 12.5, color: INK }}>メールで受け取る</span>
+          <span style={{ fontSize: FS.body, color: INK }}>メールで受け取る</span>
         </button>
         <input type="email" value={notify.email} onChange={(e) => patch({ email: e.target.value })} placeholder="you@example.com"
-          style={{ width: "100%", boxSizing: "border-box", marginTop: 8, padding: "10px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: 13, background: PAPER, color: INK }} />
+          style={{ width: "100%", boxSizing: "border-box", marginTop: 8, padding: "10px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: FS.body, background: PAPER, color: INK }} />
 
         <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${LINE}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={chk(subscribed)}>{subscribed ? "✓" : ""}</span>
-            <span style={{ fontSize: 12.5, color: INK, flex: 1 }}>
-              この端末に通知を届ける{subscribed && <span style={{ fontSize: 10, color: GREEN, marginLeft: 6 }}>受け取り中</span>}
+            <span style={{ fontSize: FS.body, color: INK, flex: 1 }}>
+              この端末に通知を届ける{subscribed && <span style={{ fontSize: FS.meta, color: GREEN, marginLeft: 6 }}>受け取り中</span>}
             </span>
           </div>
           {/* 受け取れない理由があるときは、押せないボタンではなく理由を出す。
               iPhone は「ホーム画面に追加すれば受け取れる」ので、諦めさせない */}
           {!pushOk.ok ? (
-            <div style={{ fontSize: 11, color: GRAY, marginTop: 8, lineHeight: 1.8 }}>{pushOk.reason}</div>
+            <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 8, lineHeight: 1.8 }}>{pushOk.reason}</div>
           ) : (
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
               <button onClick={subscribed ? doDisablePush : doEnablePush}
-                style={{ flex: 1, padding: "10px 0", background: subscribed ? PAPER : INK, color: subscribed ? INK : PAPER, border: subscribed ? `1.5px solid ${INK}` : "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                style={{ flex: 1, padding: "10px 0", background: subscribed ? PAPER : INK, color: subscribed ? INK : PAPER, border: subscribed ? `1.5px solid ${INK}` : "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer" }}>
                 {subscribed ? "通知を止める" : "通知を受け取る"}
               </button>
               {subscribed && (
                 <button onClick={testPush}
-                  style={{ padding: "10px 14px", background: PAPER, color: GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 11.5, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  style={{ padding: "10px 14px", background: PAPER, color: GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.meta, cursor: "pointer", whiteSpace: "nowrap" }}>
                   見本を出す
                 </button>
               )}
             </div>
           )}
-          {pushMsg && <div style={{ fontSize: 10.5, color: GRAY, marginTop: 7, lineHeight: 1.7 }}>{pushMsg}</div>}
+          {pushMsg && <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 7, lineHeight: 1.7 }}>{pushMsg}</div>}
         </div>
 
-        <button onClick={saveNotify} style={{ width: "100%", marginTop: 14, padding: "12px 0", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+        <button onClick={saveNotify} style={{ width: "100%", marginTop: 14, padding: "12px 0", background: INK, color: PAPER, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer" }}>
           通知設定を保存
         </button>
-        {saved && <div style={{ fontSize: 11, color: GREEN, marginTop: 8 }}>保存しました。配信を始めたらこの設定でお届けします。</div>}
+        {saved && <div style={{ fontSize: FS.meta, color: GREEN, marginTop: 8 }}>保存しました。配信を始めたらこの設定でお届けします。</div>}
       </div>
 
       {/* ウォッチリスト（再入荷） */}
       <div style={{ ...card, marginTop: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>再入荷ウォッチリスト</div>
-          <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, color: GRAY }}>
+          <div style={{ fontSize: FS.body, fontWeight: 700 }}>再入荷ウォッチリスト</div>
+          <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.body, color: GRAY }}>
             {restocks.length}{premium ? "" : ` / ${LIMITS.free.watchlist}`} 件
           </span>
         </div>
         {restocks.length === 0 ? (
-          <div style={{ fontSize: 11, color: GRAY, marginTop: 6, lineHeight: 1.7 }}>
+          <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 6, lineHeight: 1.7 }}>
             SOLD OUT の豆の詳細から「再入荷を待つ」で追加できます。巡回が再入荷を見つけると、この一覧に「買う」ボタンが出ます。
           </div>
         ) : (
@@ -334,16 +334,16 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
                 <div key={rc.beanId} style={{ display: "flex", alignItems: "center", gap: 10, borderTop: `1px solid ${LINE}`, padding: "10px 0" }}>
                   <button onClick={() => { if (b && onOpen) onOpen(b); }}
                     style={{ display: "flex", justifyContent: "space-between", flex: 1, minWidth: 0, gap: 8, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
-                    <span style={{ fontSize: 12.5, fontWeight: 700, color: INK }}>{rc.name}</span>
-                    <span style={{ fontSize: 10.5, color: GRAY, flexShrink: 0 }}>{rc.roaster}</span>
+                    <span style={{ fontSize: FS.body, fontWeight: 700, color: INK }}>{rc.name}</span>
+                    <span style={{ fontSize: FS.meta, color: GRAY, flexShrink: 0 }}>{rc.roaster}</span>
                   </button>
                   {back ? (
                     <a href={beanHref(r, b)} target="_blank" rel="noopener noreferrer"
-                      style={{ flexShrink: 0, textDecoration: "none", padding: "6px 12px", background: INK, color: PAPER, borderRadius: 6, fontSize: 10.5, fontWeight: 700, whiteSpace: "nowrap" }}>
+                      style={{ flexShrink: 0, textDecoration: "none", padding: "6px 12px", background: INK, color: PAPER, borderRadius: 6, fontSize: FS.meta, fontWeight: 700, whiteSpace: "nowrap" }}>
                       買う ↗
                     </a>
                   ) : (
-                    <span style={{ flexShrink: 0, fontSize: 10, color: GRAY, whiteSpace: "nowrap" }}>入荷待ち</span>
+                    <span style={{ flexShrink: 0, fontSize: FS.meta, color: GRAY, whiteSpace: "nowrap" }}>入荷待ち</span>
                   )}
                 </div>
               );
@@ -352,7 +352,7 @@ export function PremiumView({ onOpen, onNeedSignIn }) {
         )}
       </div>
 
-      <div style={{ marginTop: 20, padding: "12px 14px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 10.5, color: GRAY, lineHeight: 1.8 }}>
+      <div style={{ marginTop: 20, padding: "12px 14px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: FS.meta, color: GRAY, lineHeight: 1.8 }}>
         プレミアムの権限はアカウントに保存され、決済の記録だけを根拠に有効になります（この端末の操作では変わりません）。
         通知の配信だけはまだ動いていないため、料金に含めず「準備中」と表示しています。
       </div>

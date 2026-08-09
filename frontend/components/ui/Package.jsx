@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { beanStyle } from "../lib/palette";
+import { FS } from "../lib/theme";
 
 export function Package({ bean, small }) {
   const [imgErr, setImgErr] = useState(false);
@@ -35,12 +36,12 @@ export function Package({ bean, small }) {
           豆名とロースター名はすぐ下に大きく出るため、絵の中で繰り返さない
           （繰り返していた頃は、1枚のカードに同じ名前が2回ずつ並んでいた）。 */}
       <div style={{ position: "absolute", inset: "12% 10% 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ color: accent, fontSize: small ? 11 : 12, letterSpacing: "0.14em", fontWeight: 700, textAlign: "center", lineHeight: 1.4 }}>
+        <span style={{ color: accent, fontSize: small ? FS.meta : FS.body, letterSpacing: "0.14em", fontWeight: 700, textAlign: "center", lineHeight: 1.4 }}>
           {bean.process.toUpperCase()}
         </span>
       </div>
       {/* 標本番号 */}
-      <div style={{ position: "absolute", bottom: 6, right: 8, fontFamily: "ui-monospace, monospace", fontSize: 8, color: accent, opacity: 0.7 }}>
+      <div style={{ position: "absolute", bottom: 6, right: 8, fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: accent, opacity: 0.7 }}>
         No.{String(bean.id).padStart(4, "0")}
       </div>
     </div>

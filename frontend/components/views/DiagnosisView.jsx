@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo, useEffect, useRef } from "react";
-import { INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
+import { FS, INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
 import { getTastings, addDiagResult, addAnalysis } from "../lib/store";
@@ -147,15 +147,15 @@ export function DiagnosisView({ onRoaster }) {
   };
 
   const learnBadge = profile.runs > 0
-    ? <span style={{ fontSize: 10, color: GREEN, fontWeight: 700 }}>🧠 学習中 · {profile.runs}回分の好みを反映</span>
-    : <span style={{ fontSize: 10, color: GRAY }}>🧠 診断するほどおすすめが賢くなります</span>;
+    ? <span style={{ fontSize: FS.meta, color: GREEN, fontWeight: 700 }}>🧠 学習中 · {profile.runs}回分の好みを反映</span>
+    : <span style={{ fontSize: FS.meta, color: GRAY }}>🧠 診断するほどおすすめが賢くなります</span>;
 
   // 味の記録のAI分析パネル（記録から学習して診断に反映）
   const AnalysisPanel = () => {
     if (!tan) return null;
     if (!tan.rated) {
       return (
-        <div style={{ marginTop: 12, padding: "10px 12px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: 10.5, color: GRAY, lineHeight: 1.7 }}>
+        <div style={{ marginTop: 12, padding: "10px 12px", border: `1px dashed ${LINE}`, borderRadius: 10, fontSize: FS.meta, color: GRAY, lineHeight: 1.7 }}>
           🧠 味の記録がまだありません。豆に☆評価を付けると、その傾向をAIが分析して診断に反映します。
         </div>
       );
@@ -167,21 +167,21 @@ export function DiagnosisView({ onRoaster }) {
     ].filter(Boolean);
     return (
       <div style={{ marginTop: 12, padding: "12px 14px", background: "#F2F0E9", borderRadius: 10 }}>
-        <div style={{ fontSize: 12, fontWeight: 800 }}>🧠 記録のAI分析 <span style={{ fontWeight: 400, color: GRAY }}>· {tan.rated}件を学習</span></div>
+        <div style={{ fontSize: FS.body, fontWeight: 800 }}>🧠 記録のAI分析 <span style={{ fontWeight: 400, color: GRAY }}>· {tan.rated}件を学習</span></div>
         {tags.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
             {tags.map((t) => (
-              <span key={t} style={{ fontSize: 10.5, fontWeight: 700, color: INK, background: PAPER, border: `1px solid ${LINE}`, borderRadius: 999, padding: "3px 10px" }}>高評価: {t}</span>
+              <span key={t} style={{ fontSize: FS.meta, fontWeight: 700, color: INK, background: PAPER, border: `1px solid ${LINE}`, borderRadius: 999, padding: "3px 10px" }}>高評価: {t}</span>
             ))}
           </div>
         )}
-        <div style={{ fontSize: 9.5, color: GRAY, marginTop: 8, lineHeight: 1.6 }}>
+        <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 8, lineHeight: 1.6 }}>
           この分析はこの端末上で行われ、記録は外部に送信されません。結果とおすすめに反映済みです。
         </div>
         <button
           onClick={() => { addAnalysis({ rated: tan.rated, tags }); setAnaSaved(true); }}
           disabled={anaSaved}
-          style={{ width: "100%", marginTop: 10, padding: "9px 0", background: anaSaved ? "transparent" : PAPER, color: anaSaved ? GREEN : INK, border: `1.5px solid ${anaSaved ? LINE : INK}`, borderRadius: 8, fontSize: 11.5, fontWeight: 700, cursor: anaSaved ? "default" : "pointer" }}>
+          style={{ width: "100%", marginTop: 10, padding: "9px 0", background: anaSaved ? "transparent" : PAPER, color: anaSaved ? GREEN : INK, border: `1.5px solid ${anaSaved ? LINE : INK}`, borderRadius: 8, fontSize: FS.meta, fontWeight: 700, cursor: anaSaved ? "default" : "pointer" }}>
           {anaSaved ? "✓ 味の記録に保存しました" : "この分析を味の記録に保存"}
         </button>
       </div>
@@ -194,11 +194,11 @@ export function DiagnosisView({ onRoaster }) {
     return (
       <div className="bt-card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, letterSpacing: "0.1em" }}>RESULT</div>
+          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, letterSpacing: "0.1em" }}>RESULT</div>
           {learnBadge}
         </div>
-        <div style={{ fontSize: 21, fontWeight: 800, marginTop: 6 }}>{result.type}</div>
-        <div style={{ fontSize: 12.5, color: GRAY, marginTop: 6, lineHeight: 1.7 }}>
+        <div style={{ fontSize: FS.head, fontWeight: 800, marginTop: 6 }}>{result.type}</div>
+        <div style={{ fontSize: FS.body, color: GRAY, marginTop: 6, lineHeight: 1.7 }}>
           あなたの回答・これまでの学習・<b>味の記録の分析</b>と、各店が<b>いま並べている豆の中身</b>を
           照らし合わせて選びました。
         </div>
@@ -213,16 +213,16 @@ export function DiagnosisView({ onRoaster }) {
                 style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: i === 0 ? "#F2F0E9" : "none", border: "none", borderRadius: i === 0 ? 8 : 0, borderTop: i === 0 ? "none" : `1px solid ${LINE}`, padding: i === 0 ? "12px" : "11px 2px", cursor: "pointer", textAlign: "left" }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    {i === 0 && <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 9, color: GREEN, fontWeight: 700 }}>BEST MATCH</span>}
-                    <span style={{ fontSize: i === 0 ? 16 : 13, fontWeight: 700, color: INK }}>{r.name}</span>
+                    {i === 0 && <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GREEN, fontWeight: 700 }}>BEST MATCH</span>}
+                    <span style={{ fontSize: i === FS.meta ? FS.lead : FS.body, fontWeight: 700, color: INK }}>{r.name}</span>
                   </div>
-                  <div style={{ fontSize: 10.5, color: GRAY, marginTop: 2 }}>{r.city} / {r.country} ・ {r.focus}</div>
+                  <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 2 }}>{r.city} / {r.country} ・ {r.focus}</div>
                   {/* なぜこの店なのかを、数えた事実で書く。根拠が無いときは何も出さない */}
-                  {why && <div style={{ fontSize: 10.5, color: INK, marginTop: 4 }}>{why}</div>}
+                  {why && <div style={{ fontSize: FS.meta, color: INK, marginTop: 4 }}>{why}</div>}
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 10 }}>
-                  <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: GREEN }}>NOW {beansOf(k)}</div>
-                  <div style={{ color: GRAY, fontSize: 12 }}>→</div>
+                  <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GREEN }}>NOW {beansOf(k)}</div>
+                  <div style={{ color: GRAY, fontSize: FS.body }}>→</div>
                 </div>
               </button>
             );
@@ -237,18 +237,18 @@ export function DiagnosisView({ onRoaster }) {
             setDiagSaved(true);
           }}
           disabled={diagSaved}
-          style={{ width: "100%", marginTop: 16, padding: "12px 0", background: diagSaved ? "#EDEAE1" : INK, color: diagSaved ? GRAY : PAPER, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: diagSaved ? "default" : "pointer" }}>
+          style={{ width: "100%", marginTop: 16, padding: "12px 0", background: diagSaved ? "#EDEAE1" : INK, color: diagSaved ? GRAY : PAPER, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: diagSaved ? "default" : "pointer" }}>
           {diagSaved ? "✓ 味の記録に保存しました" : "🧭 この診断結果を味の記録に残す"}
         </button>
-        {diagSaved && <div style={{ fontSize: 10.5, color: GREEN, marginTop: 6, textAlign: "center" }}>「味の記録」タブの診断履歴から見返せます。</div>}
+        {diagSaved && <div style={{ fontSize: FS.meta, color: GREEN, marginTop: 6, textAlign: "center" }}>「味の記録」タブの診断履歴から見返せます。</div>}
 
-        <div style={{ marginTop: 16, fontSize: 10, color: GRAY, lineHeight: 1.7, borderTop: `1px solid ${LINE}`, paddingTop: 10 }}>
+        <div style={{ marginTop: 16, fontSize: FS.meta, color: GRAY, lineHeight: 1.7, borderTop: `1px solid ${LINE}`, paddingTop: 10 }}>
           相性はロースターの優劣ではなく、あなたの好みとの近さです。割合は在庫を数えた実数で、
           焙煎度だけは豆のデータに無いため店の紹介文から読んでいます。
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-          <button onClick={reset} style={{ background: "none", border: `1px solid ${LINE}`, borderRadius: 999, padding: "7px 16px", fontSize: 11, color: GRAY, cursor: "pointer" }}>もう一度診断する</button>
-          <button onClick={resetLearning} style={{ background: "none", border: "none", fontSize: 11, color: GRAY, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>学習をリセット</button>
+          <button onClick={reset} style={{ background: "none", border: `1px solid ${LINE}`, borderRadius: 999, padding: "7px 16px", fontSize: FS.meta, color: GRAY, cursor: "pointer" }}>もう一度診断する</button>
+          <button onClick={resetLearning} style={{ background: "none", border: "none", fontSize: FS.meta, color: GRAY, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>学習をリセット</button>
         </div>
       </div>
     );
@@ -259,7 +259,7 @@ export function DiagnosisView({ onRoaster }) {
   return (
     <div className="bt-card" key={step}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY, letterSpacing: "0.1em" }}>Q{step + 1} / {QUESTIONS.length}</div>
+        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, letterSpacing: "0.1em" }}>Q{step + 1} / {QUESTIONS.length}</div>
         {learnBadge}
       </div>
       <div style={{ display: "flex", gap: 4, marginTop: 8 }}>
@@ -268,21 +268,21 @@ export function DiagnosisView({ onRoaster }) {
         ))}
       </div>
       <AnalysisPanel />
-      <div style={{ fontSize: 17, fontWeight: 700, marginTop: 14, lineHeight: 1.5 }}>{cq.q}</div>
+      <div style={{ fontSize: FS.head, fontWeight: 700, marginTop: 14, lineHeight: 1.5 }}>{cq.q}</div>
       <div style={{ marginTop: 14 }}>
         {(() => {
           const rec = recIdx(cq);
           return cq.options.map((o, i) => (
             <button key={o.label} onClick={() => answer(o)}
-              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%", textAlign: "left", padding: "13px 14px", marginTop: 8, background: i === rec ? "#F5F2E8" : PAPER, border: `1px solid ${i === rec ? INK : LINE}`, borderRadius: 8, fontSize: 13, color: INK, cursor: "pointer" }}>
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%", textAlign: "left", padding: "13px 14px", marginTop: 8, background: i === rec ? "#F5F2E8" : PAPER, border: `1px solid ${i === rec ? INK : LINE}`, borderRadius: 8, fontSize: FS.body, color: INK, cursor: "pointer" }}>
               <span>{o.label}</span>
-              {i === rec && <span style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 800, color: GREEN, letterSpacing: "0.04em" }}>記録から ★</span>}
+              {i === rec && <span style={{ flexShrink: 0, fontSize: FS.meta, fontWeight: 800, color: GREEN, letterSpacing: "0.04em" }}>記録から ★</span>}
             </button>
           ));
         })()}
       </div>
       {step > 0 && (
-        <button onClick={reset} style={{ marginTop: 14, background: "none", border: "none", fontSize: 11, color: GRAY, cursor: "pointer", padding: 0 }}>← 最初からやり直す</button>
+        <button onClick={reset} style={{ marginTop: 14, background: "none", border: "none", fontSize: FS.meta, color: GRAY, cursor: "pointer", padding: 0 }}>← 最初からやり直す</button>
       )}
     </div>
   );

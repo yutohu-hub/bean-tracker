@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { INK, PAPER, GRAY, GREEN, AMBER, LINE } from "../lib/theme";
+import { FS, INK, PAPER, GRAY, GREEN, AMBER, LINE } from "../lib/theme";
 import { ROASTERS } from "../data/roasters";
 import { BEANS } from "../data/beans";
 import { shopHref, mapHref } from "../lib/utils";
@@ -257,11 +257,11 @@ export function GlobeView({ onRoaster }) {
 
   const sel = selected ? ROASTERS[selected] : null;
   const selBeans = selected ? BEANS.filter((b) => b.r === selected) : [];
-  const btn = { width: 34, height: 34, borderRadius: 8, border: `1px solid ${INK}`, background: PAPER, color: INK, fontSize: 16, fontWeight: 700, cursor: "pointer", lineHeight: "1", display: "flex", alignItems: "center", justifyContent: "center" };
+  const btn = { width: 34, height: 34, borderRadius: 8, border: `1px solid ${INK}`, background: PAPER, color: INK, fontSize: FS.lead, fontWeight: 700, cursor: "pointer", lineHeight: "1", display: "flex", alignItems: "center", justifyContent: "center" };
 
   return (
     <div>
-      <div style={{ fontSize: 11, color: GRAY, marginBottom: 6 }}>
+      <div style={{ fontSize: FS.meta, color: GRAY, marginBottom: 6 }}>
         衛星写真の地球。ドラッグで回転、ホイール／ピンチ／＋−で拡大縮小。● をタップでロースター詳細。
         拡大は ● が重ならない縮尺（街全体が入る高さ）までです。
       </div>
@@ -270,7 +270,7 @@ export function GlobeView({ onRoaster }) {
         <div ref={wrapRef} style={{ width: "100%", height: 420 }} />
 
         {status !== "ready" && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#B8AE9E", fontSize: 12, textAlign: "center", padding: 20 }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#B8AE9E", fontSize: FS.body, textAlign: "center", padding: 20 }}>
             {status === "loading" ? "地球を読み込み中…" : "地球を表示できませんでした（通信環境をご確認ください）"}
           </div>
         )}
@@ -279,7 +279,7 @@ export function GlobeView({ onRoaster }) {
           <div style={{ position: "absolute", right: 8, bottom: 8, display: "flex", flexDirection: "column", gap: 6, zIndex: 2 }}>
             <button aria-label="拡大" style={btn} onClick={() => apiRef.current?.zoomIn()}>＋</button>
             <button aria-label="縮小" style={btn} onClick={() => apiRef.current?.zoomOut()}>−</button>
-            <button aria-label="リセット" style={{ ...btn, fontSize: 13 }} onClick={() => apiRef.current?.reset()}>⟲</button>
+            <button aria-label="リセット" style={{ ...btn, fontSize: FS.body }} onClick={() => apiRef.current?.reset()}>⟲</button>
           </div>
         )}
 
@@ -288,12 +288,12 @@ export function GlobeView({ onRoaster }) {
         {noImagery && status === "ready" && (
           <div style={{ position: "absolute", left: 8, right: 8, top: 8, zIndex: 3,
             background: "rgba(6,13,22,0.82)", color: "rgba(255,255,255,0.9)",
-            fontSize: 10.5, lineHeight: 1.7, padding: "7px 10px", borderRadius: 6 }}>
+            fontSize: FS.meta, lineHeight: 1.7, padding: "7px 10px", borderRadius: 6 }}>
             衛星写真を読み込めませんでした。ロースターの位置は正しく表示されています。
           </div>
         )}
 
-        <div style={{ position: "absolute", left: 8, bottom: 8, fontSize: 9, color: "rgba(255,255,255,0.55)", zIndex: 2 }}>
+        <div style={{ position: "absolute", left: 8, bottom: 8, fontSize: FS.meta, color: "rgba(255,255,255,0.55)", zIndex: 2 }}>
           {noImagery ? "Roaster locations © BEAN TRACKER"
             : sourceRef.current === "OpenStreetMap" ? "Imagery © OpenStreetMap contributors"
               : "Imagery © Esri, Maxar, Earthstar Geographics"}
@@ -303,43 +303,43 @@ export function GlobeView({ onRoaster }) {
       {sel ? (
         <div style={{ borderTop: `2px solid ${INK}`, marginTop: 14, paddingTop: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>{sel.name}</div>
-            <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: GRAY }}>{sel.country} / {sel.platform}</span>
+            <div style={{ fontSize: FS.lead, fontWeight: 700 }}>{sel.name}</div>
+            <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY }}>{sel.country} / {sel.platform}</span>
           </div>
-          <div style={{ fontSize: 11.5, color: GRAY, marginTop: 2 }}>{sel.city} — {sel.note}</div>
-          <div style={{ display: "flex", gap: 14, marginTop: 6, fontSize: 10.5, color: GRAY }}>
+          <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 2 }}>{sel.city} — {sel.note}</div>
+          <div style={{ display: "flex", gap: 14, marginTop: 6, fontSize: FS.meta, color: GRAY }}>
             <span>創業 {sel.founded}</span><span>{sel.style}</span><span>{sel.ship}</span>
           </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 8, fontFamily: "ui-monospace, monospace", fontSize: 10.5 }}>
+          <div style={{ display: "flex", gap: 12, marginTop: 8, fontFamily: "ui-monospace, monospace", fontSize: FS.meta }}>
             <span style={{ color: GREEN }}>NOW {selBeans.filter((b) => b.status === "now").length}</span>
             <span style={{ color: AMBER }}>SOLD OUT {selBeans.filter((b) => b.status === "sold").length}</span>
             <span style={{ color: GRAY }}>ARCHIVE {selBeans.filter((b) => b.status === "archive").length}</span>
           </div>
           <button onClick={() => apiRef.current?.focus(selected)}
-            style={{ width: "100%", marginTop: 10, padding: "9px 0", background: "none", color: INK, border: `1px dashed ${LINE}`, borderRadius: 8, fontSize: 12, cursor: "pointer" }}>
+            style={{ width: "100%", marginTop: 10, padding: "9px 0", background: "none", color: INK, border: `1px dashed ${LINE}`, borderRadius: 8, fontSize: FS.body, cursor: "pointer" }}>
             🌍 この街まで寄る
           </button>
           {sel.url ? (
             <a href={shopHref(sel)} target="_blank" rel="noopener noreferrer"
-              style={{ display: "block", textAlign: "center", textDecoration: "none", width: "100%", marginTop: 8, padding: "12px 0", background: INK, color: PAPER, borderRadius: 8, fontSize: 13, fontWeight: 700 }}>
+              style={{ display: "block", textAlign: "center", textDecoration: "none", width: "100%", marginTop: 8, padding: "12px 0", background: INK, color: PAPER, borderRadius: 8, fontSize: FS.body, fontWeight: 700 }}>
               {sel.name} のECサイトへ ↗
             </a>
           ) : (
-            <div style={{ textAlign: "center", marginTop: 8, padding: "12px 0", background: "#EDEAE1", color: GRAY, borderRadius: 8, fontSize: 12, fontWeight: 700 }}>ECサイト準備中</div>
+            <div style={{ textAlign: "center", marginTop: 8, padding: "12px 0", background: "#EDEAE1", color: GRAY, borderRadius: 8, fontSize: FS.body, fontWeight: 700 }}>ECサイト準備中</div>
           )}
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             <button onClick={() => onRoaster(selected)}
-              style={{ flex: 1, padding: "10px 0", background: "none", color: INK, border: `1px solid ${INK}`, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+              style={{ flex: 1, padding: "10px 0", background: "none", color: INK, border: `1px solid ${INK}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer" }}>
               豆を見る →
             </button>
             <a href={mapHref(sel)} target="_blank" rel="noopener noreferrer"
-              style={{ flex: 1, textAlign: "center", textDecoration: "none", padding: "10px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: 12, fontWeight: 700 }}>
+              style={{ flex: 1, textAlign: "center", textDecoration: "none", padding: "10px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700 }}>
               🗺 Google Map ↗
             </a>
           </div>
         </div>
       ) : (
-        <div style={{ textAlign: "center", fontSize: 11, color: GRAY, marginTop: 12 }}>
+        <div style={{ textAlign: "center", fontSize: FS.meta, color: GRAY, marginTop: 12 }}>
           ● をタップするとロースターの詳細が出ます
         </div>
       )}

@@ -11,7 +11,7 @@
 // どの棒にも必ず名前と件数を添えて、色だけに意味を持たせない。
 
 import { useMemo } from "react";
-import { INK, PAPER, GRAY, LINE } from "../lib/theme";
+import { FS, INK, PAPER, GRAY, LINE } from "../lib/theme";
 import { PROC, processKey } from "../lib/palette";
 import { per100JPY } from "../lib/currency";
 import { ROASTERS } from "../data/roasters";
@@ -39,12 +39,12 @@ function Stat({ n, unit, label }) {
     /* boxSizing を入れないと、内側の余白のぶんだけ幅が 50% を超えて1列に落ちる */
     <div style={{ flex: "1 1 44%", minWidth: 130, boxSizing: "border-box", padding: "14px 16px", background: "#F7F5EF", borderRadius: 12 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
-        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 26, fontWeight: 800, color: INK, letterSpacing: "-0.02em" }}>
+        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.title, fontWeight: 800, color: INK, letterSpacing: "-0.02em" }}>
           {n.toLocaleString()}
         </span>
-        <span style={{ fontSize: 11, color: GRAY }}>{unit}</span>
+        <span style={{ fontSize: FS.meta, color: GRAY }}>{unit}</span>
       </div>
-      <div style={{ fontSize: 11, color: GRAY, marginTop: 4, lineHeight: 1.5 }}>{label}</div>
+      <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 4, lineHeight: 1.5 }}>{label}</div>
     </div>
   );
 }
@@ -55,14 +55,14 @@ function Bar({ label, n, max, color, sub }) {
   const w = max > 0 ? Math.max(n > 0 ? 2 : 0, (n / max) * 100) : 0;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0" }}>
-      <div style={{ width: 116, flexShrink: 0, fontSize: 11.5, color: INK, lineHeight: 1.4 }}>
+      <div style={{ width: 116, flexShrink: 0, fontSize: FS.meta, color: INK, lineHeight: 1.4 }}>
         {label}
-        {sub && <div style={{ fontSize: 9.5, color: GRAY }}>{sub}</div>}
+        {sub && <div style={{ fontSize: FS.meta, color: GRAY }}>{sub}</div>}
       </div>
       <div style={{ flex: 1, minWidth: 0, height: 10, background: "#EFECE3", borderRadius: 5 }}>
         <div style={{ width: `${w}%`, height: "100%", background: color, borderRadius: 5 }} />
       </div>
-      <div style={{ width: 46, flexShrink: 0, textAlign: "right", fontFamily: "ui-monospace, monospace", fontSize: 11, color: GRAY }}>
+      <div style={{ width: 46, flexShrink: 0, textAlign: "right", fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY }}>
         {n.toLocaleString()}
       </div>
     </div>
@@ -72,8 +72,8 @@ function Bar({ label, n, max, color, sub }) {
 function Section({ title, note, children }) {
   return (
     <div style={{ marginTop: 20 }}>
-      <div style={{ fontSize: 12.5, fontWeight: 800, color: INK }}>{title}</div>
-      {note && <div style={{ fontSize: 10.5, color: GRAY, marginTop: 3, lineHeight: 1.7 }}>{note}</div>}
+      <div style={{ fontSize: FS.body, fontWeight: 800, color: INK }}>{title}</div>
+      {note && <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 3, lineHeight: 1.7 }}>{note}</div>}
       <div style={{ marginTop: 8 }}>{children}</div>
     </div>
   );
@@ -120,9 +120,9 @@ export function AboutStats() {
 
   return (
     <div style={{ marginTop: 26, padding: "20px 20px 22px", border: `1px solid ${LINE}`, borderRadius: 14, background: PAPER }}>
-      <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, letterSpacing: "0.2em", color: GRAY }}>NOW IN THE BOOK</div>
-      <div style={{ fontSize: 16, fontWeight: 800, marginTop: 6 }}>いま、図鑑に入っているもの</div>
-      <div style={{ fontSize: 11.5, color: GRAY, marginTop: 5, lineHeight: 1.8 }}>
+      <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.2em", color: GRAY }}>NOW IN THE BOOK</div>
+      <div style={{ fontSize: FS.lead, fontWeight: 800, marginTop: 6 }}>いま、図鑑に入っているもの</div>
+      <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 5, lineHeight: 1.8 }}>
         下の数字はすべて、いま配信しているデータを数えたものです。巡回が進むと自動で変わります。
       </div>
 
@@ -152,7 +152,7 @@ export function AboutStats() {
         ))}
       </Section>
 
-      <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${LINE}`, fontSize: 11.5, color: GRAY, lineHeight: 1.9 }}>
+      <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${LINE}`, fontSize: FS.meta, color: GRAY, lineHeight: 1.9 }}>
         いま買える {s.now.toLocaleString()}銘柄のうち、<strong style={{ color: INK }}>{s.notes.toLocaleString()}銘柄（{notePct}%）</strong>には
         ロースター自身が書いたフレーバーノートが付いています。味わいマップは、この文章を読んで座標を決めています。
       </div>
