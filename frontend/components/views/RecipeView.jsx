@@ -24,12 +24,14 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2024", flag: "🇦🇹", winner: "Martin Wölfl",
-    dripper: "Orea V4 + Sibarist FAST",
+    dripper: "Orea V4（平底）",
+    filter: "Sibarist FAST（不織布・抜けが速い）",
     bean: [["生産国", "パナマ"], ["農園", "Finca Maya（Lost Origin Coffee Lab）"], ["品種", "Gesha"], ["精製", "ナチュラル・アナエロビック"], ["焙煎", "浅煎り"], ["ロースター", "Wildkaffee（オーストリア）"]],
     recipe: [["☕", "Coffee", "17g"], ["💧", "Water", "270g"], ["🌡", "Temperature", "93℃"], ["⚙", "Grind", "630μm"]],
     pours: [["0:00", "60g 蒸らし"], ["0:40", "60g 追加"], ["1:20", "50g 追加"], ["2:00", "100g 追加"]], total: "2:00",
     gear: "Melodrip（注湯の勢いを殺す道具）",
     water: "Apax（抽出用に組成を調整した水）",
+    hardness: "",
     taste: "ハネーデュー・ローズヒップ・チェリー",
     note: "平底の Orea に抜けの速い Sibarist の紙を合わせ、細挽き（630μm）でも詰まらせずに落としきる組み合わせ。"
       + "さらに Melodrip で湯を面で落とし、粉を掘らずに濡らしている。",
@@ -44,17 +46,19 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2022", flag: "🇹🇼", winner: "Shih Yuan Hsu（Sherry）",
-    dripper: "Orea V3 + Kalita 185（1Zpresso K-Pro）",
+    dripper: "Orea V3（平底）",
+    filter: "Kalita 185（台形の紙をV60形に敷く）",
+    grinder: "1Zpresso K-Pro",
     bean: [["生産国", "コロンビア"], ["農園", "Finca Mikava（Santuario Gesha）"], ["品種", "Geisha"], ["精製", "カーボニックマセレーション・ナチュラル"], ["焙煎", "浅煎り"], ["ロースター", "Mikava"]],
     recipe: [["☕", "Coffee", "14g"], ["💧", "Water", "200g"], ["🌡", "Temperature", "70℃ → 95℃"], ["⚙", "Grind", "1000μm 75% + 800μm 25%"]],
     pours: [["0:00", "50g 注湯（70℃）"], ["0:30", "50g 追加（95℃）"], ["1:00", "50g 追加（95℃）"], ["1:30", "50g 追加（95℃）"]], total: "",
-    gear: "Kalita 185（台形の紙をV60形の Orea に敷く）",
     note: "50gを30秒ごとに4回。1投目だけ70℃で、残り3投を95℃にする二温度の抽出。"
       + "低温で入ると最初に出る強い酸を抑えられ、そのあと高温で甘みと厚みを足せる。挽き目も粗さの違う2種を混ぜている。",
   },
   {
     comp: "World Brewers Cup", year: "2021", flag: "🇨🇭", winner: "Matt Winton",
     dripper: "Hario V60（メタル・Five-Pour）",
+    grinder: "Kinu M47",
     bean: [["生産国", "コロンビア / エクアドル"], ["農園", "Finca Inmaculada（Col）/ Hacienda La Florida（Ecu）"], ["品種", "Eugenioides × Catucai（ブレンド）"], ["精製", "ナチュラル / ウォッシュト"], ["焙煎", "浅煎り"], ["ロースター", "ROEST（Ona Coffee チーム）"]],
     recipe: [["☕", "Coffee", "20g"], ["💧", "Water", "300g"], ["🌡", "Temperature", "93℃ / 88℃（2ケトル）"], ["⚙", "Grind", "Kinu M47"]],
     pours: [["0:00", "60g 蒸らし"], ["0:30", "60g 追加"], ["1:00", "60g 追加"], ["1:30", "60g 追加"], ["2:00", "60g 追加"]], total: "2:40",
@@ -64,8 +68,10 @@ const RECIPES = [
     comp: "World Brewers Cup", year: "2019", flag: "🇨🇳", winner: "Jia Ning Du（杜嘉宁）",
     dripper: "Origami Dripper",
     bean: [["生産国", "エチオピア"], ["農園", "Ninety Plus Gesha Estate（標高1,600m）"], ["品種", "Gesha"], ["精製", "現地の野生バクテリアで発酵（Ninety Plus 製法）"], ["焙煎", "浅煎り"], ["ロースター", "Ninety Plus Coffee"]],
-    recipe: [["☕", "Coffee", "16g"], ["💧", "Water", "240g（Ca 4ppm / Mg 15ppm）"], ["🌡", "Temperature", "94℃"], ["⚙", "Grind", "粗挽き→細挽き（2段階）"]],
+    recipe: [["☕", "Coffee", "16g"], ["💧", "Water", "240g"], ["🌡", "Temperature", "94℃"], ["⚙", "Grind", "粗挽き→細挽き（2段階）"]],
     pours: [["1投目", "60g（6g/秒 × 10秒）"], ["2投目", "80g（4g/秒 × 20秒）"]], total: "1:40",
+    water: "カルシウム 4ppm / マグネシウム 15ppm",
+    hardness: "総硬度 約72ppm（CaCO₃換算）",
     note: "中国初の優勝。まず極粗挽きでシルバースキンを飛ばし、挽き直して表面積を稼ぐ二段階グラインド。注湯は流速まで決めている。公開されているのは2投目まで。",
   },
   {
@@ -98,7 +104,8 @@ const RECIPES = [
     bean: [["生産国", "エチオピア / Sidamo"], ["農園", "Ninety Plus Maker Series（Maker: Semeon Abbay）"], ["品種", "Nekisse（在来種）"], ["精製", "ナチュラル"], ["焙煎", "浅煎り"], ["ロースター", "Supreme Roastworks"]],
     recipe: [["☕", "Coffee", "20g"], ["💧", "Water", "300g"], ["🌡", "Temperature", "92℃"], ["⚙", "Grind", ""]],
     pours: [["0:00", "蒸らし（45秒）"]], total: "3:30",
-    water: "ノルウェー西海岸の天然水（低ミネラル）",
+    water: "ノルウェー西海岸の天然水",
+    hardness: "低ミネラル（数値は非公開）",
     taste: "完熟トロピカルフルーツ・アプリコット・マンゴー・パッションフルーツ・苺",
     note: "水にノルウェー西海岸の天然水を使用。ミネラルが少なく口当たりが柔らかくなるものを選んだと語っている。"
       + "比率は 1:15、蒸らし45秒で総抽出3分30秒と、いまの競技レシピと比べるとゆっくりめ。",
@@ -216,12 +223,30 @@ function Detail({ r }) {
       <div style={{ ...cap, marginTop: 18 }}>BEAN</div>
       {rows(r.bean)}
 
-      {(r.gear || r.water || r.taste) && (
-        <>
-          <div style={{ ...cap, marginTop: 18 }}>SETUP</div>
-          {rows([["補助道具", r.gear], ["水", r.water], ["申告した味わい", r.taste]].filter(([, v]) => v))}
-        </>
-      )}
+      {/* 抽出の条件。ドリッパー・紙・グラインダー・水は、同じ豆でも味を変える。
+          分かっているものだけを行にして、無いものは最後に1行でまとめる。
+          「情報準備中」を項目ごとに並べると、1件につき4行が空欄で埋まり、
+          何が分かっているのかが読み取りにくくなる。かといって黙って消すと、
+          調べていないのか公開されていないのかが伝わらない。 */}
+      {(() => {
+        const all = [
+          ["ドリッパー", r.dripper], ["ペーパー", r.filter], ["グラインダー", r.grinder],
+          ["水", r.water], ["水の硬度", r.hardness], ["補助道具", r.gear], ["申告した味わい", r.taste],
+        ];
+        const known = all.filter(([, v]) => v);
+        const missing = all.filter(([, v]) => !v).map(([k]) => k);
+        return (
+          <>
+            <div style={{ ...cap, marginTop: 18 }}>SETUP</div>
+            {known.length > 0 && rows(known)}
+            {missing.length > 0 && (
+              <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.8, marginTop: known.length ? 8 : 6 }}>
+                {missing.join("・")} は公開されていません。
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {r.note && (
         <p style={{ fontSize: FS.body, color: INK, lineHeight: 1.9, margin: "18px 0 0",
@@ -265,6 +290,8 @@ export function RecipeView() {
               ["挽き目", "細かいほど濃く、詰まると渋くなる。落ちきる時間が予定より長ければ粗く、短ければ細かく。"],
               ["注ぐ回数", "回数が多いほど濃く出る。総量が同じでも、3回に分ければ1回で注ぐより濃い。"],
               ["前半の配分", "4:6メソッドでは、最初の40%の2投で味の方向が決まる。1投目を少なくすると甘く、多くすると明るくなる。"],
+              ["ペーパー", "抜けの速さが変わる。速い紙（Sibarist など）は細かく挽いても詰まらず、遅い紙は同じ挽き目でも濃く出る。同じレシピで味が合わないとき、まず疑うところ。"],
+              ["水", "下の「水のこと」を参照。硬度が違うと、同じ豆でも出方が変わる。"],
             ].map(([k, v]) => (
               <div key={k} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                 <span style={{ flexShrink: 0, width: 62, fontSize: FS.meta, fontWeight: 800, color: INK, paddingTop: 1 }}>{k}</span>
@@ -272,6 +299,43 @@ export function RecipeView() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {guide && (
+        /* 硬度は「水に溶けているカルシウムとマグネシウムの量」。
+           競技レシピで水が語られるのはこれが理由なので、数字の読み方を置く。
+           SCA の基準値は出典が複数一致しているものだけを載せている。 */
+        <div style={{ marginTop: 10, padding: "14px 16px", border: `1px solid ${LINE}`, borderRadius: 12 }}>
+          <div style={{ fontSize: FS.body, fontWeight: 800, color: INK }}>水のこと</div>
+          <p style={{ fontSize: FS.body, color: GRAY, lineHeight: 1.9, margin: "8px 0 0" }}>
+            <strong style={{ color: INK }}>硬度</strong>は、水に溶けているカルシウムとマグネシウムの量です。
+            この2つが香りの成分を引き出すので、少なすぎると薄く平坦になり、多すぎると重く濁ります。
+            大会では自分で用意した水を持ち込めるため、優勝者は組成まで作り込んでいます。
+          </p>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 10 }}>
+            <tbody>
+              {[
+                ["総硬度", "50〜175 ppm", "カルシウム＋マグネシウム（CaCO₃換算）"],
+                ["総溶解物 TDS", "75〜250 ppm", "目安は150。全部のミネラルの合計"],
+                ["アルカリ度", "40〜75 ppm", "酸を打ち消す力。高いと酸が丸くなりすぎる"],
+                ["pH", "6.5〜7.5", ""],
+              ].map(([k, v, note]) => (
+                <tr key={k} style={{ borderTop: `1px solid ${LINE}` }}>
+                  <td style={{ padding: "7px 0", fontSize: FS.meta, color: GRAY, width: 96, verticalAlign: "top" }}>{k}</td>
+                  <td style={{ padding: "7px 0", verticalAlign: "top" }}>
+                    <span style={{ fontFamily: MONO, fontSize: FS.body, fontWeight: 700, color: INK }}>{v}</span>
+                    {note && <span style={{ display: "block", fontSize: FS.meta, color: GRAY, marginTop: 2, lineHeight: 1.6 }}>{note}</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.8, margin: "10px 0 0" }}>
+            上の数値は SCA（Specialty Coffee Association）の推奨範囲です。
+            日本の水道水はおおむね総硬度 50〜100ppm で、この範囲に収まります。
+            硬度の数字が「情報準備中」の回は、本人が公開していないものです。推測では書きません。
+          </p>
         </div>
       )}
 
