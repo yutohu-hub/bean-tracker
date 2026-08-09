@@ -12,7 +12,11 @@ export function BeanCard({ bean, onOpen, onRoaster, cur }) {
   // いま買える豆は、詳細シートを開かずカードから直接ECへ行けるようにする
   const buyable = bean.status === "now" && roaster && roaster.url;
   const [tap, setTap] = useState(false);
-  const per100Str = fmtJPY(per100JPY(bean), cur);
+  /* 100gあたりの値段は、袋の大きさが違う豆どうしを比べるための行。
+     袋がちょうど100gなら1袋の値段と同じ文字になり、同じものが2行続く。
+     図鑑の329件（4.6%）がこれに当たっていた。違うときだけ出す。 */
+  const grams = perGrams(bean);
+  const per100Str = grams === 100 ? null : fmtJPY(per100JPY(bean), cur);
   const handleTap = () => { setTap(true); setTimeout(() => { setTap(false); onOpen(bean); }, 200); };
   return (
     <div className={`bt-card${tap ? " bt-card-tap" : ""}`} style={{ cursor: "pointer", position: "relative" }} onClick={handleTap}>
@@ -24,9 +28,11 @@ export function BeanCard({ bean, onOpen, onRoaster, cur }) {
         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
           <span style={{ width: 6, height: 6, borderRadius: 999, background: s.dot, flexShrink: 0 }} />
           <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 9, color: s.dot === GRAY ? GRAY : s.dot, letterSpacing: "0.06em" }}>{s.label}</span>
-          <span style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: 9, color: INK }} title="1袋あたりの価格">{fmtPrice(bean, cur)}/{perGrams(bean)}g</span>
+          <span style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: 9, color: INK }} title="1袋あたりの価格">{fmtPrice(bean, cur)}/{grams}g</span>
         </div>
-        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9, color: GRAY, marginTop: 2 }} title="100gあたりに正規化した価格（比較用）">{per100Str}/100g</div>
+        {per100Str && (
+          <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 9, color: GRAY, marginTop: 2 }} title="100gあたりに正規化した価格（比較用）">{per100Str}/100g</div>
+        )}
         <div style={{ fontSize: 12, fontWeight: 700, color: INK, marginTop: 3, lineHeight: 1.3 }}>{bean.name}</div>
         <button
           onClick={(e) => { e.stopPropagation(); onRoaster(bean.r); }}

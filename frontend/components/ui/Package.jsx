@@ -1,10 +1,8 @@
 "use client";
 import { useState } from "react";
-import { ROASTERS } from "../data/roasters";
 import { beanStyle } from "../lib/palette";
 
 export function Package({ bean, small }) {
-  const roaster = ROASTERS[bean.r];
   const [imgErr, setImgErr] = useState(false);
   const st = beanStyle(bean); // 精製方法/レアで統一した色
   const bg = st.bg, accent = st.accent;
@@ -33,17 +31,13 @@ export function Package({ bean, small }) {
     >
       {/* 袋の折り返し */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "12%", background: "rgba(23,21,15,0.10)", borderBottom: "1px solid rgba(23,21,15,0.12)" }} />
-      {/* ロースターマーク */}
-      <div style={{ position: "absolute", top: "18%", left: 0, right: 0, textAlign: "center", color: accent, fontSize: small ? 8 : 9, letterSpacing: "0.18em", fontWeight: 700 }}>
-        {roaster.name.toUpperCase()}
-      </div>
-      {/* 豆名ラベル */}
-      <div style={{ position: "absolute", top: "38%", left: "10%", right: "10%", textAlign: "center" }}>
-        <div style={{ color: accent, fontWeight: 700, fontSize: small ? 11 : 13, lineHeight: 1.25 }}>{bean.name}</div>
-        <div style={{ marginTop: 6, height: 1, background: accent, opacity: 0.5 }} />
-        <div style={{ marginTop: 6, color: accent, fontSize: small ? 8 : 9, letterSpacing: "0.08em", opacity: 0.9 }}>
+      {/* 精製方法。カードの下の文字には出ていないので、ここが唯一の置き場所になる。
+          豆名とロースター名はすぐ下に大きく出るため、絵の中で繰り返さない
+          （繰り返していた頃は、1枚のカードに同じ名前が2回ずつ並んでいた）。 */}
+      <div style={{ position: "absolute", inset: "12% 10% 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ color: accent, fontSize: small ? 11 : 12, letterSpacing: "0.14em", fontWeight: 700, textAlign: "center", lineHeight: 1.4 }}>
           {bean.process.toUpperCase()}
-        </div>
+        </span>
       </div>
       {/* 標本番号 */}
       <div style={{ position: "absolute", bottom: 6, right: 8, fontFamily: "ui-monospace, monospace", fontSize: 8, color: accent, opacity: 0.7 }}>
