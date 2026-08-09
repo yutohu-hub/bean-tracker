@@ -50,7 +50,6 @@ import { PremiumView } from "./views/PremiumView";
 import { AboutView } from "./views/AboutView";
 
 const ROWS_PER_PAGE = 10; // 1ページの行数（列数は可変）
-const COL_OPTIONS = [2, 3, 4, 5, 6];
 
 /* ---------- メイン ---------- */
 export default function BeanTracker() {
@@ -81,20 +80,13 @@ export default function BeanTracker() {
   const [fxVersion, setFxVersion] = useState(0);
   const [archiveBeans, setArchiveBeans] = useState([]);
   const [page, setPage] = useState(0);
-  const [cols, setCols] = useState("auto"); // "auto" | 2..6（列数）
-  const [autoCols, setAutoCols] = useState(4); // 自動時の実効列数（画面幅から算出）
+  const [autoCols, setAutoCols] = useState(4); // 画面幅から決まる列数
   const [zukanMode, setZukanMode] = useState("beans"); // beans | roasters
   const [meTab, setMeTab] = useState("log"); // マイページ内: log | premium
   const [legendOpen, setLegendOpen] = useState(false); // 色の凡例を開いているか
+  const [filtersOpen, setFiltersOpen] = useState(false); // 絞り込みを開いているか
   const [flavorMode, setFlavorMode] = useState("one"); // 味わいマップ: one | proc
   const [authNotice, setAuthNotice] = useState(null); // メールリンクからのログイン結果
-  // 列数を端末に保存・復元
-  useEffect(() => {
-    const s = localStorage.getItem("bt_cols");
-    if (s === "auto") setCols("auto");
-    else { const c = Number(s); if (c >= 2 && c <= 6) setCols(c); }
-  }, []);
-  useEffect(() => { try { localStorage.setItem("bt_cols", String(cols)); } catch {} }, [cols]);
   // 色の凡例を開いているか。既定は畳んだ状態（豆を早く見せる）
   useEffect(() => { if (localStorage.getItem("bt_legend") === "1") setLegendOpen(true); }, []);
   useEffect(() => { try { localStorage.setItem("bt_legend", legendOpen ? "1" : "0"); } catch {} }, [legendOpen]);
@@ -108,8 +100,8 @@ export default function BeanTracker() {
     window.addEventListener("resize", calc);
     return () => window.removeEventListener("resize", calc);
   }, []);
-  // フィルタ・列数・モード変更時は1ページ目に戻す
-  useEffect(() => { setPage(0); }, [origin, statusF, priceF, processF, query, sortBy, cols, zukanMode]);
+  // フィルタ・モード変更時は1ページ目に戻す
+  useEffect(() => { setPage(0); }, [origin, statusF, priceF, processF, query, sortBy, zukanMode]);
 
   // アーカイブを端末に永続化（更新してもカタログから消えず残る）
   useEffect(() => {
@@ -278,10 +270,13 @@ export default function BeanTracker() {
     () => filterRoasters(ROASTERS, nowCountByRoaster, { query }),
     [query, nowCountByRoaster]);
 
-  // ページング（実効列数 × 10行 = 1ページの件数）— モードで対象リストを切替
-  const effCols = cols === "auto" ? autoCols : cols;
+  /* ページング（列数 × 10行 = 1ページの件数）— モードで対象リストを切替。
+     列数は画面幅から決める。以前は「自動/2/3/4/5/6」の7ボタンを豆より上に
+     置いていたが、携帯で列数を選ぶ人はいない。豆が出てくるまでの高さを
+     そのぶん占めていた。 */
+  const effCols = autoCols;
   const perPage = effCols * ROWS_PER_PAGE;
-  const gridStyle = { display: "grid", gridTemplateColumns: cols === "auto" ? "repeat(auto-fill, minmax(132px, 1fr))" : `repeat(${cols}, 1fr)`, gap: effCols >= 5 ? 8 : 10, marginTop: 12 };
+  const gridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: effCols >= 5 ? 8 : 10, marginTop: 12 };
   const activeList = zukanMode === "roasters" ? filteredRoasters : filtered;
   const pageCount = Math.max(1, Math.ceil(activeList.length / perPage));
   const curPage = Math.min(page, pageCount - 1);
@@ -289,17 +284,6 @@ export default function BeanTracker() {
   const goPage = (p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const pgStyle = (active, disabled) => ({ minWidth: 30, height: 30, padding: "0 8px", borderRadius: 8, border: `1px solid ${active ? INK : LINE}`, background: active ? INK : PAPER, color: active ? PAPER : INK, fontSize: FS.body, fontWeight: 700, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1, display: "inline-flex", alignItems: "center", justifyContent: "center" });
   const unit = zukanMode === "roasters" ? "店" : "銘柄";
-  const colSelectorEl = (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 16 }}>
-      <span style={{ fontSize: FS.meta, color: GRAY }}>列数</span>
-      <button onClick={() => setCols("auto")}
-        style={{ height: 26, padding: "0 9px", borderRadius: 7, border: `1px solid ${cols === "auto" ? INK : LINE}`, background: cols === "auto" ? INK : PAPER, color: cols === "auto" ? PAPER : INK, fontSize: FS.meta, fontWeight: 700, cursor: "pointer" }}>自動{cols === "auto" ? `(${autoCols})` : ""}</button>
-      {COL_OPTIONS.map((c) => (
-        <button key={c} onClick={() => setCols(c)}
-          style={{ width: 26, height: 26, borderRadius: 7, border: `1px solid ${cols === c ? INK : LINE}`, background: cols === c ? INK : PAPER, color: cols === c ? PAPER : INK, fontSize: FS.meta, fontWeight: 700, cursor: "pointer", fontFamily: "ui-monospace, monospace" }}>{c}</button>
-      ))}
-    </div>
-  );
   const pagerEl = (
     <>
       {pageCount > 1 && (
@@ -458,6 +442,20 @@ export default function BeanTracker() {
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={zukanMode === "roasters" ? "ロースター名・都市で検索" : "ロースター名・農園名・豆名で検索"}
               style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: FS.body, marginBottom: 8, background: PAPER, color: INK }} />
             {zukanMode === "beans" && (<>
+            {/* 絞り込みと並び替えは畳んでおく。
+                最初の豆が出てくるのが 451px（896pxの画面の半分）で、そこまでに
+                操作が18個あった。ほとんどの人は絞り込まずにまず豆を見る。
+                いま効いている条件はこの下の札で見えるので、畳んでも見失わない。 */}
+            <button onClick={() => setFiltersOpen((v) => !v)}
+              style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", padding: "9px 12px", marginBottom: 8,
+                borderRadius: 8, border: `1px solid ${LINE}`, background: PAPER, color: INK, fontSize: FS.body, cursor: "pointer" }}>
+              絞り込みと並び替え
+              {activeFilters.length > 0 && (
+                <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: PAPER, background: INK, borderRadius: 999, padding: "1px 7px" }}>{activeFilters.length}</span>
+              )}
+              <span style={{ marginLeft: "auto", color: GRAY }}>{filtersOpen ? "▲" : "▼"}</span>
+            </button>
+            {filtersOpen && (<>
             {/* 絞り込み。3つあるので、幅に応じて2列にも3列にもなる。
                 固定2列だと3つ目が半分の幅で1つだけ残り、空き升がある見た目になっていた。
                 grid ではなく flex にしているのは、行に1つしか載らないときに
@@ -492,6 +490,7 @@ export default function BeanTracker() {
                 <option value="old">古い順（図鑑に入った日）</option>
               </select>
             </div>
+            </>)}
             {/* いま効いている絞り込み。
                 絞り込みは4か所（検索・産地・精製・価格）に分かれていて、1つ掛けたまま
                 忘れると「豆が出てこない」と見える。何が効いているかを1行にまとめ、
@@ -557,7 +556,6 @@ export default function BeanTracker() {
             </div>{/* /640集約 */}
             {zukanMode === "roasters" ? (
               <>
-                {colSelectorEl}
                 {/* ロースター図鑑 */}
                 <div style={gridStyle}>
                   {pageItems.map(([rid, r]) => (
@@ -620,7 +618,6 @@ export default function BeanTracker() {
               </div>
             ) : (
               <>
-                {colSelectorEl}
                 {/* グリッド図鑑（列数 × 10行 / ページ） */}
                 <div style={gridStyle}>
                   {pageItems.map((b) => <BeanCard key={b.id} bean={b} onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} />)}
