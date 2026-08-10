@@ -375,7 +375,11 @@ def main() -> None:
                 # コーヒーは存在せず、レアロットの安い順の先頭を占めてしまう。
                 # 取れなければ 0 のままにして、価格順の一覧からは外す。
                 "amount": round(float(p.get("price") or 0)), "cur": p.get("currency") or "JPY",
-                "per": f"{grams}g" if grams else "250g",
+                # 内容量が取れなければ空にする。250g と書き込んでいたころは、
+                # $6,500 の絵が「¥390,000/100g のコーヒー」として値段順の端に並び、
+                # 内容量の分からない商品 2,138 件すべてに架空の 100g 単価が付いていた。
+                # 値段のときと同じで、取れないものは取れないままにする。
+                "per": f"{grams}g" if grams else "",
                 "status": p.get("status") or ("now" if p.get("available") else "sold"),
                 # 「いつ図鑑に入ったか」。巡回した日ではなく、その豆を初めて見つけた日を使う。
                 # 巡回した日を入れていたころは全銘柄が同じ日付になり、新着順が
@@ -410,6 +414,7 @@ def main() -> None:
             beans.append(bean)
             bid += 1
 
+    drop_impossible_prices(beans)
     OUT.write_text(json.dumps({"roasters": roasters, "beans": beans}, ensure_ascii=False), encoding="utf-8")
     print(f"live overlay: {len(roasters)} new roasters, {len(beans)} beans -> {OUT.relative_to(ROOT)}")
     report_odd_prices(roasters, beans)
@@ -422,6 +427,58 @@ _FX = {"JPY": 1, "USD": 150, "EUR": 165, "GBP": 195, "AUD": 100, "CAD": 108, "NZ
        "ISK": 1.1, "CHF": 185, "PLN": 41, "CZK": 6.8, "HUF": 0.43, "BRL": 27, "MXN": 8.3,
        "COP": 0.037, "CRC": 0.29, "ZAR": 8.2, "ETB": 1.25, "KES": 1.15, "RWF": 0.11,
        "AED": 41, "TRY": 3.75, "PEN": 40, "GTQ": 19.5, "SAR": 40, "ILS": 40}
+
+
+def _per100(b: dict) -> float:
+    """100gあたりの円。値段か内容量が取れていなければ 0。"""
+    amt = float(b.get("amount") or 0)
+    if amt <= 0:
+        return 0.0
+    g = b.get("per") or ""
+    grams = round(float(g[:-2]) * 28.35) if g.endswith("oz") else int(re.sub(r"\D", "", g) or 0)
+    if grams <= 0:
+        return 0.0
+    return amt * _FX.get(b.get("cur") or "JPY", 1) / grams * 100
+
+
+def drop_impossible_prices(beans: list, floor: int = 20, need: int = 8) -> list:
+    """同じ店の相場から桁違いに安い値段は、値段ではなく取り違えとして取り下げる。
+
+    実例: Glitch Coffee の Ethiopia Yirgacheffe Koke が「¥18 / 160g」で入っていた。
+    同じ店の他の豆は 110〜160g で ¥3,200〜¥10,200 なので、この1件だけ相場の 1/259。
+    図鑑もレアロットも100gあたりの安い順に並ぶので、この1件が先頭に居座っていた。
+
+    同じ店・同じ通貨・同じ計算どうしを比べるので、為替も内容量も効かない。
+    セール品を巻き添えにしないよう、境目は広くとる（実測で本物のセールは 1/12 まで、
+    取り違えは 1/259 だった）。店の銘柄数が少ないと相場が出せないので、そこは触らない。
+
+    消しはしない。値段だけを「取れなかった」ことにして、価格順の一覧から外す。
+    """
+    per_shop: dict = {}
+    for b in beans:
+        if b.get("status") != "now":
+            continue
+        p = _per100(b)
+        if p > 0:
+            per_shop.setdefault(b["r"], []).append(p)
+
+    dropped = []
+    for b in beans:
+        vals = per_shop.get(b.get("r")) or []
+        if len(vals) < need:
+            continue
+        p = _per100(b)
+        if p <= 0:
+            continue
+        med = sorted(vals)[len(vals) // 2]
+        if p * floor < med:
+            dropped.append((b["r"], b.get("name", ""), round(p), round(med)))
+            b["amount"] = 0          # 値段不明。0 は「価格順から外す」の合図
+    if dropped:
+        print(f"値段が店の相場の 1/{floor} 未満だったので取り下げ: {len(dropped)}件")
+        for r, name, p, med in dropped[:20]:
+            print(f"  {r:<16} ¥{p:>6}/100g (店の相場 ¥{med})  {name[:44]}")
+    return dropped
 
 
 def report_odd_prices(roasters: dict, beans: list, low: float = 200, high: float = 30000) -> list:

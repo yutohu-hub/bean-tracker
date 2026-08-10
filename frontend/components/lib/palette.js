@@ -33,6 +33,7 @@ export function processKey(proc = "") {
 
 // 豆の表示色（¥5,000+はレア、¥3,000–5,000は上位価格帯、それ以外は精製方法の色）
 export function beanStyle(b) {
+  // 値段が分からない豆は 0 が返る。安い側として色を付けず、精製方法の色にする
   const p = per100JPY(b);
   if (p >= 5000) return PREMIUM;
   if (p >= 3000) return MIDHIGH;

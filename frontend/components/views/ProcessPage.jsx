@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FS, INK, PAPER, GRAY, LINE } from "../lib/theme";
-import { fmtJPY, per100JPY } from "../lib/currency";
+import { fmtJPY, per100JPY, hasPer100 } from "../lib/currency";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
 import { PROC, processKey } from "../lib/palette";
@@ -34,8 +34,10 @@ export function ProcessPage({ pkey = "washed", onOpen, onRoaster, onBack, onProc
   const st = PROC[key];
 
   let list = now.filter((b) => processKey(b.process) === key);
-  const avg = list.length ? list.reduce((s, b) => s + per100JPY(b), 0) / list.length : 0;
-  list = list.slice().sort((a, b) => sort === "price" ? per100JPY(a) - per100JPY(b) : (b.updatedAt ? Date.parse(b.updatedAt) || 0 : 0) - (a.updatedAt ? Date.parse(a.updatedAt) || 0 : 0) || b.id - a.id);
+  // 値段の分からない豆は平均に入れない
+  const pricedList = list.filter(hasPer100);
+  const avg = pricedList.length ? pricedList.reduce((s, b) => s + per100JPY(b), 0) / pricedList.length : 0;
+  list = list.slice().sort((a, b) => sort === "price" ? (hasPer100(a) !== hasPer100(b) ? (hasPer100(a) ? -1 : 1) : per100JPY(a) - per100JPY(b)) : (b.updatedAt ? Date.parse(b.updatedAt) || 0 : 0) - (a.updatedAt ? Date.parse(a.updatedAt) || 0 : 0) || b.id - a.id);
 
   const selStyle = { padding: "7px 10px", borderRadius: 8, border: `1px solid ${LINE}`, background: PAPER, color: INK, fontSize: FS.body };
 

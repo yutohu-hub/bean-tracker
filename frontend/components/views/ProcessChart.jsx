@@ -1,6 +1,6 @@
 "use client";
 import { FS, INK, GRAY } from "../lib/theme";
-import { fmtJPY, per100JPY } from "../lib/currency";
+import { fmtJPY, per100JPY, hasPer100 } from "../lib/currency";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
 import { PROC, processKey } from "../lib/palette";
@@ -13,14 +13,16 @@ export function ProcessChart({ cur = "JPY", onProcess }) {
   const beans = BEANS.filter((b) => b.status === "now" && ROASTERS[b.r] && ROASTERS[b.r].url);
   const fmt = (jpy) => fmtJPY(jpy, cur, { usdDigits: 0 });
 
-  // 精製キーごとに件数・平均100g価格を集計
+  // 精製キーごとに件数・平均100g価格を集計。
+  // 内容量が取れていない豆は 0 になるので、平均の分母からも外す（数えると平均が薄まる）
   const g = {};
   for (const b of beans) {
     const k = processKey(b.process);
-    (g[k] = g[k] || { n: 0, sum: 0 }).n++;
-    g[k].sum += per100JPY(b);
+    const gr = (g[k] = g[k] || { n: 0, sum: 0, priced: 0 });
+    gr.n++;
+    if (hasPer100(b)) { gr.sum += per100JPY(b); gr.priced++; }
   }
-  const rows = ORDER.filter((k) => g[k]).map((k) => ({ k, ...PROC[k], n: g[k].n, avg: g[k].sum / g[k].n, jp: JP[k] }));
+  const rows = ORDER.filter((k) => g[k]).map((k) => ({ k, ...PROC[k], n: g[k].n, avg: g[k].priced ? g[k].sum / g[k].priced : 0, jp: JP[k] }));
   const total = beans.length;
   const maxN = rows.reduce((m, r) => Math.max(m, r.n), 1);
 
