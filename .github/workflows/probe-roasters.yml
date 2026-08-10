@@ -17,6 +17,9 @@ on:
       videos:
         description: "レシピに貼った動画が本人の回か確かめる（true）"
         default: ""
+      products:
+        description: "名前では判断が付かない商品を店のページで確かめる（true）"
+        default: ""
 
 permissions:
   contents: read
@@ -33,13 +36,18 @@ jobs:
       - name: 依存インストール
         run: pip install httpx pyyaml
       - name: 候補を叩く
-        if: inputs.diagnose == '' && inputs.videos == ''
+        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == ''
         run: python scripts/probe_roasters.py "${{ inputs.file }}"
 
       # 動画IDは1文字違うと別人の回が載る。目では気づけないので貼る前に照合する
       - name: レシピの動画を確かめる
         if: inputs.videos != ''
         run: python scripts/verify_videos.py
+
+      # 名前だけでは豆か器具か分からない商品を、店の product_type で確かめる
+      - name: 商品の種類を確かめる
+        if: inputs.products != ''
+        run: python scripts/check_products.py
 
       # 取れない店について、何が足りないのかを応答から調べる
       - name: 1店を詳しく調べる
