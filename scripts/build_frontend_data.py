@@ -55,6 +55,19 @@ _NONCOFFEE = re.compile("|".join([
     # 綴りは店の言語ごとに変わる（西 Cápsulas / 独 Kapsel, Kapseln / 丁 Kapsler）。
     r"c[áa]psulas?", r"capsules?(?![a-z])", r"\bkapse?l(n|er)?(?![a-z])", r"カプセル", r"キャップ式",
     r"pods?(?![a-z])", r"\bk[-\s]?cups?(?![a-z])", r"keurig", r"nespresso", r"ネスプレッソ", r"dolce\s?gusto",
+    # 缶（RTDも、豆を缶に詰めたものも）。"I Can Hear the Heart Beating as One" という
+    # アルバム名の豆があるので、複数形か、缶が終わり・区切りの直前に来るものだけ拾う。
+    r"\bcans\b", r"\bcan\b(?=\s*(?:$|[-–—(]))", r"tin\s?cans?",
+    # 生豆。"生豆商Nordic Approach" は生豆を扱う商社の名前が焙煎豆に付いたもの。
+    r"raw\s?green\s?coffee", r"green\s?coffee\s?beans?", r"\bgreen coffee\b", r"生豆(?!商)", r"unroasted",
+    # 豆はグラムで売る。名前に mL が付くものは器具か液体。
+    r"\d+\s?ml\b",
+    # ミルクピッチャー等の器具（仏 pichet／蘭 melkkan／西 jarra／独 kanne／氷 karafla）
+    r"\bpichet\b", r"melkkann", r"\bjarra\b", r"\bkanne\b", r"karafla", r"\bpipette\b", r"joefrex", r"\brhino\b", r"手沖壺", r"\brental\b",
+    # 併売の食品・菓子・ハーブティー
+    r"\bsprinkles?\b", r"\bkirkland\b", r"\bstevia\b", r"dried [a-z]+ (wheels?|slices?|rings?)", r"\bchamomile\b", r"\bspinnaker\b",
+    # 淹れて出す飲み物（"Iced Coffee Roast" は豆なので iced coffee は入れない）
+    r"iced\s?(mocha|latte)\b", r"espresso\s?tonic", r"リキッドコーヒー",
     r"water\s?minerals?", r"minerals?\s?for\s?coffee", r"brew\s?water", r"\bapax\b", r"\bosmo\b", r"lotus\s?coffee",
     r"filters?\s?\((?:\d+|[^)]*(?:count|ct|pack))",
     r"roastery\s?tour", r"tasting\s?tour", r"coffee\s?tasting\s?and",
