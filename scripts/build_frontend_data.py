@@ -31,7 +31,7 @@ def slug(s: str) -> str: return (re.sub(r"[^a-z0-9]", "", (s or "").lower())[:24
 # フロントの components/lib/isCoffee.js と同じ方針。焙煎/精製の表記や "Cup of Excellence" は残す。
 _NONCOFFEE = re.compile("|".join([
     r"subscription", r"定期便", r"頒布会",
-    r"gift\s?card", r"ギフトカード", r"\bvoucher\b", r"gift\s?set", r"e-?gift",
+    r"gift\s?card", r"ギフトカード", r"\bvoucher\b", r"gift\s?set", r"e-?gift", r"karta\s?podarunkowa",
     r"t-?shirt", r"\btee\b", r"tシャツ", r"hoodie", r"パーカー", r"sweatshirt", r"crewneck", r"\bbeanie\b", r"\bsocks\b", r"\btote\b", r"apron", r"エプロン", r"keychain", r"\bstickers?\b", r"ステッカー", r"\bcaps?\b", r"\bhat\b", r"\bshirts?\b", r"\bpants\b", r"\btrousers\b", r"\bjacket\b", r"\bsweater\b", r"\bbandana\b", r"\bshoes\b", r"incen[cs]e", r"お香",
     r"\bmugs?\b", r"マグカップ", r"tumbler", r"タンブラー", r"\bglass(es)?\b", r"グラス", r"\bbottle\b", r"ボトル", r"flask", r"thermos", r"carafe", r"カラフェ", r"decanter", r"demitasse", r"\bcup\b", r"カップ",
     r"grinder", r"グラインダー", r"coffee\s?mill", r"dripper", r"ドリッパー", r"\bv-?60\b", r"kalita", r"カリタ", r"chemex", r"\bkono\b", r"hario", r"ハリオ", r"aeropress", r"french\s?press", r"moka\s?pot", r"kettle", r"ケトル", r"gooseneck", r"\bscale\b", r"スケール", r"\bserver\b", r"サーバー", r"\bbrewer\b", r"paper\s?filter", r"filter\s?paper", r"ペーパーフィルター", r"canister", r"tamper", r"portafilter", r"\bspoon\b", r"\bscoop\b", r"\bbasket\b", r"\bjug\b", r"\bbrush\b", r"\blid\b", r"\bstraw\b", r"\bholder\b", r"\breplacement\b", r"flannel", r"ネル", r"sibarist", r"\borea\b", r"flo\s?screen", r"cera\s?filter", r"wave\s?filters?", r"deodorizer", r"消臭", r"\bcutter\b", r"stainless\s?steel", r"zebrang",
@@ -68,6 +68,19 @@ _NONCOFFEE = re.compile("|".join([
     r"\bsprinkles?\b", r"\bkirkland\b", r"\bstevia\b", r"dried [a-z]+ (wheels?|slices?|rings?)", r"\bchamomile\b", r"\bspinnaker\b",
     # 淹れて出す飲み物（"Iced Coffee Roast" は豆なので iced coffee は入れない）
     r"iced\s?(mocha|latte)\b", r"espresso\s?tonic", r"リキッドコーヒー",
+    # 器具と雑貨を国ごとの言い方で拾う。この一覧はずっと英語と日本語だけで書かれていて、
+    # 台湾・香港の店のドリッパーやグラインダーが「豆」として並んでいた。
+    # 中国語：器具／カプセル（膠囊）／贈答／食品／催し／内部ページ
+    r"濾杯", r"濾紙", r"磨豆機", r"咖啡壺", r"手沖壺", r"濾壓", r"玻璃杯", r"保溫瓶", r"不鏽鋼",
+    r"膠囊", r"禮盒", r"伴手禮", r"鳳梨酥", r"綜合堅果", r"果皮茶",
+    r"品種課", r"見面會", r"報名", r"客服部", r"付款賣場", r"分裝/特殊商品",
+    # 日本語：衣類・布物・紙物／菓子／器具・催し・書籍・内部ページ
+    r"巾着", r"紙袋", r"ショッパー", r"手ぬぐい", r"ハンカチ", r"タオル", r"スウェット", r"シャツ", r"ポーチ", r"アームカバー", r"バラクラバ",
+    r"パウンドケーキ", r"カフェオレベース", r"焼菓子",
+    r"コーヒーフィルター", r"竹べら", r"農園ツアー", r"コーヒーツアー", r"詩集", r"専用ページ",
+    # 英語：単数形や言い回しの揺れで漏れていたもの
+    r"\bsocks?\b", r"\bumbrella\b", r"\bcloth filters?\b", r"carrying case", r"\bcase\b\s*$", r"\btamp(ing)?\s?mat\b",
+    r"\bat home\b", r"coffee guide", r"brew\s?guide", r"debattbok",
     r"water\s?minerals?", r"minerals?\s?for\s?coffee", r"brew\s?water", r"\bapax\b", r"\bosmo\b", r"lotus\s?coffee",
     r"filters?\s?\((?:\d+|[^)]*(?:count|ct|pack))",
     r"roastery\s?tour", r"tasting\s?tour", r"coffee\s?tasting\s?and",

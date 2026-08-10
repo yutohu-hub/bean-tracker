@@ -3,7 +3,8 @@
 // 精製・焙煎の記述（"Washed Filter" / "Espresso" 等）はコーヒーなので除外しない。
 const NON_COFFEE = [
   /subscription|サブスク|定期便|頒布会/,
-  /gift ?card|ギフトカード|ギフト券|商品券|\bvoucher\b|e-?gift|gift ?set|ギフトセット/,
+  // karta podarunkowa = ポーランド語のギフトカード
+  /gift ?card|ギフトカード|ギフト券|商品券|\bvoucher\b|e-?gift|gift ?set|ギフトセット|karta ?podarunkowa/,
   /t-?shirt|\btee\b|tシャツ|hoodie|パーカー|sweatshirt|crewneck|beanie|\bsocks\b|靴下|\btote\b|トートバッグ|エコバッグ|apron|エプロン|enamel pin|keychain|キーホルダー|\bstickers?\b|ステッカー|\bcap\b|\bbeanie\b/,
   /\bmugs?\b|マグカップ|tumbler|タンブラー|\bglass(es)?\b|グラス|\bbottle\b|ボトル|flask|thermos|水筒|carafe|カラフェ|decanter|デカンタ|demitasse|\bcup\b|カップ|\bglassware\b/,
   /grinder|グラインダー|コーヒーミル|dripper|ドリッパー|\bv-?60\b|kalita|カリタ|chemex|ケメックス|\bkono\b|hario|ハリオ|aeropress|エアロプレス|french ?press|フレンチプレス|moka ?pot|マキネッタ|kettle|ケトル|gooseneck|\bscale\b|スケール|はかり|server\b|サーバー|ドリップポット|\bbrewer\b|ブリューワー|paper ?filter|filter ?paper|ペーパーフィルター|フィルターペーパー|ネルフィルター|canister|キャニスター|tamper|タンパー|portafilter|\bspoon\b|スプーン|\bscoop\b/,
@@ -77,6 +78,38 @@ const NON_COFFEE = [
   /\bsprinkles?\b|\bkirkland\b|\bstevia\b|dried [a-z]+ (wheels?|slices?|rings?)|\bchamomile\b|\bspinnaker\b/,
   // 淹れて出す飲み物。"Iced Coffee Roast" はアイス用の焙煎＝豆なので iced coffee は入れない
   /iced ?(mocha|latte)\b|espresso ?tonic|リキッドコーヒー/,
+
+  /* ── ここから下は、器具と雑貨を国ごとの言い方で拾う ──
+     この一覧はずっと英語と日本語だけで書かれていたので、台湾・香港の店の
+     ドリッパーやグラインダーが「豆」として並んでいた。言い方は国ごとに違うので、
+     概念ごとに並べておいて、新しい国の店が入ったときに足す場所を分かるようにする。 */
+
+  // 中国語：器具（濾杯=ドリッパー／濾紙=ペーパー／磨豆機=グラインダー／濾壓=プレス）
+  /濾杯|濾紙|磨豆機|咖啡壺|手沖壺|濾壓|玻璃杯|保溫瓶|不鏽鋼/,
+  // 中国語：カプセル（膠囊）。英語の capsule とは字が違うので別に要る
+  /膠囊/,
+  // 中国語：贈答（禮盒=ギフトボックス／伴手禮=土産）
+  /禮盒|伴手禮/,
+  // 中国語：食品（鳳梨酥=パイナップルケーキ／綜合堅果=ミックスナッツ／果皮茶=カスカラ茶）
+  // "堅果" 単体は「ナッツのような風味」で豆の名前に出るので、綜合堅果 に限る
+  /鳳梨酥|綜合堅果|果皮茶/,
+  // 中国語：催し・講座（品種課=品種の講座／見面會=ファンミーティング）
+  /品種課|見面會|報名/,
+  // 中国語：店の内部用ページ（決済用・分装用）。商品ではない
+  /客服部|付款賣場|分裝\/特殊商品/,
+
+  // 日本語：衣類・布物・紙物
+  /巾着|紙袋|ショッパー|手ぬぐい|ハンカチ|タオル|スウェット|シャツ|ポーチ|アームカバー|バラクラバ/,
+  // 日本語：菓子・加工品
+  /パウンドケーキ|カフェオレベース|焼菓子/,
+  // 日本語：器具・催し・書籍・内部ページ
+  /コーヒーフィルター|竹べら|農園ツアー|コーヒーツアー|詩集|専用ページ/,
+
+  /* 英語：単数形や言い回しの揺れで漏れていたもの。
+     "Peace Varsity Sock"（socks と書いていた）、"Tamp Mat"（tamping mat と書いていた）など。 */
+  /\bsocks?\b|\bumbrella\b|\bcloth filters?\b|carrying case|\bcase\b\s*$|\btamp(ing)? ?mat\b/,
+  // 英語：家で淹れる本・講座、ガイド本
+  /\bat home\b|coffee guide|brew ?guide|debattbok/,
 
   // 抽出用のミネラル・調整水（豆ではない）。"April Water Minerals" のように店名が付くことがある
   /water ?minerals?|minerals? ?for ?coffee|brew ?water|\bapax\b|\bosmo\b|lotus ?coffee/,

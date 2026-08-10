@@ -65,6 +65,13 @@ jobs:
       - name: eslint
         run: npm run lint
 
+      # 「豆でないもの」の一覧に語を足したとき、広すぎて本物の豆を巻き添えに
+      # していないかを見る。豆が消えるのは図鑑から静かに減るだけで、
+      # 見て気づけないので機械に見張らせる。
+      - name: 豆の判定
+        working-directory: .
+        run: node tests/test_is_coffee.mjs
+
       # 公開と同じ条件（サブパスあり）で書き出せるところまで確かめる
       - name: 静的ビルド
         env:
