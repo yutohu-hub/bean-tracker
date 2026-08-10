@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { FS, INK, PAPER, GRAY, LINE, GREEN, AMBER, STATUS } from "../lib/theme";
 import { nextCupFor } from "../lib/recommend";
 import { flavorOf, FLAVORS } from "../data/flavors";
-import { fmtPrice, fmtJPY, per100JPY, perGrams, fmtLocal } from "../lib/currency";
+import { fmtPrice, fmtJPY, per100JPY, perGrams, fmtLocal, hasPer100 } from "../lib/currency";
 import { beanHref, beanLinkKind } from "../lib/utils";
 import { getTasting, upsertTasting, removeTasting, isRestock, toggleRestock, getRestocks } from "../lib/store";
 import { usePlan } from "../lib/usePlan";
@@ -97,9 +97,11 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
     ["精製", bean.process],
     // ECに記載のフレーバーノートがある豆だけ表示する
     ...(bean.notes ? [["風味", bean.notes]] : []),
-    ["現地価格", `${fmtLocal(bean)} / ${bean.per}`],
-    [cur === "JPY" ? "円換算" : "ドル換算", `${fmtPrice(bean, cur)} / ${perGrams(bean)}g`],
-    ["100gあたり", fmtJPY(per100JPY(bean), cur)],
+    // 内容量が取れていない豆は「/ 250g」と嘘を書かず、袋の値段だけ出す
+    ["現地価格", perGrams(bean) ? `${fmtLocal(bean)} / ${bean.per}` : `${fmtLocal(bean)}（内容量不明）`],
+    [cur === "JPY" ? "円換算" : "ドル換算",
+      perGrams(bean) ? `${fmtPrice(bean, cur)} / ${perGrams(bean)}g` : fmtPrice(bean, cur)],
+    ...(hasPer100(bean) ? [["100gあたり", fmtJPY(per100JPY(bean), cur)]] : []),
     ["初出", bean.year],
   ];
   return (
@@ -142,7 +144,7 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
               <a href={beanHref(roaster, bean)} target="_blank" rel="noopener noreferrer" style={{ display: "block", textDecoration: "none", width: "100%", padding: "13px 14px", boxSizing: "border-box", background: INK, color: PAPER, borderRadius: 8, cursor: "pointer" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                   <span style={{ fontSize: FS.lead, fontWeight: 800 }}>この豆を買う ↗</span>
-                  <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.body, opacity: 0.9 }}>{fmtPrice(bean, cur)} / {perGrams(bean)}g</span>
+                  <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.body, opacity: 0.9 }}>{fmtPrice(bean, cur)}{perGrams(bean) ? ` / ${perGrams(bean)}g` : ""}</span>
                 </div>
                 <div style={{ fontSize: FS.meta, opacity: 0.75, marginTop: 3 }}>{roaster.name} の公式ECへ</div>
               </a>
@@ -259,7 +261,7 @@ function RecoCard({ label, bean, cur, onOpen }) {
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 4 }}>
         <span style={{ fontSize: FS.body, fontWeight: 700, color: INK }}>{bean.name}</span>
         <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: INK, flexShrink: 0 }}>
-          {fmtJPY(per100JPY(bean), cur)}/100g
+          {hasPer100(bean) ? `${fmtJPY(per100JPY(bean), cur)}/100g` : fmtPrice(bean, cur)}
         </span>
       </div>
       <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 2 }}>

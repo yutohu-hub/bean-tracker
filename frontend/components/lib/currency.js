@@ -52,14 +52,27 @@ export function fmtJPY(jpy, disp, { usdDigits = 2 } = {}) {
 }
 
 export function fmtPrice(bean, disp) { return fmtJPY(toJPY(bean), disp); }
+/* 袋の大きさ。取れていなければ 0。
+   巡回で内容量が読めなかった商品は per が空で来る。以前はここに 250g と
+   書き込んでいたので、$6,500 の絵が「¥390,000/100g のコーヒー」になり、
+   値段順の一覧の先頭や末尾を占めていた。分からないものは分からないままにする。 */
 export function perGrams(bean) {
-  if (bean.per.endsWith("oz")) return Math.round(parseFloat(bean.per) * 28.35);
-  return parseInt(bean.per);
+  const s = String((bean && bean.per) || "");
+  const n = s.endsWith("oz") ? Math.round(parseFloat(s) * 28.35) : parseInt(s, 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 /* 100gあたりの円。袋の大きさが 100g / 250g / 12oz とばらばらなので、
-   値段を比べるときは必ずこの単位に直す。 */
-export function per100JPY(bean) { return (toJPY(bean) / perGrams(bean)) * 100; }
+   値段を比べるときは必ずこの単位に直す。
+   値段か内容量のどちらかが取れていなければ 0（＝比べられない）を返す。 */
+export function per100JPY(bean) {
+  const g = perGrams(bean);
+  if (!g) return 0;
+  return (toJPY(bean) / g) * 100;
+}
+
+// 100gあたりで比べられるか。表示と平均の両方で、この1か所を見て判断する
+export function hasPer100(bean) { return per100JPY(bean) > 0; }
 export function fmtLocal(bean) {
   return `${CUR_SYMBOL[bean.cur]}${bean.amount.toLocaleString()}${bean.cur !== "JPY" && bean.cur !== "USD" ? ` ${bean.cur}` : ""}`;
 }

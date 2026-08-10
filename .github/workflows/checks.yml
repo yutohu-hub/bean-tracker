@@ -39,6 +39,7 @@ jobs:
         run: |
           python tests/test_push_notify.py
           python tests/test_generic_adapter.py
+          python tests/test_build_prices.py
 
       # ネットに出ずに一巡できるかを見る。ECの仕様変更とは無関係に、
       # 差分検知と書き出しの配線が生きているかの確認
@@ -77,6 +78,12 @@ jobs:
       - name: 記録の出入り
         working-directory: .
         run: node tests/test_store.mjs
+
+      # 分からない値段を、分かったふりで出していないか。
+      # 架空の100g単価が1つあると、安い順の先頭を占領する。
+      - name: 値段の扱い
+        working-directory: .
+        run: node tests/test_price.mjs
 
       # 公開と同じ条件（サブパスあり）で書き出せるところまで確かめる
       - name: 静的ビルド

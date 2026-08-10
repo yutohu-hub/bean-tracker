@@ -16,7 +16,8 @@ export function BeanCard({ bean, onOpen, onRoaster, cur }) {
      袋がちょうど100gなら1袋の値段と同じ文字になり、同じものが2行続く。
      図鑑の329件（4.6%）がこれに当たっていた。違うときだけ出す。 */
   const grams = perGrams(bean);
-  const per100Str = grams === 100 ? null : fmtJPY(per100JPY(bean), cur);
+  // 内容量が取れていない豆は100gあたりを出せない。適当な数を出すより黙る
+  const per100Str = (grams === 100 || !grams) ? null : fmtJPY(per100JPY(bean), cur);
   const handleTap = () => { setTap(true); setTimeout(() => { setTap(false); onOpen(bean); }, 200); };
   return (
     <div className={`bt-card${tap ? " bt-card-tap" : ""}`} style={{ cursor: "pointer", position: "relative" }} onClick={handleTap}>
