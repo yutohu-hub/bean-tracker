@@ -20,6 +20,7 @@
 落ちる商品は名前も出す。「この分類を落として良いか」は、名前を見れば分かる。
 """
 from __future__ import annotations
+import asyncio
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -31,44 +32,50 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 from crawler import REQ_HEADERS, _looks_like_coffee  # noqa: E402
 
+# 250軒を1軒ずつ順に叩くと、応答の遅い店の待ち時間が積み上がって
+# 15分の持ち時間では終わらなかった（実測）。巡回本体と同じように並行にする。
+CONCURRENCY = 12
+TIMEOUT = 12.0
 
-def main() -> None:
-    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 0
-    cfg = yaml.safe_load((ROOT / "config" / "roasters.yaml").read_text(encoding="utf-8"))
-    shops = [r for r in cfg.get("roasters", []) if r.get("url")]
-    if limit:
-        shops = shops[:limit]
-    print(f"調べる店 {len(shops)} 軒（1店あたり先頭250商品）\n")
 
-    kept: Counter = Counter()          # 通した分類 → 件数
-    dropped: Counter = Counter()       # 落とす分類 → 件数
+async def fetch(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict) -> list | None:
+    base = r["url"].rstrip("/")
+    async with sem:
+        try:
+            resp = await client.get(f"{base}/products.json", params={"limit": 250})
+        except httpx.HTTPError:
+            return None
+    if resp.status_code != 200:
+        return None
+    try:
+        return resp.json().get("products", []) or None
+    except ValueError:
+        return None
+
+
+async def run(shops: list) -> None:
+    kept: Counter = Counter()           # 通した分類 → 件数
+    dropped: Counter = Counter()        # 落とす分類 → 件数
     examples: dict = defaultdict(list)  # 落とす分類 → 商品名の例
     reached = 0
 
-    with httpx.Client(headers=REQ_HEADERS, timeout=20, follow_redirects=True) as c:
-        for r in shops:
-            base = r["url"].rstrip("/")
-            try:
-                resp = c.get(f"{base}/products.json", params={"limit": 250})
-            except httpx.HTTPError:
-                continue
-            if resp.status_code != 200:
-                continue
-            try:
-                prods = resp.json().get("products", [])
-            except ValueError:
-                continue
-            if not prods:
-                continue
-            reached += 1
-            for p in prods:
-                t = (p.get("product_type") or "").strip() or "(空)"
-                if _looks_like_coffee(p):
-                    kept[t] += 1
-                else:
-                    dropped[t] += 1
-                    if len(examples[t]) < 4:
-                        examples[t].append((p.get("title") or "")[:44])
+    sem = asyncio.Semaphore(CONCURRENCY)
+    async with httpx.AsyncClient(headers=REQ_HEADERS, timeout=TIMEOUT,
+                                 follow_redirects=True) as client:
+        results = await asyncio.gather(*(fetch(client, sem, r) for r in shops))
+
+    for prods in results:
+        if not prods:
+            continue
+        reached += 1
+        for p in prods:
+            t = (p.get("product_type") or "").strip() or "(空)"
+            if _looks_like_coffee(p):
+                kept[t] += 1
+            else:
+                dropped[t] += 1
+                if len(examples[t]) < 4:
+                    examples[t].append((p.get("title") or "")[:44])
 
     print(f"応答のあった店 {reached} 軒 / 商品 {sum(kept.values()) + sum(dropped.values())} 件")
     print(f"通す {sum(kept.values())} 件 / 落とす {sum(dropped.values())} 件\n")
@@ -82,6 +89,16 @@ def main() -> None:
     print("\n■ 通している分類（多い順・上位30）— ここに豆でないものが混ざっていないか")
     for t, n in kept.most_common(30):
         print(f"  {n:>5}  {t}")
+
+
+def main() -> None:
+    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+    cfg = yaml.safe_load((ROOT / "config" / "roasters.yaml").read_text(encoding="utf-8"))
+    shops = [r for r in cfg.get("roasters", []) if r.get("url")]
+    if limit:
+        shops = shops[:limit]
+    print(f"調べる店 {len(shops)} 軒（1店あたり先頭250商品・{CONCURRENCY}軒ずつ並行）\n")
+    asyncio.run(run(shops))
 
 
 if __name__ == "__main__":
