@@ -53,8 +53,13 @@ const NON_COFFEE = [
   /coffee ?mill|\bcutter\b|stainless ?steel|deodorizer|消臭|\bflannel\b|ネル|\bsibarist\b|\borea\b|flo ?screen|cera ?filter|wave ?filters?|dripkit|key ?holder|\bholder\b|\breplacement\b|zebrang/,
   // 日本語の非コーヒー（ギフト/セット/焼き菓子など。"ブレンド"はコーヒーなので除外しない）
   /ギフト|詰め合わせ|飲み比べ|アソート|福袋|セット|バナナブレッド|ブレッド|焼き菓子|洋菓子|和菓子|クッキー|マフィン|スコーン|ドーナツ|プリン|ビスケット|グラノーラ|カヌレ|マドレーヌ|フィナンシェ/,
-  // カプセル・ポッド（豆ではないので図鑑に出さない。ドリップバッグ・インスタントと同じ扱い）
-  /\bcapsules?\b|カプセル|nespresso|ネスプレッソ|\bpods?\b|キャップ式/,
+  /* カプセル・ポッド（豆ではないので図鑑に出さない。ドリップバッグ・インスタントと同じ扱い）
+     前は \bpods?\b・\bcapsules?\b と書いていたが、語の頭に境界を求めると
+     "EcoPod™"・"Inventory_Capsule Box" のような続き字に当たらず、素通りしていた。
+     後ろだけを見て、"Podium"・"Podback"・"Podi"・"Augusto" のような別の語を外す。
+     綴りは店の言語ごとに変わる（西 Cápsulas / 独 Kapsel, Kapseln / 丁 Kapsler）。 */
+  /c[áa]psulas?|capsules?(?![a-z])|\bkapse?l(n|er)?(?![a-z])|カプセル|キャップ式/,
+  /pods?(?![a-z])|\bk[-\s]?cups?(?![a-z])|keurig|nespresso|ネスプレッソ|dolce ?gusto/,
   // 抽出用のミネラル・調整水（豆ではない）。"April Water Minerals" のように店名が付くことがある
   /water ?minerals?|minerals? ?for ?coffee|brew ?water|\bapax\b|\bosmo\b|lotus ?coffee/,
   // 紙フィルター類（"(100 count)" のように枚数が付く。焙煎表記の "Filter" とは区別する）
@@ -183,9 +188,6 @@ const NON_COFFEE = [
      kaffekande=コーヒーポット / emaljekrus=ホーローマグ / kaffedåse=豆缶
      håndbryg=ハンドドリップ / plakat=ポスター / vandfilter=浄水フィルター */
   /kaffekande|emaljekrus|kaffed[åa]se|h[åa]ndbryg|\bplakat\b|vandfilter|filterkande|\bkrus\b/,
-
-  // カプセル・ポッド（豆でも粉でもない）
-  /\bkapsler\b|\bcapsules?\b|カプセル|coffee ?pods?|\bnespresso\b/,
 
   /* スペイン語の衣類・化粧品。
      bolsa（袋）は "Guatemala Finca La Bolsa" という農園名なので入れない。 */
