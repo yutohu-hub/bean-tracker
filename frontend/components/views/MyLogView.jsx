@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { FS, INK, PAPER, GRAY, LINE, GREEN } from "../lib/theme";
 import { BEANS } from "../data/beans";
 import { ROASTERS } from "../data/roasters";
-import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis } from "../lib/store";
+import { getUser, setUser, logout, getTastings, removeTasting, upsertTasting, mergeTastings, getDiagHistory, removeDiagResult, getAnalysisHistory, removeAnalysis, getTombstones, clearTombstones, keptTastingCount } from "../lib/store";
 import { usePlan, refreshPlan } from "../lib/usePlan";
-import { isCloud, isSignedIn, getSession, signInWithEmail, signInWithCode, lastEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings } from "../lib/account";
+import { isCloud, isSignedIn, getSession, signInWithEmail, signInWithCode, lastEmail, captureSessionFromUrl, signOut, cloudPullTastings, cloudPushTastings, cloudDeleteTastings } from "../lib/account";
 import { analyzeTastings, recommendRoasters, GROUP_LABEL } from "../lib/analysis";
 import { beanHref } from "../lib/utils";
 import { Portfolio } from "../ui/Portfolio";
@@ -15,7 +15,17 @@ import { savePhotoDataUrl, deletePhoto, getPhotos } from "../lib/photos";
 
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
 const validEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s || "").trim());
-const rowToTasting = (r) => ({ beanId: r.bean_id, r: r.r, name: r.name, roaster: r.roaster, origin: r.origin, rating: r.rating, notes: r.notes, at: Number(r.at) || Date.now() });
+/* at は「飲んだ日」（ミリ秒）、updated_at は「直した時刻」（timestamptz の文字列）。
+   updated_at 列がまだ無い環境では、飲んだ日を代わりに使う。その場合だけ、
+   同じ記録を2台で別々に直したときの勝ち負けが飲んだ日で決まる。 */
+const rowToTasting = (r) => {
+  const at = Number(r.at) || Date.now();
+  const up = r.updated_at ? Date.parse(r.updated_at) : NaN;
+  return {
+    beanId: r.bean_id, r: r.r, name: r.name, roaster: r.roaster, origin: r.origin,
+    rating: r.rating, notes: r.notes, at, updatedAt: Number.isFinite(up) ? up : at,
+  };
+};
 
 export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [user, setU] = useState(null);
@@ -38,6 +48,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [codeMsg, setCodeMsg] = useState("");
   const [codeErr, setCodeErr] = useState(false);
   const [backupMsg, setBackupMsg] = useState("");
+  const [saveErr, setSaveErr] = useState("");     // 端末に保存できなかったとき
   const [folds, setFolds] = useState({});          // 普段は畳んでおく節
   const [showAll, setShowAll] = useState(false);   // 記録一覧を全部出すか
   const [onlyFav, setOnlyFav] = useState(false);   // 記録一覧を★4以上に絞るか
@@ -48,7 +59,12 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const saveManual = async () => {
     if (!form.name.trim() || !form.rating) return;
     const id = -Date.now();
-    upsertTasting({ beanId: id, r: null, name: form.name.trim(), roaster: form.roaster.trim(), origin: form.origin.trim(), rating: form.rating, notes: form.notes.trim(), hasPhoto: !!form.photo });
+    /* 保存できなかったら、入力欄を閉じない。
+       前は失敗しても閉じて空にしていたので、書いた記録が黙って消えていた。 */
+    try {
+      setSaveErr("");
+      upsertTasting({ beanId: id, r: null, name: form.name.trim(), roaster: form.roaster.trim(), origin: form.origin.trim(), rating: form.rating, notes: form.notes.trim(), hasPhoto: !!form.photo });
+    } catch (e) { setSaveErr(e.message || "保存できませんでした"); return; }
     if (form.photo) await savePhotoDataUrl(id, form.photo);
     setForm({ name: "", roaster: "", origin: "", rating: 0, notes: "", photo: null });
     setShowAdd(false);
@@ -65,6 +81,13 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
     if (!isCloud() || !isSignedIn()) return;
     try {
       setSyncMsg("同期中…");
+      /* 順番が大事。
+         1. こちらで消したものを先に向こうから消す
+            （先に取ってくると、消したはずの行を取り込んで復活する）
+         2. 取ってきて合流（墓標より古い行は戻さない）
+         3. こちらの全件を送る */
+      const tomb = getTombstones().map((d) => d.beanId);
+      if (tomb.length) clearTombstones(await cloudDeleteTastings(tomb));
       const cloud = await cloudPullTastings();
       mergeTastings(cloud.map(rowToTasting));
       await cloudPushTastings(getTastings());
@@ -201,11 +224,22 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
 
   // ---- 未ログイン ----
   if (!authed) {
+    const kept = keptTastingCount();
     return (
       <div className="bt-card">
         {noticeBlock()}
         <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.15em", color: GRAY }}>MY ACCOUNT</div>
         <div style={{ fontSize: FS.head, fontWeight: 800, marginTop: 6 }}>ログインして味を記録</div>
+
+        {/* 記録はアカウントごとに分けて置いてあるので、ログアウトすると0件に見える。
+            消えたと思わせないよう、この端末に何件あるのかをここで言う。 */}
+        {kept > 0 && (
+          <div style={{ marginTop: 10, padding: "10px 13px", borderRadius: 10, background: "#EEF4E9", border: "1px solid #CBDDBC" }}>
+            <span style={{ fontSize: FS.body, color: "#3C5C2A", lineHeight: 1.7 }}>
+              この端末に <b>{kept}件</b> の記録が残っています。同じアカウントでログインすると、そのまま出てきます。
+            </span>
+          </div>
+        )}
 
         {cloud ? (
           <>
@@ -406,6 +440,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
               style={{ width: "100%", marginTop: 8, padding: "11px 0", background: (form.name.trim() && form.rating) ? INK : "#EDEAE1", color: (form.name.trim() && form.rating) ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: (form.name.trim() && form.rating) ? "pointer" : "default" }}>
               記録する
             </button>
+            {saveErr && <div style={{ fontSize: FS.meta, color: "#B8433A", marginTop: 7, lineHeight: 1.7 }}>{saveErr}</div>}
           </div>
         )}
       </div>
@@ -470,7 +505,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
                       </a>
                     );
                   })()}
-                  <button onClick={() => { removeTasting(t.beanId); deletePhoto(t.beanId); refresh(); }} style={{ background: "none", border: "none", fontSize: FS.meta, color: GRAY, cursor: "pointer" }}>削除</button>
+                  <button onClick={() => { try { removeTasting(t.beanId); } catch (e) { setSaveErr(e.message); return; } deletePhoto(t.beanId); refresh(); }} style={{ background: "none", border: "none", fontSize: FS.meta, color: GRAY, cursor: "pointer" }}>削除</button>
                 </div>
               </div>
             </div>

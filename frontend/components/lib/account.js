@@ -280,6 +280,33 @@ export async function cloudPullTastings() {
   if (!res.ok) throw syncError(res.status, "記録の取得");
   return await res.json();
 }
+/* 消した記録を、向こうからも消す。
+   これが無いと、こちらで消しても次に取ってきたときに復活する。
+   消せた bean_id を返す。呼び出し側は、消せたぶんだけ墓標を片付ける。 */
+export async function cloudDeleteTastings(beanIds) {
+  const s = readSession();
+  if (!s || !s.user || !beanIds || beanIds.length === 0) return [];
+  const done = [];
+  // in.(…) でまとめて消す。多いときに URL が長くなりすぎないよう小分けにする
+  for (let i = 0; i < beanIds.length; i += 50) {
+    const chunk = beanIds.slice(i, i + 50);
+    const res = await authFetch(
+      `/rest/v1/tastings?user_id=eq.${encodeURIComponent(s.user.id)}&bean_id=in.(${chunk.join(",")})`,
+      { method: "DELETE", headers: { Prefer: "return=minimal" } });
+    if (!res.ok) throw syncError(res.status, "記録の削除");
+    done.push(...chunk);
+  }
+  return done;
+}
+
+/* updated_at 列があるかどうか。
+   at は「飲んだ日」なので、どちらの端末の書き込みが新しいかの判断には使えない。
+   判断には「直した時刻」が要る。いまの SQL（documents/account-sync.md）には
+   timestamptz の updated_at があるが、既定値は insert のときにしか効かない。
+   upsert の update 側では動かないので、こちらから明示的に送る。
+   この列を足す前に作られたプロジェクトもあるので、一度試して、無ければ以後は送らない。 */
+let hasUpdatedAt = null;
+
 export async function cloudPushTastings(list) {
   const s = readSession(); if (!s || !s.user) return false;
   const rows = list.map((t) => ({
@@ -288,10 +315,23 @@ export async function cloudPushTastings(list) {
     notes: t.notes || null, at: t.at || Date.now(),
   }));
   if (rows.length === 0) return true;
-  const res = await authFetch(`/rest/v1/tastings?on_conflict=user_id,bean_id`, {
+  const send = (body) => authFetch(`/rest/v1/tastings?on_conflict=user_id,bean_id`, {
     method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-    body: JSON.stringify(rows),
+    body: JSON.stringify(body),
   });
+
+  if (hasUpdatedAt !== false) {
+    // 列は timestamptz。ミリ秒の数値のままでは受け取れないので ISO 文字列で送る
+    const withCol = rows.map((r, i) => ({
+      ...r, updated_at: new Date(list[i].updatedAt || list[i].at || Date.now()).toISOString(),
+    }));
+    const res = await send(withCol);
+    if (res.ok) { hasUpdatedAt = true; return true; }
+    // 400 = そんな列は無い（PGRST204）。それ以外は本当の失敗なので伝える
+    if (res.status !== 400) throw syncError(res.status, "記録の保存");
+    hasUpdatedAt = false;
+  }
+  const res = await send(rows);
   if (!res.ok) throw syncError(res.status, "記録の保存");
   return true;
 }

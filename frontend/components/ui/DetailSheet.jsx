@@ -17,6 +17,7 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
   const [rating, setRating] = useState(0);
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
+  const [saveErr, setSaveErr] = useState("");   // 端末に保存できなかったとき
   const [watching, setWatching] = useState(false);
   const [watchCount, setWatchCount] = useState(0);
   const [watchMsg, setWatchMsg] = useState("");
@@ -57,7 +58,12 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
   const roaster = ROASTERS[bean.r];
   const saveTasting = async () => {
     if (!rating) return;
-    upsertTasting({ beanId: bean.id, r: bean.r, name: bean.name, roaster: roaster.name, origin: bean.origin, rating, notes, hasPhoto: !!photo });
+    /* 端末に保存できなかったときは「記録しました」と出さない。
+       黙って成功したことにすると、書いた記録がそのまま消える。 */
+    try {
+      setSaveErr("");
+      upsertTasting({ beanId: bean.id, r: bean.r, name: bean.name, roaster: roaster.name, origin: bean.origin, rating, notes, hasPhoto: !!photo });
+    } catch (e) { setSaveErr(e.message || "保存できませんでした"); return; }
     // 写真は記録を押したときだけ確定する（開いて閉じただけで残らないように）
     if (photo) await savePhotoDataUrl(bean.id, photo); else await deletePhoto(bean.id);
     setSaved(true);
@@ -82,7 +88,10 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
     setCopied("リンクをコピーしました");
     setTimeout(() => setCopied(""), 2000);
   };
-  const delTasting = () => { removeTasting(bean.id); deletePhoto(bean.id); setRating(0); setNotes(""); setPhoto(null); setSaved(false); };
+  const delTasting = () => {
+    try { setSaveErr(""); removeTasting(bean.id); } catch (e) { setSaveErr(e.message || "削除できませんでした"); return; }
+    deletePhoto(bean.id); setRating(0); setNotes(""); setPhoto(null); setSaved(false);
+  };
   const rows = [
     ["産地", bean.origin],
     ["精製", bean.process],
@@ -210,6 +219,7 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
             </button>
             {saved && <button onClick={delTasting} style={{ padding: "10px 14px", background: "none", color: GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.body, cursor: "pointer" }}>削除</button>}
           </div>
+          {saveErr && <div style={{ fontSize: FS.meta, color: "#B8433A", marginTop: 7, lineHeight: 1.7 }}>{saveErr}</div>}
           <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 6 }}>記録はこの端末に保存されます（「記録」タブで一覧）。</div>
         </div>
 

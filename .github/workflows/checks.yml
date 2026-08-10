@@ -72,6 +72,12 @@ jobs:
         working-directory: .
         run: node tests/test_is_coffee.mjs
 
+      # 記録は、失うと取り返せない唯一のデータ。ログイン・ログアウト・
+      # 別アカウント・同期・削除が絡む出入りを、毎回ここで踏んでおく。
+      - name: 記録の出入り
+        working-directory: .
+        run: node tests/test_store.mjs
+
       # 公開と同じ条件（サブパスあり）で書き出せるところまで確かめる
       - name: 静的ビルド
         env:
