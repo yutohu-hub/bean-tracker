@@ -53,6 +53,15 @@ const NOT_COFFEE = [
      Podi はチョコがけアーモンド、Podback はカプセルの回収袋、Cups は器。 */
   "Coated: Podi Milk Chocolate Almonds", "Podback Drop-Off Bag", "Carrick Cups",
   "E-Karta Podarunkowa JAVA Coffee",
+  /* 値段の両端を見て見つけたもの（scripts/price_outliers.mjs）。
+     一覧は安い順に並ぶので、¥1 の決済ページや ¥40万のマシンは
+     いちばん目立つ場所に出てしまう。 */
+  "Payment Method Update", "IPAY88 test", "Checkout+", "GoGenerosity Pay-it-forward",
+  "Apricot Danish", "Chicken sausage roll (80 grams)", "Pain au Chocolat", "レモンサブレ",
+  "Truffle Salt Mixed Nuts", "Dog Treats", "CHICORY POWDER", "Dulce Sugar", "Cocoa Shaker",
+  "Caramel Frappe Coffee", "Mint Mocha", "5oz Black", "+ Milk alternative / Iced",
+  "Modbar Steam 220EU", "Eagle One Prima", "Wega Pegaso 2 Group EVD Auto - Raised",
+  "ZERO Barista", "Linea Mini", "Fiorenzato F83 E XGi PRO", "8oz Joco Mint", "Ubermilk Filter Discs",
 ];
 
 // 豆。規則を足したせいで消えては困るもの
@@ -72,6 +81,14 @@ const COFFEE = [
   "エチオピア / ウォルカ サカロ 完熟チェリー",
   "【Seasonal Blend 2026】August | Seigaiha Blend (青海波)",
   "堅果郡王(加奶、黑咖啡百搭配方)",                          // 堅果＝風味の話
+  /* 値段の両端を直したときに、危うく巻き添えにしかけた豆。
+     どれも実際に一度は落ちて、規則を狭め直している。 */
+  "Mwendi Wega",                                   // ケニアの水洗工場。Wega はマシンでもある
+  "キッサブレンド", "コーヒーバッグ  キッサブレンド",  // "キッ・サブレ・ンド" にサブレが入っている
+  "Cold Coffee Blend",                             // 冷用に焙煎した豆であって飲み物ではない
+  "Kigeri - Steeped Coffee",                       // 中身はコーヒー（ドリップバッグと同じ扱い）
+  "BLEND | Chicory Coffee | Medium-Dark Roast",    // インドのチコリ入りコーヒーは飲むコーヒー
+  "The Scone Queen Bakes by Danielle Sepsy",       // 菓子屋との共同名義だが中身は豆
 ];
 
 let ng = 0;
