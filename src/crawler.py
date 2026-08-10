@@ -285,13 +285,14 @@ _HARD_NOT_COFFEE = (
     "merch", "apparel", "clothing", "logoware", "mug", "drinkware", "glassware",
     "tableware", "supplies", "supply", "reusable", "kettle", "scale", "tool",
     "gift card", "subscription", "class", "course", "curso", "workshop", "training",
-    "ticket", "book", "art", "poster", "cleaning", "maintenance", "グッズ", "雑貨",
+    "ticket", "book", "art", "poster", "cleaning", "maintenance",
+    "グッズ", "雑貨", "器具", "objetos", "moccamaster",
 )
 # コーヒーの語が無いときだけ落とすもの
 _SOFT_NOT_COFFEE = (
     "arts & entertainment", "arts and entertainment", "artwork",
     "tea", "chocolate", "candy", "bakery", "food", "beverage", "snack",
-    "home & garden", "homeware", "kitchen", "furniture", "event",
+    "home & garden", "homeware", "kitchen", "furniture", "event", "フード",
 )
 # タグ側。種類が空でも、ここに書いてある店がある（Joe Coffee の "Classes" がそれ）。
 # 完全一致で見る。"art" を部分一致にすると "artisan" のような語に当たる。
