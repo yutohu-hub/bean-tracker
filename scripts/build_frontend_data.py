@@ -50,7 +50,11 @@ _NONCOFFEE = re.compile("|".join([
     # 日本語の非コーヒー（ギフト/セット/焼き菓子など）
     r"ギフト", r"詰め合わせ", r"飲み比べ", r"アソート", r"福袋", r"セット", r"バナナブレッド", r"ブレッド", r"焼き菓子", r"洋菓子", r"和菓子", r"クッキー", r"マフィン", r"スコーン", r"ドーナツ", r"プリン", r"ビスケット", r"グラノーラ", r"カヌレ", r"マドレーヌ", r"フィナンシェ",
     # カプセル・ポッド／抽出用ミネラル／紙フィルター／体験／植物性飲料（いずれも豆ではない）
-    r"\bcapsules?\b", r"カプセル", r"nespresso", r"ネスプレッソ", r"\bpods?\b",
+    # 語の頭に境界を求めると "EcoPod™"・"Inventory_Capsule Box" に当たらず素通りする。
+    # 後ろだけを見て、"Podium"・"Podback"・"Augusto" のような別の語を外す。
+    # 綴りは店の言語ごとに変わる（西 Cápsulas / 独 Kapsel, Kapseln / 丁 Kapsler）。
+    r"c[áa]psulas?", r"capsules?(?![a-z])", r"\bkapse?l(n|er)?(?![a-z])", r"カプセル", r"キャップ式",
+    r"pods?(?![a-z])", r"\bk[-\s]?cups?(?![a-z])", r"keurig", r"nespresso", r"ネスプレッソ", r"dolce\s?gusto",
     r"water\s?minerals?", r"minerals?\s?for\s?coffee", r"brew\s?water", r"\bapax\b", r"\bosmo\b", r"lotus\s?coffee",
     r"filters?\s?\((?:\d+|[^)]*(?:count|ct|pack))",
     r"roastery\s?tour", r"tasting\s?tour", r"coffee\s?tasting\s?and",
