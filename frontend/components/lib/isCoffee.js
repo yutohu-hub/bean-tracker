@@ -111,6 +111,27 @@ const NON_COFFEE = [
   // 英語：家で淹れる本・講座、ガイド本
   /\bat home\b|coffee guide|brew ?guide|debattbok/,
 
+  /* ── ここから下は、100gあたりの値段の両端を見て見つけたもの ──
+     一覧は安い順に並ぶので、豆でないものが混ざると先頭を占領する。
+     値段そのものは判定に使えない（香港やフィリピンには ¥170/100g の本物の豆があり、
+     オークションロットには $3,600/100g の本物がある）。
+     値段は「探す道具」として使い、落とすかどうかは中身を見て決める。
+     見つけ方は scripts/price_outliers.mjs に置いてある。 */
+
+  // 店の決済まわりの商品ページ。豆ではないうえ ¥1 なので一覧の先頭に来る
+  /payment ?method|ipay88|checkout\+|pay-?it-?forward|carbon removal|gogenerosity/,
+  // 焼き菓子・惣菜（"キッサブレンド" に当たらないよう サブレ の後ろを見る）
+  /\bdanish\b|\bturnover\b|sausage roll|mushroom puff|spinach pocket|pain au chocolat|サブレ(?!ン)|deli sandwich/,
+  // 食品・調味料。chicory は粉だけ（インドの「コーヒー7:チコリ3」は飲むコーヒーなので残す）
+  /mixed nuts|seasoned walnuts|dog treats|everything butter|chicory powder|dulce sugar|cocoa shaker/,
+  // 店で出す飲み物・カップの大きさ（"Cold Coffee Blend" は冷用の焙煎豆なので入れない）
+  /\bfrappe\b|berry fizz|mint mocha|\d+ ?oz (black|white)|milk alternative/,
+  /* エスプレッソマシン。値段の上端はほぼこれだった。
+     "Mwendi Wega"（ケニアの水洗工場）に当たらないよう、Wega は「◯ Group」と一緒のときだけ。 */
+  /\bmodbar\b|eagle one|\bwega\b.*\bgroup\b|ubermilk|la nueva era|(zero|xt) barista/,
+  // 同じやり方で見つかった2周目。機種名だけで売られていて店名も型番も出ない
+  /linea mini|fiorenzato|\bjoco\b|origami clear stand|verre à shot|desechable/,
+
   // 抽出用のミネラル・調整水（豆ではない）。"April Water Minerals" のように店名が付くことがある
   /water ?minerals?|minerals? ?for ?coffee|brew ?water|\bapax\b|\bosmo\b|lotus ?coffee/,
   // 紙フィルター類（"(100 count)" のように枚数が付く。焙煎表記の "Filter" とは区別する）

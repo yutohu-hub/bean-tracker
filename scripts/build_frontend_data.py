@@ -81,6 +81,15 @@ _NONCOFFEE = re.compile("|".join([
     # 英語：単数形や言い回しの揺れで漏れていたもの
     r"\bsocks?\b", r"\bumbrella\b", r"\bcloth filters?\b", r"carrying case", r"\bcase\b\s*$", r"\btamp(ing)?\s?mat\b",
     r"\bat home\b", r"coffee guide", r"brew\s?guide", r"debattbok",
+    # 100gあたりの値段の両端を見て見つけたもの（scripts/price_outliers.mjs）。
+    # 一覧は安い順に並ぶので、豆でないものが混ざると先頭を占領する。
+    r"payment\s?method", r"ipay88", r"checkout\+", r"pay-?it-?forward", r"carbon removal", r"gogenerosity",
+    r"\bdanish\b", r"\bturnover\b", r"sausage roll", r"mushroom puff", r"spinach pocket", r"pain au chocolat", r"サブレ(?!ン)", r"deli sandwich",
+    r"mixed nuts", r"seasoned walnuts", r"dog treats", r"everything butter", r"chicory powder", r"dulce sugar", r"cocoa shaker",
+    r"\bfrappe\b", r"berry fizz", r"mint mocha", r"\d+\s?oz (black|white)", r"milk alternative",
+    # "Mwendi Wega"（ケニアの水洗工場）に当たらないよう、Wega は「◯ Group」と一緒のときだけ
+    r"\bmodbar\b", r"eagle one", r"\bwega\b.*\bgroup\b", r"ubermilk", r"la nueva era", r"(zero|xt) barista",
+    r"linea mini", r"fiorenzato", r"\bjoco\b", r"origami clear stand", r"verre à shot", r"desechable",
     r"water\s?minerals?", r"minerals?\s?for\s?coffee", r"brew\s?water", r"\bapax\b", r"\bosmo\b", r"lotus\s?coffee",
     r"filters?\s?\((?:\d+|[^)]*(?:count|ct|pack))",
     r"roastery\s?tour", r"tasting\s?tour", r"coffee\s?tasting\s?and",
