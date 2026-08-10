@@ -245,6 +245,51 @@ def _first_price(payload: dict) -> str:
     return str(variants[0].get("price")) if variants else ""
 
 
+# 店が product_type / tags に書いている「種類」。ここに当たるものは豆ではない。
+#
+# 前は ("gear", "equipment", "merch", "mug", "gift card", "apparel", "subscription")
+# の7語だけを見ていた。店は自分で何を売っているか書いてくれているのに、
+# こちらが短い一覧としか照合していなかったので、次のものが素通りしていた（実測）:
+#   Four Barrel の絵画9点 … product_type: "Arts & Entertainment"（96"x96" Mixed media on panel）
+#   Tiong Hoe のマシン    … product_type: "Espresso Machine"（売主 Dalla Corte）
+#   Joe Coffee の講座2件  … tags: "Classes"（16-hour, 3-day intensive）
+#
+# "espresso machine" と "espresso" を取り違えないよう、語ではなく句で持つ。
+_NOT_COFFEE_TYPE = (
+    "gear", "equipment", "merch", "mug", "gift card", "apparel", "subscription",
+    "arts & entertainment", "arts and entertainment", "artwork", "art print", "poster",
+    "espresso machine", "coffee machine", "coffee maker", "grinder", "brewer",
+    "accessor", "hardware", "homeware", "home & garden", "kitchen",
+    "book", "class", "course", "workshop", "training", "ticket", "event",
+    "cleaning", "maintenance", "apparel & accessories", "clothing",
+    "tea", "chocolate", "bakery", "food", "beverage", "drinkware", "glassware",
+)
+# タグ側。種類が空でも、ここに書いてある店がある（Joe Coffee の "Classes" がそれ）
+_NOT_COFFEE_TAG = ("classes", "workshop", "training", "artwork", "art", "merch", "equipment", "hardware")
+
+
+def _looks_like_coffee(p: dict) -> bool:
+    """店が書いた種類とタグを見て、豆かどうかを決める。
+
+    店の申告を信じる。こちらで名前から推し量るより確かで、言語にも左右されない
+    （中国語の店でも product_type は英語のことが多い）。
+    書かれていなければ通す。分からないものを落とすと本物の豆が消える。
+    """
+    ptype = (p.get("product_type") or "").strip().lower()
+    if ptype and any(x in ptype for x in _NOT_COFFEE_TYPE):
+        # "coffee" と書いてあるならコーヒー側を優先する（"Coffee Accessories" ではなく
+        # "Whole Bean Coffee" のような書き方の店を巻き添えにしない）
+        if not any(x in ptype for x in ("whole bean", "coffee bean", "roasted coffee", "single origin")):
+            return False
+    tags = p.get("tags") or []
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.split(",")]
+    low = {str(t).strip().lower() for t in tags}
+    if low & set(_NOT_COFFEE_TAG):
+        return False
+    return True
+
+
 async def _fetch_shopify(client: httpx.AsyncClient, r: dict, max_pages: int) -> list[Product] | None:
     res = await _fetch_shopify_path(client, r, max_pages, "/products.json")
     if res:
@@ -354,9 +399,8 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
         if not batch:
             break
         for p in batch:
-            # コーヒー以外（器具・マグ等)をゆるく除外
-            ptype = (p.get("product_type") or "").lower()
-            if any(x in ptype for x in ("gear", "equipment", "merch", "mug", "gift card", "apparel", "subscription")):
+            # 店が自分で書いている「種類」と「タグ」で、豆でないものを外す
+            if not _looks_like_coffee(p):
                 continue
             variants = p.get("variants", [])
             if not variants:

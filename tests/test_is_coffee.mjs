@@ -62,6 +62,18 @@ const NOT_COFFEE = [
   "Caramel Frappe Coffee", "Mint Mocha", "5oz Black", "+ Milk alternative / Iced",
   "Modbar Steam 220EU", "Eagle One Prima", "Wega Pegaso 2 Group EVD Auto - Raised",
   "ZERO Barista", "Linea Mini", "Fiorenzato F83 E XGi PRO", "8oz Joco Mint", "Ubermilk Filter Discs",
+  /* 店の商品ページで確かめたもの（scripts/check_products.py を runner で実行）。
+     名前だけでは何なのか分からず、店の申告で確定した。
+       Four Barrel  … product_type "Arts & Entertainment"、96"x96" Mixed media on panel
+       Tiong Hoe    … product_type "Espresso Machine"、売主 Dalla Corte
+       Joe Coffee   … tags "Classes"、16-hour, 3-day intensive */
+  "nOKay", "Happy happy", "Sunday side eye", "Outta the woulds", "Ona",
+  "ICON", "MINA", "Studio", "Studio Aqua",
+  "The Intensive", "The Well-Rounded Barista",
+  // Sage(Breville) のマシン、洗浄剤、グラインダー
+  "SAGE The Dual Boiler\u2122", "Sage Bambino", "Sage the Barista Touch\u2122 Impress",
+  "Urnex Rinza 4g Tablet 120", "Urnex BIO Grindz 430g", "Urnex Dezcal 900g",
+  "Bentwood The Vertical 63", "Nucleus Link",
 ];
 
 // 豆。規則を足したせいで消えては困るもの
@@ -89,6 +101,10 @@ const COFFEE = [
   "Kigeri - Steeped Coffee",                       // 中身はコーヒー（ドリップバッグと同じ扱い）
   "BLEND | Chicory Coffee | Medium-Dark Roast",    // インドのチコリ入りコーヒーは飲むコーヒー
   "The Scone Queen Bakes by Danielle Sepsy",       // 菓子屋との共同名義だが中身は豆
+  /* 上の「店で確かめた」一覧は名前の完全一致で書いてある。
+     ふつうの語として出てくる豆を巻き添えにしないことを、ここで押さえる。 */
+  "Ona Coffee Blend", "Studio Blend", "Icon Espresso", "Mina Estate Natural",
+  "Sage & Citrus Blend",                           // sage は風味の語でもある
 ];
 
 let ng = 0;
