@@ -131,6 +131,21 @@ const NON_COFFEE = [
   /\bmodbar\b|eagle one|\bwega\b.*\bgroup\b|ubermilk|la nueva era|(zero|xt) barista/,
   // 同じやり方で見つかった2周目。機種名だけで売られていて店名も型番も出ない
   /linea mini|fiorenzato|\bjoco\b|origami clear stand|verre à shot|desechable/,
+  // 3周目。Sage(Breville) のマシン、洗浄剤、グラインダー
+  /\bsage\b.*(barista|dual boiler|oracle|bambino|precision)|\bbentwood\b|nucleus link|\burnex\b|\brinza\b|\bgrindz\b|\bdezcal\b/,
+
+  /* 名前からは何なのか分からず、店の商品ページで確かめたもの（scripts/check_products.py）。
+     店は product_type や tags に何なのかを書いてくれていて、そこには
+     はっきり書いてあった。巡回側でも同じ申告を見るようにしたが（src/crawler.py）、
+     すでに図鑑に入っているぶんはここで外す。
+
+     Four Barrel の9点 … product_type "Arts & Entertainment"、説明は
+       「96" x 96"  Mixed media on panel  $6,500」。創業者が描いた絵。
+     Tiong Hoe の4点  … product_type "Espresso Machine"、売主 Dalla Corte。
+     Joe Coffee の2点 … tags "Classes"、説明は「16-hour, 3-day intensive」。 */
+  /^(nokay|ona|yeah know|spring tips|outta the woulds|happy happy|new pet|new friend|sunday side eye)$/,
+  /^(icon|mina|studio|studio aqua)$/,
+  /^(the intensive|the well-rounded barista)$/,
 
   // 抽出用のミネラル・調整水（豆ではない）。"April Water Minerals" のように店名が付くことがある
   /water ?minerals?|minerals? ?for ?coffee|brew ?water|\bapax\b|\bosmo\b|lotus ?coffee/,

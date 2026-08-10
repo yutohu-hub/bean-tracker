@@ -90,6 +90,14 @@ _NONCOFFEE = re.compile("|".join([
     # "Mwendi Wega"（ケニアの水洗工場）に当たらないよう、Wega は「◯ Group」と一緒のときだけ
     r"\bmodbar\b", r"eagle one", r"\bwega\b.*\bgroup\b", r"ubermilk", r"la nueva era", r"(zero|xt) barista",
     r"linea mini", r"fiorenzato", r"\bjoco\b", r"origami clear stand", r"verre à shot", r"desechable",
+    r"\bsage\b.*(barista|dual boiler|oracle|bambino|precision)", r"\bbentwood\b", r"nucleus link",
+    r"\burnex\b", r"\brinza\b", r"\bgrindz\b", r"\bdezcal\b",
+    # 店の商品ページで確かめたもの（scripts/check_products.py）。
+    # Four Barrel = 絵画(Arts & Entertainment) / Tiong Hoe = マシン(Espresso Machine) /
+    # Joe Coffee = 講座(tags: Classes)。巡回側でも同じ申告を見る（src/crawler.py）。
+    r"^(nokay|ona|yeah know|spring tips|outta the woulds|happy happy|new pet|new friend|sunday side eye)$",
+    r"^(icon|mina|studio|studio aqua)$",
+    r"^(the intensive|the well-rounded barista)$",
     r"water\s?minerals?", r"minerals?\s?for\s?coffee", r"brew\s?water", r"\bapax\b", r"\bosmo\b", r"lotus\s?coffee",
     r"filters?\s?\((?:\d+|[^)]*(?:count|ct|pack))",
     r"roastery\s?tour", r"tasting\s?tour", r"coffee\s?tasting\s?and",
