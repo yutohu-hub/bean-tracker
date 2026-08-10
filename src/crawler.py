@@ -245,27 +245,59 @@ def _first_price(payload: dict) -> str:
     return str(variants[0].get("price")) if variants else ""
 
 
-# 店が product_type / tags に書いている「種類」。ここに当たるものは豆ではない。
+# 店が product_type / tags に書いている「種類」を読む。
 #
 # 前は ("gear", "equipment", "merch", "mug", "gift card", "apparel", "subscription")
-# の7語だけを見ていた。店は自分で何を売っているか書いてくれているのに、
-# こちらが短い一覧としか照合していなかったので、次のものが素通りしていた（実測）:
-#   Four Barrel の絵画9点 … product_type: "Arts & Entertainment"（96"x96" Mixed media on panel）
-#   Tiong Hoe のマシン    … product_type: "Espresso Machine"（売主 Dalla Corte）
-#   Joe Coffee の講座2件  … tags: "Classes"（16-hour, 3-day intensive）
+# の7語としか照合していなかった。店は自分で何を売っているか書いてくれているのに、
+# こちらが聞いていなかったので、次のものが素通りしていた（runner で実測）:
+#   Four Barrel の絵画9点 … product_type "Arts & Entertainment"（96"x96" Mixed media on panel）
+#   Tiong Hoe のマシン    … product_type "Espresso Machine"（売主 Dalla Corte）
+#   Joe Coffee の講座2件  … tags "Classes"（16-hour, 3-day intensive）
 #
-# "espresso machine" と "espresso" を取り違えないよう、語ではなく句で持つ。
-_NOT_COFFEE_TYPE = (
-    "gear", "equipment", "merch", "mug", "gift card", "apparel", "subscription",
-    "arts & entertainment", "arts and entertainment", "artwork", "art print", "poster",
-    "espresso machine", "coffee machine", "coffee maker", "grinder", "brewer",
-    "accessor", "hardware", "homeware", "home & garden", "kitchen",
-    "book", "class", "course", "workshop", "training", "ticket", "event",
-    "cleaning", "maintenance", "apparel & accessories", "clothing",
-    "tea", "chocolate", "bakery", "food", "beverage", "drinkware", "glassware",
+# ■ 順番が大事
+#
+# 種類に「コーヒー」と書いてあるなら、まずコーヒー側に置く。
+# 落とす語を先に見ると、本物の豆を巻き込む:
+#   "Coffee & Tea"       … tea を含むが、これはコーヒーも売る棚
+#   "Food, Beverages & Tobacco > Beverages > Coffee"
+#                        … Shopify の標準分類。food も beverage も含むが中身は豆
+# そのうえで「コーヒー用の道具」を外す:
+#   "Coffee Accessories" "Espresso Machine" "Coffee Grinder"
+
+# 単独で来たら豆の棚。焙煎の度合いや用途の呼び名で、器具の意味では使われない。
+# "Filter" は「フィルター用の焙煎」で豆（52件）、"Filters" は紙（15件）。
+# 単数と複数で意味が変わるので、ここは完全一致で持つ。
+_COFFEE_EXACT = {
+    "coffee", "filter", "espresso", "beans", "whole bean", "single origin",
+    "omniroast", "café", "cafe", "コーヒー", "コーヒー豆", "咖啡",
+}
+# コーヒーそのものを指す語。これがあれば、まずコーヒーとみなす。
+# "filter" "drip" を単独で入れてはいけない（"Filters" "Drippers" が通ってしまう）。
+_COFFEE_WORD = ("coffee", "bean", "espresso", "roast", "single origin", "blend",
+                "filter coffee", "drip coffee", "drip bag", "cascara",
+                "コーヒー", "珈琲", "咖啡", "ドリップバッグ")
+# コーヒーの語があっても落とすもの（コーヒー用の道具・催し・読み物）。
+# 各国語の呼び方も入れる（実データで通り抜けていたもの）:
+#   Cursos = 講座 / Equipamiento = 器具 / グッズ / Logoware = ロゴ入り雑貨
+_HARD_NOT_COFFEE = (
+    "machine", "grinder", "brewer", "brewing", "maker", "dripper", "filters",
+    "accessor", "equipment", "equipments", "equipamiento", "equipo", "gear", "hardware",
+    "merch", "apparel", "clothing", "logoware", "mug", "drinkware", "glassware",
+    "tableware", "supplies", "supply", "reusable", "kettle", "scale", "tool",
+    "gift card", "subscription", "class", "course", "curso", "workshop", "training",
+    "ticket", "book", "art", "poster", "cleaning", "maintenance",
+    "グッズ", "雑貨", "器具", "objetos", "moccamaster",
 )
-# タグ側。種類が空でも、ここに書いてある店がある（Joe Coffee の "Classes" がそれ）
-_NOT_COFFEE_TAG = ("classes", "workshop", "training", "artwork", "art", "merch", "equipment", "hardware")
+# コーヒーの語が無いときだけ落とすもの
+_SOFT_NOT_COFFEE = (
+    "arts & entertainment", "arts and entertainment", "artwork",
+    "tea", "chocolate", "candy", "bakery", "food", "beverage", "snack",
+    "home & garden", "homeware", "kitchen", "furniture", "event", "フード",
+)
+# タグ側。種類が空でも、ここに書いてある店がある（Joe Coffee の "Classes" がそれ）。
+# 完全一致で見る。"art" を部分一致にすると "artisan" のような語に当たる。
+_NOT_COFFEE_TAG = ("classes", "class", "workshop", "training", "artwork", "art",
+                   "merch", "equipment", "hardware", "machines")
 
 
 def _looks_like_coffee(p: dict) -> bool:
@@ -273,19 +305,27 @@ def _looks_like_coffee(p: dict) -> bool:
 
     店の申告を信じる。こちらで名前から推し量るより確かで、言語にも左右されない
     （中国語の店でも product_type は英語のことが多い）。
-    書かれていなければ通す。分からないものを落とすと本物の豆が消える。
+    何も書かれていなければ通す。分からないものを落とすと本物の豆が消える。
+
+    見る順番:
+      1. 完全一致で豆の棚と分かるもの（"Filter" など）は、そこで通す
+      2. 道具・催し・読み物なら落とす（"Espresso Machine" "Coffee Course"）
+      3. コーヒーの語があれば通す（"Coffee & Tea" "… > Beverages > Coffee"）
+      4. 食品・雑貨なら落とす（"Tea" "Chocolate"）
+      5. どれでもなければ通す（"Archive" "Retail" のような棚の名前）
     """
     ptype = (p.get("product_type") or "").strip().lower()
-    if ptype and any(x in ptype for x in _NOT_COFFEE_TYPE):
-        # "coffee" と書いてあるならコーヒー側を優先する（"Coffee Accessories" ではなく
-        # "Whole Bean Coffee" のような書き方の店を巻き添えにしない）
-        if not any(x in ptype for x in ("whole bean", "coffee bean", "roasted coffee", "single origin")):
+    if ptype and ptype not in _COFFEE_EXACT:
+        if any(x in ptype for x in _HARD_NOT_COFFEE):
             return False
+        if not any(w in ptype for w in _COFFEE_WORD) and \
+                any(x in ptype for x in _SOFT_NOT_COFFEE):
+            return False
+
     tags = p.get("tags") or []
     if isinstance(tags, str):
         tags = [t.strip() for t in tags.split(",")]
-    low = {str(t).strip().lower() for t in tags}
-    if low & set(_NOT_COFFEE_TAG):
+    if {str(t).strip().lower() for t in tags} & set(_NOT_COFFEE_TAG):
         return False
     return True
 
