@@ -98,6 +98,8 @@ _NONCOFFEE = re.compile("|".join([
     r"^(nokay|ona|yeah know|spring tips|outta the woulds|happy happy|new pet|new friend|sunday side eye)$",
     r"^(icon|mina|studio|studio aqua)$",
     r"^(the intensive|the well-rounded barista)$",
+    # 板チョコ。末尾の「40〜99%」はカカオ含有量（"Cusco 100%" と紛れないよう3桁は外す）
+    r"(^|\s)[4-9]\d\s?%\s*$", r"\btablette\b", r"\bnapolitain\b", r"claudio corallo",
     r"water\s?minerals?", r"minerals?\s?for\s?coffee", r"brew\s?water", r"\bapax\b", r"\bosmo\b", r"lotus\s?coffee",
     r"filters?\s?\((?:\d+|[^)]*(?:count|ct|pack))",
     r"roastery\s?tour", r"tasting\s?tour", r"coffee\s?tasting\s?and",
@@ -201,6 +203,25 @@ ORIGIN_JA = {
 def origin_ja(s: str) -> str:
     """産地名を図鑑の表記に揃える。知らない名前はそのまま通す。"""
     return ORIGIN_JA.get((s or "").strip().lower(), (s or "").strip())
+
+
+# 店が「ブレンド」と名乗っているかどうか。各国語ぶん見る
+# 名前が既に別の用途で使われていたので分ける（同じ名前だと後ろの定義に上書きされる）
+_BLEND_WORD = re.compile("blend|ブレンド|配合|配方|綜合|综合|mezcla|m[eé]lange|melange|miscela|mischung", re.I)
+
+
+def _origin_or_unknown(p: dict) -> str:
+    """産地。読み取れていればその国、店がブレンドと言っていれば「ブレンド」、
+    どちらでもなければ「不明」。
+
+    「ブレンド」を分からないときの受け皿にしていたので、産地でしぼり込むと
+    読み取れなかった2,538件が「ブレンド」として出てきていた。意味が違うので分ける。
+    """
+    o = origin_ja(p.get("origin"))
+    if o:
+        return o
+    text = f"{p.get('title') or ''} {p.get('tags') or ''} {p.get('notes') or ''}"
+    return "ブレンド" if _BLEND_WORD.search(text) else "不明"
 
 
 def first_seen_date(p: dict, fallback: str) -> str:
@@ -378,7 +399,12 @@ def main() -> None:
             seen = first_seen_date(p, today)
             bean = {
                 "id": bid, "r": key, "name": p.get("title") or "Lot",
-                "origin": origin_ja(p.get("origin")) or "ブレンド", "process": p.get("process") or "Washed",
+                # 分からないものを分かったふりで埋めない。
+                # 前は産地を「ブレンド」、精製を「Washed」で埋めていた。実測では
+                # 「ブレンド」2,945件のうち店が本当にブレンドと書いていたのは
+                # 13.8%だけで、「Washed」4,883件のうち根拠があるのは1割ほどだった。
+                # 味わいマップも精製方法の割合も診断も、この既定値を材料にしていた。
+                "origin": _origin_or_unknown(p), "process": p.get("process") or "不明",
                 # 値段が取れなかったときに 1 を入れていた。通貨単位1（¥1・£1）の
                 # コーヒーは存在せず、レアロットの安い順の先頭を占めてしまう。
                 # 取れなければ 0 のままにして、価格順の一覧からは外す。

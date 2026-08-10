@@ -9,7 +9,7 @@ import { BeanCard } from "../ui/BeanCard";
 import { FlavorMapView } from "./FlavorMapView";
 
 // 精製方法ごとの一覧ページ。上部のチップで精製を切り替え、その精製の「いま買える」豆を並べる。
-const ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"];
+const ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other", "unknown"];
 const JP = { washed: "水洗", natural: "ナチュラル", honey: "ハニー", anatural: "嫌気性ナチュラル", awashed: "嫌気性ウォッシュト", other: "その他" };
 const DESC = {
   washed: "果肉を除いてから発酵・乾燥。クリーンで明るい酸味、輪郭のはっきりした味わい。",

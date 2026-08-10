@@ -19,9 +19,15 @@ export const PROC = {
   anatural: { key: "anatural", bg: "#48205C", accent: "#F6E7F2", label: "Anaerobic Natural" },
   awashed: { key: "awashed", bg: "#4A4A9E", accent: "#E9E9F6", label: "Anaerobic Washed" },
   other: { key: "other", bg: "#6E655A", accent: "#F2ECE2", label: "その他" },
+  /* 店が精製方法を書いていない豆。
+     以前はここを既定で Washed にしていたので、図鑑の63%が根拠のないまま
+     「Washed」と名乗り、精製方法の割合も味わいマップも実態からずれていた。
+     「その他」（＝珍しい精製）とは意味が違うので、枠を分ける。 */
+  unknown: { key: "unknown", bg: "#9A9186", accent: "#F5F2EC", label: "不明" },
 };
 
 export function processKey(proc = "") {
+  if (!proc || /^(不明|unknown)$/i.test(String(proc).trim())) return "unknown";
   if (/Anaerobic\s*Natural/i.test(proc)) return "anatural";
   if (/Anaerobic\s*Washed/i.test(proc)) return "awashed";
   if (/Anaerobic/i.test(proc)) return "anatural";

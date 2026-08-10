@@ -147,6 +147,11 @@ const NON_COFFEE = [
   /^(icon|mina|studio|studio aqua)$/,
   /^(the intensive|the well-rounded barista)$/,
 
+  /* 板チョコ。名前の末尾に「40〜99%」と付くのはカカオ含有量で、豆の名前には出ない
+     書き方（"Cusco 100%" は "100% アラビカ" と紛れるので、3桁は外してある）。
+     産地の読み取りを広げたら "Virunga 70%" に Congo が付いてしまい、見つかった。 */
+  /(^|\s)[4-9]\d\s?%\s*$|\btablette\b|\bnapolitain\b|claudio corallo/,
+
   // 抽出用のミネラル・調整水（豆ではない）。"April Water Minerals" のように店名が付くことがある
   /water ?minerals?|minerals? ?for ?coffee|brew ?water|\bapax\b|\bosmo\b|lotus ?coffee/,
   // 紙フィルター類（"(100 count)" のように枚数が付く。焙煎表記の "Filter" とは区別する）

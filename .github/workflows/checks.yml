@@ -41,6 +41,7 @@ jobs:
           python tests/test_generic_adapter.py
           python tests/test_build_prices.py
           python tests/test_looks_like_coffee.py
+          python tests/test_origin.py
 
       # ネットに出ずに一巡できるかを見る。ECの仕様変更とは無関係に、
       # 差分検知と書き出しの配線が生きているかの確認
