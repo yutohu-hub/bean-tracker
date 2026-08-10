@@ -20,6 +20,9 @@ on:
       products:
         description: "名前では判断が付かない商品を店のページで確かめる（true）"
         default: ""
+      types:
+        description: "店が product_type に何と書いているかを集計する（店数。空なら全店）"
+        default: ""
 
 permissions:
   contents: read
@@ -36,7 +39,7 @@ jobs:
       - name: 依存インストール
         run: pip install httpx pyyaml
       - name: 候補を叩く
-        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == ''
+        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == ''
         run: python scripts/probe_roasters.py "${{ inputs.file }}"
 
       # 動画IDは1文字違うと別人の回が載る。目では気づけないので貼る前に照合する
@@ -48,6 +51,11 @@ jobs:
       - name: 商品の種類を確かめる
         if: inputs.products != ''
         run: python scripts/check_products.py
+
+      # 「店の申告を読む」判定が、本物の豆を落としていないかを実データで見る
+      - name: 分類の集計
+        if: inputs.types != ''
+        run: python scripts/audit_product_types.py "${{ inputs.types == 'all' && '0' || inputs.types }}"
 
       # 取れない店について、何が足りないのかを応答から調べる
       - name: 1店を詳しく調べる
