@@ -9,7 +9,7 @@ import { PROC, processKey } from "../lib/palette";
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const MIN = 1, MAX = 5;
-const PROC_ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"];
+const PROC_ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other", "unknown"];
 
 export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procOnly = null }) {
   const [famF, setFamF] = useState(initialFam);  // 系統ハイライト

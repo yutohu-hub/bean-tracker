@@ -23,7 +23,7 @@ const REGION_JA = {
   eastAsia: "東アジア", seAsiaIndia: "東南アジア・インド", africaMideast: "アフリカ・中東",
 };
 
-const PROC_ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"];
+const PROC_ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other", "unknown"];
 
 // 100gあたりの価格帯。図鑑の色分け（¥3,000〜 / ¥5,000〜）と境目を合わせる
 const BANDS = [

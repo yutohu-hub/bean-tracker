@@ -22,7 +22,7 @@ import { flavorOf } from "../data/flavors";
 import { PROC, processKey } from "../lib/palette";
 
 // 並べる順。件数の多い順に固定する（絞り込んでも並びが動かないように）
-const ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"];
+const ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other", "unknown"];
 
 /* 点の色。カードの背景色をそのまま点に使うと、白地の上で薄すぎるものがある。
    honey は背景色 #C89A3A のままだとコントラスト 2.47 で、基準の3を割る。

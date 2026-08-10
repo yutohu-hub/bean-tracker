@@ -5,6 +5,7 @@ import html
 import json
 import random
 import re
+import unicodedata
 from dataclasses import dataclass, asdict
 from urllib.parse import urljoin
 
@@ -19,15 +20,77 @@ REQ_HEADERS = {
     "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
 }
 
-ORIGIN_WORDS = [
-    "Ethiopia", "Kenya", "Colombia", "Panama", "Peru", "Brazil", "Bolivia",
-    "Rwanda", "Burundi", "Guatemala", "Costa Rica", "El Salvador", "Honduras",
-    "Ecuador", "Mexico", "Nicaragua", "Yemen", "India", "Indonesia", "Uganda",
-    "Tanzania", "Madagascar", "China", "Taiwan", "Thailand", "Myanmar",
-    "エチオピア", "ケニア", "コロンビア", "パナマ", "ペルー", "ブラジル",
-    "ルワンダ", "ブルンジ", "グアテマラ", "コスタリカ", "エルサルバドル",
-    "ホンジュラス", "エクアドル", "メキシコ", "インドネシア", "イエメン",
-]
+# 産地の名前。店ごとに書き方が違うので、次の3つを見る。
+#   1. 英語の国名
+#   2. その国の言葉での呼び方・つづり違い（Etiopía / Perú / Brasil / 衣索比亞 …）
+#   3. 産地が確定する地域名・農園名（Yirgacheffe → エチオピア、Huila → コロンビア）
+#
+# 前は英語と日本語の国名40語だけを見ていた。実測すると、産地が読めなかった
+# 2,945件のうち約325件は、この3つを見れば分かるものだった。
+# 照合はアクセントを外してから行う（"Peru" は "Perú" に含まれない）。
+ORIGIN_ALIASES: dict[str, tuple[str, ...]] = {
+    "Ethiopia": ("ethiopia", "etiopia", "etiopien", "athiopien", "aethiopien", "エチオピア",
+                 "衣索比亞", "埃塞俄比亚", "yirgacheffe", "yirga", "sidamo", "sidama", "guji",
+                 "limu", "harrar", "jimma", "gedeb", "kochere", "hambela", "shakiso", "nensebo"),
+    "Colombia": ("colombia", "colombie", "kolumbien", "コロンビア", "哥倫比亞", "哥伦比亚",
+                 "huila", "narino", "cauca", "tolima", "antioquia", "quindio", "risaralda",
+                 "caldas", "pitalito", "planadas"),
+    "Kenya": ("kenya", "kenia", "ケニア", "肯亞", "肯尼亚", "nyeri", "kirinyaga", "kiambu",
+              "muranga", "gichathaini", "karatina"),
+    "Panama": ("panama", "パナマ", "巴拿馬", "boquete", "volcan", "chiriqui", "hartmann"),
+    "Brazil": ("brazil", "brasil", "brasilien", "bresil", "ブラジル", "巴西",
+               "cerrado", "mogiana", "sul de minas", "minas gerais", "mantiqueira"),
+    "Peru": ("peru", "perou", "ペルー", "cajamarca", "chanchamayo", "amazonas"),
+    "Guatemala": ("guatemala", "グアテマラ", "瓜地馬拉", "危地马拉",
+                  "antigua", "huehuetenango", "acatenango", "atitlan", "fraijanes"),
+    "Costa Rica": ("costa rica", "コスタリカ", "哥斯大黎加", "哥斯达黎加",
+                   "tarrazu", "west valley", "naranjo", "brunca", "tres rios"),
+    "El Salvador": ("el salvador", "エルサルバドル", "薩爾瓦多", "apaneca", "chalatenango"),
+    "Honduras": ("honduras", "ホンジュラス", "宏都拉斯", "marcala", "copan", "santa barbara",
+                 "ocotepeque", "intibuca"),
+    "Nicaragua": ("nicaragua", "ニカラグア", "尼加拉瓜", "jinotega", "matagalpa", "nueva segovia"),
+    "Ecuador": ("ecuador", "equateur", "エクアドル", "厄瓜多", "loja", "pichincha"),
+    "Bolivia": ("bolivia", "bolivien", "ボリビア", "caranavi", "yungas"),
+    "Mexico": ("mexico", "mexiko", "メキシコ", "chiapas", "oaxaca", "veracruz"),
+    "Rwanda": ("rwanda", "ruanda", "ルワンダ", "盧安達", "nyamasheke", "huye", "gakenke", "rulindo"),
+    "Burundi": ("burundi", "ブルンジ", "蒲隆地", "kayanza", "ngozi", "kirundo", "muyinga"),
+    "Tanzania": ("tanzania", "tansania", "タンザニア", "坦尚尼亞", "kilimanjaro", "mbeya", "mbinga"),
+    "Uganda": ("uganda", "ウガンダ", "rwenzori", "sipi"),
+    "Congo": ("congo", "kongo", "コンゴ", "kivu", "virunga"),
+    "Zambia": ("zambia", "sambia"),
+    "Malawi": ("malawi",),
+    "Madagascar": ("madagascar", "マダガスカル"),
+    "Yemen": ("yemen", "jemen", "イエメン", "葉門", "haraz", "bani matar"),
+    "India": ("india", "indien", "インド", "印度", "chikmagalur", "coorg", "kodagu",
+              "baba budan", "monsoon malabar", "attikan", "seethargundu"),
+    "Indonesia": ("indonesia", "indonesien", "インドネシア", "印尼",
+                  "sumatra", "mandheling", "aceh", "gayo", "toraja", "kintamani", "flores"),
+    "Papua New Guinea": ("papua new guinea", "papua-neuguinea", "パプアニューギニア"),
+    "Timor-Leste": ("timor", "東ティモール"),
+    "Vietnam": ("vietnam", "viet nam", "ベトナム", "越南", "da lat", "dalat", "son la"),
+    "Laos": ("laos", "ラオス", "bolaven"),
+    "Thailand": ("thailand", "タイ", "泰國", "chiang mai", "doi chaang"),
+    "Myanmar": ("myanmar", "burma", "ミャンマー"),
+    "Nepal": ("nepal", "ネパール"),
+    "China": ("china", "yunnan", "中国", "雲南", "云南", "baoshan", "dehong", "pu'er"),
+    "Taiwan": ("taiwan", "台湾", "台灣", "alishan", "阿里山", "nantou", "南投", "chiayi", "嘉義"),
+    "Jamaica": ("jamaica", "jamaika", "ジャマイカ", "blue mountain"),
+    "Hawaii": ("hawaii", "hawai'i", "ハワイ", "kona"),
+    "Dominican Republic": ("dominican", "dominikanische", "ドミニカ"),
+    "Venezuela": ("venezuela", "ベネズエラ"),
+    "Cuba": ("cuba", "キューバ"),
+    "Haiti": ("haiti", "ハイチ"),
+}
+# 「エチオピア」のように、そのまま名乗っている場合に備えて英語名も引ける形にする
+ORIGIN_WORDS = list(ORIGIN_ALIASES)
+
+
+def _fold(s: str) -> str:
+    """アクセントを外して小文字にする。"Perú" と "Peru" を同じものとして扱う。"""
+    s = unicodedata.normalize("NFD", s or "")
+    return "".join(c for c in s if not unicodedata.combining(c)).lower()
+
+
 # 嫌気性は Natural / Washed まで判別する（図鑑はこの2種を別色・別カテゴリで扱うため、
 # "Anaerobic" だけだとどちらにも分類されず絞り込めなくなる）。複合語を先に判定する。
 PROCESS_WORDS = [
@@ -66,10 +129,20 @@ class Product:
 
 
 def _guess_origin(text: str) -> str:
-    for w in ORIGIN_WORDS:
-        if w.lower() in text.lower():
-            return w
-    return ""
+    """産地を1つ返す。分からなければ空文字。
+
+    国名そのものが無くても、地域名や農園名で分かることが多い
+    （"Yirgacheffe Kochere" にエチオピアとは書かれていない）。
+    長い呼び名から先に見る。"costa rica" を "rica" より先に当てるため。
+    """
+    t = _fold(text)
+    best, best_len = "", 0
+    for country, alts in ORIGIN_ALIASES.items():
+        for a in alts:
+            fa = _fold(a)
+            if len(fa) > best_len and fa in t:
+                best, best_len = country, len(fa)
+    return best
 
 
 def _guess_process(text: str) -> str:

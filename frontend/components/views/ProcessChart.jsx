@@ -6,7 +6,7 @@ import { ROASTERS } from "../data/roasters";
 import { PROC, processKey } from "../lib/palette";
 
 // 図鑑カードと同じ精製カラーで、いま買える豆を精製方法ごとに集計する棒グラフ。
-const ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other"];
+const ORDER = ["washed", "natural", "honey", "anatural", "awashed", "other", "unknown"];
 const JP = { washed: "水洗", natural: "ナチュラル", honey: "ハニー", anatural: "嫌気性ナチュラル", awashed: "嫌気性ウォッシュト", other: "その他" };
 
 export function ProcessChart({ cur = "JPY", onProcess }) {
