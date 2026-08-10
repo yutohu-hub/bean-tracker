@@ -8,6 +8,7 @@ import { FS, INK, GRAY, LINE, GREEN } from "../lib/theme";
 const RECIPES = [
   {
     comp: "World Brewers Cup", year: "2026", flag: "🇲🇾", winner: "Nas Jaafar",
+    video: "D8LEI2HJR5s",
     dripper: "UFO V3 + Hario Switch（浸漬×透過）",
     bean: [["生産国", "パナマ"], ["農園", "Finca Nuguo（標高1,700m）"], ["品種", "Geisha"], ["精製", "アナエロビック・ナチュラル"], ["焙煎", "浅煎り（熱風焙煎・焙煎3日後に使用）"], ["ロースター", ""]],
     recipe: [["☕", "Coffee", "15g"], ["💧", "Water", "200g"], ["🌡", "Temperature", "92℃"], ["⚙", "Grind", "約700μm"]],
@@ -16,6 +17,7 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2025", flag: "🇨🇳", winner: "George Jinyang Peng",
+    video: "qmCtGAODMdg",
     dripper: "SOLO Dripper",
     bean: [["生産国", "パナマ"], ["農園", "Mount Totumas（Cloud Forest）"], ["品種", "Geisha"], ["精製", "ナチュラル"], ["焙煎", "3通りに焙煎"], ["ロースター", "Captain George Coffee Roasters（中国・貴陽）"]],
     recipe: [["☕", "Coffee", "15g"], ["💧", "Water", "210g"], ["🌡", "Temperature", "96℃ → 80℃"], ["⚙", "Grind", "800μm"]],
@@ -24,6 +26,7 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2024", flag: "🇦🇹", winner: "Martin Wölfl",
+    video: "xbFpaEboy_g",
     dripper: "Orea V4（平底）",
     filter: "Sibarist FAST（不織布・抜けが速い）",
     bean: [["生産国", "パナマ"], ["農園", "Finca Maya（Lost Origin Coffee Lab）"], ["品種", "Gesha"], ["精製", "ナチュラル・アナエロビック"], ["焙煎", "浅煎り"], ["ロースター", "Wildkaffee（オーストリア）"]],
@@ -38,6 +41,7 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2023", flag: "🇨🇱", winner: "Carlos Medina",
+    video: "Ed8w-RKhR5U",
     dripper: "Origami Dripper",
     bean: [["生産国", "コロンビア"], ["農園", "Café Granja La Esperanza（Finca Potosí）"], ["品種", "Sidra（シドラ）"], ["精製", "ナチュラル"], ["焙煎", "浅煎り"], ["ロースター", "Colibrí Coffee Roasters（サンティアゴ・本人が焙煎）"]],
     recipe: [["☕", "Coffee", "16g"], ["💧", "Water", "250g"], ["🌡", "Temperature", "91℃"], ["⚙", "Grind", "中挽き（コニカル）"]],
@@ -46,6 +50,7 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2022", flag: "🇹🇼", winner: "Shih Yuan Hsu（Sherry）",
+    video: "sTroaHo5zsk",
     dripper: "Orea V3（平底）",
     filter: "Kalita 185（台形の紙をV60形に敷く）",
     grinder: "1Zpresso K-Pro",
@@ -57,6 +62,7 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2021", flag: "🇨🇭", winner: "Matt Winton",
+    video: "_7azuIxdRF4",
     dripper: "Hario V60（メタル・Five-Pour）",
     grinder: "Kinu M47",
     bean: [["生産国", "コロンビア / エクアドル"], ["農園", "Finca Inmaculada（Col）/ Hacienda La Florida（Ecu）"], ["品種", "Eugenioides × Catucai（ブレンド）"], ["精製", "ナチュラル / ウォッシュト"], ["焙煎", "浅煎り"], ["ロースター", "ROEST（Ona Coffee チーム）"]],
@@ -66,6 +72,7 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2019", flag: "🇨🇳", winner: "Jia Ning Du（杜嘉宁）",
+    video: "HNDnngFhZMU",
     dripper: "Origami Dripper",
     bean: [["生産国", "エチオピア"], ["農園", "Ninety Plus Gesha Estate（標高1,600m）"], ["品種", "Gesha"], ["精製", "現地の野生バクテリアで発酵（Ninety Plus 製法）"], ["焙煎", "浅煎り"], ["ロースター", "Ninety Plus Coffee"]],
     recipe: [["☕", "Coffee", "16g"], ["💧", "Water", "240g"], ["🌡", "Temperature", "94℃"], ["⚙", "Grind", "粗挽き→細挽き（2段階）"]],
@@ -76,6 +83,7 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2018", flag: "🇨🇭", winner: "Emi Fukahori",
+    video: "2H9gvo4Zma4",
     dripper: "GINA（浸漬 + ドリップ）",
     bean: [["生産国", "ブラジル"], ["農園", "Daterra（Cerrado）"], ["品種", "Laurina（ブルボン変異種）"], ["精製", "セミ・カーボニックマセレーション"], ["焙煎", "浅煎り"], ["ロースター", "MAME Coffee"]],
     recipe: [["☕", "Coffee", "17g"], ["💧", "Water", "220g"], ["🌡", "Temperature", "80℃ / 95℃ / 80℃"], ["⚙", "Grind", "粗挽き"]],
@@ -84,6 +92,7 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2017", flag: "🇹🇼", winner: "Chad Wang",
+    video: "rXdhzy2piMk",
     dripper: "Hario V60（センターポア）",
     bean: [["生産国", "パナマ"], ["農園", "Ninety Plus Geisha Estates（Volcán）"], ["品種", "Geisha"], ["精製", "ナチュラル（21日コールドファーメント）"], ["焙煎", "浅煎り"], ["ロースター", "Ninety Plus Coffee"]],
     recipe: [["☕", "Coffee", "15g"], ["💧", "Water", "250g"], ["🌡", "Temperature", "92℃"], ["⚙", "Grind", "細挽き"]],
@@ -92,6 +101,7 @@ const RECIPES = [
   },
   {
     comp: "World Brewers Cup", year: "2016", flag: "🇯🇵", winner: "Tetsu Kasuya（粕谷 哲）",
+    video: "pAKNvBu8YlI",
     dripper: "Hario V60（4:6メソッド）",
     bean: [["生産国", "パナマ"], ["農園", "Ninety Plus Geisha Estate（ロット: Sylvia）"], ["品種", "Geisha"], ["精製", "ナチュラル"], ["焙煎", "浅〜中煎り"], ["ロースター", "Ninety Plus Coffee"]],
     recipe: [["☕", "Coffee", "20g"], ["💧", "Water", "300g"], ["🌡", "Temperature", "92℃"], ["⚙", "Grind", "粗挽き"]],
@@ -124,6 +134,38 @@ function ratioOf(recipe) {
   const c = num("Coffee"), w = num("Water");
   if (!c || !w) return null;
   return `1:${(w / c).toFixed(1).replace(/\.0$/, "")}`;
+}
+
+/* 競技の様子。押されるまで iframe を作らない。
+   11件ぶんを最初から埋め込むと、その1画面で YouTube のプレイヤーを11個
+   読み込むことになり、開くだけで重くなる。押した1つだけを載せる。
+   表紙は YouTube の画像を直に使う（こちらで持たない）。
+   埋め込み先は nocookie 版にして、見るまで足跡を残さない。 */
+function Video({ id, title }) {
+  const [on, setOn] = useState(false);
+  if (on) {
+    return (
+      <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", marginTop: 8, borderRadius: 10, overflow: "hidden", background: "#000" }}>
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
+          title={title} allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowFullScreen
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }} />
+      </div>
+    );
+  }
+  return (
+    <button onClick={() => setOn(true)} aria-label={`${title} を再生`}
+      style={{ position: "relative", display: "block", width: "100%", aspectRatio: "16 / 9", marginTop: 8,
+        padding: 0, border: "none", borderRadius: 10, overflow: "hidden", cursor: "pointer", background: "#000" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy"
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: 0.82 }} />
+      <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ width: 54, height: 38, borderRadius: 9, background: "rgba(23,21,15,0.78)",
+          display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: FS.body }}>▶</span>
+      </span>
+    </button>
+  );
 }
 
 const MONO = "ui-monospace, monospace";
@@ -218,6 +260,16 @@ function Detail({ r }) {
             </div>
           )}
         </div>
+      )}
+
+      {r.video && (
+        <>
+          <div style={{ ...cap, marginTop: 18 }}>VIDEO</div>
+          <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 4 }}>
+            {r.year} 年、{r.winner} 本人の競技映像。
+          </div>
+          <Video id={r.video} title={`${r.winner} — ${r.year} World Brewers Cup 決勝`} />
+        </>
       )}
 
       <div style={{ ...cap, marginTop: 18 }}>BEAN</div>
