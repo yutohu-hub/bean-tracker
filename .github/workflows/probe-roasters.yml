@@ -14,6 +14,9 @@ on:
       diagnose:
         description: "1店だけ詳しく調べる（URL。指定すると候補ファイルは見ない）"
         default: ""
+      videos:
+        description: "レシピに貼った動画が本人の回か確かめる（true）"
+        default: ""
 
 permissions:
   contents: read
@@ -30,8 +33,13 @@ jobs:
       - name: 依存インストール
         run: pip install httpx pyyaml
       - name: 候補を叩く
-        if: inputs.diagnose == ''
+        if: inputs.diagnose == '' && inputs.videos == ''
         run: python scripts/probe_roasters.py "${{ inputs.file }}"
+
+      # 動画IDは1文字違うと別人の回が載る。目では気づけないので貼る前に照合する
+      - name: レシピの動画を確かめる
+        if: inputs.videos != ''
+        run: python scripts/verify_videos.py
 
       # 取れない店について、何が足りないのかを応答から調べる
       - name: 1店を詳しく調べる
