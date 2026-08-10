@@ -17,7 +17,6 @@ import { ROASTERS } from "../data/roasters";
 import { ORIGIN_GROUP, GROUP_LABEL } from "../lib/analysis";
 import { PROC, processKey } from "../lib/palette";
 import { FLAVORS, flavorOf } from "../data/flavors";
-import { beanHref } from "../lib/utils";
 
 const DAY_MS = 86400000;
 const WEEKS = 18;            // カレンダーに出す週数（およそ4か月）
@@ -162,7 +161,10 @@ function FlavorScatter({ pts, onOpen }) {
   );
 }
 
-export function Portfolio({ list, email, onOpen, onRoaster }) {
+/* part で2つに分けて呼べる。
+   マイページの本題は「自分の記録」なので、数字のまとめ(summary)だけを一覧の上に置き、
+   カレンダーや内訳(detail)は一覧の下に回す。省くと part を渡さず全部出す。 */
+export function Portfolio({ list, email, onOpen, onRoaster, part }) {
   const [tab, setTab] = useState("origin");   // 内訳の切り替え（縦に3つ並べない）
   const pts = scatterPoints(list);            // 味わいマップに打てる記録
   const rated = list.filter((t) => t.rating);
@@ -193,7 +195,6 @@ export function Portfolio({ list, email, onOpen, onRoaster }) {
   const topRoasters = Object.entries(byRoaster).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const topOrigins = Object.entries(origins).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const procList = Object.entries(procs).sort((a, b) => b[1] - a[1]);
-  const favs = rated.filter((t) => t.rating >= 4).sort((a, b) => b.rating - a.rating || b.at - a.at).slice(0, 5);
 
   const tiles = [
     ["杯", list.length],
@@ -202,7 +203,9 @@ export function Portfolio({ list, email, onOpen, onRoaster }) {
     ["産地", Object.keys(origins).length],
   ];
 
+  // 空のときの案内は summary 側だけ。detail 側は何も出さない
   if (list.length === 0) {
+    if (part === "detail") return null;
     return (
       <div style={{ marginTop: 14, padding: "20px 18px", border: `1px dashed ${LINE}`, borderRadius: 12, textAlign: "center" }}>
         <div style={{ fontSize: FS.body, fontWeight: 700 }}>ポートフォリオはまだ空です</div>
@@ -223,6 +226,7 @@ export function Portfolio({ list, email, onOpen, onRoaster }) {
   return (
     <div>
       {/* 見出し。数字は1行に畳む */}
+      {part !== "detail" && (
       <div style={{ marginTop: 14, padding: "13px 15px", background: "#141210", color: PAPER, borderRadius: 12 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
           <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, letterSpacing: "0.18em", color: "#B8AE9E" }}>PORTFOLIO</span>
@@ -243,7 +247,9 @@ export function Portfolio({ list, email, onOpen, onRoaster }) {
           )}
         </div>
       </div>
+      )}
 
+      {part === "summary" ? null : (<>
       <Section title="飲んだ日" sub={`直近${Math.round(WEEKS / 4.35)}か月`}>
         <Calendar list={list} />
       </Section>
@@ -308,33 +314,10 @@ export function Portfolio({ list, email, onOpen, onRoaster }) {
         </Section>
       )}
 
-      {favs.length > 0 && (
-        <Section title="お気に入り" sub="★4以上">
-          {favs.map((t) => {
-            const b = beanOf(t);
-            const r = b && ROASTERS[b.r];
-            const buyable = b && b.status === "now" && r && r.url;
-            return (
-              <div key={t.beanId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: `1px solid ${LINE}` }}>
-                <button onClick={() => b && onOpen(b)} disabled={!b}
-                  style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, textAlign: "left", cursor: b ? "pointer" : "default" }}>
-                  <div style={{ fontSize: FS.body, fontWeight: 700, color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
-                  <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 2 }}>
-                    <span style={{ color: "#E4A11B" }}>{"★".repeat(t.rating)}</span>
-                    {t.roaster ? ` ・ ${t.roaster}` : ""}{t.origin ? ` ・ ${t.origin}` : ""}
-                  </div>
-                </button>
-                {buyable && (
-                  <a href={beanHref(r, b)} target="_blank" rel="noopener noreferrer"
-                    style={{ flexShrink: 0, textDecoration: "none", padding: "5px 11px", background: INK, color: PAPER, borderRadius: 6, fontSize: FS.meta, fontWeight: 700, whiteSpace: "nowrap" }}>
-                    また買う ↗
-                  </a>
-                )}
-              </div>
-            );
-          })}
-        </Section>
-      )}
+      {/* ここには「お気に入り（★4以上）」の一覧があったが、豆の名前・星・焙煎所・
+          産地・「また買う」まで、下の記録一覧とそっくり同じものを同じ画面で
+          二度出していた。一覧側に★4以上の絞り込みを付けて、そちらに寄せた。 */}
+      </>)}
     </div>
   );
 }

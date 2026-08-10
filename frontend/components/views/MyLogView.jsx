@@ -40,6 +40,8 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [backupMsg, setBackupMsg] = useState("");
   const [folds, setFolds] = useState({});          // 普段は畳んでおく節
   const [showAll, setShowAll] = useState(false);   // 記録一覧を全部出すか
+  const [onlyFav, setOnlyFav] = useState(false);   // 記録一覧を★4以上に絞るか
+  const [showCode, setShowCode] = useState(false); // 6桁コードの欄を出すか（メールを送ってから）
   const [form, setForm] = useState({ name: "", roaster: "", origin: "", rating: 0, notes: "", photo: null });
   const [photos, setPhotos] = useState({});   // beanId -> dataURL（一覧のサムネイル）
 
@@ -143,18 +145,25 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
      リンク方式は、戻り先URLの許可・メール側の安全確認による使い切り・有効期限・
      メールアプリ内ブラウザへの着地、と失敗の道が多い。いま入りたい端末に
      コードを打ち込む方式なら、そのどれも起きない。 */
-  const codeLoginBlock = (compact) => {
-    const target = (codeEmail || lastEmail() || accountEmailGuess || "").trim();
+  const codeLoginBlock = (compact, presetEmail) => {
+    /* 宛先が既に分かっているときは、同じアドレスをもう一度書かせない。
+       前は上の欄と合わせてメール欄が2つ並んでいて、どちらに書くのか分からなかった。 */
+    const known = validEmail(presetEmail || "") && !codeEmail;
+    const target = (codeEmail || presetEmail || lastEmail() || accountEmailGuess || "").trim();
     return (
       <div style={{ marginTop: compact ? 10 : 12, padding: compact ? "10px 12px" : "13px 14px",
         border: `1px solid ${LINE}`, borderRadius: 10, background: PAPER }}>
         <div style={{ fontSize: FS.body, fontWeight: 700 }}>6桁のコードでログイン</div>
         <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
-          メールに書かれた6桁の数字を、いまお使いのこの端末で入力してください。
+          {/* まだ送っていない状態でこの欄を開くこともあるので「送った」とは書かない */}
+          {known ? <><b style={{ color: INK }}>{target}</b> 宛のメールに書かれた6桁の数字を、この端末で入力してください。</>
+                 : "メールに書かれた6桁の数字を、いまお使いのこの端末で入力してください。"}
           リンクを開けなかったときでも、こちらなら確実に入れます。
         </div>
-        <input type="email" value={target} onChange={(e) => setCodeEmail(e.target.value)} placeholder="you@example.com"
-          style={{ width: "100%", boxSizing: "border-box", marginTop: 9, padding: "9px 11px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: FS.body, background: PAPER, color: INK }} />
+        {!known && (
+          <input type="email" value={target} onChange={(e) => setCodeEmail(e.target.value)} placeholder="you@example.com"
+            style={{ width: "100%", boxSizing: "border-box", marginTop: 9, padding: "9px 11px", borderRadius: 8, border: `1px solid ${LINE}`, fontSize: FS.body, background: PAPER, color: INK }} />
+        )}
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
           <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
             inputMode="numeric" autoComplete="one-time-code" placeholder="123456"
@@ -216,17 +225,27 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
             <button onClick={async () => {
                 if (!validEmail(email)) return;
                 setLoginErr(false); setLoginMsg("送信中…");
-                try { await signInWithEmail(email.trim()); setLoginMsg("メールを送信しました。届いたリンクを開くと、他の端末とも記録が同期されます。"); }
-                catch (e) { setLoginErr(true); setLoginMsg(e.message || "送信できませんでした"); }
+                try {
+                  await signInWithEmail(email.trim());
+                  setLoginMsg("メールを送信しました。リンクを開くか、下に6桁のコードを入力してください。");
+                  setShowCode(true);   // 送ったこのときに初めてコード欄を出す
+                } catch (e) { setLoginErr(true); setLoginMsg(e.message || "送信できませんでした"); }
               }}
               disabled={!validEmail(email)}
               style={{ width: "100%", marginTop: 8, padding: "11px 0", background: "none", color: validEmail(email) ? INK : GRAY, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: validEmail(email) ? "pointer" : "default" }}>
               ☁ 他の端末とも同期する（メール認証）
             </button>
             {loginMsg && <div style={{ fontSize: FS.meta, color: loginErr ? "#B8433A" : GREEN, marginTop: 8, lineHeight: 1.7 }}>{loginMsg}</div>}
-            {/* 2台目の端末で入るときの本命。メールを別の端末で開いても、
-                コードならこの端末に打ち込めるので、リンクの往復に依存しない */}
-            {codeLoginBlock(false)}
+            {/* コード欄は、メールを送ったあとに出す。
+                前は最初から出ていて、まだ届いていない6桁を尋ねていた。
+                入口が3つ並ぶので、初めての人はどれを押せばいいのか分からなかった。
+                既にメールを持っている人のために、下のリンクからも開ける。 */}
+            {showCode ? codeLoginBlock(false, email.trim()) : (
+              <button onClick={() => setShowCode(true)}
+                style={{ display: "block", marginTop: 12, background: "none", border: "none", padding: 0, fontSize: FS.meta, color: GRAY, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}>
+                メールの6桁コードを持っている
+              </button>
+            )}
             <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 10, lineHeight: 1.7 }}>
               メールアドレスはこの端末の中だけに保存されます。認証するまでサーバーには送られません。
             </div>
@@ -271,6 +290,10 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   if (tan.topProc) liveTags.push(tan.topProc);
   if (tan.topFam) liveTags.push(tan.topFam);
   const recs = recommendRoasters(tan, 3).filter((k) => ROASTERS[k]);
+
+  // 一覧の絞り込み。★4以上が1件も無ければ、その札は出さない
+  const favCount = list.filter((t) => Number(t.rating) >= 4).length;
+  const shown = onlyFav ? list.filter((t) => Number(t.rating) >= 4) : list;
 
   return (
     <div>
@@ -344,38 +367,8 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
         </div>
       )}
 
-      {/* ポートフォリオ（記録から集計。件数・平均評価もここに含まれる） */}
-      <Portfolio list={list} email={accountEmail} onOpen={onOpen} onRoaster={onRoaster} />
-
-      {/* 記録の持ち出し。クラウド同期は設定に依存するが、これはファイル1つで完結する。
-          端末を変えても、ブラウザのデータを消しても、これがあれば戻せる。
-          ただし毎回使うものではないので畳んでおく。 */}
-      {foldBlock("backup", "記録を書き出す", `${list.length}件`, () => (
-        <div>
-          <button onClick={() => { setBackupMsg(""); window.print(); }}
-            disabled={list.length === 0}
-            style={{ width: "100%", padding: "11px 0", background: list.length ? INK : "#EDEAE1",
-              color: list.length ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700,
-              cursor: list.length ? "pointer" : "default" }}>
-            PDFで書き出す
-          </button>
-          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 6 }}>
-            産地・精製方法・焙煎所・評価ごとにまとめて、全記録の一覧を付けます。
-            印刷の画面が開くので、送信先で「PDFとして保存」を選んでください。
-          </div>
-          {/* PDF は読むためのもので、読み戻せない。端末を変えたときに記録を持って
-              いけるのは、いまはクラウド同期だけになる。黙っていると、書き出して
-              あるから大丈夫だと思ったまま記録を失うので、ここに書いておく。 */}
-          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${LINE}` }}>
-            PDF は読むためのもので、ここに読み戻すことはできません。
-            端末を変えても記録を引き継ぐには、上の<b style={{ color: INK }}>他の端末とも同期する</b>をお使いください。
-          </div>
-          {backupMsg && <div style={{ fontSize: FS.meta, color: GREEN, marginTop: 7 }}>{backupMsg}</div>}
-        </div>
-      ))}
-
-      {/* 印刷のときだけ現れる。画面には出ない */}
-      <PrintSheet list={list} email={accountEmail} />
+      {/* 数字のまとめ。カレンダーや内訳は記録一覧の下に回している */}
+      <Portfolio list={list} email={accountEmail} onOpen={onOpen} onRoaster={onRoaster} part="summary" />
 
       {/* 過去に飲んだ豆を手動で記録（図鑑に無い豆もカード化） */}
       <div style={{ marginTop: 12 }}>
@@ -416,6 +409,83 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
           </div>
         )}
       </div>
+
+      {/* 記録が無いときの案内はポートフォリオ側で出しているので、ここでは繰り返さない。
+          一覧は新しい順に8件まで。全部並べると、下にあるものほど二度と見られない。 */}
+      {list.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, borderBottom: `1px solid ${LINE}`, paddingBottom: 6 }}>
+            <span style={{ fontSize: FS.body, fontWeight: 800 }}>記録</span>
+            {/* ポートフォリオにあった「お気に入り（★4以上）」は、ここと同じ豆を
+                同じ画面で二度出していた。絞り込みにして1か所にまとめる。 */}
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              {[["all", `すべて ${list.length}`], ["fav", `★4以上 ${favCount}`]]
+                .filter(([k]) => k === "all" || favCount > 0)
+                .map(([k, label]) => (
+                  <button key={k} onClick={() => setOnlyFav(k === "fav")}
+                    style={{ padding: "3px 10px", borderRadius: 999, border: `1px solid ${(k === "fav") === onlyFav ? INK : LINE}`,
+                      background: (k === "fav") === onlyFav ? INK : PAPER, color: (k === "fav") === onlyFav ? PAPER : GRAY,
+                      fontSize: FS.meta, cursor: "pointer", whiteSpace: "nowrap" }}>{label}</button>
+                ))}
+            </div>
+          </div>
+          {(showAll ? shown : shown.slice(0, 8)).map((t) => (
+            <div key={t.beanId} style={{ borderBottom: `1px solid ${LINE}`, padding: "12px 0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                <button onClick={() => openBean(t.beanId)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
+                  <span style={{ fontSize: FS.body, fontWeight: 700, color: INK }}>{t.name}</span>
+                </button>
+                <span style={{ color: "#E4A11B", fontSize: FS.body, letterSpacing: 1, flexShrink: 0 }}>{stars(t.rating)}</span>
+              </div>
+              <button onClick={() => t.r && onRoaster(t.r)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: FS.meta, color: GRAY, marginTop: 2, textDecoration: "underline", textUnderlineOffset: 2 }}>
+                {t.roaster}{t.origin ? ` ・ ${t.origin}` : ""}
+              </button>
+              {photos[t.beanId] && (
+                // 写真からも豆のカードを開けるようにする（銘柄名だけが入口だと押しづらい）。
+                // 手入力の記録は図鑑に対応する豆が無いので、押せる見た目にしない。
+                hasCard(t.beanId) ? (
+                  <button onClick={() => openBean(t.beanId)} aria-label={`${t.name} の詳細を開く`}
+                    style={{ display: "block", width: "100%", padding: 0, marginTop: 8, background: "none", border: "none", cursor: "pointer" }}>
+                    <img src={photos[t.beanId]} alt=""
+                      style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10, display: "block", background: "#F0EDE4" }} />
+                  </button>
+                ) : (
+                  <img src={photos[t.beanId]} alt=""
+                    style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10, marginTop: 8, display: "block", background: "#F0EDE4" }} />
+                )
+              )}
+              {t.notes && <div style={{ fontSize: FS.body, color: INK, marginTop: 5, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{t.notes}</div>}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 6 }}>
+                <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY }}>{new Date(t.at).toLocaleDateString("ja-JP")}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {/* 気に入った豆をここから買い直せるようにする（記録タブから図鑑に戻らせない） */}
+                  {(() => {
+                    const b = BEANS.find((x) => x.id === t.beanId);
+                    const r = b && ROASTERS[b.r];
+                    if (!b || b.status !== "now" || !r || !r.url) return null;
+                    return (
+                      <a href={beanHref(r, b)} target="_blank" rel="noopener noreferrer"
+                        style={{ textDecoration: "none", padding: "6px 12px", background: INK, color: PAPER, borderRadius: 6, fontSize: FS.meta, fontWeight: 700, whiteSpace: "nowrap" }}>
+                        また買う ↗
+                      </a>
+                    );
+                  })()}
+                  <button onClick={() => { removeTasting(t.beanId); deletePhoto(t.beanId); refresh(); }} style={{ background: "none", border: "none", fontSize: FS.meta, color: GRAY, cursor: "pointer" }}>削除</button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {shown.length > 8 && (
+            <button onClick={() => setShowAll(!showAll)}
+              style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer" }}>
+              {showAll ? "たたむ" : `のこり${shown.length - 8}件を見る`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 集計（飲んだ日・味わい・内訳・よく飲むロースター） */}
+      <Portfolio list={list} email={accountEmail} onOpen={onOpen} onRoaster={onRoaster} part="detail" />
 
       {/* 記録のライブAI分析（トップ）＋おすすめロースター3件 */}
       {tan.rated > 0 && (
@@ -458,6 +528,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
           )}
         </div>
       )}
+
 
       {/* 保存した分析（過去の控え。畳んでおく） */}
       {anas.length > 0 && foldBlock("anas", "保存した分析", `${anas.length}件`, () => (
@@ -506,68 +577,36 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
         </div>
       ))}
 
-      {/* 記録が無いときの案内はポートフォリオ側で出しているので、ここでは繰り返さない。
-          一覧は新しい順に8件まで。全部並べると、下にあるものほど二度と見られない。 */}
-      {list.length > 0 && (
-        <div style={{ marginTop: 14 }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, borderBottom: `1px solid ${LINE}`, paddingBottom: 6 }}>
-            <span style={{ fontSize: FS.body, fontWeight: 800 }}>記録</span>
-            <span style={{ fontSize: FS.meta, color: GRAY }}>{list.length}件</span>
+
+      {/* 記録の持ち出し。クラウド同期は設定に依存するが、これはファイル1つで完結する。
+          端末を変えても、ブラウザのデータを消しても、これがあれば戻せる。
+          ただし毎回使うものではないので畳んでおく。 */}
+      {foldBlock("backup", "記録を書き出す", `${list.length}件`, () => (
+        <div>
+          <button onClick={() => { setBackupMsg(""); window.print(); }}
+            disabled={list.length === 0}
+            style={{ width: "100%", padding: "11px 0", background: list.length ? INK : "#EDEAE1",
+              color: list.length ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700,
+              cursor: list.length ? "pointer" : "default" }}>
+            PDFで書き出す
+          </button>
+          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 6 }}>
+            産地・精製方法・焙煎所・評価ごとにまとめて、全記録の一覧を付けます。
+            印刷の画面が開くので、送信先で「PDFとして保存」を選んでください。
           </div>
-          {(showAll ? list : list.slice(0, 8)).map((t) => (
-            <div key={t.beanId} style={{ borderBottom: `1px solid ${LINE}`, padding: "12px 0" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                <button onClick={() => openBean(t.beanId)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
-                  <span style={{ fontSize: FS.body, fontWeight: 700, color: INK }}>{t.name}</span>
-                </button>
-                <span style={{ color: "#E4A11B", fontSize: FS.body, letterSpacing: 1, flexShrink: 0 }}>{stars(t.rating)}</span>
-              </div>
-              <button onClick={() => t.r && onRoaster(t.r)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: FS.meta, color: GRAY, marginTop: 2, textDecoration: "underline", textUnderlineOffset: 2 }}>
-                {t.roaster}{t.origin ? ` ・ ${t.origin}` : ""}
-              </button>
-              {photos[t.beanId] && (
-                // 写真からも豆のカードを開けるようにする（銘柄名だけが入口だと押しづらい）。
-                // 手入力の記録は図鑑に対応する豆が無いので、押せる見た目にしない。
-                hasCard(t.beanId) ? (
-                  <button onClick={() => openBean(t.beanId)} aria-label={`${t.name} の詳細を開く`}
-                    style={{ display: "block", width: "100%", padding: 0, marginTop: 8, background: "none", border: "none", cursor: "pointer" }}>
-                    <img src={photos[t.beanId]} alt=""
-                      style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10, display: "block", background: "#F0EDE4" }} />
-                  </button>
-                ) : (
-                  <img src={photos[t.beanId]} alt=""
-                    style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10, marginTop: 8, display: "block", background: "#F0EDE4" }} />
-                )
-              )}
-              {t.notes && <div style={{ fontSize: FS.body, color: INK, marginTop: 5, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{t.notes}</div>}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 6 }}>
-                <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY }}>{new Date(t.at).toLocaleDateString("ja-JP")}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  {/* 気に入った豆をここから買い直せるようにする（記録タブから図鑑に戻らせない） */}
-                  {(() => {
-                    const b = BEANS.find((x) => x.id === t.beanId);
-                    const r = b && ROASTERS[b.r];
-                    if (!b || b.status !== "now" || !r || !r.url) return null;
-                    return (
-                      <a href={beanHref(r, b)} target="_blank" rel="noopener noreferrer"
-                        style={{ textDecoration: "none", padding: "6px 12px", background: INK, color: PAPER, borderRadius: 6, fontSize: FS.meta, fontWeight: 700, whiteSpace: "nowrap" }}>
-                        また買う ↗
-                      </a>
-                    );
-                  })()}
-                  <button onClick={() => { removeTasting(t.beanId); deletePhoto(t.beanId); refresh(); }} style={{ background: "none", border: "none", fontSize: FS.meta, color: GRAY, cursor: "pointer" }}>削除</button>
-                </div>
-              </div>
-            </div>
-          ))}
-          {list.length > 8 && (
-            <button onClick={() => setShowAll(!showAll)}
-              style={{ width: "100%", marginTop: 10, padding: "10px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer" }}>
-              {showAll ? "たたむ" : `のこり${list.length - 8}件を見る`}
-            </button>
-          )}
+          {/* PDF は読むためのもので、読み戻せない。端末を変えたときに記録を持って
+              いけるのは、いまはクラウド同期だけになる。黙っていると、書き出して
+              あるから大丈夫だと思ったまま記録を失うので、ここに書いておく。 */}
+          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${LINE}` }}>
+            PDF は読むためのもので、ここに読み戻すことはできません。
+            端末を変えても記録を引き継ぐには、上の<b style={{ color: INK }}>他の端末とも同期する</b>をお使いください。
+          </div>
+          {backupMsg && <div style={{ fontSize: FS.meta, color: GREEN, marginTop: 7 }}>{backupMsg}</div>}
         </div>
-      )}
+      ))}
+
+      {/* 印刷のときだけ現れる。画面には出ない */}
+      <PrintSheet list={list} email={accountEmail} />
     </div>
   );
 }
