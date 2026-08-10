@@ -60,6 +60,24 @@ const NON_COFFEE = [
      綴りは店の言語ごとに変わる（西 Cápsulas / 独 Kapsel, Kapseln / 丁 Kapsler）。 */
   /c[áa]psulas?|capsules?(?![a-z])|\bkapse?l(n|er)?(?![a-z])|カプセル|キャップ式/,
   /pods?(?![a-z])|\bk[-\s]?cups?(?![a-z])|keurig|nespresso|ネスプレッソ|dolce ?gusto/,
+
+  /* 缶（RTDの飲み物も、豆を缶に詰めたものも）。
+     "Yo La Tengo - I Can Hear the Heart Beating as One" というアルバム名の豆があるので、
+     助動詞の can に当てないよう、複数形か、缶が名前の終わり・区切りの直前に来るものだけ拾う。 */
+  /\bcans\b|\bcan\b(?=\s*(?:$|[-–—(]))|tin ?cans?/,
+  /* 生豆。焙煎していないのでそのままでは飲めず、100gあたりの値段も焙煎豆と比べられない。
+     "生豆商Nordic Approach" のように、生豆を扱う商社の名前が焙煎豆に付くことがあるので外す。 */
+  /raw ?green ?coffee|green ?coffee ?beans?|\bgreen coffee\b|生豆(?!商)|unroasted/,
+  /* 豆はグラムで売る。名前に mL が付くものは器具（ミルクピッチャー等）か液体。
+     実データ21件を見て、豆は1件も含まれていなかった。 */
+  /\d+ ?ml\b/,
+  // ミルクピッチャー等の器具。国ごとに言い方が変わる（仏 pichet／蘭 melkkan／西 jarra／独 kanne／氷 karafla）
+  /\bpichet\b|melkkann|\bjarra\b|\bkanne\b|karafla|\bpipette\b|joefrex|\brhino\b|手沖壺|\brental\b/,
+  // コーヒー屋が併売している食品・菓子・ハーブティー
+  /\bsprinkles?\b|\bkirkland\b|\bstevia\b|dried [a-z]+ (wheels?|slices?|rings?)|\bchamomile\b|\bspinnaker\b/,
+  // 淹れて出す飲み物。"Iced Coffee Roast" はアイス用の焙煎＝豆なので iced coffee は入れない
+  /iced ?(mocha|latte)\b|espresso ?tonic|リキッドコーヒー/,
+
   // 抽出用のミネラル・調整水（豆ではない）。"April Water Minerals" のように店名が付くことがある
   /water ?minerals?|minerals? ?for ?coffee|brew ?water|\bapax\b|\bosmo\b|lotus ?coffee/,
   // 紙フィルター類（"(100 count)" のように枚数が付く。焙煎表記の "Filter" とは区別する）
