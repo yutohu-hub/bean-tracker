@@ -151,6 +151,19 @@ export function applyRelink(plan) {
   });
   if (!n) return 0;
   writeOrThrow(tasteKey(), next);
+
+  /* 昔の番号を墓標に入れる。入れないと同じ豆が2件に増える。
+     クラウドの行は bean_id が鍵なので、付け替えても向こうには昔の番号の行が
+     残ったままになる。次の同期でそれを取り込むと、同じ豆が新旧2つの番号で並ぶ。
+     （実際に再現した。付け替え後に昔の行を合流させると2件になった）
+
+     墓標に入れておけば、同期の最初に cloudDeleteTastings が向こうの行を消し、
+     合流のときも墓標より古い行として弾かれる。削除の仕組みをそのまま使う。 */
+  const at = Date.now();
+  const olds = new Set(plan.map((p) => p.from));
+  const tomb = getTombstones().filter((d) => !olds.has(d.beanId));
+  for (const id of olds) tomb.unshift({ beanId: id, at });
+  write(deletedKey(), tomb.slice(0, 500));
   return n;
 }
 
