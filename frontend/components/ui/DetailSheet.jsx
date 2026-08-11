@@ -23,6 +23,10 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
   const [watchMsg, setWatchMsg] = useState("");
   const [photo, setPhoto] = useState(null);
   const [copied, setCopied] = useState("");
+  /* 端末の共有シートが使えるか。静的に書き出したHTMLと食い違わせないよう、
+     組み上がってから調べる（描画中に navigator を見ると #425 になる）。 */
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => { setCanShare(typeof navigator !== "undefined" && !!navigator.share); }, []);
   const sheetRef = useRef(null);
   const { premium, limits } = usePlan();
   // 次の一杯の候補。6,000件を毎描画で走査しないよう、豆が変わったときだけ出す
@@ -68,12 +72,31 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
     if (photo) await savePhotoDataUrl(bean.id, photo); else await deletePhoto(bean.id);
     setSaved(true);
   };
-  /* この豆のリンクをコピーする。開いている豆はURLに載っているので、
+  /* この豆を人に送る。開いている豆はURLに載っているので、
      受け取った人は同じカードが開いた状態で着地する。
-     clipboard API は安全なコンテキスト（https/localhost）でしか使えないので、
-     使えない環境では選択してコピーする昔ながらの方法に落とす。 */
-  const copyLink = async () => {
+
+     まず端末の共有シートを試す。コピーして、送りたいアプリを開いて、
+     貼り付けて…という往復が丸ごと消え、押してから送り先を選ぶだけになる。
+
+     共有シートが無い環境（PCのFirefoxなど）ではクリップボードに落とす。
+     さらに clipboard API も使えないとき（httpsでない場所）は、
+     選択してコピーする昔ながらの方法に落とす。 */
+  const shareBean = async () => {
     const url = shareUrl({ bean: bean.id });
+    const title = roaster && roaster.name ? `${bean.name} — ${roaster.name}` : bean.name;
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title, text: title, url });
+        return;                       // 送り先は端末側が出すので、こちらは何も言わない
+      } catch (e) {
+        /* 共有シートを閉じただけ（AbortError）は失敗ではない。
+           ここで「送れませんでした」と出すと、やめただけの人を驚かせる。 */
+        if (e && e.name === "AbortError") return;
+        // それ以外（この端末では共有できない等）はコピーに落として続ける
+      }
+    }
+
     try {
       await navigator.clipboard.writeText(url);
     } catch {
@@ -111,8 +134,14 @@ export function DetailSheet({ bean, onClose, onRoaster, onFlavor, onOpen, cur })
           <div style={{ width: 34, height: 4, borderRadius: 999, background: LINE, margin: "0 auto 16px" }} />
           <button onClick={onClose} aria-label="閉じる"
             style={{ position: "absolute", top: -4, right: -4, width: 30, height: 30, borderRadius: 999, border: "none", background: "#F2F0E9", color: GRAY, fontSize: FS.lead, lineHeight: 1, cursor: "pointer" }}>✕</button>
-          <button onClick={copyLink} aria-label="この豆のリンクをコピー" title="この豆のリンクをコピー"
-            style={{ position: "absolute", top: -4, right: 30, height: 30, padding: "0 10px", borderRadius: 999, border: "none", background: "#F2F0E9", color: GRAY, fontSize: FS.meta, lineHeight: 1, cursor: "pointer" }}>🔗</button>
+          {/* 絵文字だけだと何が起きるか分からないので、言葉で書く。
+              共有シートが使える端末では「送る」、無い端末では「リンク」。 */}
+          <button onClick={shareBean}
+            aria-label={canShare ? "この豆を送る" : "この豆のリンクをコピー"}
+            title={canShare ? "この豆を送る" : "この豆のリンクをコピー"}
+            style={{ position: "absolute", top: -4, right: 30, height: 30, padding: "0 12px", borderRadius: 999, border: "none", background: "#F2F0E9", color: INK, fontSize: FS.meta, fontWeight: 700, lineHeight: 1, cursor: "pointer" }}>
+            {canShare ? "送る" : "リンク"}
+          </button>
         </div>
         {copied && <div style={{ textAlign: "center", fontSize: FS.meta, color: GREEN, marginTop: -8, marginBottom: 6 }}>{copied}</div>}
         <div style={{ display: "flex", gap: 16 }}>
