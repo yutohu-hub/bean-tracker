@@ -98,6 +98,9 @@ def main() -> None:
     con = open_db(str(ROOT / "data" / "state.db"))
     stats = apply_snapshot(con, products, float(settings.get("min_oos_hours", 12)))
     print(f"イベント: 新着{stats['new']} / 再入荷{stats['restock']} / 売り切れ{stats['soldout']}")
+    # 棚から消えた商品。数が急に跳ねたら、門が効きすぎているか店側の不調を疑う
+    if stats.get("gone"):
+        print(f"棚から消えたので在庫なしに倒した: {stats['gone']}件")
 
     site_data = export_for_site(con)
     build(site_data, failed)

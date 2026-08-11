@@ -53,7 +53,7 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
                    min_oos_hours: float = 12.0) -> dict:
     """スナップショットを取り込み、イベント件数を返す。"""
     now = time.time()
-    stats = {"new": 0, "restock": 0, "soldout": 0}
+    stats = {"new": 0, "restock": 0, "soldout": 0, "gone": 0}
     seen_keys = set()
 
     for p in products:
@@ -108,8 +108,63 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
              p.get("city") or "", p.get("province") or "", p.get("kind") or "", now,
              int(is_available), now, p["key"]))
 
+    stats["gone"] = _mark_withdrawn(con, products, seen_keys, now)
     con.commit()
     return stats
+
+
+def _mark_withdrawn(con: sqlite3.Connection, products: list[dict],
+                    seen_keys: set, now: float) -> int:
+    """店の棚から消えた商品を「買えない」に倒す。
+
+    ■ なぜ要るのか
+
+    これまで、一度入った商品は available=1 のまま残り続けていた。棚から
+    消えても誰も 0 に戻さないので、derive_status はいつまでも "now"（いま買える）
+    を返す。売り終わった豆も、店が下げた商品も、図鑑では買えるように見えていた。
+
+    取り込みの門（has_bean_evidence）を入れても、これのせいで効き目が
+    出なかった。門は「これから取らない」を決めるだけで、すでに入っている
+    雑貨は誰も下げないため、図鑑にはずっと並んだままになる。
+
+    ■ 消さずに倒すだけにする理由
+
+    行ごと消すと first_seen（初めて見つけた日）が失われ、図鑑の「古い順」が
+    狂う。available=0 にしておけば SOLD OUT に移り、14日後に ARCHIVE へ送られる。
+    店が戻せば次の巡回で在庫ありに戻る。
+
+    ■ どの店を対象にするか
+
+    巡回は 442 店を 13 に割って1時間ごとに回している。今回見ていない店の商品まで
+    倒すと、全店が一巡するまで図鑑が売り切れだらけになる。
+    そこで「今回1件以上返してきた店」だけを対象にする。これで自動的に、
+
+      ・今回のスライスに入っていない店 → 対象外
+      ・取得に失敗した店（429・接続断）  → 対象外
+      ・0件しか返さなかった店           → 対象外
+
+    が全部除かれる。0件の店を外すのは、店の一時的な不調と「全部下げた」を
+    見分けられないため。倒しすぎるより、次の巡回に持ち越す方が安全。
+
+    ■ イベントは立てない
+
+    売り切れイベントは「在庫ありを見ていたのに無くなった」という知らせで、
+    棚から消えたことはそれとは別。ここでイベントを立てると、門を入れた直後の
+    巡回で何千件も売り切れが流れ、本当の売り切れが埋もれる。
+    """
+    returned = {p["roaster"] for p in products if p.get("roaster")}
+    gone = 0
+    for rname in returned:
+        rows = con.execute(
+            "SELECT key FROM products WHERE roaster=? AND available=1", (rname,)).fetchall()
+        missing = [r["key"] for r in rows if r["key"] not in seen_keys]
+        if not missing:
+            continue
+        con.executemany(
+            "UPDATE products SET available=0, last_status_change=? WHERE key=?",
+            [(now, k) for k in missing])
+        gone += len(missing)
+    return gone
 
 
 def derive_status(product: dict, now: float | None = None,
