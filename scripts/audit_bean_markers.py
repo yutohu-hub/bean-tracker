@@ -41,7 +41,8 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 from crawler import (REQ_HEADERS, _grams_from_text, html_to_text,  # noqa: E402
-                     shop_says, bean_markers, _looks_like_coffee, STRONG, WEAK)
+                     shop_says, bean_markers, _looks_like_coffee, option_text,
+                     STRONG, WEAK)
 
 CONCURRENCY = 24
 TIMEOUT = 20.0
@@ -76,15 +77,16 @@ async def fetch(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict):
 
 def markers_of(p: dict) -> set:
     v = (p.get("variants") or [{}])[0]
-    titletext = f"{v.get('title', '')} {p.get('title', '')}"
+    opts = option_text(p)
     tagtext = (" ".join(p.get("tags", [])) if isinstance(p.get("tags"), list)
                else str(p.get("tags", "")))
     return bean_markers(
         title=f"{p.get('title', '')} {tagtext}",
         body=html_to_text(p.get("body_html") or "")[:1200],
         grams_field=int(v.get("grams") or 0),
-        grams_title=_grams_from_text(titletext),
+        grams_title=_grams_from_text(f"{p.get('title', '')} {opts}"),
         kind=shop_says(p),
+        options=opts,
     )
 
 

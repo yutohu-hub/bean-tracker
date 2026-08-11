@@ -173,6 +173,15 @@ _VARIETY = re.compile(
     r"|\bpink\s?bourbon\b|\bjava\b|\bkent\b|\bmundo\s?novo\b|\bacaia\b|\bobata\b"
     r"|\beugenioides\b|\blaurina\b|\bparainema\b|\bmarsellesa\b|\bcatimor\b"
     r"|ゲイシャ|ブルボン|カトゥーラ|ティピカ|パカマラ|エチオピア在来|藝伎|瑰夏|波旁")
+# 挽き方の選択肢。豆にしか付かない。
+# 器具にもTシャツにも「挽き方を選ぶ」欄は無いので、これがあれば豆と考えてよい。
+# 実測で Tim Wendelboe の Kapsokisio（ウガンダの実在の銘柄）を落としかけた。
+# 名前が水洗工場の名だけで、産地の語も内容量も焙煎度も無かったため。
+# 挽き方の欄を見ていれば拾えた。
+_GRIND = re.compile(
+    r"(?i)\bgrinds?\b|\bgrind\s?(size|type|option)\b|\bwhole\s?beans?\b|\bground\b"
+    r"|\bmahlgrad\b|\bmouture\b|\bmolienda\b|\bmalning\b|\bkværning\b|\bmaling\b"
+    r"|挽き方|挽き目|豆のまま|研磨|磨豆|粉碎|원두|분쇄")
 # 焙煎度
 _ROAST = re.compile(
     r"(?i)\b(light|medium|dark|city|full\s?city|french|italian|omni)\s?roast\b"
@@ -181,7 +190,7 @@ _ROAST = re.compile(
 
 
 def bean_markers(title: str, body: str, grams_field: int, grams_title: int,
-                 kind: str = "") -> set[str]:
+                 kind: str = "", options: str = "") -> set[str]:
     """その商品が豆だと言える証拠を集める。強い証拠と弱い証拠を分けて返す。
 
     ■ 強い証拠（大文字）— 商品名とタグにある
@@ -189,6 +198,7 @@ def bean_markers(title: str, body: str, grams_field: int, grams_title: int,
 
         W  内容量が商品名か規格名に書いてある（"Ethiopia Guji 250g"）
         O  産地      P  精製      V  品種      R  焙煎度
+        G  挽き方を選ぶ欄がある。器具にもTシャツにも付かない
 
     ■ 弱い証拠（小文字）— 説明文にある
         器具の説明文にも産地や淹れ方は出てくるので、そこだけを頼りにはできない。
@@ -216,6 +226,8 @@ def bean_markers(title: str, body: str, grams_field: int, grams_title: int,
         m.add("V")
     if _ROAST.search(title):
         m.add("R")
+    if options and _GRIND.search(options):
+        m.add("G")
 
     if _guess_origin(body):
         m.add("o")
@@ -233,8 +245,27 @@ def bean_markers(title: str, body: str, grams_field: int, grams_title: int,
     return m
 
 
-STRONG = ("W", "O", "P", "V", "R")
+STRONG = ("W", "O", "P", "V", "R", "G")
 WEAK = ("o", "p", "v", "r")
+
+
+def option_text(p: dict) -> str:
+    """選択肢の欄を1つの文字列にまとめる。挽き方の欄を探すために使う。
+
+    Shopify の options は [{"name": "Grind", "values": ["Whole bean", ...]}] の形。
+    店によっては options を持たず、規格名（variants[].title）に
+    "250g / Whole Bean" のように入れているので、そちらも混ぜる。
+    """
+    parts: list[str] = []
+    for o in p.get("options") or []:
+        if isinstance(o, dict):
+            parts.append(str(o.get("name", "")))
+            vals = o.get("values") or []
+            parts.extend(str(v) for v in vals) if isinstance(vals, list) else None
+        else:
+            parts.append(str(o))
+    parts.extend(str(v.get("title", "")) for v in (p.get("variants") or []))
+    return " ".join(parts)
 
 
 def _guess_process(text: str) -> str:
@@ -536,14 +567,16 @@ def has_bean_evidence(p: dict) -> bool:
     _looks_like_coffee と表示側の isCoffeeBean が受け持つ。
     門は、名前を知りようがないものだけを担当する。
     """
-    v = (p.get("variants") or [{}])[0]
     tags = p.get("tags") or []
     tagtext = " ".join(tags) if isinstance(tags, list) else str(tags)
-    grams_title = _grams_from_text(f"{v.get('title', '')} {p.get('title', '')}")
+    opts = option_text(p)
+    # 規格名は全部見る。1つめが "Default Title" で、2つめから "250g" の店がある。
+    grams_title = _grams_from_text(f"{p.get('title', '')} {opts}")
     # 説明文と出荷重量は見ない。器具の説明文にも産地は出るし、Shopify の重量欄は
     # 実測 86% の商品に値が入っていて何も分けられなかった（マグにも T シャツにもある）。
     m = bean_markers(title=f"{p.get('title', '')} {tagtext}", body="",
-                     grams_field=0, grams_title=grams_title, kind=shop_says(p))
+                     grams_field=0, grams_title=grams_title, kind=shop_says(p),
+                     options=opts)
     return bool(m & set(STRONG)) or "c" in m
 
 

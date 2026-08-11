@@ -22,9 +22,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from crawler import has_bean_evidence  # noqa: E402
 
 
-def prod(title, ptype="", tags=None, variant_title=""):
+def prod(title, ptype="", tags=None, variant_title="", options=None):
     return {"title": title, "product_type": ptype, "tags": tags or [],
+            "options": options or [],
             "variants": [{"title": variant_title, "grams": 0}]}
+
+
+def grind_opt(*values):
+    """挽き方を選ぶ欄。豆にしか付かない。"""
+    return [{"name": "Grind", "values": list(values) or ["Whole bean"]}]
 
 
 # --- 通らねばならないもの（本物の豆） ---------------------------------------
@@ -60,6 +66,16 @@ MUST_PASS = [
     prod("Grunyí", ptype="Filter"),
     # 店の申告が中国語・北欧語でも通ること（門は語の一覧に頼らない）
     prod("耶加雪菲 日曬", ptype="咖啡豆"),
+
+    # --- 挽き方の欄だけが頼りのもの ---
+    # 実測でここを落としかけた。名前が水洗工場の名だけで、産地の語も内容量も
+    # 焙煎度も無く、店は product_type を空にしていた。
+    # 挽き方を選ばせている以上、豆でしかありえない。
+    prod("Kapsokisio", options=grind_opt("Whole bean", "Filter", "Espresso")),
+    prod("Scattered Salinas", options=grind_opt()),
+    prod("Pañuelo", options=[{"name": "挽き方", "values": ["豆のまま", "中挽き"]}]),
+    # options を持たず、規格名に入れている店
+    prod("Nano Challa", variant_title="Whole Bean / 250 g"),
 ]
 
 # --- 落ちてほしいもの（雑貨・器具） -----------------------------------------
