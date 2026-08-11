@@ -12,7 +12,9 @@ import { FS, INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGIN_GROUPS } from "./lib/constants";
 import { syncArchive } from "./lib/store";
 import { captureSessionFromUrl, ensureFreshSession } from "./lib/account";
-import { purgeLegacyPlan, keepForever } from "./lib/store";
+import { purgeLegacyPlan, keepForever, getTastings, applyRelink } from "./lib/store";
+import { planRelink, isLegacyId } from "./lib/relink";
+import { movePhotos } from "./lib/photos";
 import { refreshPlan } from "./lib/usePlan";
 import { isReturningFromCheckout } from "./lib/billing";
 import { readUrlState, writeUrlState, onUrlChange } from "./lib/urlState";
@@ -89,6 +91,24 @@ export default function BeanTracker() {
   const tabsRef = useRef(null);
   const [flavorMode, setFlavorMode] = useState("one"); // 味わいマップ: one | proc
   const [authNotice, setAuthNotice] = useState(null); // メールリンクからのログイン結果
+  /* 昔の豆番号で残っている記録を、いまの番号に付け替える。
+     豆の番号は前まで巡回のたびにずれていたので、記録が別の豆に付いて見えていた。
+     番号の作り方は直したが、手元に残っている記録は昔のままなので、ここで直す。
+     付け替えるものが無ければ何もしない（毎回走っても実害が出ない作り）。 */
+  useEffect(() => {
+    try {
+      const list = getTastings();
+      if (!list.some((t) => isLegacyId(t.beanId))) return;
+      const plan = planRelink(list, BEANS.map((b) => ({
+        id: b.id, name: b.name, roasterName: (ROASTERS[b.r] || {}).name || b.r,
+      })));
+      if (!plan.length) return;
+      // 写真を先に動かす。記録を先に書き替えると、途中で失敗したときに
+      // 写真だけが昔の番号に取り残されて、二度と結び付かなくなる
+      movePhotos(plan).finally(() => { try { applyRelink(plan); } catch {} });
+    } catch {}
+  }, []);
+
   // 色の凡例を開いているか。既定は畳んだ状態（豆を早く見せる）
   useEffect(() => { if (localStorage.getItem("bt_legend") === "1") setLegendOpen(true); }, []);
   useEffect(() => { try { localStorage.setItem("bt_legend", legendOpen ? "1" : "0"); } catch {} }, [legendOpen]);

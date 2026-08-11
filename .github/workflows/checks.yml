@@ -44,6 +44,7 @@ jobs:
           python tests/test_origin.py
           python tests/test_bean_evidence.py
           python tests/test_withdrawn.py
+          python tests/test_bean_id.py
 
       # ネットに出ずに一巡できるかを見る。ECの仕様変更とは無関係に、
       # 差分検知と書き出しの配線が生きているかの確認
@@ -88,6 +89,11 @@ jobs:
       - name: 値段の扱い
         working-directory: .
         run: node tests/test_price.mjs
+
+      # 昔の豆番号で残っている記録の付け替え。人の記録を書き替えるので落とせない
+      - name: 記録の付け替え
+        working-directory: .
+        run: node tests/test_relink.mjs
 
       # 公開と同じ条件（サブパスあり）で書き出せるところまで確かめる
       - name: 静的ビルド

@@ -70,6 +70,28 @@ export async function getPhotos(beanIds) {
   return out;
 }
 
+/* 写真の鍵を付け替える。豆番号が変わったときに、記録と一緒に連れていく。
+   写真は beanId を鍵にしているので、記録だけ付け替えると写真が迷子になる。 */
+export async function movePhotos(plan) {
+  if (!Array.isArray(plan) || !plan.length) return 0;
+  let n = 0;
+  try {
+    await tx("readwrite", (s) => {
+      for (const { from, to } of plan) {
+        const r = s.get(String(from));
+        r.onsuccess = () => {
+          if (!r.result) return;                 // 写真の無い記録は何もしない
+          s.put(r.result, String(to));
+          s.delete(String(from));
+          n += 1;
+        };
+      }
+      return null;
+    });
+  } catch {}
+  return n;
+}
+
 export async function deletePhoto(beanId) {
   try { await tx("readwrite", (s) => s.delete(String(beanId))); } catch {}
 }

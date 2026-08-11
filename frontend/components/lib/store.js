@@ -133,6 +133,27 @@ export function upsertTasting(rec) {
   return list;
 }
 
+/* 昔の豆番号で残っている記録を、新しい番号に付け替える。
+   番号だけを差し替え、評価もメモも飲んだ日もそのまま残す。
+   どれを付け替えるかは lib/relink.js が決める（ここは書き込むだけ）。 */
+export function applyRelink(plan) {
+  if (!Array.isArray(plan) || !plan.length) return 0;
+  const list = getTastings();
+  const to = new Map(plan.map((p) => [p.from, p.to]));
+  let n = 0;
+  const next = list.map((t) => {
+    const dst = to.get(t.beanId);
+    if (dst === undefined) return t;
+    n += 1;
+    /* updatedAt は動かさない。ここで今の時刻にすると、付け替えただけの記録が
+       クラウド上の新しい記録に勝ってしまい、他の端末で直した内容を巻き戻す。 */
+    return { ...t, beanId: dst };
+  });
+  if (!n) return 0;
+  writeOrThrow(tasteKey(), next);
+  return n;
+}
+
 /* 消す。消したことも残す。
    墓標が無いと、クラウドには消す前の行が残ったままなので、
    次の同期でそれを取り込んで復活してしまう（実際に復活していた）。 */

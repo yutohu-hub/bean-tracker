@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import re
 import datetime
+import hashlib
 import sys
 from pathlib import Path
 
@@ -230,6 +231,59 @@ def _origin_or_unknown(p: dict) -> str:
     return "ブレンド" if _BLEND_WORD.search(text) else "不明"
 
 
+# 豆の番号は 10億台から始める。それより小さい番号は、
+#   1〜99999      手で確認した種の豆(seedBeans)
+#   100000〜      昔の「上から順に振っていた」番号
+# なので、番号を見ただけでどちらの世代か分かる。表示側の付け替えがこれを見る。
+ID_BASE = 1_000_000_000
+ID_SPAN = 9_000_000_000_000        # JS の安全な整数(2^53)に十分収まる
+
+
+def bean_id(key: str, salt: int = 0) -> int:
+    """商品の key（roaster::handle）から、変わらない番号を作る。
+
+    ■ なぜ要るのか
+
+    前は 100000 から順に振っていた。並びは
+    `SELECT * FROM products ORDER BY last_seen DESC` が決めていて、
+    巡回のたびに変わる。つまり **同じ番号が翌時間には別の豆を指していた**。
+
+    味の記録は beanId だけで豆に結び付いている（store.js の getTasting）。
+    番号がずれると、自分が付けた評価・メモ・写真が別の豆に付いて見える。
+    写真も IndexedDB で beanId を鍵にしているので一緒にずれる。
+    共有リンク(?b=) も別の豆を開く。
+
+    実測: 手元の6件で並びを1つずらしただけで、4件が別の豆を指した。
+
+    ■ key を種にする理由
+
+    key は state.db の主キーで、店の名前と商品の handle から作る。
+    商品が増えても減っても、他の豆の key は動かない。
+    """
+    h = hashlib.sha1(f"{key}#{salt}".encode("utf-8")).digest()
+    return ID_BASE + int.from_bytes(h[:6], "big") % ID_SPAN
+
+
+def assign_bean_ids(products: list[dict]) -> dict:
+    """key → 番号 の対応を作る。
+
+    ぶつかったときのために key の順に並べてから振る。こうしておくと、
+    ぶつかった組み合わせが同じなら、何度作り直しても同じ結果になる。
+    （8千件を9兆通りに振るので、ぶつかる見込みは百万分の4ほど）
+    """
+    used: dict = {}
+    out: dict = {}
+    for key in sorted({p.get("key") or "" for p in products if p.get("key")}):
+        salt = 0
+        bid = bean_id(key)
+        while bid in used:
+            salt += 1
+            bid = bean_id(key, salt)
+        used[bid] = key
+        out[key] = bid
+    return out
+
+
 def first_seen_date(p: dict, fallback: str) -> str:
     """その豆を初めて見つけた日（YYYY-MM-DD）。
 
@@ -351,7 +405,8 @@ def main() -> None:
     for p in data.get("products", []):
         by_roaster.setdefault(p.get("roaster") or "Unknown", []).append(p)
 
-    bid = 100000
+    # 番号は key から決める。並び順には一切よらない（よると巡回のたびにずれる）
+    ids = assign_bean_ids(data.get("products", []))
     today = datetime.date.today().isoformat()
     # 豆名の重複判定用（日本語も残すため、区切り記号だけ除去）
     bnorm = lambda s: re.sub(r"[\s　_\-\[\]（）()／/|、。,.:：!！’'\"]", "", (s or "").lower())
@@ -405,7 +460,11 @@ def main() -> None:
 
         for i, p in enumerate(prods):
             grams = int(p.get("grams") or 0)
-            col, acc = PAL[(bid) % len(PAL)]
+            bid = ids.get(p.get("key") or "")
+            if bid is None:                # key の無い商品は番号を作れないので出さない
+                continue
+            # 袋の色も番号から決める。番号が変わらないので、同じ豆は毎回同じ色になる
+            col, acc = PAL[bid % len(PAL)]
             seen = first_seen_date(p, today)
             bean = {
                 "id": bid, "r": key, "name": p.get("title") or "Lot",
@@ -460,7 +519,6 @@ def main() -> None:
             if _is_cgle(title, bean["origin"]):
                 bean["cgle"] = True
             beans.append(bean)
-            bid += 1
 
     report_all_goods(all_goods)
     drop_impossible_prices(beans)
