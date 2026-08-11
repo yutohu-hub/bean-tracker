@@ -122,6 +122,10 @@ class Product:
     process: str
     tags: str
     notes: str = ""
+    # 店が product_type / tags に「これはコーヒーだ」と書いていたか。
+    # "c" = 書いてある / "" = 何も書いていない。
+    # 表示側はこれを見て、名前からの当て推量の規則を使うかどうかを決める。
+    kind: str = ""
     # 店の所在地。地球儀の点はここから決まる。国コードしか無いと、
     # 同じ国の店が全部1点に重なる（実際、米国の10軒はカンザスに固まっていた）。
     city: str = ""
@@ -373,6 +377,37 @@ _NOT_COFFEE_TAG = ("classes", "class", "workshop", "training", "artwork", "art",
                    "merch", "equipment", "hardware", "machines")
 
 
+def shop_says(p: dict) -> str:
+    """店の申告を1文字で返す。
+
+      "c"  コーヒーだと書いてある（product_type / tags）
+      "x"  コーヒーでないと書いてある
+      ""   何も書いていない
+
+    店の申告は「コーヒーでない」ことの証明には強いが、「これは豆だ」ことの
+    証明には弱い。"Coffee" にはカプセルもギフト箱も粉も入るため。
+    だから "c" は「落としてよい」ではなく「名前から当てるのをやめてよい」の合図。
+    """
+    ptype = (p.get("product_type") or "").strip().lower()
+    tags = p.get("tags") or []
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.split(",")]
+    low = {str(t).strip().lower() for t in tags}
+    if low & set(_NOT_COFFEE_TAG):
+        return "x"
+    if not ptype:
+        return ""
+    if ptype in _COFFEE_EXACT:
+        return "c"
+    if any(x in ptype for x in _HARD_NOT_COFFEE):
+        return "x"
+    if any(w in ptype for w in _COFFEE_WORD):
+        return "c"
+    if any(x in ptype for x in _SOFT_NOT_COFFEE):
+        return "x"
+    return ""
+
+
 def _looks_like_coffee(p: dict) -> bool:
     """店が書いた種類とタグを見て、豆かどうかを決める。
 
@@ -547,7 +582,7 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
                 available=bool(avail_vs),
                 origin=_guess_origin(text) or _guess_origin(deep),
                 process=_guess_process(text) or _guess_process(deep),
-                tags=text[:300], notes=notes,
+                tags=text[:300], notes=notes, kind=shop_says(p),
                 city=place.get("city", ""), province=place.get("province", ""),
             ))
         if len(batch) < 250:

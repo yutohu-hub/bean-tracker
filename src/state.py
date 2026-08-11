@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS products (
   available INTEGER,
   origin TEXT, process TEXT, tags TEXT, notes TEXT,
   city TEXT, province TEXT,
+  kind TEXT,
   first_seen REAL, last_seen REAL,
   last_status_change REAL
 );
@@ -33,7 +34,9 @@ def open_db(path: str) -> sqlite3.Connection:
         con.execute("ALTER TABLE products ADD COLUMN notes TEXT")
         con.commit()
     # 店の所在地。地球儀の点をこれで置く。
-    for col in ("city", "province"):
+    # kind = 店が「これはコーヒーだ」と書いていたか（表示側が名前からの当て推量を
+    # 使うかどうかの判断に使う）。
+    for col in ("city", "province", "kind"):
         if col not in cols:
             con.execute(f"ALTER TABLE products ADD COLUMN {col} TEXT")
     con.commit()
@@ -64,13 +67,14 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
                 """INSERT INTO products
                    (key, roaster, country, title, url, image,
                     price, currency, grams, per100, available,
-                    origin, process, tags, notes, city, province,
+                    origin, process, tags, notes, city, province, kind,
                     first_seen, last_seen, last_status_change)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (p["key"], p["roaster"], p["country"], p["title"], p["url"], p["image"],
                  p["price"], p["currency"], p["grams"], p["per100"],
                  int(p["available"]), p["origin"], p["process"], p["tags"],
                  p.get("notes") or "", p.get("city") or "", p.get("province") or "",
+                 p.get("kind") or "",
                  now, now, now))
             if p["available"]:
                 con.execute("INSERT INTO events (key,type,ts,oos_hours) VALUES (?,?,?,?)",
@@ -95,13 +99,13 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
         con.execute(
             """UPDATE products SET roaster=?,country=?,title=?,url=?,image=?,
                price=?,currency=?,grams=?,per100=?,available=?,origin=?,process=?,tags=?,notes=?,
-               city=?, province=?,
+               city=?, province=?, kind=?,
                last_seen=?, last_status_change=CASE WHEN available!=? THEN ? ELSE last_status_change END
                WHERE key=?""",
             (p["roaster"], p["country"], p["title"], p["url"], p["image"],
              p["price"], p["currency"], p["grams"], p["per100"], int(is_available),
              p["origin"], p["process"], p["tags"], p.get("notes") or "",
-             p.get("city") or "", p.get("province") or "", now,
+             p.get("city") or "", p.get("province") or "", p.get("kind") or "", now,
              int(is_available), now, p["key"]))
 
     con.commit()

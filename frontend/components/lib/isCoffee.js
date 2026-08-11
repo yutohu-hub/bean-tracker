@@ -1,7 +1,7 @@
 // 巡回クローラが各ECから取り込む商品には、コーヒー豆以外（サブスク・器具・マグ・
 // ミルク・ギフト券・イベント等）が混ざる。豆だけを図鑑に残すための判定。
 // 精製・焙煎の記述（"Washed Filter" / "Espresso" 等）はコーヒーなので除外しない。
-const NON_COFFEE = [
+const FORM_NOT_COFFEE = [
   /subscription|サブスク|定期便|頒布会/,
   // karta podarunkowa = ポーランド語のギフトカード
   /gift ?card|ギフトカード|ギフト券|商品券|\bvoucher\b|e-?gift|gift ?set|ギフトセット|karta ?podarunkowa/,
@@ -111,7 +111,22 @@ const NON_COFFEE = [
   // 英語：家で淹れる本・講座、ガイド本
   /\bat home\b|coffee guide|brew ?guide|debattbok/,
 
-  /* ── ここから下は、100gあたりの値段の両端を見て見つけたもの ──
+];
+
+/* ── ここから下は「名前からの当て推量」──────────────────────────────
+   上の FORM は「形が豆でない」もの（カプセル・ギフト箱・器具・定期便…）で、
+   店が何と言おうと図鑑に載せない。だから常に見る。
+
+   こちらは商品名の綴りから何なのかを当てているだけで、当たり外れがある。
+   実際、次の本物の豆を巻き添えにしかけた（どれも一度は落ちた）:
+     "Mwendi Wega"（ケニアの水洗工場）  "キッサブレンド"（サブレが入っている）
+     "Coffee & Tea"（tea が入っている）  "Filter"（フィルター用の焙煎）
+
+   店が product_type に「コーヒーだ」と書いている商品には、こちらは使わない。
+   店の申告のほうが確かで、言語にも左右されないため。 */
+const GUESS_NOT_COFFEE = [
+
+  /* ── 100gあたりの値段の両端を見て見つけたもの ──
      一覧は安い順に並ぶので、豆でないものが混ざると先頭を占領する。
      値段そのものは判定に使えない（香港やフィリピンには ¥170/100g の本物の豆があり、
      オークションロットには $3,600/100g の本物がある）。
@@ -308,12 +323,35 @@ const NON_COFFEE = [
   /filter ?baskets?/,
 ];
 
-// コーヒー豆（＝図鑑に載せる）なら true
+/* コーヒー豆（＝図鑑に載せる）なら true。
+ *
+ * ■ 判断の順番
+ *
+ *   1. FORM        形が豆でないもの。店が何と言おうと載せない
+ *   2. 店の申告     bean.kind === "c" なら、ここで通す
+ *   3. GUESS       店が何も言っていないときだけ、名前から当てる
+ *
+ * ■ なぜ店の申告を挟むのか
+ *
+ * 店は product_type に「これはコーヒーだ」と書いてくれている（巡回が読んで
+ * kind として運んでくる。src/crawler.py の shop_says）。それは商品名の綴りより
+ * 確かで、言語にも左右されない。
+ *
+ * ただし店の "Coffee" には、カプセルもギフト箱も粉も入る。だから
+ * 「コーヒーでない」ことの証明には強いが、「これは豆だ」の証明には弱い。
+ * そこで FORM は素通しにせず、GUESS だけを免除する。
+ *
+ * この形にする前は、名前からの当て推量が本物の豆を消していた
+ * （"Mwendi Wega"・"キッサブレンド"・"Coffee & Tea"・"Filter"）。
+ * 店が豆だと言っているものは、もうその巻き添えに遭わない。
+ */
 export function isCoffeeBean(bean) {
   const raw = (bean && bean.name) || "";
   const n = raw.replace(/&#8211;/g, "-").replace(/&#038;/g, "&").replace(/&amp;/g, "&").toLowerCase();
   if (/cup of excellence|\bcoe\b/.test(n)) return true; // COEはコーヒー
-  return !NON_COFFEE.some((re) => re.test(n));
+  if (FORM_NOT_COFFEE.some((re) => re.test(n))) return false;
+  if (bean && bean.kind === "c") return true;             // 店が「コーヒー」と書いている
+  return !GUESS_NOT_COFFEE.some((re) => re.test(n));
 }
 
 // 内容量を g に換算（"250g" / "12oz" / "1000g"）

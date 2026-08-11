@@ -107,6 +107,24 @@ const COFFEE = [
   "Sage & Citrus Blend",                           // sage は風味の語でもある
 ];
 
+/* 店が product_type に「コーヒー」と書いている商品（kind="c"）。
+   名前からの当て推量は使わないが、形の規則は残る。 */
+const SHOP_SAYS_COFFEE = [
+  // 当て推量に当たっていた名前でも、店が豆だと言っているなら残る
+  ["Mwendi Wega", true, "ケニアの水洗工場。Wega はマシン名でもある"],
+  ["キッサブレンド", true, "キッ・サブレ・ンド にサブレが入っている"],
+  ["Studio", true, "Tiong Hoe のマシンと同じ名前だが、店が豆だと言っている"],
+  ["Ona", true, "Four Barrel の絵と同じ名前"],
+  ["8oz Joco Mint", true, "Joco はカップの銘柄だが、店の申告が優先"],
+  // 形が豆でないものは、店が何と言おうと載せない
+  ["Birchwood Blend EcoPod™", false, "カプセル"],
+  ["台灣精品咖啡禮盒｜冰雪白", false, "ギフト箱"],
+  ["Coffee Subscription", false, "定期便"],
+  ["ドリップバッグ 5個入", false, "ドリップバッグ"],
+  ["Raw Green Coffee - Colombia", false, "生豆"],
+  ["Espresso Machine Linea Mini", false, "マシン"],
+];
+
 let ng = 0;
 for (const name of NOT_COFFEE) {
   if (isCoffeeBean({ name })) { console.log(`✗ 豆でないのに通っている: ${name}`); ng++; }
@@ -114,8 +132,16 @@ for (const name of NOT_COFFEE) {
 for (const name of COFFEE) {
   if (!isCoffeeBean({ name })) { console.log(`✗ 豆なのに落ちている: ${name}`); ng++; }
 }
+for (const [name, want, why] of SHOP_SAYS_COFFEE) {
+  const got = isCoffeeBean({ name, kind: "c" });
+  if (got !== want) {
+    console.log(`✗ 店が「コーヒー」と書いているのに ${got ? "通した" : "落とした"}: ${name}（${why}）`);
+    ng++;
+  }
+}
 if (ng) {
   console.log(`\n★ ${ng} 件おかしい。isCoffee.js に足した語が広すぎるか、狭すぎる。`);
   process.exit(1);
 }
-console.log(`豆でないもの ${NOT_COFFEE.length} 件・豆 ${COFFEE.length} 件、すべて期待どおり。`);
+console.log(`豆でないもの ${NOT_COFFEE.length} 件・豆 ${COFFEE.length} 件`
+  + `・店の申告つき ${SHOP_SAYS_COFFEE.length} 件、すべて期待どおり。`);

@@ -421,6 +421,10 @@ def main() -> None:
                 # first_seen は state.db が持っている（export_for_site が SELECT * で返す）。
                 "color": col, "accent": acc, "year": seen[:4], "updatedAt": seen,
             }
+            # 店が「これはコーヒーだ」と書いていた印。表示側はこれを見て、
+            # 名前からの当て推量の規則を使うかどうかを決める（components/lib/isCoffee.js）。
+            if p.get("kind") == "c":
+                bean["kind"] = "c"
             if p.get("image"):
                 bean["img"] = p["image"]
             # 商品ページのURL。これが無いと「買う」ボタンが店内検索止まりになり、
