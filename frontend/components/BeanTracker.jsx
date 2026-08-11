@@ -85,6 +85,7 @@ export default function BeanTracker() {
   const [autoCols, setAutoCols] = useState(4); // 画面幅から決まる列数
   const [zukanMode, setZukanMode] = useState("beans"); // beans | roasters
   const [meTab, setMeTab] = useState("log"); // マイページ内: log | premium
+  const [beanIds, setBeanIds] = useState([]); // 人から送られてきた「好きな豆」の並び
   const [legendOpen, setLegendOpen] = useState(false); // 色の凡例を開いているか
   const [filtersOpen, setFiltersOpen] = useState(false); // 絞り込みを開いているか
   const [tabsOverflow, setTabsOverflow] = useState(false); // タブが画面に収まらないか
@@ -161,6 +162,7 @@ export default function BeanTracker() {
     if (u.status) setStatusF(u.status);
     if (u.sortBy) setSortBy(u.sortBy);
     if (u.meTab) setMeTab(u.meTab);
+    setBeanIds(Array.isArray(u.beanIds) ? u.beanIds : []);
     // 豆は id から実体を引く。消えた豆のリンクを踏んでも落ちないよう存在確認する
     setOpen(u.bean ? BEANS.find((b) => b.id === u.bean) || null : null);
   };
@@ -179,7 +181,7 @@ export default function BeanTracker() {
   const urlState = () => ({
     view, bean: open ? open.id : null, roaster: roasterId,
     roasterTab, process: view === "process" ? procKey : null,
-    query, origin, status: statusF, sortBy, meTab,
+    query, origin, status: statusF, sortBy, meTab, beanIds,
   });
   const navWroteRef = useRef(false);
   const filterWroteRef = useRef(false);
@@ -322,6 +324,16 @@ export default function BeanTracker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [origin, statusF, priceF, processF, query, sortBy, fxVersion]);
 
+  /* 人から送られてきた「好きな豆」の一覧。URLに ?bs=... が付いているときだけ働く。
+     送り手が並べた順のまま出す。おすすめは順番にも意味があるため。
+     すでに売り切れた豆や図鑑から消えた豆は、ここで静かに落ちる。 */
+  const sharedBeans = useMemo(() => {
+    if (!beanIds.length) return [];
+    const byId = new Map(BEANS.map((b) => [b.id, b]));
+    return beanIds.map((id) => byId.get(id)).filter(Boolean);
+  }, [beanIds]);
+  const shownBeans = beanIds.length ? sharedBeans : filtered;
+
   const nowCountByRoaster = useMemo(() => countNowByRoaster(BEANS), []);
   const filteredRoasters = useMemo(
     () => filterRoasters(ROASTERS, nowCountByRoaster, { query }),
@@ -334,7 +346,7 @@ export default function BeanTracker() {
   const effCols = autoCols;
   const perPage = effCols * ROWS_PER_PAGE;
   const gridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: effCols >= 5 ? 8 : 10, marginTop: 12 };
-  const activeList = zukanMode === "roasters" ? filteredRoasters : filtered;
+  const activeList = zukanMode === "roasters" ? filteredRoasters : shownBeans;
   const pageCount = Math.max(1, Math.ceil(activeList.length / perPage));
   const curPage = Math.min(page, pageCount - 1);
   const pageItems = activeList.slice(curPage * perPage, curPage * perPage + perPage);
@@ -502,7 +514,29 @@ export default function BeanTracker() {
           <>
             {/* 操作系は640pxに集約（グリッドはワイド） */}
             <div style={{ maxWidth: 640, margin: "0 auto" }}>
-            {/* 表示切替：豆 / ロースター */}
+            {/* 人から送られてきた「好きな豆」を開いたとき。
+                そうと分からないまま図鑑が数件しかない画面に見えると、
+                壊れていると思われる。何を見ているのかを最初に書く。 */}
+            {beanIds.length > 0 && (
+              <div style={{ border: `1px solid ${INK}`, borderRadius: 10, padding: "12px 14px", marginBottom: 12, background: PAPER }}>
+                <div style={{ fontSize: FS.body, fontWeight: 700, color: INK }}>
+                  おすすめされた豆 {sharedBeans.length}件
+                </div>
+                {sharedBeans.length < beanIds.length && (
+                  <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
+                    {beanIds.length - sharedBeans.length}件は、いまの図鑑にありません（売り切れて外れた可能性があります）。
+                  </div>
+                )}
+                <button onClick={() => setBeanIds([])}
+                  style={{ marginTop: 8, background: "none", border: "none", padding: 0, cursor: "pointer",
+                    fontSize: FS.meta, color: INK, textDecoration: "underline", textUnderlineOffset: 2 }}>
+                  図鑑をすべて見る
+                </button>
+              </div>
+            )}
+            {/* 表示切替：豆 / ロースター。送られた一覧のときは出さない
+                （絞り込みや並び替えは、送り手が並べた順を壊すだけで役に立たない） */}
+            {beanIds.length === 0 && (<>
             <div style={{ display: "inline-flex", border: `1px solid ${INK}`, borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
               {[["beans", "豆"], ["roasters", "ロースター"]].map(([k, l]) => (
                 <button key={k} onClick={() => setZukanMode(k)}
@@ -598,6 +632,7 @@ export default function BeanTracker() {
               ))}
               <div style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, alignSelf: "center" }}>{/* アーカイブはロースターのカードが並ぶため、枚数と件数が食い違って見えないよう軒数も出す */}{statusF === "archive" ? `${Object.keys(archiveByRoaster).length} 店 / ${archiveBeans.length} 銘柄` : `${filtered.length} 銘柄`}</div>
             </div>
+            </>)}
             {/* 色の凡例（精製方法／レア）。
                 7つで2行を占め、操作系と豆の間に常に居座っていた。画面の狭い端末では、
                 この2行のぶんだけ豆が下に押し出される。一度読めば足りる説明なので、
@@ -693,8 +728,12 @@ export default function BeanTracker() {
                 <div style={gridStyle}>
                   {pageItems.map((b) => <BeanCard key={b.id} bean={b} onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} />)}
                 </div>
-                {filtered.length === 0 && (
-                  <div style={{ textAlign: "center", color: GRAY, fontSize: FS.body, padding: "50px 0" }}>該当する豆がありません。フィルタを変えてみてください。</div>
+                {shownBeans.length === 0 && (
+                  <div style={{ textAlign: "center", color: GRAY, fontSize: FS.body, padding: "50px 0" }}>
+                    {beanIds.length
+                      ? "送られた豆は、いまの図鑑では見つかりませんでした。売り切れて図鑑から外れたのかもしれません。"
+                      : "該当する豆がありません。フィルタを変えてみてください。"}
+                  </div>
                 )}
                 {pagerEl}
               </>

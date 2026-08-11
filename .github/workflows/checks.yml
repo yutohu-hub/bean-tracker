@@ -95,6 +95,11 @@ jobs:
         working-directory: .
         run: node tests/test_relink.mjs
 
+      # 好きな豆をまとめて送るリンク。壊れると相手の手元で起き、送った側は気づけない
+      - name: まとめリンクのURL
+        working-directory: .
+        run: node tests/test_url_beans.mjs
+
       # 公開と同じ条件（サブパスあり）で書き出せるところまで確かめる
       - name: 静的ビルド
         env:

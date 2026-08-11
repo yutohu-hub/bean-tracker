@@ -12,6 +12,7 @@ import { Portfolio } from "../ui/Portfolio";
 import { PhotoPicker } from "../ui/PhotoPicker";
 import { PrintSheet } from "../ui/PrintSheet";
 import { savePhotoDataUrl, deletePhoto, getPhotos } from "../lib/photos";
+import { shareUrl, MAX_SHARED_BEANS } from "../lib/urlState";
 
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
 const validEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s || "").trim());
@@ -62,6 +63,7 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [printPhotos, setPrintPhotos] = useState(null);
   const [printing, setPrinting] = useState(false);
   const [printHint, setPrintHint] = useState("");
+  const [favMsg, setFavMsg] = useState("");        // 好きな豆のリンクをコピーしたとき
 
   /* 「PDFとして保存」の選び方は端末で言葉が違う。どこを押せばいいのか
      書いていないと、印刷の画面が出たところで止まってしまう。
@@ -97,6 +99,36 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
     setForm({ name: "", roaster: "", origin: "", rating: 0, notes: "", photo: null });
     setShowAdd(false);
     refresh();
+  };
+
+  /* 好きな豆をまとめて送る。
+     1本のリンクに豆の番号を並べ、開くとその一覧が出る。
+
+     これまでは豆を1つずつ送るしかなく、10個好きな豆があれば10回送っていた。
+
+     送れるのは図鑑にある豆だけ。手で足した記録（負の番号）は相手の図鑑に
+     無いので入れない。番号は key から作っていて巡回しても動かないので、
+     送ったリンクは後から別の豆を指したりしない。 */
+  const favIds = list
+    .filter((t) => Number(t.rating) >= 4 && Number(t.beanId) > 0)
+    // 評価の高い順、同じなら新しく飲んだ順。上限で切れるとき、上に来るものが残る
+    .sort((a, b) => Number(b.rating) - Number(a.rating) || Number(b.at || 0) - Number(a.at || 0))
+    .map((t) => t.beanId)
+    .slice(0, MAX_SHARED_BEANS);
+
+  const shareFavs = async () => {
+    if (!favIds.length) return;
+    const url = shareUrl({ beanIds: favIds });
+    const title = `好きなコーヒー豆 ${favIds.length}件`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try { await navigator.share({ title, text: title, url }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setFavMsg("リンクをコピーしました");
+    } catch { setFavMsg("コピーできませんでした"); return; }
+    setTimeout(() => setFavMsg(""), 2000);
   };
 
   /* PDFに入る写真の枚数。写真は豆ごとに1枚なので、記録の数とは一致しない
@@ -535,6 +567,24 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
                 ))}
             </div>
           </div>
+          {/* 好きな豆をまとめて送る。★4以上に絞っているときだけ出す。
+              1つずつ送ると、好きな豆が10個あれば10回送ることになっていた。 */}
+          {onlyFav && favIds.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <button onClick={shareFavs}
+                style={{ width: "100%", padding: "11px 0", background: INK, color: PAPER, border: "none",
+                  borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer" }}>
+                この{favIds.length}件をまとめて送る
+              </button>
+              <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 6 }}>
+                受け取った人は、この{favIds.length}件だけが並んだ図鑑が開きます。
+                {favCount > favIds.length && (
+                  <>（手で足した記録は、相手の図鑑に無いので入りません）</>
+                )}
+              </div>
+              {favMsg && <div style={{ fontSize: FS.meta, color: GREEN, marginTop: 6 }}>{favMsg}</div>}
+            </div>
+          )}
           {(showAll ? shown : shown.slice(0, 8)).map((t) => (
             <div key={t.beanId} style={{ borderBottom: `1px solid ${LINE}`, padding: "12px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
