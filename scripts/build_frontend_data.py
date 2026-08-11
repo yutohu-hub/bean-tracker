@@ -81,6 +81,12 @@ _NONCOFFEE = re.compile("|".join([
     # 英語：単数形や言い回しの揺れで漏れていたもの
     r"\bsocks?\b", r"\bumbrella\b", r"\bcloth filters?\b", r"carrying case", r"\bcase\b\s*$", r"\btamp(ing)?\s?mat\b",
     r"\bat home\b", r"coffee guide", r"brew\s?guide", r"debattbok",
+    # 雑貨中心の店（No Coffee）。ブランド名で売る雑貨・WALLMUG のような続き字・ℓ 表記
+    r"\bnalgene\b", r"\bhelinox\b", r"\bklean ?kanteen\b", r"\bhydro ?flask\b", r"\bstanley\b",
+    r"mugs?(?![a-z])", r"\d+(\.\d+)?\s?(ℓ|リットル)",
+    r"フィギュア", r"キーチェーン", r"キーリング", r"ウォレット", r"ニットバッグ", r"トートバッグ", r"プレート", r"マグネット", r"ピンバッジ", r"パスケース",
+    # "table" は "The Cupping Table" のような豆名に当たるので入れない
+    r"\bwallet\b", r"\bpolo\b", r"\bgolf\b", r"\btour ?tee\b", r"\bcushion\b", r"\bblanket\b", r"\bchair\b",
     # 100gあたりの値段の両端を見て見つけたもの（scripts/price_outliers.mjs）。
     # 一覧は安い順に並ぶので、豆でないものが混ざると先頭を占領する。
     r"payment\s?method", r"ipay88", r"checkout\+", r"pay-?it-?forward", r"carbon removal", r"gogenerosity",
@@ -349,9 +355,13 @@ def main() -> None:
     today = datetime.date.today().isoformat()
     # 豆名の重複判定用（日本語も残すため、区切り記号だけ除去）
     bnorm = lambda s: re.sub(r"[\s　_\-\[\]（）()／/|、。,.:：!！’'\"]", "", (s or "").lower())
+    all_goods: list = []      # 1件も豆が残らなかった店（雑貨だけを売っている疑い）
     for rname, prods in by_roaster.items():
         # 豆以外（器具・グッズ・ティー・RTD・業務用 等）を除外して整理整頓
+        before = len(prods)
         prods = [p for p in prods if is_coffee(p.get("title"), int(p.get("grams") or 0))]
+        if before >= 5 and not prods:
+            all_goods.append((rname, before))
         # 同一ロースター内の同名の豆（filter/espresso違い・再掲など）を1件に。now/在庫ありを優先
         prods.sort(key=lambda p: 0 if (p.get("status") == "now" or p.get("available")) else 1)
         seen_names, uniq = set(), []
@@ -452,6 +462,7 @@ def main() -> None:
             beans.append(bean)
             bid += 1
 
+    report_all_goods(all_goods)
     drop_impossible_prices(beans)
     OUT.write_text(json.dumps({"roasters": roasters, "beans": beans}, ensure_ascii=False), encoding="utf-8")
     print(f"live overlay: {len(roasters)} new roasters, {len(beans)} beans -> {OUT.relative_to(ROOT)}")
@@ -465,6 +476,27 @@ _FX = {"JPY": 1, "USD": 150, "EUR": 165, "GBP": 195, "AUD": 100, "CAD": 108, "NZ
        "ISK": 1.1, "CHF": 185, "PLN": 41, "CZK": 6.8, "HUF": 0.43, "BRL": 27, "MXN": 8.3,
        "COP": 0.037, "CRC": 0.29, "ZAR": 8.2, "ETB": 1.25, "KES": 1.15, "RWF": 0.11,
        "AED": 41, "TRY": 3.75, "PEN": 40, "GTQ": 19.5, "SAR": 40, "ILS": 40}
+
+
+def report_all_goods(shops: list) -> None:
+    """商品はあるのに、豆が1件も残らなかった店を出す。
+
+    実例: No Coffee（福岡）は雑貨中心の店で、図鑑に13件出していたが
+    その全部がフィギュア・財布・椅子・水筒・マグで、豆は1件も無かった。
+    これに気づいたのは利用者からの画面写真で、こちらの仕組みは何も言っていなかった。
+
+    1件も豆が残らないのは、たいてい次のどちらか。
+      - その店が雑貨中心で、そもそも巡回対象に向いていない
+      - 豆はあるのに、こちらの取り方が間違っている（取りこぼし）
+    どちらも人が見て決めることなので、止めずに知らせるだけにする。
+    """
+    if not shops:
+        return
+    print(f"★ 商品はあるのに豆が1件も残らなかった店: {len(shops)}軒")
+    for name, n in sorted(shops, key=lambda x: -x[1]):
+        print(f"    {name}（商品{n}件）")
+    print("    雑貨中心の店なら config/roasters.yaml から外す。"
+          "豆があるのに残らないなら取りこぼし。")
 
 
 def _per100(b: dict) -> float:

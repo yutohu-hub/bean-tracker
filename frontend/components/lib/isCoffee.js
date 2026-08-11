@@ -111,6 +111,23 @@ const FORM_NOT_COFFEE = [
   // 英語：家で淹れる本・講座、ガイド本
   /\bat home\b|coffee guide|brew ?guide|debattbok/,
 
+  /* 雑貨中心の店。No Coffee（福岡）は図鑑に13件出していて、その全部が
+     フィギュア・キーチェーン・財布・ポロシャツ・椅子・水筒・マグで、
+     豆は1件も無かった。落ちなかった理由は3つあり、どれも型が同じ。
+
+       NALGENE / Helinox   … 器具ではなく「雑貨のブランド名」で売っている
+       WALLMUG             … mug の前に文字が続くので \bmug に当たらない
+       1ℓ / 0.5ℓ           … 容量が mL ではなく ℓ
+
+     いずれも「形が豆でない」ので、店が何と言おうと載せない。 */
+  /\bnalgene\b|\bhelinox\b|\bklean ?kanteen\b|\bhydro ?flask\b|\bstanley\b/,
+  /mugs?(?![a-z])/,
+  /\d+(\.\d+)?\s?(ℓ|リットル)/,
+  /フィギュア|キーチェーン|キーリング|ウォレット|ニットバッグ|トートバッグ|プレート|マグネット|ピンバッジ|パスケース/,
+  /* "table" は "The Cupping Table" のような豆の名前に当たるので入れない。
+     椅子は Helinox でも拾えるが、他店にも出うるので語でも持つ。 */
+  /\bwallet\b|\bpolo\b|\bgolf\b|\btour ?tee\b|\bcushion\b|\bblanket\b|\bchair\b/,
+
 ];
 
 /* ── ここから下は「名前からの当て推量」──────────────────────────────
