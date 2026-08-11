@@ -147,6 +147,23 @@ async def run(shops: list) -> None:
                                       min(14, len(kept_undeclared))):
             print(f"      {shop:<14} {title}")
 
+    # 実際に入れた門で、取り込みが今とどう変わるかを出す。
+    # 規則を選ぶ話とは別に、「今日の巡回で何が消えるか」を見ないと踏み切れない。
+    print(f"\n{'=' * 74}\n■ いま入っている門（has_bean_evidence）で、取り込みがどう変わるか")
+    old = [(s, t) for s, t, m, d, o in rows if o]
+    now, newly_cut = [], []
+    for shop, title, m, declared, o in rows:
+        gate = bool(m & set(STRONG)) or declared
+        if gate and o:
+            now.append((shop, title))
+        elif o and not gate:
+            newly_cut.append((shop, title))
+    print(f"  これまでの取り込み {len(old)} 件 → これから {len(now)} 件"
+          f"（{len(newly_cut)} 件 減る）")
+    print("  新たに落ちるもの（20件を無作為に）:")
+    for shop, title in rnd.sample(newly_cut, min(20, len(newly_cut))):
+        print(f"      {shop:<14} {title}")
+
 
 def main() -> None:
     limit = int(sys.argv[1]) if len(sys.argv) > 1 else 0

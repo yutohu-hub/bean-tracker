@@ -35,9 +35,14 @@ ORIGIN_ALIASES: dict[str, tuple[str, ...]] = {
     "Colombia": ("colombia", "colombie", "kolumbien", "コロンビア", "哥倫比亞", "哥伦比亚",
                  "huila", "narino", "cauca", "tolima", "antioquia", "quindio", "risaralda",
                  "caldas", "pitalito", "planadas"),
+    # 水洗工場の名だけで売られる銘柄がある（"Mwendi Wega" に国名は無い）。
+    # "wega" 単独は入れない。同じ綴りのエスプレッソ機の銘柄があり、器具を
+    # ケニア産と読み違える。工場名は丸ごとで照合する。
     "Kenya": ("kenya", "kenia", "ケニア", "肯亞", "肯尼亚", "nyeri", "kirinyaga", "kiambu",
-              "muranga", "gichathaini", "karatina"),
-    "Panama": ("panama", "パナマ", "巴拿馬", "boquete", "volcan", "chiriqui", "hartmann"),
+              "muranga", "gichathaini", "karatina", "mwendi wega", "gatomboya", "kagumoini"),
+    # ゲイシャは農園名だけで売られることが多く、国名が名前に出ない
+    "Panama": ("panama", "パナマ", "巴拿馬", "boquete", "volcan", "chiriqui", "hartmann",
+               "esmeralda", "jaramillo", "elida", "janson", "finca deborah"),
     "Brazil": ("brazil", "brasil", "brasilien", "bresil", "ブラジル", "巴西",
                "cerrado", "mogiana", "sul de minas", "minas gerais", "mantiqueira"),
     "Peru": ("peru", "perou", "ペルー", "cajamarca", "chanchamayo", "amazonas"),
@@ -314,6 +319,9 @@ def _grams_from_text(text: str) -> int:
 
 # 失敗理由（HTTPステータス等）を店ごとに残し、ログで原因を追えるようにする。
 LAST_REASON: dict[str, str] = {}
+# 「豆である証拠が無い」で取らなかった数を店ごとに残す。
+# 落とした物は画面に出ないので、数字にしておかないと落としすぎに気づけない。
+LAST_DROPPED: dict[str, int] = {}
 
 
 # 実測: GitHub Actions のIPからは Shopify が 429 を返し続け、90秒待っても解消しない
@@ -491,6 +499,54 @@ def shop_says(p: dict) -> str:
     return ""
 
 
+def has_bean_evidence(p: dict) -> bool:
+    """豆である証拠がひとつでもあるか。無ければ取り込まない。
+
+    これが「足し算」の門。豆でないものの名前を数えるのをやめて、
+    豆である証拠のあるものだけを通す。
+
+    ■ なぜ引き算をやめたのか
+
+    「豆でないものを外す」やり方は、外す語を各国語ぶん書き続けることになる。
+    英語と日本語だけ書いていた時期に台湾の濾杯と膠囊が並び、語を広げると
+    今度は本物の豆（Mwendi Wega・キッサブレンド・Coffee & Tea）を巻き添えにした。
+    店が増えるたび、言語が増えるたびに漏れる。終わりが無い。
+
+    証拠を数えるやり方なら、まだ見たことのない言語の雑貨でも黙って落ちる。
+    ノルウェー語の水筒に産地も精製も品種も内容量も書かれていないからで、
+    「水筒」という語をこちらが知っている必要は無い。
+
+    ■ 通す条件（実データ5260件で6つの案を比べて選んだ）
+
+      商品名かタグに強い証拠がひとつでもある      … または
+      店が product_type に「コーヒー」と書いている
+
+    厳しい案（証拠2つ以上）も試したが、店が自分でコーヒーだと書いている商品を
+    739件も落とした。中に「オニバスブレンド」「シティローストブレンド」
+    「Seasonal Blend [200g]」のような本物の豆が混ざっていた。
+    落ちた豆は画面に出ないので、間違えても誰も気づけない。だから緩い側に寄せた。
+    この条件だと、店の申告がある商品はひとつも落ちない（実測0件）。
+
+    ■ ここで全部を決めようとしないこと
+
+    この門は「証拠が無い物」を止めるだけで、証拠がある物の中身までは見ない。
+    実測では "Origin Series Poster | Rwanda"（産地の語がある）や
+    "Earl Grey 1kg"（内容量がある）も通ってしまう。
+    それは名前を知っていれば外せるものなので、これまでどおり後段の
+    _looks_like_coffee と表示側の isCoffeeBean が受け持つ。
+    門は、名前を知りようがないものだけを担当する。
+    """
+    v = (p.get("variants") or [{}])[0]
+    tags = p.get("tags") or []
+    tagtext = " ".join(tags) if isinstance(tags, list) else str(tags)
+    grams_title = _grams_from_text(f"{v.get('title', '')} {p.get('title', '')}")
+    # 説明文と出荷重量は見ない。器具の説明文にも産地は出るし、Shopify の重量欄は
+    # 実測 86% の商品に値が入っていて何も分けられなかった（マグにも T シャツにもある）。
+    m = bean_markers(title=f"{p.get('title', '')} {tagtext}", body="",
+                     grams_field=0, grams_title=grams_title, kind=shop_says(p))
+    return bool(m & set(STRONG)) or "c" in m
+
+
 def _looks_like_coffee(p: dict) -> bool:
     """店が書いた種類とタグを見て、豆かどうかを決める。
 
@@ -612,6 +668,7 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
         except json.JSONDecodeError:
             currency = presentment
     products: list[Product] = []
+    no_evidence = 0          # 豆である証拠が無くて取らなかった数。ログに出す
     for page in range(1, max_pages + 1):
         resp, why = await _get_with_retry(client, f"{base}{path}",
                                           {"limit": 250, "page": page, **ask})
@@ -630,7 +687,13 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
         if not batch:
             break
         for p in batch:
-            # 店が自分で書いている「種類」と「タグ」で、豆でないものを外す
+            # 1. 豆である証拠が無いものは取らない（足し算の門）。
+            #    ここで落ちるのは、こちらが名前を知らない雑貨・器具。
+            if not has_bean_evidence(p):
+                no_evidence += 1
+                continue
+            # 2. 店が自分で「豆ではない」と書いているものを外す（引き算）。
+            #    証拠はあるが豆ではないもの（講座・器具）はここで落ちる。
             if not _looks_like_coffee(p):
                 continue
             variants = p.get("variants", [])
@@ -670,6 +733,10 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
             ))
         if len(batch) < 250:
             break
+    # 門で落とした数を残す。取れた数だけ見ていると「落としすぎ」に気づけない。
+    # 落ちた物は画面に出ないので、この数字が唯一の手がかりになる。
+    if no_evidence:
+        LAST_DROPPED[r["name"]] = no_evidence
     return products
 
 
@@ -957,8 +1024,19 @@ async def crawl_all(config: dict) -> tuple[list[Product], list[str]]:
                 failed.append(r["name"])
                 print(f"  ✗ {r['name']} — 取得失敗: {LAST_REASON.get(r['name'], '不明')}")
             else:
-                print(f"  ✓ {r['name']} — {len(res)}件")
+                # 落とした数も出す。取れた数だけ見ていると、門が効きすぎて
+                # 豆まで落としている店に気づけない（落ちた物は画面に出ない）。
+                cut = LAST_DROPPED.get(r["name"], 0)
+                note = f"（証拠なしで見送り {cut}件）" if cut else ""
+                print(f"  ✓ {r['name']} — {len(res)}件{note}")
                 all_products.extend(res)
+
+    # 1件も取れなかったのに大量に見送った店は、門が効きすぎている疑いがある。
+    # 名前を挙げておけば、次に見るとき最初にそこを見られる。
+    suspects = [n for n, c in LAST_DROPPED.items() if c >= 20
+                and not any(p.roaster == n for p in all_products)]
+    if suspects:
+        print(f"\n  ⚠ 全部見送った店（門が厳しすぎないか要確認）: {', '.join(suspects[:20])}")
     return all_products, failed
 
 
