@@ -175,31 +175,61 @@ _ROAST = re.compile(
     r"|浅煎り|中煎り|深煎り|中深煎り|浅焙|中焙|深焙|淺烘焙|中烘焙|深烘焙|淺焙")
 
 
-def bean_markers(text: str, deep: str, grams: int, kind: str = "") -> set[str]:
-    """その商品が豆だと言える証拠を集める。
+def bean_markers(title: str, body: str, grams_field: int, grams_title: int,
+                 kind: str = "") -> set[str]:
+    """その商品が豆だと言える証拠を集める。強い証拠と弱い証拠を分けて返す。
 
-    weight   内容量がグラム/オンスで付いている。豆は重さで売る。
-             椅子・水筒・フィギュアには付かない（No Coffee の雑貨13件はここで全滅した）
-    origin   産地が読み取れる
-    process  精製方法が読み取れる
-    variety  品種名がある
-    roast    焙煎度がある
-    shop     店が product_type に「コーヒー」と書いている
+    ■ 強い証拠（大文字）— 商品名とタグにある
+        店員がその商品そのものを指して書いた言葉なので、外れが少ない。
+
+        W  内容量が商品名か規格名に書いてある（"Ethiopia Guji 250g"）
+        O  産地      P  精製      V  品種      R  焙煎度
+
+    ■ 弱い証拠（小文字）— 説明文にある
+        器具の説明文にも産地や淹れ方は出てくるので、そこだけを頼りにはできない。
+        実測で CLEVER DRIPPER が「台湾」で産地ありと判定された。台湾製だからで、
+        豆だからではない。
+
+        o p v r
+
+    ■ 証拠にならないもの
+        Shopify の重量欄（grams）は出荷重量。マグにも T シャツにも入っている。
+        実測 4127 件のうち 92.4% に値があり、何も分けられなかった。だから
+        単独では証拠に数えない。強い証拠の裏付けとしてだけ使う（"g"）。
+
+        c  店が product_type に「コーヒー」と書いている。カプセルもギフト箱も
+           「コーヒー」なので、これ単独でも豆の証明にはならない。
     """
     m: set[str] = set()
-    if grams > 0:
-        m.add("weight")
-    if _guess_origin(text) or _guess_origin(deep):
-        m.add("origin")
-    if _guess_process(text) or _guess_process(deep):
-        m.add("process")
-    if _VARIETY.search(text) or _VARIETY.search(deep):
-        m.add("variety")
-    if _ROAST.search(text) or _ROAST.search(deep):
-        m.add("roast")
+    if grams_title > 0:
+        m.add("W")
+    if _guess_origin(title):
+        m.add("O")
+    if _guess_process(title):
+        m.add("P")
+    if _VARIETY.search(title):
+        m.add("V")
+    if _ROAST.search(title):
+        m.add("R")
+
+    if _guess_origin(body):
+        m.add("o")
+    if _guess_process(body):
+        m.add("p")
+    if _VARIETY.search(body):
+        m.add("v")
+    if _ROAST.search(body):
+        m.add("r")
+
+    if grams_field > 0:
+        m.add("g")
     if kind == "c":
-        m.add("shop")
+        m.add("c")
     return m
+
+
+STRONG = ("W", "O", "P", "V", "R")
+WEAK = ("o", "p", "v", "r")
 
 
 def _guess_process(text: str) -> str:
