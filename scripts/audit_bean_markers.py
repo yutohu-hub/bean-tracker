@@ -110,7 +110,9 @@ async def run(shops: list) -> None:
             title = (p.get("title") or "").strip()
             rows.append((r["name"][:14], title[:52],
                          markers_of(p), shop_says(p) == "c",
-                         _looks_like_coffee(p)))
+                         _looks_like_coffee(p), r["name"],
+                         (p.get("product_type") or "").strip(),
+                         int((p.get("variants") or [{}])[0].get("grams") or 0)))
             if any(w in title.lower() for w in WATCH):
                 watched.append((r["name"], title, p))
 
@@ -129,8 +131,17 @@ async def run(shops: list) -> None:
     total = len(rows)
     print(f"応答のあった店 {reached} 軒 / 商品 {total} 件\n")
 
+    # 商品の種類を1つも書いていない店。そういう店では店の申告が使えないので、
+    # 門が不当に厳しくなる（Tim Wendelboe がこれ。全商品で product_type が空）。
+    silent_shops = {s for _, _, _, _, _, s, _, _ in rows}
+    for _, _, _, _, _, shop, ptype, _ in rows:
+        if ptype:
+            silent_shops.discard(shop)
+    print(f"■ 商品の種類を1つも書いていない店 {len(silent_shops)} 軒: "
+          f"{', '.join(sorted(silent_shops)[:12])}\n")
+
     each: Counter = Counter()
-    for _, _, m, _, _ in rows:
+    for _, _, m, _, _, _, _, _ in rows:
         for k in m:
             each[k] += 1
     print("■ 証拠ごとの件数")
@@ -145,7 +156,7 @@ async def run(shops: list) -> None:
     rnd = random.Random(0)
     for name, ok in RULES.items():
         kept, dropped_declared, kept_undeclared = [], [], []
-        for shop, title, m, declared, old in rows:
+        for shop, title, m, declared, old, _s, _pt, _g in rows:
             S = sum(1 for k in STRONG if k in m)
             K = sum(1 for k in WEAK if k in m)
             passed = ok(S, K, "g" in m, declared)
@@ -171,23 +182,31 @@ async def run(shops: list) -> None:
     # 門の候補ごとに「今日の巡回で何が消えるか」を出す。
     # 規則を数字で比べるだけでは踏み切れない。落ちる物の中身を見ないと、
     # 本物の豆が混じっていることに気づけない（実際 Kapsokisio で気づいた）。
+    # silent = 商品の種類を1つも書かない店の商品。店の申告に頼れない
+    # ship = Shopify の出荷重量
     GATES = {
         "いま入っている門（強1つ以上 or 申告）":
-            lambda S, K, d: S >= 1 or d,
+            lambda S, K, d, silent, ship: S >= 1 or d,
         "＋説明文の証拠が2つ以上あれば通す":
-            lambda S, K, d: S >= 1 or d or K >= 2,
-        "＋説明文の証拠が3つ以上あれば通す":
-            lambda S, K, d: S >= 1 or d or K >= 3,
+            lambda S, K, d, silent, ship: S >= 1 or d or K >= 2,
+        "＋種類を書かない店では、袋らしい重さ（150〜1500g）も証拠に数える":
+            lambda S, K, d, silent, ship: (S >= 1 or d
+                                           or (silent and 150 <= ship <= 1500)),
+        "＋その店で、説明文の証拠が1つ以上あるものに限る":
+            lambda S, K, d, silent, ship: (S >= 1 or d
+                                           or (silent and 150 <= ship <= 1500
+                                               and K >= 1)),
     }
-    old = [(s, t) for s, t, m, d, o in rows if o]
+    old = [(s, t) for s, t, m, d, o, _s, _pt, _g in rows if o]
     for label, gate in GATES.items():
         now, newly_cut = [], []
-        for shop, title, m, declared, o in rows:
+        for shop, title, m, declared, o, sname, _pt, ship in rows:
             if not o:
                 continue                      # もともと取っていない物は関係ない
             S = sum(1 for k in STRONG if k in m)
             K = sum(1 for k in WEAK if k in m)
-            (now if gate(S, K, declared) else newly_cut).append((shop, title))
+            (now if gate(S, K, declared, sname in silent_shops, ship)
+             else newly_cut).append((shop, title))
         print(f"\n{'=' * 74}\n■ {label}")
         print(f"  これまでの取り込み {len(old)} 件 → これから {len(now)} 件"
               f"（{len(newly_cut)} 件 減る）")

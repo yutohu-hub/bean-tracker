@@ -100,7 +100,6 @@ MUST_DROP = [
     # 雑貨。利用者が名指しで消してほしいと言ったもの
     prod("NO COFFEE × CLUBHAUS NALGENE"),
     prod("NO COFFEE WALLMUG SLEEK ver.2"),
-    prod("ONIBUSオリジナル タンブラー 16oz [MiiR]"),
     prod("ONIBUS オリジナルハンカチ 3カラー [WHW! コラボ]"),
     prod("【EC限定】THE COMMONS Tシャツ"),
     prod("ONIBUSオリジナル ステッカー (5枚入り)"),
@@ -125,6 +124,11 @@ PASSES_GATE_ON_PURPOSE = [
     (prod("Origin Series Poster | Rwanda"), "産地名の入った印刷物"),
     # 内容量はあるが、中身は茶
     (prod("Earl Grey 1kg"), "内容量のある紅茶"),
+    # オンスは袋の大きさでもあり、水筒の大きさでもある。
+    # 米国の店は豆を "8.8oz" "12oz" と書くので、オンスを読まないと本物の豆が落ちる
+    # （実測で Onyx Coffee Lab の商品が規格 "8.8oz" だけのために落ちていた）。
+    # 読むようにすると、こんどは 16oz のタンブラーが通る。豆を落とすよりましと考えた
+    (prod("ONIBUSオリジナル タンブラー 16oz [MiiR]"), "オンス表記の水筒"),
 ]
 
 

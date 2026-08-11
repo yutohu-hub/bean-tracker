@@ -341,11 +341,24 @@ def extract_notes(html: str, title: str = "") -> str:
 
 
 def _grams_from_text(text: str) -> int:
-    m = re.search(r"(\d+(?:\.\d+)?)\s*(kg|g)\b", text.lower())
+    """内容量をグラムで返す。読めなければ 0。
+
+    オンスとポンドも読む。米国の店は袋を "8.8oz" "12 oz" "5lbs" と書く。
+    実測で Onyx Coffee Lab の商品が、規格が "8.8oz" だけだったために
+    内容量が読めず、豆である証拠が立たずに落ちていた。
+    8.8oz は 250g の袋のこと。
+    """
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(kg|lbs?|oz|g)\b", text.lower())
     if not m:
         return 0
-    val = float(m.group(1))
-    return int(val * 1000) if m.group(2) == "kg" else int(val)
+    val, unit = float(m.group(1)), m.group(2)
+    if unit == "kg":
+        return int(val * 1000)
+    if unit == "oz":
+        return int(val * 28.35)
+    if unit in ("lb", "lbs"):
+        return int(val * 453.6)
+    return int(val)
 
 
 # 失敗理由（HTTPステータス等）を店ごとに残し、ログで原因を追えるようにする。
