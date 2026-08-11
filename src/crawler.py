@@ -149,6 +149,59 @@ def _guess_origin(text: str) -> str:
     return best
 
 
+# --- 豆である証拠 -----------------------------------------------------------
+#
+# 取り方を「全部取ってから豆でないものを外す」（引き算）から
+# 「豆である証拠がある物だけ取る」（足し算）に変えるための材料。
+#
+# 引き算は各国語ぶんの語が要るので一覧が終わらない。実際、英語と日本語だけで
+# 書いていた時期は台湾の濾杯・膠囊が並び、広げると本物の豆（Mwendi Wega・
+# キッサブレンド・Coffee & Tea）を巻き添えにした。
+#
+# 足し算に使う証拠は、言語や店に関わらず豆の側にだけ現れるものを選ぶ。
+
+# 品種。豆にしか出ない固有名詞
+_VARIETY = re.compile(
+    r"(?i)\bgeisha\b|\bgesha\b|\bbourbon\b|\bcaturra\b|\bcatuai\b|\btypica\b"
+    r"|\bpacamara\b|\bmaragogype\b|\bsl-?\s?(28|34)\b|\bruiru\b|\bbatian\b"
+    r"|\bheirloom\b|\bwush\s?wush\b|\bsidra\b|\bmokka\b|\bcastillo\b|\bcolombia\s?variety\b"
+    r"|\bpink\s?bourbon\b|\bjava\b|\bkent\b|\bmundo\s?novo\b|\bacaia\b|\bobata\b"
+    r"|\beugenioides\b|\blaurina\b|\bparainema\b|\bmarsellesa\b|\bcatimor\b"
+    r"|ゲイシャ|ブルボン|カトゥーラ|ティピカ|パカマラ|エチオピア在来|藝伎|瑰夏|波旁")
+# 焙煎度
+_ROAST = re.compile(
+    r"(?i)\b(light|medium|dark|city|full\s?city|french|italian|omni)\s?roast\b"
+    r"|\broast\s?(level|profile)\b|\b(light|medium|dark)-(light|medium|dark)\b"
+    r"|浅煎り|中煎り|深煎り|中深煎り|浅焙|中焙|深焙|淺烘焙|中烘焙|深烘焙|淺焙")
+
+
+def bean_markers(text: str, deep: str, grams: int, kind: str = "") -> set[str]:
+    """その商品が豆だと言える証拠を集める。
+
+    weight   内容量がグラム/オンスで付いている。豆は重さで売る。
+             椅子・水筒・フィギュアには付かない（No Coffee の雑貨13件はここで全滅した）
+    origin   産地が読み取れる
+    process  精製方法が読み取れる
+    variety  品種名がある
+    roast    焙煎度がある
+    shop     店が product_type に「コーヒー」と書いている
+    """
+    m: set[str] = set()
+    if grams > 0:
+        m.add("weight")
+    if _guess_origin(text) or _guess_origin(deep):
+        m.add("origin")
+    if _guess_process(text) or _guess_process(deep):
+        m.add("process")
+    if _VARIETY.search(text) or _VARIETY.search(deep):
+        m.add("variety")
+    if _ROAST.search(text) or _ROAST.search(deep):
+        m.add("roast")
+    if kind == "c":
+        m.add("shop")
+    return m
+
+
 def _guess_process(text: str) -> str:
     low = text.lower()
     for needle, label in PROCESS_WORDS:

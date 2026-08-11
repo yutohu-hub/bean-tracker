@@ -23,6 +23,9 @@ on:
       types:
         description: "店が product_type に何と書いているかを集計する（店数。空なら全店）"
         default: ""
+      markers:
+        description: "「豆である証拠」がどれだけ揃うかを数える（店数。all で全店）"
+        default: ""
 
 permissions:
   contents: read
@@ -39,7 +42,7 @@ jobs:
       - name: 依存インストール
         run: pip install httpx pyyaml
       - name: 候補を叩く
-        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == ''
+        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == '' && inputs.markers == ''
         run: python scripts/probe_roasters.py "${{ inputs.file }}"
 
       # 動画IDは1文字違うと別人の回が載る。目では気づけないので貼る前に照合する
@@ -56,6 +59,11 @@ jobs:
       - name: 分類の集計
         if: inputs.types != ''
         run: python scripts/audit_product_types.py "${{ inputs.types == 'all' && '0' || inputs.types }}"
+
+      # 「豆である証拠がある物だけ取る」に変えたとき、何が落ちるかを先に数える
+      - name: 豆の証拠を数える
+        if: inputs.markers != ''
+        run: python scripts/audit_bean_markers.py "${{ inputs.markers == 'all' && '0' || inputs.markers }}"
 
       # 取れない店について、何が足りないのかを応答から調べる
       - name: 1店を詳しく調べる
