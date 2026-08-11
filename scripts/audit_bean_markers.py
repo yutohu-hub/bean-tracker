@@ -98,14 +98,33 @@ async def run(shops: list) -> None:
 
     rows: list = []          # (店名, 商品名, 証拠, 店の申告, いまの引き算で通るか)
     reached = 0
+    # 落ちた理由を1件ずつ確かめたい商品。実物の中身を出す。
+    # 「なぜ落ちたのか」を想像で語らないため。
+    WATCH = ("kapsokisio", "io-e-1", "scattered salinas")
+    watched: list = []
     for r, prods in results:
         if not prods:
             continue
         reached += 1
         for p in prods:
-            rows.append((r["name"][:14], (p.get("title") or "").strip()[:52],
+            title = (p.get("title") or "").strip()
+            rows.append((r["name"][:14], title[:52],
                          markers_of(p), shop_says(p) == "c",
                          _looks_like_coffee(p)))
+            if any(w in title.lower() for w in WATCH):
+                watched.append((r["name"], title, p))
+
+    if watched:
+        print("■ 名指しで中身を見る商品")
+        for shop, title, p in watched[:6]:
+            print(f"  {shop} / {title}")
+            print(f"    product_type = {p.get('product_type')!r}")
+            print(f"    options      = {p.get('options')}")
+            print(f"    variants     = "
+                  f"{[(v.get('title'), v.get('grams')) for v in (p.get('variants') or [])][:4]}")
+            print(f"    tags         = {p.get('tags')}")
+            print(f"    証拠         = {''.join(sorted(markers_of(p)))}")
+        print()
 
     total = len(rows)
     print(f"応答のあった店 {reached} 軒 / 商品 {total} 件\n")
@@ -149,22 +168,32 @@ async def run(shops: list) -> None:
                                       min(14, len(kept_undeclared))):
             print(f"      {shop:<14} {title}")
 
-    # 実際に入れた門で、取り込みが今とどう変わるかを出す。
-    # 規則を選ぶ話とは別に、「今日の巡回で何が消えるか」を見ないと踏み切れない。
-    print(f"\n{'=' * 74}\n■ いま入っている門（has_bean_evidence）で、取り込みがどう変わるか")
+    # 門の候補ごとに「今日の巡回で何が消えるか」を出す。
+    # 規則を数字で比べるだけでは踏み切れない。落ちる物の中身を見ないと、
+    # 本物の豆が混じっていることに気づけない（実際 Kapsokisio で気づいた）。
+    GATES = {
+        "いま入っている門（強1つ以上 or 申告）":
+            lambda S, K, d: S >= 1 or d,
+        "＋説明文の証拠が2つ以上あれば通す":
+            lambda S, K, d: S >= 1 or d or K >= 2,
+        "＋説明文の証拠が3つ以上あれば通す":
+            lambda S, K, d: S >= 1 or d or K >= 3,
+    }
     old = [(s, t) for s, t, m, d, o in rows if o]
-    now, newly_cut = [], []
-    for shop, title, m, declared, o in rows:
-        gate = bool(m & set(STRONG)) or declared
-        if gate and o:
-            now.append((shop, title))
-        elif o and not gate:
-            newly_cut.append((shop, title))
-    print(f"  これまでの取り込み {len(old)} 件 → これから {len(now)} 件"
-          f"（{len(newly_cut)} 件 減る）")
-    print("  新たに落ちるもの（20件を無作為に）:")
-    for shop, title in rnd.sample(newly_cut, min(20, len(newly_cut))):
-        print(f"      {shop:<14} {title}")
+    for label, gate in GATES.items():
+        now, newly_cut = [], []
+        for shop, title, m, declared, o in rows:
+            if not o:
+                continue                      # もともと取っていない物は関係ない
+            S = sum(1 for k in STRONG if k in m)
+            K = sum(1 for k in WEAK if k in m)
+            (now if gate(S, K, declared) else newly_cut).append((shop, title))
+        print(f"\n{'=' * 74}\n■ {label}")
+        print(f"  これまでの取り込み {len(old)} 件 → これから {len(now)} 件"
+              f"（{len(newly_cut)} 件 減る）")
+        print("  新たに落ちるもの（20件を無作為に）:")
+        for shop, title in rnd.sample(newly_cut, min(20, len(newly_cut))):
+            print(f"      {shop:<14} {title}")
 
 
 def main() -> None:
