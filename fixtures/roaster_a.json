@@ -19,7 +19,8 @@
      "grams": 200,
      "available": true
     }
-   ]
+   ],
+   "product_type": "Coffee"
   },
   {
    "handle": "kenya-karatina",
@@ -33,7 +34,8 @@
      "grams": 200,
      "available": true
     }
-   ]
+   ],
+   "product_type": ""
   },
   {
    "handle": "colombia-pink",
@@ -47,7 +49,8 @@
      "grams": 100,
      "available": false
     }
-   ]
+   ],
+   "product_type": ""
   },
   {
    "handle": "ethiopia-guji-natural",
@@ -62,7 +65,8 @@
      "grams": 150,
      "available": true
     }
-   ]
+   ],
+   "product_type": ""
   },
   {
    "handle": "colombia-el-diviso-anaerobic",
@@ -75,7 +79,8 @@
      "grams": 100,
      "available": true
     }
-   ]
+   ],
+   "product_type": ""
   }
  ]
 }
