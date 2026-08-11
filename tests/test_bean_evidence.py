@@ -132,6 +132,25 @@ PASSES_GATE_ON_PURPOSE = [
 ]
 
 
+# --- 商品の種類を1つも書かない店での扱い -------------------------------------
+# そういう店では店の申告が使えないので、門が不当に厳しくなる。
+# 実測44軒中1軒（Tim Wendelboe）で、そこだけ出荷重量を最後の手がかりにする。
+def shipped(title, grams):
+    return {"title": title, "product_type": "", "tags": [], "options": [],
+            "variants": [{"title": "Default Title", "grams": grams}]}
+
+
+SILENT_SHOP = [
+    # 実物。銘柄名だけ・種類なし・規格なし・出荷重量311g
+    (shipped("Kapsokisio", 311), True, "袋らしい重さの豆"),
+    (shipped("Tariku Kare", 280), True, "袋らしい重さの豆"),
+    # 重さが袋の範囲から外れるもの
+    (shipped("Espresso Machine", 12000), False, "重すぎる"),
+    (shipped("Digital Gift Card", 0), False, "重さが無い"),
+    (shipped("Silver Logo Stickers", 12), False, "軽すぎる"),
+]
+
+
 def main() -> int:
     bad = []
     for p in MUST_PASS:
@@ -146,15 +165,28 @@ def main() -> int:
                        "落とせたように見えるが、同じ厳しさで本物の豆も落ちる。"
                        "外すなら表示側の isCoffee.js で名指しすること")
 
+    for p, want, why in SILENT_SHOP:
+        got = has_bean_evidence(p, shop_writes_type=False)
+        if got != want:
+            bad.append(f"種類を書かない店（{why}）: {p['title']!r} — "
+                       f"{'通す' if want else '落とす'}はずが"
+                       f"{'通した' if got else '落とした'}")
+    # 種類を書く店では、この逃げ道は使わない。使うと雑貨が大量に通る
+    for p, _want, _why in SILENT_SHOP:
+        if has_bean_evidence(p, shop_writes_type=True):
+            bad.append(f"種類を書く店なのに重さだけで通した: {p['title']!r}")
+
     for line in bad:
         print("  ✗", line)
-    total = len(MUST_PASS) + len(MUST_DROP) + len(PASSES_GATE_ON_PURPOSE)
+    total = (len(MUST_PASS) + len(MUST_DROP) + len(PASSES_GATE_ON_PURPOSE)
+             + len(SILENT_SHOP) * 2)
     if bad:
         print(f"\n{len(bad)}件の食い違い / {total}件中")
         return 1
     print(f"取り込みの門: {total}件すべて期待どおり "
           f"（通す{len(MUST_PASS)}件・落とす{len(MUST_DROP)}件・"
-          f"わざと通す{len(PASSES_GATE_ON_PURPOSE)}件）")
+          f"わざと通す{len(PASSES_GATE_ON_PURPOSE)}件・"
+          f"種類を書かない店{len(SILENT_SHOP)}件×2）")
     return 0
 
 

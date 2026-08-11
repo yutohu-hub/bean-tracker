@@ -543,7 +543,13 @@ def shop_says(p: dict) -> str:
     return ""
 
 
-def has_bean_evidence(p: dict) -> bool:
+# 袋らしい重さの範囲。豆の袋は 250g / 500g / 1kg で、包装ぶんを足しても
+# だいたいこの中に収まる。出荷重量は本来あてにならない（実測で86%の商品に
+# 値が入っている）ので、店の申告が使えないときの最後の手段としてだけ使う。
+BAG_GRAMS = (150, 1500)
+
+
+def has_bean_evidence(p: dict, shop_writes_type: bool = True) -> bool:
     """豆である証拠がひとつでもあるか。無ければ取り込まない。
 
     これが「足し算」の門。豆でないものの名前を数えるのをやめて、
@@ -590,7 +596,18 @@ def has_bean_evidence(p: dict) -> bool:
     m = bean_markers(title=f"{p.get('title', '')} {tagtext}", body="",
                      grams_field=0, grams_title=grams_title, kind=shop_says(p),
                      options=opts)
-    return bool(m & set(STRONG)) or "c" in m
+    if bool(m & set(STRONG)) or "c" in m:
+        return True
+
+    # 商品の種類を1つも書かない店では、店の申告という証拠が最初から使えない。
+    # そこだけは出荷重量を最後の手がかりにする。実測44軒中1軒（Tim Wendelboe）で、
+    # 銘柄名だけの豆 "Kapsokisio"（ウガンダ）がこれで拾える。
+    # この店のTシャツやギフトカードも通ってしまうが、それは名前で外せるものなので
+    # 後段に任せる（落ちることは確かめた）。豆を落とす方が取り返しがつかない。
+    if not shop_writes_type:
+        ship = int((p.get("variants") or [{}])[0].get("grams") or 0)
+        return BAG_GRAMS[0] <= ship <= BAG_GRAMS[1]
+    return False
 
 
 def _looks_like_coffee(p: dict) -> bool:
@@ -713,8 +730,10 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
                 currency = presentment            # 無視された。返ってくる通貨で名乗る
         except json.JSONDecodeError:
             currency = presentment
-    products: list[Product] = []
-    no_evidence = 0          # 豆である証拠が無くて取らなかった数。ログに出す
+    # まず全ページを集める。門の判断に「その店が商品の種類を書く店かどうか」が
+    # 要るので、1商品ずつ即断できない。種類を1ページ目には書かず2ページ目から
+    # 書く店があっても取り違えないよう、全部そろえてから判断する。
+    raw: list[dict] = []
     for page in range(1, max_pages + 1):
         resp, why = await _get_with_retry(client, f"{base}{path}",
                                           {"limit": 250, "page": page, **ask})
@@ -722,63 +741,72 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
             if page == 1:
                 LAST_REASON[r["name"]] = f"{path} → {why}"
                 return None
-            return products
+            break
         try:
             batch = resp.json().get("products", [])
         except json.JSONDecodeError:
             if page == 1:
                 LAST_REASON[r["name"]] = f"{path} → JSONではない応答"
                 return None
-            return products
+            break
         if not batch:
             break
-        for p in batch:
-            # 1. 豆である証拠が無いものは取らない（足し算の門）。
-            #    ここで落ちるのは、こちらが名前を知らない雑貨・器具。
-            if not has_bean_evidence(p):
-                no_evidence += 1
-                continue
-            # 2. 店が自分で「豆ではない」と書いているものを外す（引き算）。
-            #    証拠はあるが豆ではないもの（講座・器具）はここで落ちる。
-            if not _looks_like_coffee(p):
-                continue
-            variants = p.get("variants", [])
-            if not variants:
-                continue
-            avail_vs = [v for v in variants if v.get("available")]
-            v = avail_vs[0] if avail_vs else variants[0]
-            try:
-                price = float(v.get("price") or 0)
-            except (TypeError, ValueError):
-                price = 0.0
-            grams = int(v.get("grams") or 0) or _grams_from_text(
-                f"{v.get('title','')} {p.get('title','')}")
-            per100 = round(price / grams * 100, 2) if grams and price else None
-            tagtext = (" ".join(p.get("tags", [])) if isinstance(p.get("tags"), list)
-                       else str(p.get("tags", "")))
-            text = " ".join([p.get("title", ""), tagtext])
-            # 産地・精製・風味は説明文にしか書かれていないことが多い。
-            # タイトル/タグで決まらない分をここで補う（味わいマップの入力になる）
-            body = p.get("body_html") or ""
-            notes = extract_notes(body, p.get("title", ""))
-            deep = " ".join([text, html_to_text(body)[:1200]])
-            images = p.get("images") or []
-            products.append(Product(
-                key=f"{r['name']}::{p.get('handle','')}",
-                roaster=r["name"], country=r.get("country", ""),
-                title=p.get("title", "").strip(),
-                url=f"{base}/products/{p.get('handle','')}",
-                image=(images[0].get("src", "") if images else ""),
-                price=price, currency=currency,
-                grams=grams, per100=per100,
-                available=bool(avail_vs),
-                origin=_guess_origin(text) or _guess_origin(deep),
-                process=_guess_process(text) or _guess_process(deep),
-                tags=text[:300], notes=notes, kind=shop_says(p),
-                city=place.get("city", ""), province=place.get("province", ""),
-            ))
+        raw.extend(batch)
         if len(batch) < 250:
             break
+
+    # 商品の種類を1つも書かない店では、店の申告に頼れない。
+    # 実測では44軒中1軒（Tim Wendelboe）。そこでは門が不当に厳しくなり、
+    # 銘柄名だけの豆（Kapsokisio）が証拠なしとして落ちていた。
+    shop_writes_type = any((p.get("product_type") or "").strip() for p in raw)
+
+    products: list[Product] = []
+    no_evidence = 0          # 豆である証拠が無くて取らなかった数。ログに出す
+    for p in raw:
+        # 1. 豆である証拠が無いものは取らない（足し算の門）。
+        #    ここで落ちるのは、こちらが名前を知らない雑貨・器具。
+        if not has_bean_evidence(p, shop_writes_type=shop_writes_type):
+            no_evidence += 1
+            continue
+        # 2. 店が自分で「豆ではない」と書いているものを外す（引き算）。
+        #    証拠はあるが豆ではないもの（講座・器具）はここで落ちる。
+        if not _looks_like_coffee(p):
+            continue
+        variants = p.get("variants", [])
+        if not variants:
+            continue
+        avail_vs = [v for v in variants if v.get("available")]
+        v = avail_vs[0] if avail_vs else variants[0]
+        try:
+            price = float(v.get("price") or 0)
+        except (TypeError, ValueError):
+            price = 0.0
+        grams = int(v.get("grams") or 0) or _grams_from_text(
+            f"{v.get('title','')} {p.get('title','')}")
+        per100 = round(price / grams * 100, 2) if grams and price else None
+        tagtext = (" ".join(p.get("tags", [])) if isinstance(p.get("tags"), list)
+                   else str(p.get("tags", "")))
+        text = " ".join([p.get("title", ""), tagtext])
+        # 産地・精製・風味は説明文にしか書かれていないことが多い。
+        # タイトル/タグで決まらない分をここで補う（味わいマップの入力になる）
+        body = p.get("body_html") or ""
+        notes = extract_notes(body, p.get("title", ""))
+        deep = " ".join([text, html_to_text(body)[:1200]])
+        images = p.get("images") or []
+        products.append(Product(
+            key=f"{r['name']}::{p.get('handle','')}",
+            roaster=r["name"], country=r.get("country", ""),
+            title=p.get("title", "").strip(),
+            url=f"{base}/products/{p.get('handle','')}",
+            image=(images[0].get("src", "") if images else ""),
+            price=price, currency=currency,
+            grams=grams, per100=per100,
+            available=bool(avail_vs),
+            origin=_guess_origin(text) or _guess_origin(deep),
+            process=_guess_process(text) or _guess_process(deep),
+            tags=text[:300], notes=notes, kind=shop_says(p),
+            city=place.get("city", ""), province=place.get("province", ""),
+        ))
     # 門で落とした数を残す。取れた数だけ見ていると「落としすぎ」に気づけない。
     # 落ちた物は画面に出ないので、この数字が唯一の手がかりになる。
     if no_evidence:
