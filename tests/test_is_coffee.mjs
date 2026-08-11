@@ -74,6 +74,17 @@ const NOT_COFFEE = [
   "SAGE The Dual Boiler\u2122", "Sage Bambino", "Sage the Barista Touch\u2122 Impress",
   "Urnex Rinza 4g Tablet 120", "Urnex BIO Grindz 430g", "Urnex Dezcal 900g",
   "Bentwood The Vertical 63", "Nucleus Link",
+  /* 雑貨中心の店（No Coffee・福岡）。図鑑に13件出していて、その全部が雑貨だった。
+     落ちなかった理由は3つで、どれも型が同じ。
+       NALGENE / Helinox … 器具ではなく「雑貨のブランド名」で売っている
+       WALLMUG           … mug の前に文字が続くので \bmug に当たらない
+       1ℓ / 0.5ℓ         … 容量が mL ではなく ℓ */
+  "NO COFFEE × CLUBHAUS NALGENE 1ℓ", "NO COFFEE NALGENE 0.5ℓ",
+  "NO COFFEE WALLMUG SLEEK ver.2", "NO COFFEE × Helinox Chair One",
+  "NO COFFEE × BENZILLA NO LOOOK フィギュア", "エヌオくんアクリルキーチェーン(FISHMAN Ver.)",
+  "NO COFFEE CORDURA MULTI WALLET", "NO COFFEE × TANGRAM HENRY POLO S/S",
+  "NO COFFEE × OLU PRODUCTS ニットバッグ", "NO GOLF TOURTEE 26S/S", "N ロゴ　プレート",
+  "DOGWOOD NALGENE", "Stanley Classic Perfect Pour Over",
 ];
 
 // 豆。規則を足したせいで消えては困るもの
@@ -105,6 +116,9 @@ const COFFEE = [
      ふつうの語として出てくる豆を巻き添えにしないことを、ここで押さえる。 */
   "Ona Coffee Blend", "Studio Blend", "Icon Espresso", "Mina Estate Natural",
   "Sage & Citrus Blend",                           // sage は風味の語でもある
+  /* 雑貨を落とす語で巻き添えにしかけた豆。
+     "table" は入れていない（"The Cupping Table" が消えるため）。 */
+  "The Cupping Table", "The Dessert Table",
 ];
 
 /* 店が product_type に「コーヒー」と書いている商品（kind="c"）。
@@ -123,6 +137,8 @@ const SHOP_SAYS_COFFEE = [
   ["ドリップバッグ 5個入", false, "ドリップバッグ"],
   ["Raw Green Coffee - Colombia", false, "生豆"],
   ["Espresso Machine Linea Mini", false, "マシン"],
+  ["NO COFFEE NALGENE 0.5ℓ", false, "雑貨。店が何と言おうと載せない"],
+  ["NO COFFEE WALLMUG SLEEK ver.2", false, "マグ"],
 ];
 
 let ng = 0;
