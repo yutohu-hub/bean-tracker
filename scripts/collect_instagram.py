@@ -36,6 +36,7 @@ from __future__ import annotations
 import asyncio
 import re
 import sys
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -175,13 +176,21 @@ def other_hosts(url: str) -> list[str]:
 
 # トップページに導線が無い店で、次に見る場所。
 # 実測で61軒が「リンク無し」。SNSの導線を問い合わせページだけに置く店がある
-MORE_PAGES = ("/pages/contact", "/pages/about-us", "/pages/about")
+MORE_PAGES = ("/pages/contact", "/pages/about")
+
+# 1回の実行に使ってよい時間。GitHub 側の上限（15分）に当たると、
+# その回に取れたぶんまで捨てられる。手前で切り上げて、取れたぶんを必ず残す。
+# 実測: つながらない店に www の入れ替えと別ページを足したら、134軒で上限に届いた
+BUDGET_SEC = 8 * 60
 
 
-async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict):
+async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict,
+                deadline: float = 0.0):
     base = r["url"].rstrip("/")
 
     async def get(url):
+        if deadline and time.monotonic() > deadline:
+            return None, "時間切れ"
         async with sem:
             try:
                 return await client.get(url), ""
@@ -254,9 +263,11 @@ async def check_embed(handles: list[str], posts: list = ()) -> None:
 
 async def run(shops: list) -> dict:
     sem = asyncio.Semaphore(CONCURRENCY)
+    deadline = time.monotonic() + BUDGET_SEC
     async with httpx.AsyncClient(headers=REQ_HEADERS, timeout=TIMEOUT,
                                  follow_redirects=True) as client:
-        results = await asyncio.gather(*(probe(client, sem, r) for r in shops))
+        results = await asyncio.gather(
+            *(probe(client, sem, r, deadline) for r in shops))
 
     got = [(r["name"], h) for r, h, _, _ in results if h]
     miss = [(r["name"], why) for r, h, why, _ in results if not h]
