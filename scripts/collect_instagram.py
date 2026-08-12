@@ -282,9 +282,16 @@ async def run(shops: list) -> dict:
     print("\n■ 取れなかった理由")
     for why, n in Counter(w for _, w in miss).most_common():
         print(f"   {why:<20} {n} 軒")
-    print("\n■ 取れなかった店（先頭20）")
-    for name, why in miss[:20]:
-        print(f"   {name[:26]:<26} {why}")
+    # 全部出す。先頭20だけだと、何度走らせても同じ店が並ぶだけで、
+    # 「あと何軒を手で足せば終わるのか」が最後まで分からない
+    print("\n■ 取れなかった店（理由ごとに全部）")
+    by_why: dict = {}
+    for name, why in miss:
+        by_why.setdefault(why, []).append(name)
+    for why, names in sorted(by_why.items(), key=lambda kv: -len(kv[1])):
+        print(f"  ── {why}（{len(names)}軒）")
+        for i in range(0, len(names), 3):
+            print("     " + "".join(f"{n[:24]:<26}" for n in names[i:i + 3]))
 
     if got:
         await check_embed([h for _, h in got], posts)
