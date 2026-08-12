@@ -158,17 +158,60 @@ def pick_handle(found: list[str], shop_name: str) -> str:
     return ""
 
 
+def other_hosts(url: str) -> list[str]:
+    """つながらなかったときに試す、同じ店の別の書き方。
+
+    実測で40軒が接続失敗だった。www の有無が食い違っているだけの店がある
+    （www を required にしている店、逆に www を持たない店）。
+    """
+    m = re.match(r"^(https?://)([^/]+)(.*)$", url)
+    if not m:
+        return []
+    scheme, host, rest = m.groups()
+    if host.startswith("www."):
+        return [f"{scheme}{host[4:]}{rest}"]
+    return [f"{scheme}www.{host}{rest}"]
+
+
+# トップページに導線が無い店で、次に見る場所。
+# 実測で61軒が「リンク無し」。SNSの導線を問い合わせページだけに置く店がある
+MORE_PAGES = ("/pages/contact", "/pages/about-us", "/pages/about")
+
+
 async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict):
     base = r["url"].rstrip("/")
-    async with sem:
-        try:
-            resp = await client.get(base)
-        except httpx.HTTPError as e:
-            return r, None, f"接続失敗({type(e).__name__})", []
+
+    async def get(url):
+        async with sem:
+            try:
+                return await client.get(url), ""
+            except httpx.HTTPError as e:
+                return None, f"接続失敗({type(e).__name__})"
+
+    resp, why = await get(base)
+    if resp is None:
+        # www の有無だけ違う書き方を1回だけ試す
+        for alt in other_hosts(base):
+            resp, why2 = await get(alt)
+            if resp is not None:
+                why = why2
+                break
+    if resp is None:
+        return r, None, why, []
     if resp.status_code != 200:
         return r, None, f"HTTP {resp.status_code}", []
     found = handles_in(resp.text)
     posts = _POST.findall(resp.text)
+    if not found:
+        # 問い合わせページに置いている店がある。無ければ1ページずつ諦める
+        for path in MORE_PAGES:
+            more, _ = await get(base + path)
+            if more is None or more.status_code != 200:
+                continue
+            found = handles_in(more.text)
+            posts = posts or _POST.findall(more.text)
+            if found:
+                break
     if not found:
         return r, None, "リンク無し", posts
     h = pick_handle(found, r.get("name", ""))
