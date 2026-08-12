@@ -251,6 +251,13 @@ def main() -> None:
     cfg = yaml.safe_load((ROOT / "config" / "roasters.yaml").read_text(encoding="utf-8"))
     shops = [r for r in cfg.get("roasters", []) if r.get("url")]
     known = load_known()
+    # 図鑑から外した店・名前を直した店のぶんが表に残る。誰も使わないまま
+    # 溜まっていくと、次に集めるときの「もう持っている」の判断が狂う
+    listed = {r["name"] for r in cfg.get("roasters", [])}
+    stale = [n for n in known if n not in listed]
+    for n in stale:
+        print(f"図鑑に無い店なので表から外す: {n}")
+        known.pop(n)
     if limit:
         # まだ取れていない店を先に見る。何度か走らせれば全体が埋まる
         shops = sorted(shops, key=lambda r: r["name"] in known)[:limit]
