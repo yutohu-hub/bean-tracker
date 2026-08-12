@@ -103,14 +103,19 @@ def pick_handle(found: list[str], shop_name: str) -> str:
     出てくる回数だけで決めると、フッターに載っている制作会社や取引先を拾う。
     実測で Single O が @process_creative になった（サイトを作った会社）。
 
-    店名に似ているものを先に見る。似たものが無ければ、いちばん多く出てくるもの。
+    店名と結びつくものだけを採る。結びつかないものは採らない。
 
-    ■ 名前が似ていないときに、1回しか出てこないものは採らない
+    ■ 「いちばん多く出てくるもの」を最後の手段にしない
 
-    実測で Padre Coffee が @shopify になった。「Powered by Shopify」の導線が
-    フッターに1回だけあり、他に候補が無かったので、それが選ばれた。
-    店が自分のアカウントを貼るときは、ヘッダーとフッターの両方に置くことが多い。
-    1回しか出てこないうえ名前も似ていないものは、店のものではない疑いが強い。
+    はじめは、名前が似ていなければ回数で決めていた。実測で2件外した。
+
+      Padre Coffee          → @shopify（フッターの「Powered by Shopify」）
+      Slate Coffee Roasters → @xoilactvnet（店とは無関係の宣伝。何度も出てくる）
+
+    回数は「店のものらしさ」を測っていない。ページに何度も貼られているだけの
+    ものが勝つ。実データ308件のうち、回数だけで決まっていたのは3件。
+    そのうち1件が上の間違いだった。残る2件（略称・日本語の店名）は、
+    この表を手で直して足せばよい。
 
     間違ったアカウントを出すのは、何も出さないより悪い。別の人の投稿を
     「この店です」と紹介することになる。取りこぼしは次に集めれば埋まる。
@@ -118,17 +123,24 @@ def pick_handle(found: list[str], shop_name: str) -> str:
     if not found:
         return ""
     n = _norm(shop_name)
+    if not n:
+        # 日本語だけの店名。綴りの手がかりが無いので、ここでは決めない
+        return ""
     counts = Counter(found)
-    if n:
-        near = [h for h in counts if _norm(h).startswith(n) or n.startswith(_norm(h))]
-        if near:
-            return max(near, key=lambda h: (counts[h], -len(h)))
-        # 部分的に含むもの（"coffeecollective" と "coffeecollectif" のような揺れ）
-        part = [h for h in counts if len(n) >= 5 and (n[:6] in _norm(h) or _norm(h)[:6] in n)]
-        if part:
-            return max(part, key=lambda h: (counts[h], -len(h)))
-    h, c = counts.most_common(1)[0]
-    return h if c >= 2 else ""
+    best = lambda hs: max(hs, key=lambda h: (counts[h], -len(h)))
+    near = [h for h in counts if _norm(h).startswith(n) or n.startswith(_norm(h))]
+    if near:
+        return best(near)
+    # 部分的に含むもの（"coffeecollective" と "coffeecollectif" のような揺れ）
+    part = [h for h in counts if len(n) >= 5 and (n[:6] in _norm(h) or _norm(h)[:6] in n)]
+    if part:
+        return best(part)
+    # 店名の単語が入っているもの（"Luna" → @enjoylunacoffee）
+    words = [w for w in re.findall(r"[a-z0-9]+", shop_name.lower()) if len(w) >= 4]
+    word = [h for h in counts if any(w in _norm(h) for w in words)]
+    if word:
+        return best(word)
+    return ""
 
 
 async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict):

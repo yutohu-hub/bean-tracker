@@ -2,6 +2,10 @@
 # 店のトップページに貼ってある導線から拾っている。
 # 手で直したいときは、この表を直接編集してよい
 # （次に集めたとき、取れた店だけが上書きされる）。
+#
+# 店名から綴りが読めないものは自動では採らないので、ここに手で足す。
+#   Modern Standard = Modern Standard Coffee の略で MSC
+#   丸山珈琲 … 日本語の店名にはラテン文字の手がかりが無い
 instagram:
   '% Arabica': arabica.global
   3fe: 3fecoffee
@@ -256,7 +260,6 @@ instagram:
   Simple Kaffa: simplekaffa
   Single O: single_o
   Single O Japan: single_ojapan
-  Slate Coffee Roasters: xoilactvnet
   Slow Coffee: sl.owcoffee
   SlowMov: slow.mov
   Solberg & Hansen: solbergoghansen
