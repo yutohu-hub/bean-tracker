@@ -296,9 +296,11 @@ def html_to_text(html: str) -> str:
 
 # 見出しの語そのもの。ここだけを1か所に持ち、行頭の判定と、
 # 取り出したあとの残骸そぎ落としの両方から使う。
-_LABEL_WORDS = (r"tasting\s*notes?|flavou?r\s*notes?|cupping\s*notes?|flavou?r\s*profile"
-                r"|flavou?rs?|tasting|notes?|フレーバー(?:ノート)?|テイスティング\s*ノート"
-                r"|カッピング\s*ノート|風味|味わい|フレーバ")
+_LABEL_WORDS = (r"(?:with\s+)?(?:tasting\s*)?notes?\s+of|tasting\s*notes?|flavou?r\s*notes?"
+                r"|cupping\s*notes?|flavou?r\s*profile|tastes?\s*like|tasting\s*comments?"
+                r"|flavou?rs?|tasting|notes?"
+                r"|テイスティング\s*(?:ノート|コメント)|カッピング\s*(?:ノート|コメント)"
+                r"|フレーバー(?:ノート)?|フレーバ|風味|味わい|テイスト")
 # 見出しを囲む記号。実測で【FLAVOR】（味わい）[Flavor notes] の3通りが出た。
 # ここを許していなかったので、その店の風味が丸ごと取れていなかった。
 _LABEL_OPEN = r"[\s\-–—・*\[\(【（「『]*"
@@ -312,6 +314,13 @@ _NOTE_LABEL = re.compile(
 # 当て推量で拾った行から、前置きごと見出しを落とすのに使う。
 _LABEL_ANYWHERE = re.compile(
     rf"(?i)^.{{0,20}}?{_LABEL_OPEN}(?:{_LABEL_WORDS}){_LABEL_CLOSE}\s*[:：]\s*")
+
+# アレルギー・原材料の表示。風味語（ナッツ・アーモンド・大豆…）が並ぶので
+# 風味として拾ってしまう。実測で Proud Mary のチャイが
+# 「MAY CONTAIN PEANUT, ALMOND」を風味にしていた。
+_ALLERGEN = re.compile(
+    r"(?i)may\s+contain|contains?\s+(?:traces|milk|soy|nuts?|almond|peanut|wheat)"
+    r"|allergen|アレルギー|を含みます|原材料")
 
 # 同じ語が続けて出てくるもの（"define define"）。店の原稿の打ち間違い
 _DUP_WORD = re.compile(r"(?i)\b(\w{3,})(\s+\1)+\b")
@@ -341,11 +350,11 @@ def _clean_note(s: str) -> str:
     残骸を残したまま集計すると、"tasting" や "味わい" が風味の語として
     数えられてしまう（味わいマップと法人向けレポートの材料になるため）。
     """
-    s = (s or "").strip(" .．、,:：-–—/|")
+    s = (s or "").strip(" .．、,:：-–—/|()（）[]【】")
     s = _LABEL_ANYWHERE.sub("", s)          # 行の途中に見出しがある場合
     s = _TIGHT_DOT.sub(". ", s)
     s = _DUP_WORD.sub(r"\1", s)
-    s = re.sub(r"(?i)^(and|of)\s+", "", s.strip(" .．、,:：-–—/|"))
+    s = re.sub(r"(?i)^(and|of|with)\s+", "", s.strip(" .．、,:：-–—/|()（）[]【】"))
     return _WS.sub(" ", s)[:160]
 
 def extract_notes(html: str, title: str = "") -> str:
@@ -362,11 +371,13 @@ def extract_notes(html: str, title: str = "") -> str:
         # 「Tasting Notes」だけの見出し行なら、次の行が中身
         if len(val) < 3 and i + 1 < len(lines):
             val = _clean_note(lines[i + 1])
-        if len(val) >= 3 and _FLAVOR_WORD.search(val):
+        if len(val) >= 3 and _FLAVOR_WORD.search(val) and not _ALLERGEN.search(val):
             return val
     # 見出しが無い場合：風味語が2種類以上ある短い行を採る
     for ln in lines:
         if len(ln) > 90 or len(ln) < 5:
+            continue
+        if _ALLERGEN.search(ln):
             continue
         if len(set(w.group(0).lower() for w in _FLAVOR_WORD.finditer(ln))) >= 2:
             return _clean_note(ln)

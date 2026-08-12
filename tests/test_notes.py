@@ -59,6 +59,23 @@ CASES = [
     ("風味語が1つだけの地の文", p("This lot was dried on raised beds with cherry left on."), ""),
     ("説明文が無い", "", ""),
 
+    # --- 13店に広げて見つかった壊れ（2回目の実測） ---
+    ("日本語の別の見出し", p("テイスティングコメント：ストロベリージャム、白ぶどう、フローラルな香り"),
+     "ストロベリージャム、白ぶどう、フローラルな香り"),
+    ("Tastes Like という見出し", p("Tastes Like: Green Grape, Geranium, Pear"),
+     "Green Grape, Geranium, Pear"),
+    ("括弧つきの前置き", p("(with tasting notes of mango, melon, lychee)"),
+     "mango, melon, lychee"),
+    ("notes of で始まる", p("Notes of redcurrant, brown sugar and almond"),
+     "redcurrant, brown sugar and almond"),
+
+    # --- アレルギー表示を風味として採らない ---
+    # 実測: Proud Mary のチャイで「MAY CONTAIN PEANUT, ALMOND」を風味にしていた
+    ("アレルギー表示", p("MAY CONTAIN PEANUT, ALMOND"), ""),
+    ("含有表示（日本語）", p("アレルギー：乳、大豆、落花生を含みます"), ""),
+    ("見出しのあとがアレルギー表示",
+     p("Tasting Notes: contains almond and peanut traces"), ""),
+
     # --- 見出しそぎ落としが、中身まで削らないこと ---
     ("見出しに見える語が中身の一部", p("Tasting Notes: chocolate notes with orange"),
      "chocolate notes with orange"),
