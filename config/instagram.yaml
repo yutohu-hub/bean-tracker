@@ -4,6 +4,7 @@
 # （次に集めたとき、取れた店だけが上書きされる）。
 instagram:
   '% Arabica': arabica.global
+  3fe: 3fecoffee
   Alt Wien Kaffee: altwienkaffee
   Amameria Espresso: amameria_espresso
   Amor Perfecto: amorperfectocoffeeus
@@ -22,36 +23,45 @@ instagram:
   Blossom Coffee: blossomcoffeeroasters
   Bonanza Coffee: bonanzacoffee
   Boon Coffee: booncoffee
+  Bourbon Coffee: bourboncoffeerwanda
   Bows & Arrows: bowscoffeeroasters
   Cafetoria Roastery: cafetoriaroastery
   Caffènation: caffenation_coffee
   Café Mokxa: cafemokxa
   Cafés El Magnífico: cafeselmagnifico
+  Camel Step: camelstep
   Caravan Coffee: caravanroastery
   Casino Mocca: casinomocca
   Center Coffee: centercoffee
   Circus Coffee: circuscoffee55
   Clark St Coffee: clarkstcoffee
   Clifton Coffee: cliftoncoffee
+  Cloud Picker: cloud_picker
   Code Black Coffee: codeblackcoffee
   Coffee Circle: coffeecircle
   Coffee Collective: coffeecollectif
   Coffee County: coffeecountycc
   Coffee Lab: coffeelab_br
   Coffee Libre: coffeelibrekorea
+  Coffee Roasters Asia: coffeeroasters.asia
+  Coffee Tonya PH: coffeetonyaph
   Coffee Wrights: coffeewrights_kuramae
+  Coffeellera: coffeellera
   Colonna Coffee: colonnacoffee
   Copenhagen Coffee Lab: cphcoffeelab
   Coutume: coutumecafe
   Crankhouse Coffee: crankhouseroast
+  Dark Arts Coffee: darkartscoffee
   Dayglow Coffee: dayglowcoffee
   De Mello: demellocoffee
+  Dear Green Coffee: deargreen
   Devoción: devocionusa
   Doubleshot: doubleshotcz
   Drop Coffee: dropcoffeeroasters
   Dukes Coffee: dukes_coffee
   Eight Ounce Coffee: eightouncecoffee
   Elbgold: elbgoldkaffee
+  Expat Roasters: expatroasters
   Fineprint Co: fineprint_co
   Five Elephant: fiveelephant
   Five Senses Coffee: 5sensescoffee
@@ -60,6 +70,7 @@ instagram:
   Fuglen Coffee Roasters: fuglencoffee_tokyo
   GB Roasters: gb.roasters
   George Howell Coffee: ghowellcoffee
+  Girls Who Grind: girlswhogrindcoffee
   Golpie Coffee: golpiecoffee
   Good Life Coffee: goodlifecoffeeroasters
   Goodman Roaster: goodman_roaster_kyoto
@@ -69,27 +80,39 @@ instagram:
   Hydrangea: hydrangeacoffeeroaster
   Impact Roasters: impact_roasters
   Industry Beans: industrybeans
+  Jacu Coffee Roastery: jacucoffeeroastery
   Kaffa Roastery: kaffaroastery
+  Kaffebrenneriet: kaffebrenneriet.no
+  Kaffelabbet: kaffelabbet.se
   Kahiwa Coffee Roasters: kahiwacoffeeroasters
   Kaikado Café: kaikadocafe
+  Kalsada Coffee: kalsadacoffee
   Kannon Coffee: kannoncoffee
+  Kiss the Hippo: kissthehippo
   Kontra Coffee: kontracoffee
   L'Arbre à Café: larbreacafe
   La Cabra: lacabracoffee
+  Langøra Kaffe: langorakaffe
   Laynes Espresso: laynescafe
   LCC Roastery: lccroastery
   Leaves Coffee: leaves_coffee_roasters
   Lehmus Roastery: lehmusroastery
+  Lippe: lippekaffe
   Little Victories: littlevictoriescoffee
   Luna: enjoylunacoffee
   Maker Coffee: makercoffeemelbourne
   MAME: mamespecialtycoffee
+  Man met Bril Koffie: manmetbrilkoffie
   Manhattan Coffee Roasters: manhattancoffeeroasters
   Manu Coffee: manucoffee.official
+  Manufact Coffee: manufact_official
   Market Lane Coffee: marketlane
   Marufuku Coffee: marufukucoffee1934
   Mecca Coffee: meccacoffee
+  Milagros Coffee Roastery: milagrosroastery
+  Modern Standard: mscroasters
   MOK Coffee: mok_coffee
+  Momos Coffee: momoscoffee_official
   Monogram Coffee: monogramco
   Morihico: morihico.official
   Nem Coffee & Espresso: _nem_coffee_espresso
@@ -97,17 +120,22 @@ instagram:
   Nightjar Coffee: nightjar.coffee
   Nineteen Grams: 19grams.coffee
   Nomad Coffee: nomadcoffee
+  North Star Coffee: northstarroast
+  Obadiah Coffee: obadiahcoffeeroasters
   Obscura Coffee: obscuracoffeeroasters
   OddKin Coffee: oddkinandco
   Okaffe Kyoto: okaffe.kyoto
+  Olfactory Coffee: olfactorycoffee
   Olympia Coffee Roasting: olympiacoffee
   ONA Coffee: onacoffee
   One Half Coffee: onehalfcoffee
   Onibus Coffee: onibuscoffee
   Onyx Coffee Lab: onyxcoffeelab
   OR Coffee: orcoffeeroasters
+  Origin Coffee: origincoffeeroasters
   Original Coffee: originalcoffee
   Orsonero: orsonerocoffee
+  Ozone Coffee: ozonecoffeeuk
   Phil & Sebastian: philandseb
   Philocoffea: philocoffea
   Pilot Coffee: pilotcoffee
@@ -115,13 +143,16 @@ instagram:
   Proud Mary Coffee: proudmarycoffee
   Public Coffee: publiccoffeeroasters
   Q.O.L. Coffee: q.o.l.coffee
+  Question Coffee: questioncaferw
   RAW Coffee Company: rawcoffeecompany
   Reykjavik Roasters: reykjavik_roasters
   Right Side Coffee: rightsidecoffee
   Risteriet Coffee: risteriet
   Roastery Coffee House: roasterycoffeehouseindia
+  Roastwork: roastwork
   Rogue Wave Coffee: rogue_wave_coffee
   Rosso Coffee: rossocoffeeroasters
+  Round Hill Roastery: roundhillroastery
   Rumble Coffee: rumblecoffee
   Röststätte: roeststaetteberlin
   Saza Coffee: sazacoffee
@@ -131,6 +162,7 @@ instagram:
   Single O: single_o
   Slow Coffee: sl.owcoffee
   SlowMov: slow.mov
+  Solberg & Hansen: solbergoghansen
   Square Mile: squaremilecoffee
   Square Mile Coffee: squaremilecoffee
   St. Ali: st_ali
@@ -139,8 +171,10 @@ instagram:
   Suzuki Coffee: suzukicoffee.co.ltd
   Syra Coffee: syracoffee
   Takamura Coffee: takamura_coffee_roasters
+  Talormade: talormade
   Tanamera Coffee: tanameracoffee
   Te & Kaffi: teogkaffi
+  Terarosa: terarosacoffee
   The Barn: thebarnberlin
   The Espresso Lab: theespressolab
   The Miners: theminerscoffee
@@ -150,10 +184,14 @@ instagram:
   Trunk Coffee: trunkcoffee
   Unir: unir_coffee
   Vacation Coffee: vacation.coffee
+  VCR: vcrlovesyou
   Veneziano Coffee: venezianocoffeeroasters
   Walden Woods Kyoto: waldenwoodskyoto
   Weekenders Coffee: weekenders_coffee
+  Wells Cafe: wellscafe.pg
   Wes Ngopi: _wes_ngopi
+  White Label Coffee: whitelabelcoffee
   Wide Open Road: wideopenroad.coffee
+  Workshop Coffee: workshopcoffee
   Yanaka Coffee: yanakacoffee
   丸山珈琲: maruyama_coffee
