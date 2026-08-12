@@ -360,6 +360,40 @@ def _clean_note(s: str) -> str:
     s = re.sub(r"(?i)^(and|of|with)\s+", "", s.strip(" .．、,:：-–—/|()（）[]【】"))
     return _WS.sub(" ", s)[:160]
 
+# 地の文から風味の並びだけを切り出すための手がかり。
+# 「〜の風味があります」の "〜" にあたる部分を、はっきりした接続語がある場合だけ拾う。
+# 接続語が無い文には触らない（勝手に切ると意味が変わる）。
+_PROSE_LEAD = re.compile(
+    r"(?i)\b(?:with|of)\s+(?:flavou?rs?|notes?|hints?|aromas?|tastes?)\s+of\s+"
+    r"|\b(?:flavou?rs?|notes?|hints?|aromas?)\s+of\s+"
+    r"|\btastes?\s+(?:like|of)\s+"
+    r"|\breminiscent\s+of\s+")
+# 切り出したあとに残る締めの言葉。"chocolate and cherry in the cup." のような尾
+_PROSE_TAIL = re.compile(
+    r"(?i)\s+(?:in\s+the\s+cup|throughout|on\s+the\s+finish|with\s+a\s+\w+\s+finish)\b.*$")
+
+
+def trim_prose(s: str) -> str:
+    """地の文から風味の並びだけを残す。手がかりが無ければそのまま返す。
+
+    "A comforting and sweet coffee with flavours of chocolate and cherry"
+      → "chocolate and cherry"
+
+    見出しの無い店では、風味が文章の中に埋まっている。そのまま集計すると
+    "comforting" や "coffee" まで数えることになる。ただし切りすぎると
+    意味が変わるので、接続語がはっきりある場合だけ切る。
+    """
+    m = _PROSE_LEAD.search(s or "")
+    if not m:
+        return s
+    out = s[m.end():].strip(" .．、,:：-–—")
+    out = _PROSE_TAIL.sub("", out).strip(" .．、,:：-–—")
+    # 切った結果が短すぎる・風味語が無いなら、切らない方が安全
+    if len(out) < 3 or not _FLAVOR_WORD.search(out):
+        return s
+    return out
+
+
 def extract_notes_src(html: str, title: str = "") -> tuple[str, str]:
     """風味の記述と、どの道で見つけたかを返す。
 

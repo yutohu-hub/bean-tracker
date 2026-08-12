@@ -19,6 +19,14 @@
 
 この2つを分けて数える。当て推量ぶんが多いなら、全体の精度はその分だけ落ちる。
 
+■ 地の文からの切り出し（trim_prose）の下見
+
+当て推量で拾った文は "A comforting and sweet coffee with flavours of
+chocolate and cherry" のように、風味の前に地の文が付く。crawler.trim_prose は
+「flavours of」のような接続語がある場合だけ、その後ろを残す。
+まだ本番の取り込みには入れていない。入れるかどうかを決めるために、
+元の文と切った結果を並べて出す。件数だけでは、切りすぎたかどうかが分からない。
+
 ■ 商品ページから取る案の検証
 
 products.json に無くても、商品ページには書かれていることがある。
@@ -36,7 +44,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from crawler import (REQ_HEADERS, extract_notes_src,  # noqa: E402
+from crawler import (REQ_HEADERS, extract_notes_src, trim_prose,  # noqa: E402
                      has_bean_evidence, _looks_like_coffee)
 
 CONCURRENCY = 6
@@ -71,6 +79,8 @@ async def one_shop(client, sem, r, page_n):
         rows.append({
             "shop": r["name"], "title": (p.get("title") or "")[:40],
             "note": note, "how": how, "page_note": None,
+            # まだ本番には入れていない切り出し。入れるかどうかを目で決めるために並べる
+            "trimmed": trim_prose(note) if note else "",
         })
     # 商品ページ側は数を絞って取る（1商品1リクエストなので）
     for row, p in list(zip(rows, beans))[:page_n]:
@@ -137,6 +147,31 @@ async def run(shops, page_n):
         per[k] = per.get(k, 0) + 1
         print(f"   {x['shop'][:14]:<14} {x['title']:<38} → {x['note'][:48]}")
         if sum(per.values()) >= 24:
+            break
+
+    # --- 地の文からの切り出し（採否を決めるための下見） ---
+    # 「何件変わったか」だけを出しても採否は決められない。切りすぎれば意味が
+    # 変わるので、元の文と切った結果を必ず並べて出す。
+    cut = [x for x in rows if x["note"] and x["trimmed"] != x["note"]]
+    print("\n■ 地の文からの切り出し（まだ本番には入れていない）")
+    print(f"  風味あり {len(have)} 件のうち、切り出しが働くのは {len(cut)} 件"
+          f" ({len(cut) / max(len(have), 1) * 100:.1f}%)")
+    print(f"    うち見出しあり {sum(1 for x in cut if x['how'] == 'label')} 件"
+          f" / 当て推量 {sum(1 for x in cut if x['how'] == 'guess')} 件")
+    if cut:
+        ls = sorted(len(x["trimmed"]) for x in cut)
+        print(f"    切ったあとの長さ 中央値 {ls[len(ls) // 2]}字（切る前は"
+              f" {sorted(len(x['note']) for x in cut)[len(cut) // 2]}字）")
+    print("\n  元の文 → 切った結果（店ごとに2件ずつ）")
+    per2 = {}
+    for x in cut:
+        if per2.get(x["shop"], 0) >= 2:
+            continue
+        per2[x["shop"]] = per2.get(x["shop"], 0) + 1
+        print(f"   {x['shop'][:14]:<14} [{x['how']}]")
+        print(f"      前: {x['note'][:78]}")
+        print(f"      後: {x['trimmed'][:78]}")
+        if sum(per2.values()) >= 30:
             break
 
     # --- 商品ページから取る案 ---
