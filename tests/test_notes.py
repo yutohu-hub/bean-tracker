@@ -81,6 +81,28 @@ CASES = [
      "chocolate notes with orange"),
     ("コロンが無ければ途中の語は落とさない",
      p("Deep chocolate and caramel notes fill the cup here")," Deep chocolate and caramel notes fill the cup here".strip()),
+
+    # --- 地の文から風味の並びだけを切り出す（見出しの無い店の質を上げる） ---
+    # 実データで並べて目視してから入れた。切る側・切らない側の両方を残す。
+    ("接続語のうしろを残す",
+     p("A comforting and sweet coffee with flavours of caramel, chocolate and red fruits"),
+     "caramel, chocolate and red fruits"),
+    ("Notes of のうしろを残す",
+     p("Bright and balanced. Notes of redcurrant, brown sugar, and dark chocolate"),
+     "redcurrant, brown sugar, and dark chocolate"),
+    ("tastes like のうしろを残し、締めの言葉は落とす",
+     p("This lot tastes like green apple and jasmine in the cup"),
+     "green apple and jasmine"),
+    # ここから下は「切らない」側。接続語は文の途中にもあるので、
+    # そこで切ると前半に書かれていた風味ごと捨てることになる
+    ("前半の風味が消えるなら切らない（caramel）",
+     p("Rich caramel-like sweetness and taste of cherry candy for every day"),
+     "Rich caramel-like sweetness and taste of cherry candy for every day"),
+    ("前半の風味が消えるなら切らない（dark chocolate）",
+     p("This coffee has classical dark chocolate flavour notes, with a hazelnut finish"),
+     "This coffee has classical dark chocolate flavour notes, with a hazelnut finish"),
+    ("接続語が無ければ触らない",
+     p("Grape, Guava, Floral and stone fruit"), "Grape, Guava, Floral and stone fruit"),
 ]
 
 

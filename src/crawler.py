@@ -454,7 +454,9 @@ def extract_notes_src(html: str, title: str = "") -> tuple[str, str]:
         if _ALLERGEN.search(ln):
             continue
         if len(set(w.group(0).lower() for w in _FLAVOR_WORD.finditer(ln))) >= 2:
-            return _clean_note(ln), "guess"
+            # 地の文なら、風味の並びだけを切り出す。切ると風味が消える文には
+            # 触らない（trim_prose がそのまま返す）。見出しのある方には使わない
+            return trim_prose(_clean_note(ln)), "guess"
     return "", ""
 
 
