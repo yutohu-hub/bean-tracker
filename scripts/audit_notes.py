@@ -79,8 +79,10 @@ async def one_shop(client, sem, r, page_n):
         rows.append({
             "shop": r["name"], "title": (p.get("title") or "")[:40],
             "note": note, "how": how, "page_note": None,
-            # まだ本番には入れていない切り出し。入れるかどうかを目で決めるために並べる
-            "trimmed": trim_prose(note) if note else "",
+            # まだ本番には入れていない切り出し。入れるかどうかを目で決めるために並べる。
+            # 見出しのある風味には触らない（店が「これは風味だ」と書いている一番良い
+            # ものを、切って壊す理由が無い）。実測でも label を切ると悪くなっていた
+            "trimmed": trim_prose(note) if note and how == "guess" else note,
         })
     # 商品ページ側は数を絞って取る（1商品1リクエストなので）
     for row, p in list(zip(rows, beans))[:page_n]:

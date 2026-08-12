@@ -382,6 +382,19 @@ def trim_prose(s: str) -> str:
     見出しの無い店では、風味が文章の中に埋まっている。そのまま集計すると
     "comforting" や "coffee" まで数えることになる。ただし切りすぎると
     意味が変わるので、接続語がはっきりある場合だけ切る。
+
+    ■ 風味語を1つでも落とすなら、切らない
+
+    実データで並べて見たら、5件中3件で風味が消えていた。
+
+      前: Rich caramel-like sweetness and taste of cherry candy...
+      後: cherry candy...                          ← caramel が消えた
+
+      前: This coffee has classical dark chocolate flavour notes, with a hazelnut...
+      後: hazelnut...                              ← dark chocolate が消えた
+
+    接続語は文の途中にもある。そこで切ると、前半に書かれていた風味ごと
+    捨てることになる。切る前と後で風味語の集まりが変わるなら、切らない。
     """
     m = _PROSE_LEAD.search(s or "")
     if not m:
@@ -391,7 +404,13 @@ def trim_prose(s: str) -> str:
     # 切った結果が短すぎる・風味語が無いなら、切らない方が安全
     if len(out) < 3 or not _FLAVOR_WORD.search(out):
         return s
+    if _flavor_words(out) != _flavor_words(s):
+        return s
     return out
+
+
+def _flavor_words(s: str) -> set:
+    return {w.lower() for w in _FLAVOR_WORD.findall(s or "")}
 
 
 def extract_notes_src(html: str, title: str = "") -> tuple[str, str]:
