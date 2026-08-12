@@ -32,6 +32,9 @@ on:
       sheet:
         description: "情報シート（産地・精製・風味・内容量）の欠けを数える（店数。all で全店）"
         default: ""
+      page:
+        description: "商品ページのHTMLを読むと空欄が埋まるか試す（\"店数 商品数\" 例: 20 6）"
+        default: ""
 
 # instagram モードだけ config/instagram.yaml を書き戻すので write が要る
 permissions:
@@ -49,7 +52,7 @@ jobs:
       - name: 依存インストール
         run: pip install httpx pyyaml
       - name: 候補を叩く
-        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == '' && inputs.markers == '' && inputs.instagram == '' && inputs.sheet == ''
+        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == '' && inputs.markers == '' && inputs.instagram == '' && inputs.sheet == '' && inputs.page == ''
         run: python scripts/probe_roasters.py "${{ inputs.file }}"
 
       # 動画IDは1文字違うと別人の回が載る。目では気づけないので貼る前に照合する
@@ -95,6 +98,11 @@ jobs:
       - name: 情報シートの欠けを数える
         if: inputs.sheet != ''
         run: python scripts/audit_sheet.py "${{ inputs.sheet == 'all' && '0' || inputs.sheet }}"
+
+      # products.json に無い情報が、商品ページのHTMLにあるかを試す
+      - name: 商品ページを読んで試す
+        if: inputs.page != ''
+        run: python scripts/audit_product_page.py ${{ inputs.page }}
 
       # 取れない店について、何が足りないのかを応答から調べる
       - name: 1店を詳しく調べる
