@@ -265,12 +265,19 @@ export function mergeTastings(incoming) {
 // カタログから消えても残り続けるようにする。既存スナップショットは上書きしない
 // （「EC から消える前のカードのまま変更しない」ため、初出時の状態を保持）。
 export function getArchivedBeans() { const l = read(ARCHIVE_KEY, []); return Array.isArray(l) ? l : []; }
+/* 控えの重複は番号ではなく「店＋豆名」で見る。
+   番号で見ていたころは、豆の番号が変わると同じ豆をもう一度足していた。
+   控えは図鑑から消えた豆を残すためのものなので、番号の付け替え（relink）では
+   拾えない（付け替え先が図鑑にもう無い）。だから鍵の方を変える。 */
+const archKey = (b) => `${b.r || ""}::${String(b.name || "").trim().toLowerCase()}`;
+
 export function syncArchive(currentArchive) {
   const stored = getArchivedBeans();
-  const have = new Set(stored.map((b) => b.id));
+  const have = new Set(stored.map(archKey));
   let changed = false;
   for (const b of currentArchive) {
-    if (!have.has(b.id)) { stored.push(b); have.add(b.id); changed = true; }
+    const k = archKey(b);
+    if (!have.has(k)) { stored.push(b); have.add(k); changed = true; }
   }
   if (changed) write(ARCHIVE_KEY, stored);
   return stored;
@@ -296,6 +303,26 @@ export function setNotify(prefs) { const n = { ...getNotify(), ...prefs, at: Dat
 // ---- 再入荷ウォッチ（SOLD OUT の豆の再入荷アラート・端末内プロトタイプ） ----
 export function getRestocks() { const l = read(RESTOCK_KEY, []); return Array.isArray(l) ? l : []; }
 export function isRestock(beanId) { return getRestocks().some((x) => x.beanId === beanId); }
+/* 再入荷ウォッチの番号も付け替える。
+   ここも beanId が鍵なので、付け替えないと「知らせる」に入れたはずの豆が
+   外れて見える（isRestock が新しい番号で引けない）。
+   しかも昔の番号の分は残り続けるので、無料プランのウォッチ上限も食う。 */
+export function applyRestockRelink(plan) {
+  if (!Array.isArray(plan) || !plan.length) return 0;
+  const to = new Map(plan.map((p) => [p.from, p.to]));
+  const list = getRestocks();
+  let n = 0;
+  const next = list.map((x) => {
+    const dst = to.get(x.beanId);
+    if (dst === undefined) return x;
+    n += 1;
+    return { ...x, beanId: dst };
+  });
+  if (!n) return 0;
+  write(RESTOCK_KEY, next);
+  return n;
+}
+
 export function toggleRestock(rec) {
   const list = getRestocks();
   const i = list.findIndex((x) => x.beanId === rec.beanId);

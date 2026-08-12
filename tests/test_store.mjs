@@ -176,6 +176,39 @@ check("付け替えても、評価もメモも飲んだ日も残る", () => {
     "直した時刻が動くと、他の端末で直した内容を巻き戻す");
 });
 
+/* 再入荷ウォッチも beanId が鍵。付け替えないと「知らせる」が外れて見える。
+   しかも昔の番号の分が残り続け、無料プランのウォッチ上限を食う。 */
+check("再入荷ウォッチの番号も付け替わる", () => {
+  localStorage.m.clear();
+  signIn("A");
+  store.toggleRestock({ beanId: 100050, r: "t", name: "Kenya AA", roaster: "T" });
+  store.applyRestockRelink([{ from: 100050, to: 2020077693920 }]);
+  assert.equal(store.isRestock(2020077693920), true, "新しい番号で引けない＝ウォッチが外れて見える");
+  assert.equal(store.isRestock(100050), false);
+  assert.equal(store.getRestocks().length, 1, "昔の分が残ると上限を食う");
+});
+
+/* 控えは図鑑から消えた豆を残すためのもの。番号で重複を見ていたので、
+   豆の番号が変わると同じ豆をもう一度足していた（控えが倍に増える）。
+   控えの豆はもう図鑑に無いので、番号の付け替えでは拾えない。鍵の方を変えた。 */
+check("豆の番号が変わっても、控えが二重にならない", () => {
+  localStorage.m.clear();
+  signIn("A");
+  store.syncArchive([{ id: 100060, r: "t", name: "Ethiopia Guji", status: "archive" }]);
+  // 巡回で番号が振り直された。中身は同じ豆
+  store.syncArchive([{ id: 2363981440412, r: "t", name: "Ethiopia Guji", status: "archive" }]);
+  assert.equal(store.getArchivedBeans().length, 1, "同じ豆が2件になっている");
+});
+
+check("別の豆はちゃんと控えに増える", () => {
+  localStorage.m.clear();
+  signIn("A");
+  store.syncArchive([{ id: 1, r: "t", name: "豆A" }]);
+  store.syncArchive([{ id: 2, r: "t", name: "豆B" }]);
+  store.syncArchive([{ id: 3, r: "u", name: "豆A" }]);   // 別の店の同名は別の豆
+  assert.equal(store.getArchivedBeans().length, 3);
+});
+
 check("付け替えるものが無ければ、何も触らない", () => {
   localStorage.m.clear();
   signIn("A");

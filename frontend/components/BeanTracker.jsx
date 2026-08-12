@@ -12,7 +12,8 @@ import { FS, INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGIN_GROUPS } from "./lib/constants";
 import { syncArchive } from "./lib/store";
 import { captureSessionFromUrl, ensureFreshSession } from "./lib/account";
-import { purgeLegacyPlan, keepForever, getTastings, applyRelink } from "./lib/store";
+import { purgeLegacyPlan, keepForever, getTastings, applyRelink,
+         getRestocks, applyRestockRelink } from "./lib/store";
 import { planRelink, isLegacyId } from "./lib/relink";
 import { movePhotos } from "./lib/photos";
 import { refreshPlan } from "./lib/usePlan";
@@ -99,10 +100,18 @@ export default function BeanTracker() {
   useEffect(() => {
     try {
       const list = getTastings();
-      if (!list.some((t) => isLegacyId(t.beanId))) return;
-      const plan = planRelink(list, BEANS.map((b) => ({
+      const watches = getRestocks();
+      const stale = list.some((t) => isLegacyId(t.beanId))
+        || watches.some((x) => isLegacyId(x.beanId));
+      if (!stale) return;
+      const catalog = BEANS.map((b) => ({
         id: b.id, name: b.name, roasterName: (ROASTERS[b.r] || {}).name || b.r,
-      })));
+      }));
+      // 再入荷ウォッチも beanId が鍵。放っておくと「知らせる」が外れて見える
+      const wPlan = planRelink(watches, catalog);
+      if (wPlan.length) { try { applyRestockRelink(wPlan); } catch {} }
+
+      const plan = planRelink(list, catalog);
       if (!plan.length) return;
       // 写真を先に動かす。記録を先に書き替えると、途中で失敗したときに
       // 写真だけが昔の番号に取り残されて、二度と結び付かなくなる
