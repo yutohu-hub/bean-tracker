@@ -284,6 +284,24 @@ def assign_bean_ids(products: list[dict]) -> dict:
     return out
 
 
+def load_instagram() -> dict:
+    """店名 → Instagram のアカウント名。無ければ空。
+
+    集めるのは scripts/collect_instagram.py（たまに走らせる）。
+    アカウント名はめったに変わらないので、毎時の巡回には混ぜていない。
+    """
+    p = ROOT / "config" / "instagram.yaml"
+    if not p.exists():
+        return {}
+    try:
+        import yaml
+        d = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        got = d.get("instagram") or {}
+        return {k: str(v).lstrip("@") for k, v in got.items() if v}
+    except Exception:
+        return {}
+
+
 def first_seen_date(p: dict, fallback: str) -> str:
     """その豆を初めて見つけた日（YYYY-MM-DD）。
 
@@ -519,6 +537,18 @@ def main() -> None:
             if _is_cgle(title, bean["origin"]):
                 bean["cgle"] = True
             beans.append(bean)
+
+    # 店の Instagram。scripts/collect_instagram.py が集めたものを重ねる。
+    # 無い店には何も付けない（画面側は付いている店にだけ導線を出す）。
+    ig = load_instagram()
+    hit = 0
+    for v in roasters.values():
+        h = ig.get(v.get("name"))
+        if h:
+            v["instagram"] = h
+            hit += 1
+    if ig:
+        print(f"Instagram: {hit}/{len(roasters)} 店に付けた（手持ち {len(ig)} 件）")
 
     report_all_goods(all_goods)
     drop_impossible_prices(beans)

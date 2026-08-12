@@ -27,11 +27,12 @@ on:
         description: "「豆である証拠」がどれだけ揃うかを数える（店数。all で全店）"
         default: ""
       instagram:
-        description: "店のページから Instagram のアカウント名が取れるか数える（店数。all で全店）"
+        description: "Instagram のアカウント名を集めて config/instagram.yaml に貯める（店数。all で全店）"
         default: ""
 
+# instagram モードだけ config/instagram.yaml を書き戻すので write が要る
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   probe:
@@ -68,10 +69,24 @@ jobs:
         if: inputs.markers != ''
         run: python scripts/audit_bean_markers.py "${{ inputs.markers == 'all' && '0' || inputs.markers }}"
 
-      # 図鑑に Instagram を出す前に、アカウント名がどれだけ取れるかを見る
-      - name: Instagramのアカウント名を数える
+      # 店のページから Instagram のアカウント名を集めて貯める。
+      # 一度に全店を叩くと429で落ちるので、少しずつ回して足していく。
+      - name: Instagramのアカウント名を集める
         if: inputs.instagram != ''
-        run: python scripts/probe_instagram.py "${{ inputs.instagram == 'all' && '0' || inputs.instagram }}"
+        run: python scripts/collect_instagram.py "${{ inputs.instagram == 'all' && '0' || inputs.instagram }}"
+
+      - name: 集めた結果を残す
+        if: inputs.instagram != ''
+        run: |
+          if [ -n "$(git status --porcelain config/instagram.yaml)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add config/instagram.yaml
+            git commit -m "Instagram のアカウント名を集める（自動）"
+            git push
+          else
+            echo "変更なし"
+          fi
 
       # 取れない店について、何が足りないのかを応答から調べる
       - name: 1店を詳しく調べる

@@ -1,7 +1,20 @@
-"""店のページから Instagram のアカウント名が取れるかを実測する。
+"""店のページから Instagram のアカウント名を集めて config/instagram.yaml に貯める。
 
-  python scripts/probe_instagram.py        全店
-  python scripts/probe_instagram.py 80     先頭80店
+  python scripts/collect_instagram.py            全店を見て、結果を書き込む
+  python scripts/collect_instagram.py 80         先頭80店だけ
+  python scripts/collect_instagram.py 0 --dry    書き込まずに数えるだけ
+
+■ なぜ毎時の巡回に混ぜないのか
+
+アカウント名はめったに変わらない。毎時の巡回に1リクエスト足すと、
+447店ぶんの負荷が毎時かかるだけで、得るものが無い。
+たまに走らせてファイルに貯め、そのファイルを図鑑が読む形にする。
+
+■ なぜ一度に全店を叩かないのか
+
+実測: 447店を24軒ずつ並行で叩いたら、199軒が 429（レート制限）で落ちた。
+GitHub の IP は共有なので、Shopify 側が早々に締める。
+少しずつ回して、取れたぶんだけファイルに足していく（前の結果は消さない）。
 
 ■ なぜ要るのか
 
@@ -33,8 +46,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 from crawler import REQ_HEADERS  # noqa: E402
 
-CONCURRENCY = 24
+CONCURRENCY = 6      # 24 で叩いたら 447店中199軒が429だった
 TIMEOUT = 20.0
+OUT = ROOT / "config" / "instagram.yaml"
 
 _LINK = re.compile(
     r"(?:https?:)?//(?:www\.)?instagram\.com/([^/?\"'\s>&#]+)", re.I)
@@ -127,7 +141,7 @@ async def check_embed(handles: list[str]) -> None:
                   f"/ 最終URL {str(r.url)[:52]} {wall}")
 
 
-async def run(shops: list) -> None:
+async def run(shops: list) -> dict:
     sem = asyncio.Semaphore(CONCURRENCY)
     async with httpx.AsyncClient(headers=REQ_HEADERS, timeout=TIMEOUT,
                                  follow_redirects=True) as client:
@@ -159,15 +173,53 @@ async def run(shops: list) -> None:
         for h, n in sorted(dup, key=lambda x: -x[1])[:15]:
             print(f"   @{h}  {n}軒")
 
+    # 同じアカウントが複数店に付いたものは採らない。どちらかが間違っている
+    bad = {h for h, n in Counter(h for _, h in got).items() if n > 1}
+    return {name: h for name, h in got if h not in bad}
+
+
+def load_known() -> dict:
+    """すでに集めてあるぶん。取れなかった回に消してしまわないよう、必ず読む。"""
+    if not OUT.exists():
+        return {}
+    d = yaml.safe_load(OUT.read_text(encoding="utf-8")) or {}
+    return d.get("instagram", {}) or {}
+
+
+def save(known: dict) -> None:
+    lines = ["# 店の Instagram アカウント名。scripts/collect_instagram.py が集める。",
+             "# 店のトップページに貼ってある導線から拾っている。",
+             "# 手で直したものは、次に集めても上書きされない（found: false を付ける）。",
+             "instagram:"]
+    for name in sorted(known, key=lambda x: x.lower()):
+        lines.append(f"  {yaml.safe_dump(name, allow_unicode=True).strip()}: {known[name]}")
+    OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
 
 def main() -> None:
-    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    dry = "--dry" in sys.argv
+    limit = int(args[0]) if args else 0
     cfg = yaml.safe_load((ROOT / "config" / "roasters.yaml").read_text(encoding="utf-8"))
     shops = [r for r in cfg.get("roasters", []) if r.get("url")]
+    known = load_known()
     if limit:
-        shops = shops[:limit]
-    print(f"調べる店 {len(shops)} 軒（{CONCURRENCY}軒ずつ並行）\n")
-    asyncio.run(run(shops))
+        # まだ取れていない店を先に見る。何度か走らせれば全体が埋まる
+        shops = sorted(shops, key=lambda r: r["name"] in known)[:limit]
+    print(f"調べる店 {len(shops)} 軒（{CONCURRENCY}軒ずつ並行）"
+          f" / すでに {len(known)} 軒ぶん持っている\n")
+    found = asyncio.run(run(shops))
+    if dry:
+        print("\n--dry なので書き込まない")
+        return
+    added = {n: h for n, h in found.items() if n not in known}
+    changed = {n: h for n, h in found.items() if n in known and known[n] != h}
+    known.update(found)
+    save(known)
+    print(f"\n{OUT} に書き込んだ: 合計 {len(known)} 軒"
+          f"（新しく {len(added)} 軒 / 変わった {len(changed)} 軒）")
+    for n, h in list(changed.items())[:10]:
+        print(f"   変更 {n}: @{h}")
 
 
 if __name__ == "__main__":
