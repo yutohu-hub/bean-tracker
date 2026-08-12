@@ -2,6 +2,10 @@
 # 店のトップページに貼ってある導線から拾っている。
 # 手で直したいときは、この表を直接編集してよい
 # （次に集めたとき、取れた店だけが上書きされる）。
+#
+# 店名の綴りと結びつかないものは自動では採らない。
+# 略称（Subtext → @sbtxt.coffee）や日本語だけの店名は、ここに手で足す。
+# 自動では選べないので、次に集めても消えない。
 instagram:
   '% Arabica': arabica.global
   3fe: 3fecoffee
@@ -74,7 +78,6 @@ instagram:
   Coffeellera: coffeellera
   Colonna Coffee: colonnacoffee
   Combi Coffee: combi_coffee
-  Comete Coffee Roasters: interpret_coffee
   Common Man Coffee: commonmancoffee
   Copenhagen Coffee Lab: cphcoffeelab
   Corridor Seven: corridorsevencoffee
@@ -85,7 +88,6 @@ instagram:
   Crema Coffee: cremacrema
   da Matteo: damatteo
   Dark Arts Coffee: darkartscoffee
-  Dark Matter Coffee: ridmanscoffee
   Dayglow Coffee: dayglowcoffee
   De Mello: demellocoffee
   Dear Green Coffee: deargreen
@@ -167,7 +169,6 @@ instagram:
   Leaves Coffee: leaves_coffee_roasters
   Lehmus Roastery: lehmusroastery
   Light Up Coffee: lightupcoffee
-  LiLo Coffee Roasters: inthecoffeekyoto
   Lippe: lippekaffe
   Little Victories: littlevictoriescoffee
   Luna: enjoylunacoffee

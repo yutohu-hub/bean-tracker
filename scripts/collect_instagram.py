@@ -93,6 +93,16 @@ def handles_in(html: str) -> list[str]:
     return out
 
 
+# どの店の名前にも入っている業種の言葉。店を見分ける手がかりにならない
+_GENERIC_WORDS = {
+    "coffee", "coffees", "coffe", "cafe", "café", "caffe", "caffè", "kaffe",
+    "kaffee", "koffie", "kahve", "cafes", "roasters", "roaster", "roasting",
+    "roastery", "roasterie", "roast", "roasted", "beans", "bean", "espresso",
+    "specialty", "speciality", "company", "coffeeroasters", "coffeeroasting",
+    "coffeeco", "roastingco", "brewing", "brew", "torrefaction", "tostadores",
+}
+
+
 def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]", "", (s or "").lower())
 
@@ -135,8 +145,13 @@ def pick_handle(found: list[str], shop_name: str) -> str:
     part = [h for h in counts if len(n) >= 5 and (n[:6] in _norm(h) or _norm(h)[:6] in n)]
     if part:
         return best(part)
-    # 店名の単語が入っているもの（"Luna" → @enjoylunacoffee）
-    words = [w for w in re.findall(r"[a-z0-9]+", shop_name.lower()) if len(w) >= 4]
+    # 店名の単語が入っているもの（"Luna" → @enjoylunacoffee）。
+    # ただし業種の言葉（coffee / roasters …）では照らし合わせない。
+    # 実測で Dark Matter Coffee が @ridmanscoffee、Comete Coffee Roasters が
+    # @interpret_coffee になった。どちらも "coffee" だけで一致していた。
+    # 業種の言葉は、そのページに載っている他店のアカウントにも必ず入っている
+    words = [w for w in re.findall(r"[a-z0-9]+", shop_name.lower())
+             if len(w) >= 4 and w not in _GENERIC_WORDS]
     word = [h for h in counts if any(w in _norm(h) for w in words)]
     if word:
         return best(word)
@@ -247,10 +262,15 @@ def save(known: dict) -> None:
     ドキュメント終端（...）がそのまま混ざり、読み込めないファイルになっていた。
     マッピングごと safe_dump に渡せば、引用符も終端も正しく付く。
     """
+    # 見出しはここに全部書く。ファイル側に足した説明は、次に集めたときに消える
     head = ("# 店の Instagram アカウント名。scripts/collect_instagram.py が集める。\n"
             "# 店のトップページに貼ってある導線から拾っている。\n"
             "# 手で直したいときは、この表を直接編集してよい\n"
-            "# （次に集めたとき、取れた店だけが上書きされる）。\n")
+            "# （次に集めたとき、取れた店だけが上書きされる）。\n"
+            "#\n"
+            "# 店名の綴りと結びつかないものは自動では採らない。\n"
+            "# 略称（Subtext → @sbtxt.coffee）や日本語だけの店名は、ここに手で足す。\n"
+            "# 自動では選べないので、次に集めても消えない。\n")
     body = yaml.safe_dump({"instagram": dict(sorted(known.items(), key=lambda x: x[0].lower()))},
                           allow_unicode=True, sort_keys=False, default_flow_style=False)
     OUT.write_text(head + body, encoding="utf-8")
