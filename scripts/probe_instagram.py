@@ -59,6 +59,33 @@ def handles_in(html: str) -> list[str]:
     return out
 
 
+def _norm(s: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", (s or "").lower())
+
+
+def pick_handle(found: list[str], shop_name: str) -> str:
+    """候補の中から、その店のアカウントを選ぶ。
+
+    出てくる回数だけで決めると、フッターに載っている制作会社や取引先を拾う。
+    実測で Single O が @process_creative になった（サイトを作った会社）。
+
+    店名に似ているものを先に見る。似たものが無ければ、いちばん多く出てくるもの。
+    """
+    if not found:
+        return ""
+    n = _norm(shop_name)
+    counts = Counter(found)
+    if n:
+        near = [h for h in counts if _norm(h).startswith(n) or n.startswith(_norm(h))]
+        if near:
+            return max(near, key=lambda h: (counts[h], -len(h)))
+        # 部分的に含むもの（"coffeecollective" と "coffeecollectif" のような揺れ）
+        part = [h for h in counts if len(n) >= 5 and (n[:6] in _norm(h) or _norm(h)[:6] in n)]
+        if part:
+            return max(part, key=lambda h: (counts[h], -len(h)))
+    return counts.most_common(1)[0][0]
+
+
 async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict):
     base = r["url"].rstrip("/")
     async with sem:
@@ -71,8 +98,33 @@ async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict):
     found = handles_in(resp.text)
     if not found:
         return r, None, "リンク無し"
-    # いちばん多く出てくるものを店のアカウントとみなす
-    return r, Counter(found).most_common(1)[0][0], ""
+    return r, pick_handle(found, r.get("name", "")), ""
+
+
+async def check_embed(handles: list[str]) -> None:
+    """プロフィールの埋め込みが本当に使えるかを確かめる。
+
+    記憶で「使える/使えない」を決めない。実際に叩いて、返ってきたものを見る。
+    Instagram は公開プロフィールの埋め込みを止めた（ログイン画面が返る）はずだが、
+    仕様は変わるので、そのときの本当の応答で判断する。
+    """
+    urls = []
+    for h in handles[:3]:
+        urls.append((f"プロフィール埋め込み @{h}", f"https://www.instagram.com/{h}/embed"))
+        urls.append((f"プロフィール       @{h}", f"https://www.instagram.com/{h}/"))
+    async with httpx.AsyncClient(headers=REQ_HEADERS, timeout=TIMEOUT,
+                                 follow_redirects=True) as client:
+        print("\n■ 埋め込みが使えるか（実際に叩いて確かめる）")
+        for label, u in urls:
+            try:
+                r = await client.get(u)
+            except httpx.HTTPError as e:
+                print(f"   {label:<28} 接続失敗 {type(e).__name__}")
+                continue
+            t = r.text
+            wall = "ログイン" if re.search(r"login|Log in|loginForm", t, re.I) else ""
+            print(f"   {label:<28} HTTP {r.status_code} / {len(t):>7}字 "
+                  f"/ 最終URL {str(r.url)[:52]} {wall}")
 
 
 async def run(shops: list) -> None:
@@ -96,6 +148,9 @@ async def run(shops: list) -> None:
     print("\n■ 取れなかった店（先頭20）")
     for name, why in miss[:20]:
         print(f"   {name[:26]:<26} {why}")
+
+    if got:
+        await check_embed([h for _, h in got])
 
     # 同じアカウントが複数の店に付いたら、拾い方を間違えている疑い
     dup = [(h, n) for h, n in Counter(h for _, h in got).items() if n > 1]
