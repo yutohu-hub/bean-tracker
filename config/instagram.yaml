@@ -1,0 +1,66 @@
+# 店の Instagram アカウント名。scripts/collect_instagram.py が集める。
+# 店のトップページに貼ってある導線から拾っている。
+# 手で直したものは、次に集めても上書きされない（found: false を付ける）。
+instagram:
+  Apollon's Gold
+...: apollonsgold
+  April Coffee Roasters
+...: aprilcoffeecph
+  Boon Coffee
+...: booncoffee
+  Coffee Collective
+...: coffeecollectif
+  Crankhouse Coffee
+...: crankhouseroast
+  Dayglow Coffee
+...: dayglowcoffee
+  Drop Coffee
+...: dropcoffeeroasters
+  Eight Ounce Coffee
+...: eightouncecoffee
+  Friedhats
+...: friedhats
+  Fuglen Coffee Roasters
+...: fuglencoffee_tokyo
+  George Howell Coffee
+...: ghowellcoffee
+  Goodman Roaster
+...: goodman_roaster_kyoto
+  Heart Coffee Roasters
+...: heartroasters
+  Hydrangea
+...: hydrangeacoffeeroaster
+  La Cabra
+...: lacabracoffee
+  Luna
+...: enjoylunacoffee
+  Manhattan Coffee Roasters
+...: manhattancoffeeroasters
+  Market Lane Coffee
+...: marketlane
+  Olympia Coffee Roasting
+...: olympiacoffee
+  ONA Coffee
+...: onacoffee
+  One Half Coffee
+...: onehalfcoffee
+  Onibus Coffee
+...: onibuscoffee
+  Onyx Coffee Lab
+...: onyxcoffeelab
+  Proud Mary Coffee
+...: proudmarycoffee
+  Sey Coffee
+...: seycoffee
+  Single O
+...: single_o
+  Slow Coffee
+...: sl.owcoffee
+  Square Mile Coffee
+...: squaremilecoffee
+  The Barn
+...: thebarnberlin
+  Tim Wendelboe
+...: timwendelboe
+  Wes Ngopi
+...: _wes_ngopi
