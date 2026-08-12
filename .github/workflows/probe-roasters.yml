@@ -26,6 +26,9 @@ on:
       markers:
         description: "「豆である証拠」がどれだけ揃うかを数える（店数。all で全店）"
         default: ""
+      instagram:
+        description: "店のページから Instagram のアカウント名が取れるか数える（店数。all で全店）"
+        default: ""
 
 permissions:
   contents: read
@@ -42,7 +45,7 @@ jobs:
       - name: 依存インストール
         run: pip install httpx pyyaml
       - name: 候補を叩く
-        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == '' && inputs.markers == ''
+        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == '' && inputs.markers == '' && inputs.instagram == ''
         run: python scripts/probe_roasters.py "${{ inputs.file }}"
 
       # 動画IDは1文字違うと別人の回が載る。目では気づけないので貼る前に照合する
@@ -64,6 +67,11 @@ jobs:
       - name: 豆の証拠を数える
         if: inputs.markers != ''
         run: python scripts/audit_bean_markers.py "${{ inputs.markers == 'all' && '0' || inputs.markers }}"
+
+      # 図鑑に Instagram を出す前に、アカウント名がどれだけ取れるかを見る
+      - name: Instagramのアカウント名を数える
+        if: inputs.instagram != ''
+        run: python scripts/probe_instagram.py "${{ inputs.instagram == 'all' && '0' || inputs.instagram }}"
 
       # 取れない店について、何が足りないのかを応答から調べる
       - name: 1店を詳しく調べる
