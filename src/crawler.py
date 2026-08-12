@@ -413,7 +413,8 @@ def _flavor_words(s: str) -> set:
     return {w.lower() for w in _FLAVOR_WORD.findall(s or "")}
 
 
-def extract_notes_src(html: str, title: str = "") -> tuple[str, str]:
+def extract_notes_src(html: str, title: str = "",
+                      trim: bool = True) -> tuple[str, str]:
     """風味の記述と、どの道で見つけたかを返す。
 
       ("…", "label")  見出しの直後。店が「これは風味だ」と書いている
@@ -456,7 +457,9 @@ def extract_notes_src(html: str, title: str = "") -> tuple[str, str]:
         if len(set(w.group(0).lower() for w in _FLAVOR_WORD.finditer(ln))) >= 2:
             # 地の文なら、風味の並びだけを切り出す。切ると風味が消える文には
             # 触らない（trim_prose がそのまま返す）。見出しのある方には使わない
-            return trim_prose(_clean_note(ln)), "guess"
+            val = _clean_note(ln)
+            # trim=False は監査用。切る前と後を並べて見るために生の文が要る
+            return (trim_prose(val) if trim else val), "guess"
     return "", ""
 
 
