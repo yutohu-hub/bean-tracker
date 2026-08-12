@@ -61,6 +61,8 @@ _NOT_ACCOUNT = {
 }
 # Instagram のアカウント名の決まり: 英数字・ピリオド・アンダースコア、30字まで
 _HANDLE = re.compile(r"^[A-Za-z0-9._]{1,30}$")
+# 投稿のID。店のページに Instagram のフィードを貼っている店から拾える
+_POST = re.compile(r"instagram\.com/(?:p|reel)/([A-Za-z0-9_-]{5,24})", re.I)
 
 
 def handles_in(html: str) -> list[str]:
@@ -110,20 +112,26 @@ async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict):
     if resp.status_code != 200:
         return r, None, f"HTTP {resp.status_code}"
     found = handles_in(resp.text)
+    posts = _POST.findall(resp.text)
     if not found:
-        return r, None, "リンク無し"
-    return r, pick_handle(found, r.get("name", "")), ""
+        return r, None, "リンク無し", posts
+    return r, pick_handle(found, r.get("name", "")), "", posts
 
 
-async def check_embed(handles: list[str]) -> None:
+async def check_embed(handles: list[str], posts: list = ()) -> None:
     """プロフィールの埋め込みが本当に使えるかを確かめる。
 
     記憶で「使える/使えない」を決めない。実際に叩いて、返ってきたものを見る。
     Instagram は公開プロフィールの埋め込みを止めた（ログイン画面が返る）はずだが、
     仕様は変わるので、そのときの本当の応答で判断する。
     """
+    print(f"\n■ 店のページから拾えた投稿ID: {len(posts)} 件")
+    for name, code in posts[:5]:
+        print(f"   {name[:26]:<26} /p/{code}/")
     urls = []
-    for h in handles[:3]:
+    for _, code in posts[:2]:
+        urls.append((f"投稿の埋め込み /p/{code}", f"https://www.instagram.com/p/{code}/embed/"))
+    for h in handles[:2]:
         urls.append((f"プロフィール埋め込み @{h}", f"https://www.instagram.com/{h}/embed"))
         urls.append((f"プロフィール       @{h}", f"https://www.instagram.com/{h}/"))
     async with httpx.AsyncClient(headers=REQ_HEADERS, timeout=TIMEOUT,
@@ -147,8 +155,9 @@ async def run(shops: list) -> dict:
                                  follow_redirects=True) as client:
         results = await asyncio.gather(*(probe(client, sem, r) for r in shops))
 
-    got = [(r["name"], h) for r, h, _ in results if h]
-    miss = [(r["name"], why) for r, h, why in results if not h]
+    got = [(r["name"], h) for r, h, _, _ in results if h]
+    miss = [(r["name"], why) for r, h, why, _ in results if not h]
+    posts = [(r["name"], p) for r, _, _, ps in results for p in ps]
     print(f"調べた店 {len(results)} 軒 / アカウントが取れた {len(got)} 軒 "
           f"({len(got) / max(len(results), 1) * 100:.1f}%)\n")
 
@@ -164,7 +173,7 @@ async def run(shops: list) -> dict:
         print(f"   {name[:26]:<26} {why}")
 
     if got:
-        await check_embed([h for _, h in got])
+        await check_embed([h for _, h in got], posts)
 
     # 同じアカウントが複数の店に付いたら、拾い方を間違えている疑い
     dup = [(h, n) for h, n in Counter(h for _, h in got).items() if n > 1]
