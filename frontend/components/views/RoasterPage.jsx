@@ -10,6 +10,7 @@ import { BeanCard } from "../ui/BeanCard";
 export function RoasterPage({ rid, onOpen, onBack, onRoaster, initialTab, cur }) {
   const roaster = ROASTERS[rid];
   const [tab, setTab] = useState(initialTab || "now");
+  const [placeTab, setPlaceTab] = useState("ig");   // 店の外の場所: ig | map
   const beans = BEANS.filter((b) => b.r === rid);
   const byStatus = (st) => beans.filter((b) => b.status === st);
   // アーカイブは端末に永続化したスナップショットとマージ（更新で消えても残す）
@@ -61,22 +62,60 @@ export function RoasterPage({ rid, onOpen, onBack, onRoaster, initialTab, cur })
       {roaster.url && (
         <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, marginTop: 6, textAlign: "center" }}>{roaster.url} へ送客（utm付き）</div>
       )}
-      {/* 店の Instagram。アカウント名が取れている店にだけ出す。
-          投稿を埋め込むことはできない。実測で /{'{'}アカウント名{'}'}/embed は
-          ログイン画面（634KB）を返した。Instagram が公開プロフィールの
-          埋め込みを止めているため、導線だけを置いている。 */}
-      {roaster.instagram && (
-        <a href={`https://www.instagram.com/${roaster.instagram}/`}
-          target="_blank" rel="noopener noreferrer"
+      {/* 店の外の場所（Instagram・地図）をタブでまとめる。
+          Instagram のアカウント名が取れていない店ではタブを出さず、
+          これまでどおり地図の導線だけを置く。
+
+          ■ 投稿は埋め込めない（実測）
+          /{アカウント名}/embed も /{アカウント名}/ も、HTTP 200 で
+          634KB のログイン画面が返る。Instagram が公開プロフィールの
+          埋め込みを止めているため。
+          投稿単体の埋め込み（/p/{ID}/embed）は仕組みとしては生きているが、
+          その ID をどこからも取れない。店のトップページ40軒を見て、
+          投稿へのリンクは0件だった。
+          だから中身を貼るのではなく、開く導線を置いている。 */}
+      {roaster.instagram ? (
+        <div style={{ marginTop: 8, border: `1px solid ${LINE}`, borderRadius: 8, overflow: "hidden" }}>
+          <div style={{ display: "flex", borderBottom: `1px solid ${LINE}` }}>
+            {[["ig", `Instagram`], ["map", "地図"]].map(([k, label]) => (
+              <button key={k} onClick={() => setPlaceTab(k)}
+                style={{
+                  flex: 1, padding: "9px 0", background: placeTab === k ? "#F2F0E9" : PAPER,
+                  border: "none", cursor: "pointer", fontSize: FS.meta, letterSpacing: "0.04em",
+                  color: placeTab === k ? INK : GRAY, fontWeight: placeTab === k ? 700 : 400,
+                }}>{label}</button>
+            ))}
+          </div>
+          <div style={{ padding: 12 }}>
+            {placeTab === "ig" ? (
+              <>
+                <div style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.body, color: INK, textAlign: "center" }}>
+                  @{roaster.instagram}
+                </div>
+                <a href={`https://www.instagram.com/${roaster.instagram}/`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", marginTop: 8, padding: "10px 0", background: INK, color: PAPER, borderRadius: 8, fontSize: FS.body, fontWeight: 700, textDecoration: "none" }}>
+                  Instagram で見る ↗
+                </a>
+                <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 8, textAlign: "center" }}>
+                  投稿の埋め込みは Instagram 側で止められているため、
+                  ここには出せません。
+                </div>
+              </>
+            ) : (
+              <a href={mapHref(roaster)} target="_blank" rel="noopener noreferrer"
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "10px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700, textDecoration: "none" }}>
+                🗺 Google マップで場所を見る ↗
+              </a>
+            )}
+          </div>
+        </div>
+      ) : (
+        <a href={mapHref(roaster)} target="_blank" rel="noopener noreferrer"
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", marginTop: 8, padding: "10px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700, textDecoration: "none" }}>
-          <span aria-hidden style={{ fontSize: FS.body }}>◙</span>
-          Instagram @{roaster.instagram} ↗
+          🗺 Google マップで場所を見る ↗
         </a>
       )}
-      <a href={mapHref(roaster)} target="_blank" rel="noopener noreferrer"
-        style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", marginTop: 8, padding: "10px 0", background: "none", color: INK, border: `1px solid ${LINE}`, borderRadius: 8, fontSize: FS.body, fontWeight: 700, textDecoration: "none" }}>
-        🗺 Google マップで場所を見る ↗
-      </a>
       <div style={{ display: "flex", gap: 0, marginTop: 18, borderBottom: `1px solid ${LINE}` }}>
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}

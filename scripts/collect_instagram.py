@@ -196,13 +196,19 @@ def load_known() -> dict:
 
 
 def save(known: dict) -> None:
-    lines = ["# 店の Instagram アカウント名。scripts/collect_instagram.py が集める。",
-             "# 店のトップページに貼ってある導線から拾っている。",
-             "# 手で直したものは、次に集めても上書きされない（found: false を付ける）。",
-             "instagram:"]
-    for name in sorted(known, key=lambda x: x.lower()):
-        lines.append(f"  {yaml.safe_dump(name, allow_unicode=True).strip()}: {known[name]}")
-    OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    """YAML として書く。
+
+    以前は行を手で組み立てていて、yaml.safe_dump が文字列に付ける
+    ドキュメント終端（...）がそのまま混ざり、読み込めないファイルになっていた。
+    マッピングごと safe_dump に渡せば、引用符も終端も正しく付く。
+    """
+    head = ("# 店の Instagram アカウント名。scripts/collect_instagram.py が集める。\n"
+            "# 店のトップページに貼ってある導線から拾っている。\n"
+            "# 手で直したいときは、この表を直接編集してよい\n"
+            "# （次に集めたとき、取れた店だけが上書きされる）。\n")
+    body = yaml.safe_dump({"instagram": dict(sorted(known.items(), key=lambda x: x[0].lower()))},
+                          allow_unicode=True, sort_keys=False, default_flow_style=False)
+    OUT.write_text(head + body, encoding="utf-8")
 
 
 def main() -> None:
