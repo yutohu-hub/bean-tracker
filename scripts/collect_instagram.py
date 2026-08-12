@@ -108,7 +108,31 @@ def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]", "", (s or "").lower())
 
 
-def pick_handle(found: list[str], shop_name: str) -> str:
+def domain_word(url: str) -> str:
+    """店のURLから、その店を指す綴りを取り出す。
+
+      https://kurasu.kyoto        → kurasu
+      https://shop.glitchcoffee.com → glitchcoffee
+      https://www.maruyamacoffee.com → maruyamacoffee
+
+    店名が日本語だけだと綴りの手がかりが無く、アカウントを選べない。
+    残り127軒のうち22軒が日本、5軒が台湾で、いちばん大きな塊になっている。
+    URLは店自身が名乗っている綴りなので、名前と同じくらい確かな手がかりになる。
+    """
+    m = re.match(r"^https?://([^/]+)", (url or "").strip())
+    if not m:
+        return ""
+    host = m.group(1).lower()
+    for pre in ("www.", "shop.", "store.", "online.", "ec."):
+        if host.startswith(pre):
+            host = host[len(pre):]
+    label = host.split(".")[0]
+    if len(label) < 4 or label in _GENERIC_WORDS:
+        return ""
+    return re.sub(r"[^a-z0-9]", "", label)
+
+
+def pick_handle(found: list[str], shop_name: str, url: str = "") -> str:
     """候補の中から、その店のアカウントを選ぶ。
 
     出てくる回数だけで決めると、フッターに載っている制作会社や取引先を拾う。
@@ -133,12 +157,14 @@ def pick_handle(found: list[str], shop_name: str) -> str:
     """
     if not found:
         return ""
-    n = _norm(shop_name)
-    if not n:
-        # 日本語だけの店名。綴りの手がかりが無いので、ここでは決めない
-        return ""
     counts = Counter(found)
     best = lambda hs: max(hs, key=lambda h: (counts[h], -len(h)))
+    n = _norm(shop_name)
+    if not n:
+        # 日本語だけの店名。名前からは決められないので、URLの綴りだけで見る
+        dw = domain_word(url)
+        hit = [h for h in counts if dw and dw in _norm(h)] if dw else []
+        return best(hit) if hit else ""
     near = [h for h in counts if _norm(h).startswith(n) or n.startswith(_norm(h))]
     if near:
         return best(near)
@@ -156,6 +182,13 @@ def pick_handle(found: list[str], shop_name: str) -> str:
     word = [h for h in counts if any(w in _norm(h) for w in words)]
     if word:
         return best(word)
+    # 最後に、店のURLの綴り（"Bear Pond Espresso" → bearpond.jp → @bearpond…）。
+    # 名前と綴りが違う店でも、URLは店自身が名乗っているものなので手がかりになる
+    dw = domain_word(url)
+    if dw:
+        dom = [h for h in counts if dw in _norm(h) or _norm(h).startswith(dw[:6])]
+        if dom:
+            return best(dom)
     return ""
 
 
@@ -223,7 +256,7 @@ async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict,
                 break
     if not found:
         return r, None, "リンク無し", posts
-    h = pick_handle(found, r.get("name", ""))
+    h = pick_handle(found, r.get("name", ""), r.get("url", ""))
     if not h:
         # 候補はあったが、店のものだと言い切れなかった。理由を分けて数える
         return r, None, "店のものか決められない", posts

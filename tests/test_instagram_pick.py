@@ -30,7 +30,7 @@ def link(h: str) -> str:
 
 
 CASES = [
-    # (店名, ページのHTML, 期待するアカウント, 何を見ているか)
+    # (店名, ページのHTML, 期待するアカウント, 何を見ているか[, 店のURL])
     ("Padre Coffee",
      link("shopify") + '<p>Powered by Shopify</p>',
      "", "決済・カートの会社は店ではない"),
@@ -63,7 +63,7 @@ CASES = [
      "", "名前も似ておらず1回だけ。店のものとは言えない"),
     ("丸山珈琲",
      link("maruyama_coffee") + link("someoneelse"),
-     "", "綴りの手がかりが無い店名は、ここでは決めない（表に手で足す）"),
+     "", "日本語だけの店名は、URLが無ければ決めない"),
     ("Fuglen Coffee Roasters",
      link("fuglencoffee_tokyo") + '<a href="https://instagram.com/p/ABC123/">post</a>',
      "fuglencoffee_tokyo", "投稿のURLはアカウント名ではない"),
@@ -76,13 +76,33 @@ CASES = [
     ("49th Parallel",
      link("49th") + link("49thparallelroasters"),
      "49thparallelroasters", "短いものを外したうえで、名前が似ている方を選ぶ"),
+
+    # --- 店のURLの綴りを手がかりにする ---
+    ("丸山珈琲",
+     link("maruyama_coffee") + link("someoneelse"),
+     "maruyama_coffee", "日本語の店名でも、URLの綴りと結びつけば選べる",
+     "https://www.maruyamacoffee.com"),
+    ("丸山珈琲",
+     link("someoneelse") * 4,
+     "", "URLとも結びつかなければ、やはり採らない",
+     "https://www.maruyamacoffee.com"),
+    ("Bear Pond Espresso",
+     link("bearpondespresso") + link("otherplace"),
+     "bearpondespresso", "名前とURLの綴りが違う店でも選べる",
+     "https://bearpond.jp"),
+    ("Kurasu",
+     link("kurasu_kyoto"),
+     "kurasu_kyoto", "店名で決まる場合はURLを見るまでもない",
+     "https://kurasu.kyoto"),
 ]
 
 
 def main() -> int:
     bad = []
-    for name, html, want, why in CASES:
-        got = pick_handle(handles_in(html), name)
+    for case in CASES:
+        name, html, want, why = case[:4]
+        url = case[4] if len(case) > 4 else ""
+        got = pick_handle(handles_in(html), name, url)
         mark = "✓" if got == want else "✗"
         if got != want:
             bad.append(f"{name}: {want!r} のはずが {got!r}（{why}）")
