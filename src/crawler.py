@@ -127,6 +127,9 @@ class Product:
     process: str
     tags: str
     notes: str = ""
+    # 風味をどの道で取ったか。"label"=見出しの直後 / "guess"=当て推量 / ""=無し。
+    # 集計で「確かな方だけ使う」を選べるようにするための目印。
+    note_src: str = ""
     # 店が product_type / tags に「これはコーヒーだ」と書いていたか。
     # "c" = 書いてある / "" = 何も書いていない。
     # 表示側はこれを見て、名前からの当て推量の規則を使うかどうかを決める。
@@ -357,11 +360,29 @@ def _clean_note(s: str) -> str:
     s = re.sub(r"(?i)^(and|of|with)\s+", "", s.strip(" .．、,:：-–—/|()（）[]【】"))
     return _WS.sub(" ", s)[:160]
 
-def extract_notes(html: str, title: str = "") -> str:
-    """商品説明から風味の記述だけを取り出す。見つからなければ空文字。"""
+def extract_notes_src(html: str, title: str = "") -> tuple[str, str]:
+    """風味の記述と、どの道で見つけたかを返す。
+
+      ("…", "label")  見出しの直後。店が「これは風味だ」と書いている
+      ("…", "guess")  見出しが無く、風味語が2つ以上ある行から拾った
+      ("", "")        見つからない
+
+    ■ なぜ道を分けて持つのか
+
+    この2つは質が違う。見出しありは "Grape, Guava, Floral" のような列挙で、
+    そのまま風味語として数えられる。当て推量は
+    "A comforting and sweet coffee with flavours of chocolate" のような
+    説明文の地の文を拾うことがあり、間違ってはいないが列挙ではない。
+
+    実測（120店）では見出しが1件も無い店が多く（Five Senses 70件中0件、
+    Coffee Collective 56件中0件）、そういう店では当て推量が全量を支えている。
+    混ぜて1つの欄に入れると、あとから選び分けられない。
+
+    集計するときに「確かな方だけ使う」を選べるように、豆ごとに残す。
+    """
     text = html_to_text(html)
     if not text:
-        return ""
+        return "", ""
     lines = text.split("\n")
     for i, ln in enumerate(lines):
         m = _NOTE_LABEL.match(ln)
@@ -372,7 +393,7 @@ def extract_notes(html: str, title: str = "") -> str:
         if len(val) < 3 and i + 1 < len(lines):
             val = _clean_note(lines[i + 1])
         if len(val) >= 3 and _FLAVOR_WORD.search(val) and not _ALLERGEN.search(val):
-            return val
+            return val, "label"
     # 見出しが無い場合：風味語が2種類以上ある短い行を採る
     for ln in lines:
         if len(ln) > 90 or len(ln) < 5:
@@ -380,8 +401,13 @@ def extract_notes(html: str, title: str = "") -> str:
         if _ALLERGEN.search(ln):
             continue
         if len(set(w.group(0).lower() for w in _FLAVOR_WORD.finditer(ln))) >= 2:
-            return _clean_note(ln)
-    return ""
+            return _clean_note(ln), "guess"
+    return "", ""
+
+
+def extract_notes(html: str, title: str = "") -> str:
+    """商品説明から風味の記述だけを取り出す。見つからなければ空文字。"""
+    return extract_notes_src(html, title)[0]
 
 
 def _grams_from_text(text: str) -> int:
@@ -740,7 +766,7 @@ async def _fetch_shopify_atom(client: httpx.AsyncClient, r: dict) -> list[Produc
         # ノートはここしか出所が無いので、JSON経路と同じように読む。
         summary = re.search(r"(?is)<summary[^>]*>(.*?)</summary>", e)
         body = html.unescape(summary.group(1)) if summary else ""
-        notes = extract_notes(body, name)
+        notes, note_src = extract_notes_src(body, name)
         text = f"{name} {re.sub(r'<[^>]+>', ' ', e)}"
         deep = f"{text} {html_to_text(body)[:DEEP_CHARS]}"
         grams = _grams_from_text(name)
@@ -754,7 +780,7 @@ async def _fetch_shopify_atom(client: httpx.AsyncClient, r: dict) -> list[Produc
             available=True,          # Atomは在庫切れを載せないため、掲載＝在庫ありとみなす
             origin=_guess_origin(text) or _guess_origin(deep),
             process=_guess_process(text) or _guess_process(deep),
-            tags=name[:300], notes=notes,
+            tags=name[:300], notes=notes, note_src=note_src,
         ))
     return products or None
 
@@ -843,7 +869,7 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
         # 産地・精製・風味は説明文にしか書かれていないことが多い。
         # タイトル/タグで決まらない分をここで補う（味わいマップの入力になる）
         body = p.get("body_html") or ""
-        notes = extract_notes(body, p.get("title", ""))
+        notes, note_src = extract_notes_src(body, p.get("title", ""))
         deep = " ".join([text, html_to_text(body)[:DEEP_CHARS]])
         images = p.get("images") or []
         products.append(Product(
@@ -857,7 +883,7 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
             available=bool(avail_vs),
             origin=_guess_origin(text) or _guess_origin(deep),
             process=_guess_process(text) or _guess_process(deep),
-            tags=text[:300], notes=notes, kind=shop_says(p),
+            tags=text[:300], notes=notes, note_src=note_src, kind=shop_says(p),
             city=place.get("city", ""), province=place.get("province", ""),
         ))
     # 門で落とした数を残す。取れた数だけ見ていると「落としすぎ」に気づけない。
@@ -900,7 +926,7 @@ async def _fetch_woo(client: httpx.AsyncClient, r: dict, max_pages: int) -> list
             grams = _grams_from_text(title)
             per100 = round(price / grams * 100, 2) if grams and price else None
             body = f"{p.get('short_description') or ''}\n{p.get('description') or ''}"
-            notes = extract_notes(body, title)
+            notes, note_src = extract_notes_src(body, title)
             deep = f"{title} {html_to_text(body)[:DEEP_CHARS]}"
             products.append(Product(
                 key=f"{r['name']}::{p.get('id')}",
@@ -914,7 +940,7 @@ async def _fetch_woo(client: httpx.AsyncClient, r: dict, max_pages: int) -> list
                 available=bool(p.get("is_in_stock", True)),
                 origin=_guess_origin(title) or _guess_origin(deep),
                 process=_guess_process(title) or _guess_process(deep),
-                tags=title, notes=notes,
+                tags=title, notes=notes, note_src=note_src,
             ))
         if len(batch) < 100:
             break
@@ -1027,6 +1053,7 @@ def _product_from_ld(r: dict, url: str, html: str) -> Product | None:
     avail = str(offer.get("availability") or "").lower()
     grams = _grams_from_text(title) or _grams_from_text(desc)
     deep = f"{title} {html_to_text(desc)[:DEEP_CHARS]}"
+    _gen_notes = extract_notes_src(desc, title)
     return Product(
         key=f"{r['name']}::{url.rstrip('/').rsplit('/', 1)[-1]}",
         roaster=r["name"], country=r.get("country", ""),
@@ -1037,7 +1064,7 @@ def _product_from_ld(r: dict, url: str, html: str) -> Product | None:
         available=("outofstock" not in avail.replace(" ", "") and "soldout" not in avail.replace(" ", "")),
         origin=_guess_origin(title) or _guess_origin(deep),
         process=_guess_process(title) or _guess_process(deep),
-        tags=title[:300], notes=extract_notes(desc, title),
+        tags=title[:300], notes=_gen_notes[0], note_src=_gen_notes[1],
     )
 
 

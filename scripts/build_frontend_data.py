@@ -536,6 +536,11 @@ def main() -> None:
                     bean["coeRank"] = rank
             if _is_cgle(title, bean["origin"]):
                 bean["cgle"] = True
+            # 風味をどの道で取ったか。"label"=店が見出しを付けている /
+            # "guess"=説明文から拾った。集計で確かな方だけを選べるようにする。
+            # 風味が無い豆には付けない（欄が増えるだけなので）
+            if bean.get("notes") and p.get("note_src"):
+                bean["noteSrc"] = p["note_src"]
             beans.append(bean)
 
     # 店の Instagram。scripts/collect_instagram.py が集めたものを重ねる。

@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS products (
   roaster TEXT, country TEXT, title TEXT, url TEXT, image TEXT,
   price REAL, currency TEXT, grams INTEGER, per100 REAL,
   available INTEGER,
-  origin TEXT, process TEXT, tags TEXT, notes TEXT,
+  origin TEXT, process TEXT, tags TEXT, notes TEXT, note_src TEXT,
   city TEXT, province TEXT,
   kind TEXT,
   first_seen REAL, last_seen REAL,
@@ -36,7 +36,7 @@ def open_db(path: str) -> sqlite3.Connection:
     # 店の所在地。地球儀の点をこれで置く。
     # kind = 店が「これはコーヒーだ」と書いていたか（表示側が名前からの当て推量を
     # 使うかどうかの判断に使う）。
-    for col in ("city", "province", "kind"):
+    for col in ("city", "province", "kind", "note_src"):
         if col not in cols:
             con.execute(f"ALTER TABLE products ADD COLUMN {col} TEXT")
     con.commit()
@@ -67,13 +67,14 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
                 """INSERT INTO products
                    (key, roaster, country, title, url, image,
                     price, currency, grams, per100, available,
-                    origin, process, tags, notes, city, province, kind,
+                    origin, process, tags, notes, note_src, city, province, kind,
                     first_seen, last_seen, last_status_change)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (p["key"], p["roaster"], p["country"], p["title"], p["url"], p["image"],
                  p["price"], p["currency"], p["grams"], p["per100"],
                  int(p["available"]), p["origin"], p["process"], p["tags"],
-                 p.get("notes") or "", p.get("city") or "", p.get("province") or "",
+                 p.get("notes") or "", p.get("note_src") or "",
+                 p.get("city") or "", p.get("province") or "",
                  p.get("kind") or "",
                  now, now, now))
             if p["available"]:
@@ -99,12 +100,13 @@ def apply_snapshot(con: sqlite3.Connection, products: list[dict],
         con.execute(
             """UPDATE products SET roaster=?,country=?,title=?,url=?,image=?,
                price=?,currency=?,grams=?,per100=?,available=?,origin=?,process=?,tags=?,notes=?,
-               city=?, province=?, kind=?,
+               note_src=?, city=?, province=?, kind=?,
                last_seen=?, last_status_change=CASE WHEN available!=? THEN ? ELSE last_status_change END
                WHERE key=?""",
             (p["roaster"], p["country"], p["title"], p["url"], p["image"],
              p["price"], p["currency"], p["grams"], p["per100"], int(is_available),
              p["origin"], p["process"], p["tags"], p.get("notes") or "",
+             p.get("note_src") or "",
              p.get("city") or "", p.get("province") or "", p.get("kind") or "", now,
              int(is_available), now, p["key"]))
 

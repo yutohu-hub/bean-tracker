@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-from crawler import extract_notes  # noqa: E402
+from crawler import extract_notes, extract_notes_src  # noqa: E402
 
 
 def p(*paras):
@@ -84,19 +84,36 @@ CASES = [
 ]
 
 
+# 風味をどの道で取ったかも残す。集計で「確かな方だけ使う」を選べるようにするため。
+# label=店が見出しを付けている / guess=説明文から拾った / ""=見つからない
+SRC_CASES = [
+    ("見出しあり", p("Tasting Notes: Grape, Guava, Floral"), "label"),
+    ("見出しあり（全角カッコ）", p("（味わい）：甘み、チョコレート、ワイン"), "label"),
+    ("見出しあり（Tastes Like）", p("Tastes Like: Green Grape, Geranium, Pear"), "label"),
+    ("当て推量", p("Grown at 1900m.", "starfruit, honeysuckle, mango"), "guess"),
+    ("説明文の地の文も当て推量", p("A comforting sweet coffee with chocolate and cherry"), "guess"),
+    ("見つからない", p("Grown at 1900m by Mr. Tesfaye."), ""),
+    ("アレルギー表示は採らないので道も空", p("MAY CONTAIN PEANUT, ALMOND"), ""),
+]
+
+
 def main() -> int:
     bad = []
     for label, html, want in CASES:
         got = extract_notes(html)
         if got != want:
             bad.append(f"{label}\n      期待 {want!r}\n      実際 {got!r}")
+    for label, html, want in SRC_CASES:
+        got = extract_notes_src(html)[1]
+        if got != want:
+            bad.append(f"取り方 {label}\n      期待 {want!r}\n      実際 {got!r}")
 
     for line in bad:
         print("  ✗", line)
     if bad:
-        print(f"\n{len(bad)}件の食い違い / {len(CASES)}件中")
+        print(f"\n{len(bad)}件の食い違い / {len(CASES) + len(SRC_CASES)}件中")
         return 1
-    print(f"風味の取り出し: {len(CASES)}件すべて期待どおり")
+    print(f"風味の取り出し: {len(CASES) + len(SRC_CASES)}件すべて期待どおり")
     return 0
 
 

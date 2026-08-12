@@ -36,35 +36,11 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from crawler import (REQ_HEADERS, html_to_text, extract_notes,  # noqa: E402
-                     has_bean_evidence, _looks_like_coffee,
-                     _NOTE_LABEL, _FLAVOR_WORD, _clean_note)
+from crawler import (REQ_HEADERS, extract_notes_src,  # noqa: E402
+                     has_bean_evidence, _looks_like_coffee)
 
 CONCURRENCY = 6
 TIMEOUT = 20.0
-
-
-def how_found(html: str) -> str:
-    """extract_notes がどちらの道で見つけたかを、同じ手順で判定する。"""
-    text = html_to_text(html)
-    if not text:
-        return "none"
-    lines = text.split("\n")
-    for i, ln in enumerate(lines):
-        m = _NOTE_LABEL.match(ln)
-        if not m:
-            continue
-        val = _clean_note(m.group(1))
-        if len(val) < 3 and i + 1 < len(lines):
-            val = _clean_note(lines[i + 1])
-        if len(val) >= 3 and _FLAVOR_WORD.search(val):
-            return "label"
-    for ln in lines:
-        if len(ln) > 90 or len(ln) < 5:
-            continue
-        if len(set(w.group(0).lower() for w in _FLAVOR_WORD.finditer(ln))) >= 2:
-            return "guess"
-    return "none"
 
 
 async def get(client, sem, url, params=None):
@@ -89,11 +65,12 @@ async def one_shop(client, sem, r, page_n):
 
     rows = []
     for i, p in enumerate(beans):
-        body = p.get("body_html") or ""
+        # 取り方は crawler が返す。監査側で同じ手順を書き写すと、
+        # 本体を直したときにこちらだけ古いままになる
+        note, how = extract_notes_src(p.get("body_html") or "", p.get("title", ""))
         rows.append({
             "shop": r["name"], "title": (p.get("title") or "")[:40],
-            "note": extract_notes(body, p.get("title", "")),
-            "how": how_found(body), "page_note": None,
+            "note": note, "how": how, "page_note": None,
         })
     # 商品ページ側は数を絞って取る（1商品1リクエストなので）
     for row, p in list(zip(rows, beans))[:page_n]:
@@ -103,7 +80,7 @@ async def one_shop(client, sem, r, page_n):
         page = await get(client, sem, f"{base}/products/{h}")
         if page is None:
             continue
-        row["page_note"] = extract_notes(page.text, p.get("title", ""))
+        row["page_note"] = extract_notes_src(page.text, p.get("title", ""))[0]
     return rows
 
 
