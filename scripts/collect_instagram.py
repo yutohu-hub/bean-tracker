@@ -108,9 +108,9 @@ async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict):
         try:
             resp = await client.get(base)
         except httpx.HTTPError as e:
-            return r, None, f"接続失敗({type(e).__name__})"
+            return r, None, f"接続失敗({type(e).__name__})", []
     if resp.status_code != 200:
-        return r, None, f"HTTP {resp.status_code}"
+        return r, None, f"HTTP {resp.status_code}", []
     found = handles_in(resp.text)
     posts = _POST.findall(resp.text)
     if not found:
