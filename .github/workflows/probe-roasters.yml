@@ -29,6 +29,9 @@ on:
       instagram:
         description: "Instagram のアカウント名を集めて config/instagram.yaml に貯める（店数。all で全店）"
         default: ""
+      sheet:
+        description: "情報シート（産地・精製・風味・内容量）の欠けを数える（店数。all で全店）"
+        default: ""
 
 # instagram モードだけ config/instagram.yaml を書き戻すので write が要る
 permissions:
@@ -46,7 +49,7 @@ jobs:
       - name: 依存インストール
         run: pip install httpx pyyaml
       - name: 候補を叩く
-        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == '' && inputs.markers == '' && inputs.instagram == ''
+        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == '' && inputs.markers == '' && inputs.instagram == '' && inputs.sheet == ''
         run: python scripts/probe_roasters.py "${{ inputs.file }}"
 
       # 動画IDは1文字違うと別人の回が載る。目では気づけないので貼る前に照合する
@@ -87,6 +90,11 @@ jobs:
           else
             echo "変更なし"
           fi
+
+      # 情報シートの空欄が「店が書いていない」のか「取り方が悪い」のかを分ける
+      - name: 情報シートの欠けを数える
+        if: inputs.sheet != ''
+        run: python scripts/audit_sheet.py "${{ inputs.sheet == 'all' && '0' || inputs.sheet }}"
 
       # 取れない店について、何が足りないのかを応答から調べる
       - name: 1店を詳しく調べる
