@@ -35,6 +35,9 @@ on:
       page:
         description: "商品ページのHTMLを読むと空欄が埋まるか試す（\"店数 商品数\" 例: 20 6）"
         default: ""
+      notes:
+        description: "風味がどれだけ取れて、どれだけ正しいかを測る（\"店数 ページ数\" 例: 40 3）"
+        default: ""
 
 # instagram モードだけ config/instagram.yaml を書き戻すので write が要る
 permissions:
@@ -52,7 +55,7 @@ jobs:
       - name: 依存インストール
         run: pip install httpx pyyaml
       - name: 候補を叩く
-        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == '' && inputs.markers == '' && inputs.instagram == '' && inputs.sheet == '' && inputs.page == ''
+        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == '' && inputs.markers == '' && inputs.instagram == '' && inputs.sheet == '' && inputs.page == '' && inputs.notes == ''
         run: python scripts/probe_roasters.py "${{ inputs.file }}"
 
       # 動画IDは1文字違うと別人の回が載る。目では気づけないので貼る前に照合する
@@ -103,6 +106,11 @@ jobs:
       - name: 商品ページを読んで試す
         if: inputs.page != ''
         run: python scripts/audit_product_page.py ${{ inputs.page }}
+
+      # 風味の「量」と「質」を分けて測る。量だけ増やしても、別の豆の風味なら害になる
+      - name: 風味の精度を測る
+        if: inputs.notes != ''
+        run: python scripts/audit_notes.py ${{ inputs.notes }}
 
       # 取れない店について、何が足りないのかを応答から調べる
       - name: 1店を詳しく調べる
