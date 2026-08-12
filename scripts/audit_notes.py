@@ -137,9 +137,30 @@ async def run(shops, page_n):
     for x in lab[:14]:
         print(f"   {x['shop'][:14]:<14} {x['title']:<40} → {x['note'][:52]}")
 
-    print("\n■ 当て推量の例（怪しいものが混ざっていないか目で見る）")
-    for x in gue[:14]:
-        print(f"   {x['shop'][:14]:<14} {x['title']:<40} → {x['note'][:52]}")
+    # 店ごとの内訳。当て推量に頼っている店がどこかを出す。
+    # 先頭から並べるだけだと1店の例で埋まり、その店の書き方しか見えない
+    by_shop = {}
+    for x in rows:
+        d = by_shop.setdefault(x["shop"], {"n": 0, "label": 0, "guess": 0})
+        d["n"] += 1
+        if x["how"] in ("label", "guess"):
+            d[x["how"]] += 1
+    print("\n■ 店ごとの内訳（当て推量が多い順）")
+    print(f"   {'店':<20} {'豆':>5} {'見出し':>6} {'当て推量':>8}")
+    ranked = sorted(by_shop.items(), key=lambda kv: -kv[1]["guess"])
+    for name, d in ranked[:15]:
+        print(f"   {name[:20]:<20} {d['n']:>5} {d['label']:>6} {d['guess']:>8}")
+
+    print("\n■ 当て推量の例（店ごとに2件ずつ。1店の書き方に偏らせない）")
+    per = {}
+    for x in gue:
+        k = x["shop"]
+        if per.get(k, 0) >= 2:
+            continue
+        per[k] = per.get(k, 0) + 1
+        print(f"   {x['shop'][:14]:<14} {x['title']:<38} → {x['note'][:48]}")
+        if sum(per.values()) >= 24:
+            break
 
     # --- 商品ページから取る案 ---
     checked = [x for x in rows if x["page_note"] is not None]
