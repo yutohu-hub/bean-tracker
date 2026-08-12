@@ -16,7 +16,8 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 from crawler import (crawl_all, products_to_dicts, _guess_origin, shop_says,  # noqa: E402
                      _guess_process, extract_notes, html_to_text)
-from state import open_db, apply_snapshot, export_for_site  # noqa: E402
+from state import (open_db, apply_snapshot, export_for_site,  # noqa: E402
+                   prune_missing_roasters)
 from build_site import build  # noqa: E402
 from notify import notify  # noqa: E402
 from push_notify import push  # noqa: E402
@@ -72,6 +73,9 @@ def main() -> None:
     t0 = time.time()
     config = yaml.safe_load((ROOT / "config" / "roasters.yaml").read_text(encoding="utf-8"))
     settings = config.get("settings", {})
+    # 分割巡回で config["roasters"] は縮むので、全部の名前を先に控えておく。
+    # 「図鑑に載せる店」の一覧は、今回見る店ではなく、こちらが正しい
+    all_names = {r["name"] for r in config["roasters"]}
 
     if "--shard" in sys.argv:
         spec = sys.argv[sys.argv.index("--shard") + 1]
@@ -96,6 +100,12 @@ def main() -> None:
 
     (ROOT / "data").mkdir(exist_ok=True)
     con = open_db(str(ROOT / "data" / "state.db"))
+    # 図鑑から外した店の商品を消す。外しただけでは消えず、在庫ありのまま残る。
+    # mock は fixtures の店名なので対象にしない（本物の一覧と噛み合わない）
+    if "--mock" not in sys.argv:
+        for name, n in prune_missing_roasters(con, all_names):
+            print(f"図鑑から外した店の商品を消した: {name} {n}件")
+
     stats = apply_snapshot(con, products, float(settings.get("min_oos_hours", 12)))
     print(f"イベント: 新着{stats['new']} / 再入荷{stats['restock']} / 売り切れ{stats['soldout']}")
     # 棚から消えた商品。数が急に跳ねたら、門が効きすぎているか店側の不調を疑う

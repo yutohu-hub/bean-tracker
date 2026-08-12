@@ -169,6 +169,56 @@ def _mark_withdrawn(con: sqlite3.Connection, products: list[dict],
     return gone
 
 
+def prune_missing_roasters(con: sqlite3.Connection, keep: set[str],
+                           max_share: float = 0.2) -> list[tuple[str, int]]:
+    """図鑑から外した店の商品を、DBからも消す。消した店と件数を返す。
+
+    ■ なぜ要るのか
+
+    巡回する店は config/roasters.yaml で決めているが、取り込んだ商品は
+    state.db に残り続ける。店を1行消しても、その店の豆は図鑑に並んだままで、
+    在庫ありのまま動かない（誰も見に行かないので available も変わらない）。
+
+    実際、書き出しの最後には「雑貨中心の店なら config/roasters.yaml から外す」
+    と出していた。ところが外しても消えない。助言のとおりにしても効かなかった。
+
+    同じ店が2行あるとき（例: Square Mile と Square Mile Coffee）も、
+    片方を消さないと店の数と国の数が本当より多く出る。
+
+    ■ 倒すのではなく消す理由
+
+    棚から消えた商品（_mark_withdrawn）は「店にはまだ聞いている」ので、
+    在庫なしに倒して様子を見る。こちらは人が「この店はもう載せない」と
+    決めた場合なので、残す理由がない。売り切れ棚に置いても誰も戻せない。
+
+    ■ 一度に消しすぎない
+
+    設定ファイルの読み違いや書き損じで店の一覧が短くなると、この処理は
+    黙って何千件も消す。全体の max_share（既定2割）を超えるときは何もせず、
+    何が起きたかだけを知らせる。消すのはいつでもできるが、戻すのは難しい。
+    """
+    if not keep:
+        return []
+    rows = con.execute("SELECT roaster, COUNT(*) n FROM products GROUP BY roaster").fetchall()
+    total = sum(r["n"] for r in rows) or 1
+    drop = [(r["roaster"], r["n"]) for r in rows if (r["roaster"] or "") not in keep]
+    if not drop:
+        return []
+    share = sum(n for _, n in drop) / total
+    if share > max_share:
+        print(f"⚠ 図鑑に無い店の商品が {sum(n for _, n in drop)}件（全体の{share:.0%}）ありました。"
+              f"多すぎるので消していません。config/roasters.yaml を確かめてください")
+        for name, n in sorted(drop, key=lambda x: -x[1])[:10]:
+            print(f"    {name} {n}件")
+        return []
+    for name, _ in drop:
+        con.execute("DELETE FROM events WHERE key IN "
+                    "(SELECT key FROM products WHERE roaster=?)", (name,))
+        con.execute("DELETE FROM products WHERE roaster=?", (name,))
+    con.commit()
+    return sorted(drop, key=lambda x: -x[1])
+
+
 def derive_status(product: dict, now: float | None = None,
                   archive_days: int = 14) -> str:
     """在庫状態から表示ステータスを決める。

@@ -70,11 +70,11 @@ roasters:
 
   # ---- 欧州 ----
   - name: Square Mile Coffee
-    country: UK
+    country: GB
     url: https://shop.squaremilecoffee.com
     currency: GBP
   - name: Crankhouse Coffee
-    country: UK
+    country: GB
     url: https://www.crankhousecoffee.co.uk
     currency: GBP
   - name: The Barn
@@ -715,7 +715,8 @@ roasters:
     country: "GB"
     url: https://roundhillroastery.com
     currency: GBP
-  - name: "Square Mile"
+  # Square Mile Coffee と同じ店。名前を揃えてある（違うと図鑑で2店に見える）
+  - name: "Square Mile Coffee"
     country: "GB"
     url: https://squaremilecoffee.com
     currency: GBP
@@ -898,10 +899,6 @@ roasters:
   - name: "Koffee Mameya"
     country: "JP"
     url: https://koffee-mameya.com
-    currency: JPY
-  - name: "Leaves Coffee"
-    country: "JP"
-    url: https://leavescoffee.jp
     currency: JPY
   - name: "LiLo Coffee Roasters"
     country: "JP"
