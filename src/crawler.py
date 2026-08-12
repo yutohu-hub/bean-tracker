@@ -361,6 +361,15 @@ def _grams_from_text(text: str) -> int:
     return int(val)
 
 
+# 産地・精製を説明文から読むときに、どこまで見るか。
+#
+# 前は1200字で切っていた。店の説明文は「物語 → 生産者 → 標高 → 精製 → 味」の順が多く、
+# 表が下にあると丸ごと落ちる。実測（21店・1192件）で、全部読むと
+# 産地が3件・精製が10件増えた。1.1%と小さいが、失う理由も無いので広げる。
+# 説明文の長さは実測で中央値1903字・最長3927字だったので、6000字あれば足りる。
+# 上限を残すのは、まれに数万字を返す店から守るため。
+DEEP_CHARS = 6000
+
 # 失敗理由（HTTPステータス等）を店ごとに残し、ログで原因を追えるようにする。
 LAST_REASON: dict[str, str] = {}
 # 「豆である証拠が無い」で取らなかった数を店ごとに残す。
@@ -689,7 +698,7 @@ async def _fetch_shopify_atom(client: httpx.AsyncClient, r: dict) -> list[Produc
         body = html.unescape(summary.group(1)) if summary else ""
         notes = extract_notes(body, name)
         text = f"{name} {re.sub(r'<[^>]+>', ' ', e)}"
-        deep = f"{text} {html_to_text(body)[:1200]}"
+        deep = f"{text} {html_to_text(body)[:DEEP_CHARS]}"
         grams = _grams_from_text(name)
         p = float(price.group(1)) if price else 0.0
         products.append(Product(
@@ -791,7 +800,7 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
         # タイトル/タグで決まらない分をここで補う（味わいマップの入力になる）
         body = p.get("body_html") or ""
         notes = extract_notes(body, p.get("title", ""))
-        deep = " ".join([text, html_to_text(body)[:1200]])
+        deep = " ".join([text, html_to_text(body)[:DEEP_CHARS]])
         images = p.get("images") or []
         products.append(Product(
             key=f"{r['name']}::{p.get('handle','')}",
@@ -848,7 +857,7 @@ async def _fetch_woo(client: httpx.AsyncClient, r: dict, max_pages: int) -> list
             per100 = round(price / grams * 100, 2) if grams and price else None
             body = f"{p.get('short_description') or ''}\n{p.get('description') or ''}"
             notes = extract_notes(body, title)
-            deep = f"{title} {html_to_text(body)[:1200]}"
+            deep = f"{title} {html_to_text(body)[:DEEP_CHARS]}"
             products.append(Product(
                 key=f"{r['name']}::{p.get('id')}",
                 roaster=r["name"], country=r.get("country", ""),
@@ -973,7 +982,7 @@ def _product_from_ld(r: dict, url: str, html: str) -> Product | None:
     desc = str(ld.get("description") or "")
     avail = str(offer.get("availability") or "").lower()
     grams = _grams_from_text(title) or _grams_from_text(desc)
-    deep = f"{title} {html_to_text(desc)[:1200]}"
+    deep = f"{title} {html_to_text(desc)[:DEEP_CHARS]}"
     return Product(
         key=f"{r['name']}::{url.rstrip('/').rsplit('/', 1)[-1]}",
         roaster=r["name"], country=r.get("country", ""),
