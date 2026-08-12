@@ -294,11 +294,30 @@ def html_to_text(html: str) -> str:
     s = _WS.sub(" ", s)
     return "\n".join(ln.strip() for ln in s.split("\n") if ln.strip())
 
+# 見出しの語そのもの。ここだけを1か所に持ち、行頭の判定と、
+# 取り出したあとの残骸そぎ落としの両方から使う。
+_LABEL_WORDS = (r"tasting\s*notes?|flavou?r\s*notes?|cupping\s*notes?|flavou?r\s*profile"
+                r"|flavou?rs?|tasting|notes?|フレーバー(?:ノート)?|テイスティング\s*ノート"
+                r"|カッピング\s*ノート|風味|味わい|フレーバ")
+# 見出しを囲む記号。実測で【FLAVOR】（味わい）[Flavor notes] の3通りが出た。
+# ここを許していなかったので、その店の風味が丸ごと取れていなかった。
+_LABEL_OPEN = r"[\s\-–—・*\[\(【（「『]*"
+_LABEL_CLOSE = r"[\]\)】）」』]*"
+
 # 「Tasting Notes: 〜」のように見出しが付いている行を拾う
 _NOTE_LABEL = re.compile(
-    r"(?im)^[\s\-–・*]*(?:tasting\s*notes?|flavou?r\s*notes?|cupping\s*notes?|flavou?r\s*profile"
-    r"|tasting|notes?|フレーバー(?:ノート)?|テイスティング\s*ノート|カッピング\s*ノート|風味|味わい|フレーバ)"
-    r"\s*[:：]?\s*(.*)$")
+    rf"(?im)^{_LABEL_OPEN}(?:{_LABEL_WORDS}){_LABEL_CLOSE}\s*[:：]?\s*(.*)$")
+
+# 行の途中に見出しがある場合（"Our tasting notes : ..."）。
+# 当て推量で拾った行から、前置きごと見出しを落とすのに使う。
+_LABEL_ANYWHERE = re.compile(
+    rf"(?i)^.{{0,20}}?{_LABEL_OPEN}(?:{_LABEL_WORDS}){_LABEL_CLOSE}\s*[:：]\s*")
+
+# 同じ語が続けて出てくるもの（"define define"）。店の原稿の打ち間違い
+_DUP_WORD = re.compile(r"(?i)\b(\w{3,})(\s+\1)+\b")
+# ピリオドのあとに空白が無い（"CARAMEL.BERRY"）。両側が文字のときだけ空ける。
+# 数字は触らない（"1.5" を壊さないため）
+_TIGHT_DOT = re.compile(r"(?<=[A-Za-z])\.(?=[A-Za-z])")
 # 見出しが無い店向け。風味語が2つ以上並ぶ短い行を候補にする
 _FLAVOR_WORD = re.compile(
     r"(?i)berr|cassis|cherry|plum|straw|blueberr|raspberr|currant|acerola|hibiscus"
@@ -312,7 +331,21 @@ _FLAVOR_WORD = re.compile(
     r"|チョコ|カカオ|ココア|ナッツ|キャラメル|黒糖|蜂蜜|はちみつ|バニラ|モルト|林檎|りんご|ぶどう")
 
 def _clean_note(s: str) -> str:
-    s = re.sub(r"(?i)^(and|of)\s+", "", (s or "").strip(" .．、,:：-–—/|"))
+    """取り出した風味の文字列を整える。
+
+    実測で出てきた壊れ方を、ここでまとめて直す。
+      ・見出しの残骸  「Our tasting notes : 〜」→ 見出しから前を落とす
+      ・語の重複      「toffee define define Decaf」→ 1つにする
+      ・区切りの消え  「CARAMEL.BERRY」→「CARAMEL. BERRY」
+
+    残骸を残したまま集計すると、"tasting" や "味わい" が風味の語として
+    数えられてしまう（味わいマップと法人向けレポートの材料になるため）。
+    """
+    s = (s or "").strip(" .．、,:：-–—/|")
+    s = _LABEL_ANYWHERE.sub("", s)          # 行の途中に見出しがある場合
+    s = _TIGHT_DOT.sub(". ", s)
+    s = _DUP_WORD.sub(r"\1", s)
+    s = re.sub(r"(?i)^(and|of)\s+", "", s.strip(" .．、,:：-–—/|"))
     return _WS.sub(" ", s)[:160]
 
 def extract_notes(html: str, title: str = "") -> str:
