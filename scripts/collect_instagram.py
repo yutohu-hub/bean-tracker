@@ -59,8 +59,26 @@ _NOT_ACCOUNT = {
     "about", "developer", "legal", "privacy", "terms", "embed", "share",
     "sharer", "oauth", "web", "graphql", "api", "static", "images", "favicon",
 }
-# Instagram のアカウント名の決まり: 英数字・ピリオド・アンダースコア、30字まで
-_HANDLE = re.compile(r"^[A-Za-z0-9._]{1,30}$")
+# 店のアカウントではないと分かっているもの。
+# 実測で Padre Coffee が @shopify になった（フッターの「Powered by Shopify」）。
+# 店のページには、使っている道具や決済の会社の導線が必ず貼ってある。
+# 名前が似ていないときの最後の手段（いちばん多く出てくるもの）が、これを拾う。
+_NOT_A_SHOP = {
+    "shopify", "shopifypartners", "shopifyplus", "instagram", "facebook", "meta",
+    "klaviyo", "mailchimp", "squarespace", "wix", "wordpress", "woocommerce",
+    "stripe", "paypal", "shoppay", "afterpay", "klarna", "square",
+    "tiktok", "youtube", "twitter", "x", "pinterest", "linkedin", "threads",
+    "spotify", "whatsapp", "google", "apple", "amazon", "etsy", "patreon",
+    "kickstarter", "vimeo", "snapchat", "discord", "telegram", "reddit",
+    "tumblr", "flickr", "behance", "dribbble", "medium", "substack", "github",
+    "judgeme", "yotpo", "recharge", "gorgias", "okendo", "loox", "printful",
+    "canva", "figma", "webflow", "wordpressdotcom", "godaddy",
+}
+# Instagram のアカウント名の決まり: 英数字・ピリオド・アンダースコア、30字まで。
+# ただし4字以下は採らない。実測で 49th Parallel が @49th になった
+# （店名の頭と一致するので「似ている」と判断された）。短い文字列は、
+# 途中で切れたリンクや飾りからも簡単に出てくる。
+_HANDLE = re.compile(r"^[A-Za-z0-9._]{5,30}$")
 # 投稿のID。店のページに Instagram のフィードを貼っている店から拾える
 _POST = re.compile(r"instagram\.com/(?:p|reel)/([A-Za-z0-9_-]{5,24})", re.I)
 
@@ -69,7 +87,7 @@ def handles_in(html: str) -> list[str]:
     out = []
     for raw in _LINK.findall(html or ""):
         h = raw.strip().strip(".").lower()
-        if not h or h in _NOT_ACCOUNT or not _HANDLE.match(h):
+        if not h or h in _NOT_ACCOUNT or h in _NOT_A_SHOP or not _HANDLE.match(h):
             continue
         out.append(h)
     return out
@@ -86,6 +104,16 @@ def pick_handle(found: list[str], shop_name: str) -> str:
     実測で Single O が @process_creative になった（サイトを作った会社）。
 
     店名に似ているものを先に見る。似たものが無ければ、いちばん多く出てくるもの。
+
+    ■ 名前が似ていないときに、1回しか出てこないものは採らない
+
+    実測で Padre Coffee が @shopify になった。「Powered by Shopify」の導線が
+    フッターに1回だけあり、他に候補が無かったので、それが選ばれた。
+    店が自分のアカウントを貼るときは、ヘッダーとフッターの両方に置くことが多い。
+    1回しか出てこないうえ名前も似ていないものは、店のものではない疑いが強い。
+
+    間違ったアカウントを出すのは、何も出さないより悪い。別の人の投稿を
+    「この店です」と紹介することになる。取りこぼしは次に集めれば埋まる。
     """
     if not found:
         return ""
@@ -99,7 +127,8 @@ def pick_handle(found: list[str], shop_name: str) -> str:
         part = [h for h in counts if len(n) >= 5 and (n[:6] in _norm(h) or _norm(h)[:6] in n)]
         if part:
             return max(part, key=lambda h: (counts[h], -len(h)))
-    return counts.most_common(1)[0][0]
+    h, c = counts.most_common(1)[0]
+    return h if c >= 2 else ""
 
 
 async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict):
@@ -115,7 +144,11 @@ async def probe(client: httpx.AsyncClient, sem: asyncio.Semaphore, r: dict):
     posts = _POST.findall(resp.text)
     if not found:
         return r, None, "リンク無し", posts
-    return r, pick_handle(found, r.get("name", "")), "", posts
+    h = pick_handle(found, r.get("name", ""))
+    if not h:
+        # 候補はあったが、店のものだと言い切れなかった。理由を分けて数える
+        return r, None, "店のものか決められない", posts
+    return r, h, "", posts
 
 
 async def check_embed(handles: list[str], posts: list = ()) -> None:
