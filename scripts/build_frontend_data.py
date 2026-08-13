@@ -336,6 +336,95 @@ def load_seed_keys() -> dict:
     return m
 
 
+def _domain_conflict(key: str, dom: str, key_dom: dict) -> bool:
+    """名前で引いたキーが、別の店を指していないかを検算する。
+
+    norm() は業種の言葉（Coffee / Roasters …）を落とすので、別の店が
+    同じ名前に潰れる。実測:
+
+      config/roasters.yaml: Luna（enjoylunacoffee.com）
+      図鑑の表:             Luna Coffee（lunacoffeeroasters.com、バンクーバー）
+
+    どちらも norm() では "luna" になる。名前だけで引くと、Luna の
+    Instagram がバンクーバーの別の店のページに出る。
+
+    引いたキーのドメインが分かっていて、それが店のドメインと違うなら、
+    別の店だと判断して使わない。
+    """
+    seeded = key_dom.get(key)
+    return bool(seeded and dom and seeded != dom)
+
+
+def load_shop_urls() -> dict:
+    """巡回対象の 店名 → EC の URL（config/roasters.yaml）。
+
+    Instagram の表は店名で引くが、図鑑の表と名前の書き方が違う店がある。
+    そのときにドメインで引き当てるために使う。
+    """
+    p = ROOT / "config" / "roasters.yaml"
+    if not p.exists():
+        return {}
+    try:
+        import yaml
+        d = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        return {r["name"]: r.get("url", "") for r in d.get("roasters", []) if r.get("name")}
+    except Exception:
+        return {}
+
+
+def bare_domain(url: str) -> str:
+    """URL から店を指す部分だけを残す。https も www も shop も落とす。"""
+    d = re.sub(r"^https?://", "", (url or "").strip().lower()).split("/")[0]
+    for pre in ("www.", "shop.", "store.", "online.", "ec."):
+        if d.startswith(pre):
+            d = d[len(pre):]
+    return d
+
+
+def load_seed_domains() -> dict:
+    """店のドメイン → 図鑑のキー。
+
+    ■ なぜ名前だけでは足りないのか
+
+    図鑑の手書きの表と config/roasters.yaml とで、同じ店の名前の書き方が違う。
+
+      図鑑: George Howell   /  roasters.yaml: George Howell Coffee
+      図鑑: Square Mile     /  roasters.yaml: Square Mile Coffee
+
+    名前が完全一致しないので引けず、実測で10店に Instagram が付かなかった。
+
+    ■ なぜ名前を「緩く」一致させないのか
+
+    業種の言葉（Coffee / Roasters）を落として突き合わせれば10店とも引ける。
+    だが表には別の店として
+
+      Luna       … enjoylunacoffee.com
+      Luna Coffee … lunacoffeeroasters.com
+
+    が並んでいる。緩くすると、この2店が同じ店になる。ドメインは店ごとに
+    違うので、取り違えが起きない。
+
+    同じドメインが2つのキーに割り当たっている場合は、どちらか決められない
+    ので両方捨てる（間違ったキーに付けるより、付けない方がよい）。
+    """
+    m, dup = {}, set()
+    for f in ROASTER_DIR.glob("*.js"):
+        for km in re.finditer(r'^\s+([a-z0-9]+): \{ name: "[^"]+"(.*)$',
+                              f.read_text(encoding="utf-8"), re.M):
+            u = re.search(r'url: "([^"]+)"', km.group(2))
+            if not u:
+                continue
+            d = bare_domain(u.group(1))
+            if not d:
+                continue
+            if d in m and m[d] != km.group(1):
+                dup.add(d)
+            m[d] = km.group(1)
+    for d in dup:
+        m.pop(d, None)
+    return m
+
+
 # レアロット画面のカテゴリはこの印で組まれている。銘柄名か店のタグから拾う。
 # 「ゲイシャ入りブレンド」まで拾うと希少ロットの一覧が薄まるので、
 # ブレンドと明記されているものは対象から外す。
@@ -568,16 +657,46 @@ def main() -> None:
     # 種にある店へ足すのは instagram の欄だけ。画面側は欄ごとに重ねるので、
     # 手で書いた街・座標・紹介文は消えない（components/data/roasters.js）。
     ig = load_instagram()
-    hit, skipped = 0, []
+    seed_dom = load_seed_domains()
+    shop_url = load_shop_urls()
+    key_dom = {k: d for d, k in seed_dom.items()}   # 図鑑のキー → その店のドメイン
+
+    # 店ごとに「どのキーか」と「どれだけ確かか」を出す。
+    # ドメインは店ごとに違うので確か。名前は norm() が業種の言葉を落とすため、
+    # 別の店が同じキーに潰れることがある（Luna と Luna Coffee → どちらも luna）。
+    picked: dict = {}          # キー → (確からしさ, 店名, アカウント名)
+    skipped = []
     for rname, h in ig.items():
-        key = seed.get(norm(rname)) or key_of_name.get(rname)
-        if not key:
+        dom = bare_domain(shop_url.get(rname, ""))
+        if dom and seed_dom.get(dom):
+            key, rank = seed_dom[dom], 2
+        elif seed.get(norm(rname)) and not _domain_conflict(seed[norm(rname)], dom, key_dom):
+            key, rank = seed[norm(rname)], 1
+        elif key_of_name.get(rname):
+            key, rank = key_of_name[rname], 1
+        else:
             skipped.append(rname)
+            continue
+        cur = picked.get(key)
+        if cur is None or rank > cur[0]:
+            picked[key] = (rank, rname, h)
+        elif rank == cur[0]:
+            # 同じ確からしさで2店が同じキーに来た。どちらの店か決められないので
+            # 印を残す（あとで両方落とす）。間違った店のアカウントを出すより良い
+            picked[key] = (rank, None, None)
+
+    ambiguous = [k for k, v in picked.items() if v[1] is None]
+    hit = 0
+    for key, (_, rname, h) in picked.items():
+        if rname is None:
             continue
         roasters.setdefault(key, {})["instagram"] = h
         hit += 1
     if ig:
         print(f"Instagram: {hit}/{len(ig)} 店に付けた")
+        if ambiguous:
+            print(f"    どの店か決められないので付けなかった: {len(ambiguous)} 件"
+                  f" — キー {', '.join(ambiguous[:8])}")
         if skipped:
             # 図鑑に店そのものが無いぶん。表の名前が古い疑いもあるので名前を出す
             print(f"    図鑑に店が無いので付けなかった: {len(skipped)} 件"
