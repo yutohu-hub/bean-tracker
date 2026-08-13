@@ -9,8 +9,12 @@
 
 settings:
   max_pages: 2
-  timeout_sec: 20
-  concurrency: 4
+  # 候補には閉じたドメインが混ざる。本番と同じ3回の再試行だと
+  # 1店あたり最大74秒かかり、18店で15分の上限に当たった（実測）。
+  # 下見では「今つながるか」が分かればよいので、粘らない。
+  timeout_sec: 10
+  retries: 1
+  concurrency: 6
 
 roasters:
   # ---- メルボルン市内・近郊 ----

@@ -510,10 +510,19 @@ LAST_DROPPED: dict[str, int] = {}
 # Retry-After が短く示された時だけ1回待ち、それ以外は素早く諦めて次の店へ進む。
 # 理由は戻り値で返す。店は並行に巡回しているので、共有の辞書に書くと
 # 隣の店の失敗理由が混ざり、URLの誤りとレート制限を見分けられなくなる。
+# 1つのURLを何回まで試すか。既定は3回（2秒→4秒→8秒と待つ）。
+#
+# 本番の巡回では、一時的な不調で店を落とさないために粘る価値がある。
+# ただし候補を下見するときは話が別で、閉じたドメインが並ぶため、
+# 1店あたり最大 3回×(20秒+待ち) かかり、18店で15分の上限に当たった。
+# 設定 retries で下げられるようにしてある（crawl_all が読む）。
+RETRIES = 3
+
+
 async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
-                          retries: int = 3) -> tuple[httpx.Response | None, str]:
+                          retries: int = 0) -> tuple[httpx.Response | None, str]:
     resp, why = None, "接続失敗"
-    for attempt in range(retries):
+    for attempt in range(retries or RETRIES):
         try:
             resp = await client.get(url, params=params)
         except httpx.HTTPError as e:
@@ -1224,6 +1233,8 @@ async def crawl_all(config: dict) -> tuple[list[Product], list[str]]:
     s = config.get("settings", {})
     sem = asyncio.Semaphore(int(s.get("concurrency", 8)))
     timeout = httpx.Timeout(float(s.get("timeout_sec", 20)))
+    global RETRIES
+    RETRIES = max(1, int(s.get("retries", 3)))
     max_pages = int(s.get("max_pages", 4))
     failed: list[str] = []
     all_products: list[Product] = []
