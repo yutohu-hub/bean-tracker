@@ -375,10 +375,6 @@ roasters:
     country: "CA"
     url: https://rossocoffeeroasters.com
     currency: CAD
-  - name: "September Coffee"
-    country: "CA"
-    url: https://septembercoffee.co
-    currency: CAD
   - name: "Subtext Coffee"
     country: "CA"
     url: https://subtext.coffee
