@@ -22,7 +22,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
-from build_frontend_data import norm, bare_domain  # noqa: E402
+from build_frontend_data import norm, bare_domain, roaster_key  # noqa: E402
+
+# 図鑑（手書きの表）を模したもの。norm した名前 → 鍵
+SEED = {norm("Luna Coffee"): "luna", norm("The Espresso Lab"): "espressolab",
+        norm("Onyx Coffee Lab"): "onyx", norm("丸山珈琲"): "maruyama",
+        norm("堀口珈琲"): "horiguchi"}
+SEED_KEYS = set(SEED.values())
+KEY_DOM = {"luna": "lunacoffeeroasters.com", "espressolab": "theespressolab.com",
+           "onyx": "onyxcoffeelab.com", "maruyama": "maruyamacoffee.com",
+           "horiguchi": "horiguchicoffee.com"}
 
 
 def main() -> int:
@@ -64,6 +73,34 @@ def main() -> int:
     check("Luna と Luna Coffee は別のドメイン",
           bare_domain("https://enjoylunacoffee.com") == bare_domain("https://lunacoffeeroasters.com"),
           False)
+
+    # --- 図鑑のどの店に結びつけるか ---
+    def key(name, dom):
+        return roaster_key(name, dom, SEED, SEED_KEYS, KEY_DOM)
+
+    # 同じ店。名前の書き方が違っても、ドメインが合えば結びつく
+    check("同じ店は図鑑の店に結びつく",
+          key("Onyx Coffee Lab", "onyxcoffeelab.com")[:2], ("onyx", True))
+    # 別の店。名前が潰れて一致しても、ドメインが違えば結びつけない
+    check("別の店は結びつけない（Luna）",
+          key("Luna", "enjoylunacoffee.com")[1], False)
+    check("別の店は図鑑の鍵とぶつからない（Luna）",
+          key("Luna", "enjoylunacoffee.com")[0] != "luna", True)
+    check("ぶつかった相手を返す（あとで人に知らせる）",
+          key("Luna", "enjoylunacoffee.com")[2], "luna")
+    check("別の店は結びつけない（Coffee Lab）",
+          key("Coffee Lab", "coffeelab.com.br")[1], False)
+    # 何度呼んでも同じ鍵。毎回変わると、豆が別の店に移り続ける
+    check("鍵は毎回同じ",
+          key("Luna", "enjoylunacoffee.com")[0], key("Luna", "enjoylunacoffee.com")[0])
+    # 日本語の店。潰れずにそれぞれの店に結びつく
+    check("丸山珈琲は丸山珈琲へ", key("丸山珈琲", "maruyamacoffee.com")[:2], ("maruyama", True))
+    check("堀口珈琲は堀口珈琲へ", key("堀口珈琲", "horiguchicoffee.com")[:2], ("horiguchi", True))
+    # 図鑑に無い店は、新しい鍵で入る
+    check("図鑑に無い店は新しい鍵", key("Zzz Roastery", "zzz.example")[:2], ("zzzroastery", False))
+    # ドメインが分からない店は、これまでどおり名前で結びつける
+    check("ドメイン不明なら名前で結びつける",
+          key("Onyx Coffee Lab", "")[:2], ("onyx", True))
 
     for line in bad:
         print("  ✗", line)

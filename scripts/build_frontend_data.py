@@ -375,6 +375,41 @@ def _domain_conflict(key: str, dom: str, key_dom: dict) -> bool:
     return bool(seeded and dom and seeded != dom)
 
 
+def roaster_key(rname: str, dom: str, seed: dict, seed_keys: set,
+                key_dom: dict) -> tuple[str, bool, str]:
+    """巡回で取れた店を、図鑑のどの店に結びつけるかを決める。
+
+    返すのは (鍵, 図鑑の店に結びついたか, ぶつかった図鑑の鍵)。
+
+    ■ 名前が一致しても、ドメインが違えば別の店
+
+    norm() は業種の言葉を落とすので、実データで別の店が同じ名前に潰れていた。
+
+      Luna（enjoylunacoffee.com）        → 図鑑 Luna Coffee（バンクーバー）
+      Coffee Lab（coffeelab.com.br）     → 図鑑 The Espresso Lab（ドバイ）
+      Origin Coffee（origincoffee.co.uk）→ 図鑑 Origin Coffee Roasting（南ア）
+      Kaffa（kaffa.no）                  → 図鑑 Kaffa Roastery（フィンランド）
+
+    このままだと豆が別の店のページに並ぶ。画面を見ても気づけない。
+    ドメインが食い違うときは別の店として扱う。同じ店なのにドメイン表記が
+    ずれているだけなら、図鑑側の url を直せばまたひとつに戻る。
+    どちらの取り違えかは人にしか判断できないので、呼び出し側が名前を出す。
+
+    ■ 分けた先が、図鑑の鍵とぶつかってはいけない
+
+    実測: Luna を分けたのに slug("Luna") が図鑑の "luna"（Luna Coffee）と
+    同じで、また同じ店に戻っていた。ドメインから決まる印を足して離す。
+    毎回同じ鍵になるので、次の巡回でも同じ店を指す。
+    """
+    hit = seed.get(norm(rname))
+    if hit and not _domain_conflict(hit, dom, key_dom):
+        return hit, True, ""
+    key = slug(rname)
+    if key in seed_keys:
+        key = f"{key}{hashlib.sha1((dom or rname).encode()).hexdigest()[:4]}"
+    return key, False, (hit or "")
+
+
 def load_shop_urls() -> dict:
     """巡回対象の 店名 → EC の URL（config/roasters.yaml）。
 
@@ -530,6 +565,12 @@ def main() -> None:
     beans: list = []
     by_roaster: dict = {}
     key_of_name: dict = {}
+    name_clash: list = []          # 名前は同じだがドメインが違った組
+    # 店の見分けに使う対応表。名前だけでは別の店が潰れるので、ドメインでも引く
+    seed_dom = load_seed_domains()
+    shop_url = load_shop_urls()
+    key_dom = {k: d for d, k in seed_dom.items()}   # 図鑑のキー → その店のドメイン
+    seed_keys = set(seed.values())                 # 図鑑がすでに使っている鍵
     for p in data.get("products", []):
         by_roaster.setdefault(p.get("roaster") or "Unknown", []).append(p)
 
@@ -568,8 +609,10 @@ def main() -> None:
         # 「新規」と判定され、手で書いた都市名・座標が国コードと国の代表座標で
         # 上書きされていた（Onyx は Rogers から米国の中心へ、Five Elephant は
         # ベルリンから大西洋へ飛んでいた）。
-        matched = norm(rname) in seed
-        key = seed[norm(rname)] if matched else slug(rname)
+        key, matched, clash = roaster_key(rname, bare_domain(shop_url.get(rname, "")),
+                                          seed, seed_keys, key_dom)
+        if clash:
+            name_clash.append((rname, clash))
         # 種にある店も含めて控える。Instagram のように「種にある店へ1欄だけ
         # 足したい」ときに、この対応表が要る
         key_of_name[rname] = key
@@ -677,9 +720,6 @@ def main() -> None:
     # 種にある店へ足すのは instagram の欄だけ。画面側は欄ごとに重ねるので、
     # 手で書いた街・座標・紹介文は消えない（components/data/roasters.js）。
     ig = load_instagram()
-    seed_dom = load_seed_domains()
-    shop_url = load_shop_urls()
-    key_dom = {k: d for d, k in seed_dom.items()}   # 図鑑のキー → その店のドメイン
 
     # 店ごとに「どのキーか」と「どれだけ確かか」を出す。
     # ドメインは店ごとに違うので確か。名前は norm() が業種の言葉を落とすため、
@@ -721,6 +761,15 @@ def main() -> None:
             # 図鑑に店そのものが無いぶん。表の名前が古い疑いもあるので名前を出す
             print(f"    図鑑に店が無いので付けなかった: {len(skipped)} 件"
                   f" — {', '.join(skipped[:8])}")
+
+    # 名前は同じだがドメインが違った組。別の店として扱っている。
+    # 同じ店なのにドメイン表記がずれているだけなら、図鑑側の url を直せば
+    # ひとつに戻る。どちらなのかは人にしか判断できないので、必ず名前を出す。
+    if name_clash:
+        print(f"\n⚠ 名前が同じでドメインが違う店（別の店として扱った）: {len(name_clash)} 組")
+        for rname, key in name_clash:
+            print(f"    {rname[:28]:<28} {bare_domain(shop_url.get(rname, '')):<28}"
+                  f" ↔ 図鑑 {key}（{key_dom.get(key)}）")
 
     report_all_goods(all_goods)
     drop_impossible_prices(beans)
