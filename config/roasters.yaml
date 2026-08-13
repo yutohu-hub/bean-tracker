@@ -287,6 +287,30 @@ roasters:
     country: "AU"
     url: https://wideopenroad.com.au
     currency: AUD
+  # ---- メルボルン追加分（config/candidates-melbourne.yaml で18店を叩き、
+  #      実際に商品が取れた店だけを写した）----
+  - name: "Wood and Co Coffee"
+    country: "AU"
+    url: https://woodandcocoffee.com.au   # Brunswick。下見で20件（在庫18）
+    currency: AUD
+  - name: "Genovese Coffee"
+    country: "AU"
+    url: https://genovese.com.au
+    currency: AUD
+  - name: "Square One Coffee Roasters"
+    country: "AU"
+    url: https://squareonecoffee.com.au
+    currency: AUD
+  - name: "Inglewood Coffee Roasters"
+    country: "AU"
+    url: https://inglewoodcoffeeroasters.com.au
+    currency: AUD
+  # メルボルンではなくビクトリア州 Moe（車で2時間ほど東）。
+  # 依頼はメルボルンだったが、ゲイシャや発酵ロットが並ぶ良い店なので入れておく。
+  - name: "Zest Coffee"
+    country: "AU"
+    url: https://zestcoffee.com.au   # 下見で64件（在庫60）
+    currency: AUD
   - name: "Caffènation"
     country: "BE"
     url: https://caffenation.be
@@ -710,11 +734,6 @@ roasters:
   - name: "Round Hill Roastery"
     country: "GB"
     url: https://roundhillroastery.com
-    currency: GBP
-  # Square Mile Coffee と同じ店。名前を揃えてある（違うと図鑑で2店に見える）
-  - name: "Square Mile Coffee"
-    country: "GB"
-    url: https://squaremilecoffee.com
     currency: GBP
   - name: "Workshop Coffee"
     country: "GB"
