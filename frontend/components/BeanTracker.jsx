@@ -54,6 +54,20 @@ import { AboutView } from "./views/AboutView";
 
 const ROWS_PER_PAGE = 10; // 1ページの行数（列数は可変）
 
+/* Instagram の印。画像は読み込まず、線で描く。
+   図鑑は静的に書き出して配信するので、外から画像を取りに行くと
+   その1枚のために別の通信が要る（表示も遅れる）。 */
+function InstagramMark({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5.5" />
+      <circle cx="12" cy="12" r="4.2" />
+      <circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 /* ---------- メイン ---------- */
 export default function BeanTracker() {
   const [view, setView] = useState("zukan"); // zukan | roaster
@@ -674,14 +688,31 @@ export default function BeanTracker() {
                 {/* ロースター図鑑 */}
                 <div style={gridStyle}>
                   {pageItems.map(([rid, r]) => (
-                    <button key={rid} onClick={() => goRoaster(rid, "now")} className="bt-card"
-                      style={{ display: "flex", flexDirection: "column", gap: 5, background: PAPER, border: `1px solid ${LINE}`, borderRadius: 10, padding: "11px 11px", cursor: "pointer", textAlign: "left" }}>
-                      <div style={{ fontSize: FS.body, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
-                      <div style={{ fontSize: FS.meta, color: GRAY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.city} · {r.country}</div>
-                      <div style={{ marginTop: 2, fontFamily: "ui-monospace, monospace", fontSize: FS.meta }}>
-                        <span style={{ color: (nowCountByRoaster[rid] || 0) ? GREEN : GRAY }}>NOW {nowCountByRoaster[rid] || 0}</span>
-                      </div>
-                    </button>
+                    /* Instagram の導線をカードの中に置く。
+                       カード自体が <button> なので、その中に <a> を入れると
+                       入れ子の押せる要素になり、どちらが反応するか定まらない。
+                       同じ場所に重ねて置き、店を開く操作とぶつからないようにする。
+                       アカウント名を持っている店にだけ出す（持っていない店には何も出さない）。 */
+                    <div key={rid} style={{ position: "relative" }}>
+                      <button onClick={() => goRoaster(rid, "now")} className="bt-card"
+                        style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%", height: "100%", background: PAPER, border: `1px solid ${LINE}`, borderRadius: 10, padding: "11px 11px", cursor: "pointer", textAlign: "left" }}>
+                        <div style={{ fontSize: FS.body, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                        <div style={{ fontSize: FS.meta, color: GRAY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.city} · {r.country}</div>
+                        <div style={{ marginTop: 2, fontFamily: "ui-monospace, monospace", fontSize: FS.meta }}>
+                          <span style={{ color: (nowCountByRoaster[rid] || 0) ? GREEN : GRAY }}>NOW {nowCountByRoaster[rid] || 0}</span>
+                        </div>
+                      </button>
+                      {r.instagram && (
+                        <a href={`https://www.instagram.com/${r.instagram}/`}
+                          target="_blank" rel="noopener noreferrer"
+                          aria-label={`${r.name} の Instagram を開く`}
+                          title={`@${r.instagram}`}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ position: "absolute", right: 7, bottom: 6, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, color: GRAY, borderRadius: 6 }}>
+                          <InstagramMark />
+                        </a>
+                      )}
+                    </div>
                   ))}
                 </div>
                 {activeList.length === 0 && (
