@@ -13,6 +13,13 @@ on:
         # 空なら今までどおり run 番号から決める。
         description: "回すスライス（例: 3 / 空なら実行番号から自動）"
         default: ""
+      shards:
+        # 1周を何回に分けるか。既定の13は「毎時×13回＝約13時間で一周」。
+        # 減らすと1回の店数が増えて一周は速くなるが、同じIPからの総量が増えて
+        # 429（レート制限）が出やすくなる。どこまで増やせるかは実測でしか
+        # 分からないので、手で走らせて確かめられるようにしてある。
+        description: "1周の分割数（既定 13。減らすほど1回の店数が増える）"
+        default: ""
 
 permissions:
   contents: write
@@ -79,7 +86,7 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           PUSH_SEND_TOKEN: ${{ secrets.PUSH_SEND_TOKEN }}
           RUN_NUMBER: ${{ github.run_number }}
-          SHARDS: "13"
+          SHARDS: ${{ inputs.shards || '13' }}
           PICK: ${{ inputs.shard }}
         run: |
           # run ごとにスライスをずらし、13回で全店を一周する。
