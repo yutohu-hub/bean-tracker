@@ -169,6 +169,75 @@ def _mark_withdrawn(con: sqlite3.Connection, products: list[dict],
     return gone
 
 
+SHOP_HEALTH = """
+CREATE TABLE IF NOT EXISTS shop_health (
+  roaster TEXT PRIMARY KEY,
+  fails INTEGER DEFAULT 0,      -- 続けて失敗した回数
+  last_ok REAL,                 -- 最後に取れた時刻
+  last_try REAL                 -- 最後に試した時刻
+);
+"""
+
+
+def record_health(con: sqlite3.Connection, ok_names: set[str],
+                  failed_names: set[str]) -> None:
+    """店ごとに、取れたか取れなかったかを覚えておく。
+
+    毎回の巡回で、応答しない店にも同じだけ時間と回数を使っている。
+    実測では 442店のうち豆が取れているのは 274店で、残り 168店は
+    毎周ぶんの枠を使って何も返していない。
+
+    ここに記録を残しておくと、続けて失敗している店を後回しにできる
+    （→ due_shops）。相手の制限とは関係なく、同じ回数で「取れる店」を
+    今より短い間隔で回せるようになる。
+    """
+    con.executescript(SHOP_HEALTH)
+    now = time.time()
+    con.executemany(
+        "INSERT INTO shop_health (roaster, fails, last_ok, last_try) VALUES (?,0,?,?) "
+        "ON CONFLICT(roaster) DO UPDATE SET fails=0, last_ok=?, last_try=?",
+        [(n, now, now, now, now) for n in ok_names])
+    con.executemany(
+        "INSERT INTO shop_health (roaster, fails, last_ok, last_try) VALUES (?,1,NULL,?) "
+        "ON CONFLICT(roaster) DO UPDATE SET fails=fails+1, last_try=?",
+        [(n, now, now) for n in failed_names])
+    con.commit()
+
+
+def due_shops(con: sqlite3.Connection, names: list[str], now: float | None = None,
+              dead_after: int = 10, retry_hours: float = 24.0) -> tuple[list, list]:
+    """今回みる店と、今回は飛ばす店に分ける。
+
+    続けて dead_after 回（既定10回）失敗している店は、毎回叩いても同じ結果に
+    なることが多い。retry_hours（既定24時間）に1回だけ試す。
+
+    ■ 見捨てはしない
+
+    店は復活する。ドメインを変えただけの店も、一時的に落ちている店もある。
+    だから「もう見ない」ではなく「頻度を落とす」。24時間に1回は必ず試すので、
+    復活すれば遅くとも1日で戻る。
+
+    ■ 10回という数
+
+    1周13時間なので、10回続けて失敗＝5日以上ずっと取れていない店。
+    429（レート制限）は同じ店で10回続けて起きることは少なく、
+    起きたとしても24時間ごとの再試行で戻る。
+    """
+    con.executescript(SHOP_HEALTH)
+    now = now or time.time()
+    rows = {r["roaster"]: r for r in con.execute(
+        "SELECT roaster, fails, last_try FROM shop_health")}
+    due, skip = [], []
+    for n in names:
+        r = rows.get(n)
+        if r and r["fails"] >= dead_after and r["last_try"] \
+                and (now - r["last_try"]) < retry_hours * 3600:
+            skip.append(n)
+        else:
+            due.append(n)
+    return due, skip
+
+
 def prune_missing_roasters(con: sqlite3.Connection, keep: set[str],
                            max_share: float = 0.2) -> list[tuple[str, int]]:
     """図鑑から外した店の商品を、DBからも消す。消した店と件数を返す。

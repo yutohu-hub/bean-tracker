@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from crawler import (crawl_all, products_to_dicts, _guess_origin, shop_says,  # noqa: E402
                      _guess_process, extract_notes, html_to_text)
 from state import (open_db, apply_snapshot, export_for_site,  # noqa: E402
-                   prune_missing_roasters)
+                   prune_missing_roasters, record_health, due_shops)
 from build_site import build  # noqa: E402
 from notify import notify  # noqa: E402
 from push_notify import push  # noqa: E402
@@ -83,23 +83,34 @@ def main() -> None:
         config["roasters"] = apply_shard(every, spec)
         print(f"分割巡回 {spec}: {len(config['roasters'])}/{len(every)}店舗")
 
+    (ROOT / "data").mkdir(exist_ok=True)
+    con = open_db(str(ROOT / "data" / "state.db"))
+
     if "--mock" in sys.argv:
         fixture_dir = sys.argv[sys.argv.index("--mock") + 1]
         print(f"[mock] fixtures: {fixture_dir}")
         products = load_mock(fixture_dir)
         failed: list[str] = []
     else:
+        # 続けて失敗している店は、毎回叩いても同じ結果になることが多い。
+        # 24時間に1回だけ試すことにして、空いた枠を取れる店に回す。
+        # 見捨てるのではなく頻度を落とすだけなので、復活すれば1日で戻る。
+        names = [r["name"] for r in config["roasters"]]
+        due, skip = due_shops(con, names)
+        if skip:
+            print(f"今回は飛ばす（10回以上続けて取れていない店）: {len(skip)}店")
+            config["roasters"] = [r for r in config["roasters"] if r["name"] in set(due)]
         print(f"巡回開始: {len(config['roasters'])}店舗")
         raw, failed = asyncio.run(crawl_all(config))
         products = products_to_dicts(raw)
+        record_health(con, {r["name"] for r in config["roasters"]} - set(failed),
+                      set(failed))
 
     # ノートの取得率は味わいマップの精度そのものなので、毎回ログに出して追えるようにする
     noted = sum(1 for p in products if (p.get("notes") or "").strip())
     pct = round(noted / len(products) * 100, 1) if products else 0.0
     print(f"取得: {len(products)}商品（失敗 {len(failed)}店舗） / ノートあり {noted}件 {pct}%")
 
-    (ROOT / "data").mkdir(exist_ok=True)
-    con = open_db(str(ROOT / "data" / "state.db"))
     # 図鑑から外した店の商品を消す。外しただけでは消えず、在庫ありのまま残る。
     # mock は fixtures の店名なので対象にしない（本物の一覧と噛み合わない）
     if "--mock" not in sys.argv:
