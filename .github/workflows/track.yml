@@ -110,7 +110,16 @@ jobs:
         run: |
           "$RUNPY" scripts/build_frontend_data.py
 
+      # push に失敗しても、ジョブは落とさない。
+      #
+      # 実測: 110店を6分かけて巡回したあと、別の実行が先に押していて push に失敗し、
+      # ジョブごと落ちた。すると巡回履歴DB（state.db）のキャッシュ保存も飛ばされ、
+      # 6分ぶんの巡回が丸ごと消える。
+      #
+      # 書き出したものは state.db から作り直せるので、押せなかった回は次の回で
+      # 一緒に出れば足りる。取り直しの利かない巡回結果の方を優先して残す。
       - name: 結果をコミット（frontendの更新でPages再デプロイがトリガー）
+        continue-on-error: true
         run: |
           git config user.name "bean-tracker-bot"
           git config user.email "actions@users.noreply.github.com"
