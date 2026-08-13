@@ -1,0 +1,88 @@
+# メルボルンのロースター候補。
+#
+# 既に24店のオーストラリアの店が入っていて、そのうち17店はメルボルン。
+# ここに並べるのは、まだ入っていない店。
+#
+# 名前と所在地は実在のものだが、商品が取れるかどうかは叩いてみないと分からない。
+# 独自ECだったり、店頭のみだったり、サブスクだけの店もある。
+# scripts/probe_roasters.py で確かめ、取れた店だけを config/roasters.yaml に写す。
+
+settings:
+  max_pages: 2
+  timeout_sec: 20
+  concurrency: 4
+
+roasters:
+  # ---- メルボルン市内・近郊 ----
+  - name: "Everyday Coffee"
+    country: "AU"
+    url: https://everydaycoffee.com.au
+    currency: AUD
+  - name: "Bureaux Collective"
+    country: "AU"
+    url: https://bureauxcollective.com
+    currency: AUD
+  - name: "Genovese Coffee"
+    country: "AU"
+    url: https://genovese.com.au
+    currency: AUD
+  - name: "Square One Coffee Roasters"
+    country: "AU"
+    url: https://squareonecoffee.com.au
+    currency: AUD
+  - name: "Inglewood Coffee Roasters"
+    country: "AU"
+    url: https://inglewoodcoffeeroasters.com.au
+    currency: AUD
+  - name: "Bench Coffee Co"
+    country: "AU"
+    url: https://benchcoffee.com.au
+    currency: AUD
+  - name: "Coffee Supreme"
+    country: "AU"
+    url: https://coffeesupreme.com
+    currency: AUD
+  - name: "Cartel Coffee"
+    country: "AU"
+    url: https://cartelcoffee.com.au
+    currency: AUD
+  - name: "Reformatory Caffeine Lab"
+    country: "AU"
+    url: https://reformatorycaffeinelab.com.au
+    currency: AUD
+  - name: "Aunty Peg's"
+    country: "AU"
+    url: https://auntypegs.com.au
+    currency: AUD
+  - name: "Brother Baba Budan"
+    country: "AU"
+    url: https://brotherbababudan.com.au
+    currency: AUD
+  - name: "Wood and Co Coffee"
+    country: "AU"
+    url: https://woodandcocoffee.com.au
+    currency: AUD
+  - name: "Tinker Coffee"
+    country: "AU"
+    url: https://tinkercoffee.com.au
+    currency: AUD
+  - name: "Zest Coffee"
+    country: "AU"
+    url: https://zestcoffee.com.au
+    currency: AUD
+  - name: "Kōhī Coffee"
+    country: "AU"
+    url: https://kohicoffee.com.au
+    currency: AUD
+  - name: "Ora Coffee"
+    country: "AU"
+    url: https://oracoffee.com.au
+    currency: AUD
+  - name: "Barry Coffee"
+    country: "AU"
+    url: https://barrycoffee.com.au
+    currency: AUD
+  - name: "Cibi"
+    country: "AU"
+    url: https://cibi.com.au
+    currency: AUD
