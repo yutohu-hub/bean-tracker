@@ -25,7 +25,27 @@ ROASTER_DIR = ROOT / "frontend" / "components" / "data" / "roasters"
 OUT = ROOT / "frontend" / "components" / "data" / "live.generated.json"
 
 STOP = re.compile(r"\b(coffee|roasters?|roastery|roasting|company|co|the|specialty|cafe|café|espresso|works|stand|brewers?|kaffe|koffie)\b")
-def norm(s: str) -> str: return re.sub(r"[^a-z0-9]", "", STOP.sub("", (s or "").lower()))
+def norm(s: str) -> str:
+    """店名を、突き合わせ用の形にする。
+
+    業種の言葉（Coffee / Roasters …）を落とすので、
+    「Onyx Coffee Lab」と図鑑の「Onyx」が同じ店として引ける。
+
+    ■ 日本語だけの店名が全部ひとつに潰れていた
+
+    英数字以外を捨てていたため、丸山珈琲も堀口珈琲も空文字になり、
+    図鑑の突き合わせ表では同じ鍵（""）を奪い合っていた。あとから読んだ方が
+    勝つので、実データで **丸山珈琲の豆が堀口珈琲のページに入っていた**。
+    店の数も1つ少なく数えられていた。
+
+    英数字が1つも残らないときは、記号と空白だけを落とした形を返す。
+    こうすると丸山珈琲と堀口珈琲は別の鍵になる。英数字の名前の店では、
+    これまでと同じ結果になる（1文字も変わらない）。
+    """
+    t = re.sub(r"[^a-z0-9]", "", STOP.sub("", (s or "").lower()))
+    if t:
+        return t
+    return re.sub(r"[\s　_\-–—・･,.'\"()（）\[\]【】/|]+", "", (s or "").lower())
 def slug(s: str) -> str: return (re.sub(r"[^a-z0-9]", "", (s or "").lower())[:24] or "roaster")
 
 # --- 豆以外（器具/グッズ/ミルク/ティー/RTD/ドリップバッグ/インスタント/業務用 等）を巡回結果から除外して整理整頓 ---

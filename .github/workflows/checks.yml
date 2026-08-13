@@ -49,6 +49,7 @@ jobs:
           python tests/test_shopify_adapter.py
           python tests/test_instagram_pick.py
           python tests/test_prune.py
+          python tests/test_roaster_key.py
 
       # ネットに出ずに一巡できるかを見る。ECの仕様変更とは無関係に、
       # 差分検知と書き出しの配線が生きているかの確認
