@@ -104,6 +104,12 @@ jobs:
         working-directory: .
         run: node tests/test_url_beans.mjs
 
+      # 手で書いた店の情報と巡回のデータの重ね方。浅すぎると巡回で集めた欄が
+      # 出ず、強すぎると手で書いた街・座標が消える。どちらも画面では気づきにくい
+      - name: 店の情報の重ね方
+        working-directory: .
+        run: node tests/test_roaster_merge.mjs
+
       # 公開と同じ条件（サブパスあり）で書き出せるところまで確かめる
       - name: 静的ビルド
         env:

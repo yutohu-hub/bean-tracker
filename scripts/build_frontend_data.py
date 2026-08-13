@@ -420,6 +420,7 @@ def main() -> None:
     roasters: dict = {}
     beans: list = []
     by_roaster: dict = {}
+    key_of_name: dict = {}
     for p in data.get("products", []):
         by_roaster.setdefault(p.get("roaster") or "Unknown", []).append(p)
 
@@ -460,6 +461,9 @@ def main() -> None:
         # ベルリンから大西洋へ飛んでいた）。
         matched = norm(rname) in seed
         key = seed[norm(rname)] if matched else slug(rname)
+        # 種にある店も含めて控える。Instagram のように「種にある店へ1欄だけ
+        # 足したい」ときに、この対応表が要る
+        key_of_name[rname] = key
         country = (prods[0].get("country") or "JP").upper()
         # 店が /meta.json で名乗っている市区町村。ここが取れていれば実際の街に置ける。
         city = (prods[0].get("city") or "").strip()
@@ -545,15 +549,25 @@ def main() -> None:
 
     # 店の Instagram。scripts/collect_instagram.py が集めたものを重ねる。
     # 無い店には何も付けない（画面側は付いている店にだけ導線を出す）。
+    #
+    # ■ 種データにある店にも付ける
+    #
+    # ここで roasters（＝オーバーレイ）だけを見ていたため、318件集めたのに
+    # 図鑑に出たのは9店だけだった。オーバーレイは「種データに無い店」しか
+    # 持たない作りなので、残り299店には永久に付かなかった。
+    # 種にある店へは instagram の欄だけを持つ項目を足す。
+    # 画面側は欄ごとに重ねるので、手で書いた街・座標・紹介文は消えない
+    # （frontend/components/data/roasters.js）。
     ig = load_instagram()
     hit = 0
-    for v in roasters.values():
-        h = ig.get(v.get("name"))
-        if h:
-            v["instagram"] = h
-            hit += 1
+    for rname, key in key_of_name.items():
+        h = ig.get(rname)
+        if not h:
+            continue
+        roasters.setdefault(key, {})["instagram"] = h
+        hit += 1
     if ig:
-        print(f"Instagram: {hit}/{len(roasters)} 店に付けた（手持ち {len(ig)} 件）")
+        print(f"Instagram: {hit}/{len(key_of_name)} 店に付けた（手持ち {len(ig)} 件）")
 
     report_all_goods(all_goods)
     drop_impossible_prices(beans)
