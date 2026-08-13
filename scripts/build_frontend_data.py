@@ -550,24 +550,38 @@ def main() -> None:
     # 店の Instagram。scripts/collect_instagram.py が集めたものを重ねる。
     # 無い店には何も付けない（画面側は付いている店にだけ導線を出す）。
     #
-    # ■ 種データにある店にも付ける
+    # ■ 店の見つけ方を2つ使う
     #
-    # ここで roasters（＝オーバーレイ）だけを見ていたため、318件集めたのに
-    # 図鑑に出たのは9店だけだった。オーバーレイは「種データに無い店」しか
-    # 持たない作りなので、残り299店には永久に付かなかった。
-    # 種にある店へは instagram の欄だけを持つ項目を足す。
-    # 画面側は欄ごとに重ねるので、手で書いた街・座標・紹介文は消えない
-    # （frontend/components/data/roasters.js）。
+    # 実測で2回、届かない店が出た。
+    #
+    #   1回目: オーバーレイだけを見ていた。オーバーレイは「種データに無い店」
+    #          しか持たないので、318件のうち図鑑に出たのは9店だけだった。
+    #   2回目: 巡回で豆が取れた店だけを見ていた。図鑑にページはあるが、まだ
+    #          豆を取れていない店に付かず、79店が漏れた。
+    #
+    # 図鑑に店のページがある経路は2つある。種データ（手書き）と、巡回で
+    # 見つけた店。どちらの経路で載っている店にも付くように、両方を引く。
+    #
+    # どちらでも見つからない店には付けない。付けると、名前も街も持たない
+    # 「instagram だけの店」が図鑑に生まれる。
+    #
+    # 種にある店へ足すのは instagram の欄だけ。画面側は欄ごとに重ねるので、
+    # 手で書いた街・座標・紹介文は消えない（components/data/roasters.js）。
     ig = load_instagram()
-    hit = 0
-    for rname, key in key_of_name.items():
-        h = ig.get(rname)
-        if not h:
+    hit, skipped = 0, []
+    for rname, h in ig.items():
+        key = seed.get(norm(rname)) or key_of_name.get(rname)
+        if not key:
+            skipped.append(rname)
             continue
         roasters.setdefault(key, {})["instagram"] = h
         hit += 1
     if ig:
-        print(f"Instagram: {hit}/{len(key_of_name)} 店に付けた（手持ち {len(ig)} 件）")
+        print(f"Instagram: {hit}/{len(ig)} 店に付けた")
+        if skipped:
+            # 図鑑に店そのものが無いぶん。表の名前が古い疑いもあるので名前を出す
+            print(f"    図鑑に店が無いので付けなかった: {len(skipped)} 件"
+                  f" — {', '.join(skipped[:8])}")
 
     report_all_goods(all_goods)
     drop_impossible_prices(beans)
