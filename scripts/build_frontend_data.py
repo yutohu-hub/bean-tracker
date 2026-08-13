@@ -348,35 +348,37 @@ PAL = [["#DCD6C8", "#8A3B2E"], ["#2E2A24", "#C8A96A"], ["#B8433A", "#F2E9DC"], [
        ["#F4F1E8", "#1A1815"], ["#6B2D3C", "#EFE9DA"]]
 
 
-def load_seed_keys() -> dict:
-    m = {}
+def load_seed_index() -> dict:
+    """図鑑（手書きの表）を、突き合わせ用の索引にする。
+
+      { 突き合わせ名: [(鍵, ドメイン), ...] }
+
+    ■ なぜ名前ひとつに複数を持つのか
+
+    以前は「名前 → 鍵」の1対1だった。ところが突き合わせ名は業種の言葉を
+    落とすので、図鑑の中でも別の店が同じ名前に潰れる。実測で3組あった。
+
+      Kaffa（kaffa.no）      と Kaffa Roastery（kaffaroastery.fi）
+      Coffee Lab（ブラジル） と The Espresso Lab（ドバイ）
+      Origin Coffee（英）    と Origin Coffee Roasting（南ア）
+
+    1対1の表では、あとから読んだ方が前の店を上書きする。上書きされた店は
+    どの巡回結果とも結びつかず、その店のページに豆が1件も入らない。
+    さらに、上書きした側のページには別の店の豆が入る。
+
+    候補を全部持っておき、ドメインで選び分ける（→ roaster_key）。
+    """
+    m: dict = {}
     for f in ROASTER_DIR.glob("*.js"):
-        for km in re.finditer(r'^\s+([a-z0-9]+): \{ name: "([^"]+)"', f.read_text(encoding="utf-8"), re.M):
-            m[norm(km.group(2))] = km.group(1)
+        for km in re.finditer(r'^\s+([a-z0-9]+): \{ name: "([^"]+)"(.*)$',
+                              f.read_text(encoding="utf-8"), re.M):
+            u = re.search(r'url: "([^"]+)"', km.group(3))
+            m.setdefault(norm(km.group(2)), []).append(
+                (km.group(1), bare_domain(u.group(1)) if u else ""))
     return m
 
 
-def _domain_conflict(key: str, dom: str, key_dom: dict) -> bool:
-    """名前で引いたキーが、別の店を指していないかを検算する。
-
-    norm() は業種の言葉（Coffee / Roasters …）を落とすので、別の店が
-    同じ名前に潰れる。実測:
-
-      config/roasters.yaml: Luna（enjoylunacoffee.com）
-      図鑑の表:             Luna Coffee（lunacoffeeroasters.com、バンクーバー）
-
-    どちらも norm() では "luna" になる。名前だけで引くと、Luna の
-    Instagram がバンクーバーの別の店のページに出る。
-
-    引いたキーのドメインが分かっていて、それが店のドメインと違うなら、
-    別の店だと判断して使わない。
-    """
-    seeded = key_dom.get(key)
-    return bool(seeded and dom and seeded != dom)
-
-
-def roaster_key(rname: str, dom: str, seed: dict, seed_keys: set,
-                key_dom: dict) -> tuple[str, bool, str]:
+def roaster_key(rname: str, dom: str, index: dict, seed_keys: set) -> tuple[str, bool, str]:
     """巡回で取れた店を、図鑑のどの店に結びつけるかを決める。
 
     返すのは (鍵, 図鑑の店に結びついたか, ぶつかった図鑑の鍵)。
@@ -391,9 +393,16 @@ def roaster_key(rname: str, dom: str, seed: dict, seed_keys: set,
       Kaffa（kaffa.no）                  → 図鑑 Kaffa Roastery（フィンランド）
 
     このままだと豆が別の店のページに並ぶ。画面を見ても気づけない。
-    ドメインが食い違うときは別の店として扱う。同じ店なのにドメイン表記が
-    ずれているだけなら、図鑑側の url を直せばまたひとつに戻る。
-    どちらの取り違えかは人にしか判断できないので、呼び出し側が名前を出す。
+
+    選び方は次のとおり。
+
+      1. ドメインが一致する候補があれば、それ（いちばん確か）
+      2. 候補が1つだけで、ドメインが食い違わないなら、それ
+      3. それ以外は結びつけず、その店の項目を新しく作る
+
+    同じ店なのにドメイン表記がずれているだけなら、図鑑側の url を直せば
+    またひとつに戻る。どちらの取り違えかは人にしか判断できないので、
+    呼び出し側が名前を出す。
 
     ■ 分けた先が、図鑑の鍵とぶつかってはいけない
 
@@ -401,13 +410,19 @@ def roaster_key(rname: str, dom: str, seed: dict, seed_keys: set,
     同じで、また同じ店に戻っていた。ドメインから決まる印を足して離す。
     毎回同じ鍵になるので、次の巡回でも同じ店を指す。
     """
-    hit = seed.get(norm(rname))
-    if hit and not _domain_conflict(hit, dom, key_dom):
-        return hit, True, ""
+    cands = index.get(norm(rname)) or []
+    if dom:
+        for key, kdom in cands:
+            if kdom == dom:
+                return key, True, ""
+    if len(cands) == 1:
+        key, kdom = cands[0]
+        if not (kdom and dom and kdom != dom):
+            return key, True, ""
     key = slug(rname)
     if key in seed_keys:
         key = f"{key}{hashlib.sha1((dom or rname).encode()).hexdigest()[:4]}"
-    return key, False, (hit or "")
+    return key, False, (cands[0][0] if cands else "")
 
 
 def load_shop_urls() -> dict:
@@ -434,50 +449,6 @@ def bare_domain(url: str) -> str:
         if d.startswith(pre):
             d = d[len(pre):]
     return d
-
-
-def load_seed_domains() -> dict:
-    """店のドメイン → 図鑑のキー。
-
-    ■ なぜ名前だけでは足りないのか
-
-    図鑑の手書きの表と config/roasters.yaml とで、同じ店の名前の書き方が違う。
-
-      図鑑: George Howell   /  roasters.yaml: George Howell Coffee
-      図鑑: Square Mile     /  roasters.yaml: Square Mile Coffee
-
-    名前が完全一致しないので引けず、実測で10店に Instagram が付かなかった。
-
-    ■ なぜ名前を「緩く」一致させないのか
-
-    業種の言葉（Coffee / Roasters）を落として突き合わせれば10店とも引ける。
-    だが表には別の店として
-
-      Luna       … enjoylunacoffee.com
-      Luna Coffee … lunacoffeeroasters.com
-
-    が並んでいる。緩くすると、この2店が同じ店になる。ドメインは店ごとに
-    違うので、取り違えが起きない。
-
-    同じドメインが2つのキーに割り当たっている場合は、どちらか決められない
-    ので両方捨てる（間違ったキーに付けるより、付けない方がよい）。
-    """
-    m, dup = {}, set()
-    for f in ROASTER_DIR.glob("*.js"):
-        for km in re.finditer(r'^\s+([a-z0-9]+): \{ name: "[^"]+"(.*)$',
-                              f.read_text(encoding="utf-8"), re.M):
-            u = re.search(r'url: "([^"]+)"', km.group(2))
-            if not u:
-                continue
-            d = bare_domain(u.group(1))
-            if not d:
-                continue
-            if d in m and m[d] != km.group(1):
-                dup.add(d)
-            m[d] = km.group(1)
-    for d in dup:
-        m.pop(d, None)
-    return m
 
 
 # レアロット画面のカテゴリはこの印で組まれている。銘柄名か店のタグから拾う。
@@ -550,7 +521,7 @@ def main() -> None:
         print("no site.json; wrote empty overlay")
         return
     data = json.loads(SITE.read_text(encoding="utf-8"))
-    seed = load_seed_keys()
+    seed = load_seed_index()
 
     # 店ごとに1つだけ (市区町村, 国) を集めて座標に直す。
     # 失敗しても空の辞書が返るだけで、国の代表座標に落ちる。
@@ -567,10 +538,10 @@ def main() -> None:
     key_of_name: dict = {}
     name_clash: list = []          # 名前は同じだがドメインが違った組
     # 店の見分けに使う対応表。名前だけでは別の店が潰れるので、ドメインでも引く
-    seed_dom = load_seed_domains()
     shop_url = load_shop_urls()
-    key_dom = {k: d for d, k in seed_dom.items()}   # 図鑑のキー → その店のドメイン
-    seed_keys = set(seed.values())                 # 図鑑がすでに使っている鍵
+    # 図鑑がすでに使っている鍵と、鍵 → ドメイン
+    seed_keys = {k for v in seed.values() for k, _ in v}
+    key_dom = {k: d for v in seed.values() for k, d in v if d}
     for p in data.get("products", []):
         by_roaster.setdefault(p.get("roaster") or "Unknown", []).append(p)
 
@@ -610,7 +581,7 @@ def main() -> None:
         # 上書きされていた（Onyx は Rogers から米国の中心へ、Five Elephant は
         # ベルリンから大西洋へ飛んでいた）。
         key, matched, clash = roaster_key(rname, bare_domain(shop_url.get(rname, "")),
-                                          seed, seed_keys, key_dom)
+                                          seed, seed_keys)
         if clash:
             name_clash.append((rname, clash))
         # 種にある店も含めて控える。Instagram のように「種にある店へ1欄だけ
@@ -728,10 +699,10 @@ def main() -> None:
     skipped = []
     for rname, h in ig.items():
         dom = bare_domain(shop_url.get(rname, ""))
-        if dom and seed_dom.get(dom):
-            key, rank = seed_dom[dom], 2
-        elif seed.get(norm(rname)) and not _domain_conflict(seed[norm(rname)], dom, key_dom):
-            key, rank = seed[norm(rname)], 1
+        k, matched, _ = roaster_key(rname, dom, seed, seed_keys)
+        if matched:
+            # 図鑑の店と結びついた。ドメインが一致していればいちばん確か
+            key, rank = k, (2 if dom and key_dom.get(k) == dom else 1)
         elif key_of_name.get(rname):
             key, rank = key_of_name[rname], 1
         else:

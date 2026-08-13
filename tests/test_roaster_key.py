@@ -24,14 +24,17 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 from build_frontend_data import norm, bare_domain, roaster_key  # noqa: E402
 
-# 図鑑（手書きの表）を模したもの。norm した名前 → 鍵
-SEED = {norm("Luna Coffee"): "luna", norm("The Espresso Lab"): "espressolab",
-        norm("Onyx Coffee Lab"): "onyx", norm("丸山珈琲"): "maruyama",
-        norm("堀口珈琲"): "horiguchi"}
-SEED_KEYS = set(SEED.values())
-KEY_DOM = {"luna": "lunacoffeeroasters.com", "espressolab": "theespressolab.com",
-           "onyx": "onyxcoffeelab.com", "maruyama": "maruyamacoffee.com",
-           "horiguchi": "horiguchicoffee.com"}
+# 図鑑（手書きの表）を模した索引。突き合わせ名 → [(鍵, ドメイン), ...]。
+# "lab" には2店ぶら下がる（Coffee Lab と The Espresso Lab）。実データと同じ形
+SEED = {
+    norm("Luna Coffee"): [("luna", "lunacoffeeroasters.com")],
+    norm("Onyx Coffee Lab"): [("onyx", "onyxcoffeelab.com")],
+    norm("丸山珈琲"): [("maruyama", "maruyamacoffee.com")],
+    norm("堀口珈琲"): [("horiguchi", "horiguchicoffee.com")],
+    norm("The Espresso Lab"): [("espressolab", "theespressolab.com"),
+                               ("coffeelab", "coffeelab.com.br")],
+}
+SEED_KEYS = {k for v in SEED.values() for k, _ in v}
 
 
 def main() -> int:
@@ -76,7 +79,7 @@ def main() -> int:
 
     # --- 図鑑のどの店に結びつけるか ---
     def key(name, dom):
-        return roaster_key(name, dom, SEED, SEED_KEYS, KEY_DOM)
+        return roaster_key(name, dom, SEED, SEED_KEYS)
 
     # 同じ店。名前の書き方が違っても、ドメインが合えば結びつく
     check("同じ店は図鑑の店に結びつく",
@@ -88,8 +91,13 @@ def main() -> int:
           key("Luna", "enjoylunacoffee.com")[0] != "luna", True)
     check("ぶつかった相手を返す（あとで人に知らせる）",
           key("Luna", "enjoylunacoffee.com")[2], "luna")
-    check("別の店は結びつけない（Coffee Lab）",
-          key("Coffee Lab", "coffeelab.com.br")[1], False)
+    # 図鑑の中でも名前が潰れている組。ドメインで正しい方を選ぶ
+    check("潰れた候補からドメインで選ぶ（Coffee Lab）",
+          key("Coffee Lab", "coffeelab.com.br")[:2], ("coffeelab", True))
+    check("潰れた候補からドメインで選ぶ（The Espresso Lab）",
+          key("The Espresso Lab", "theespressolab.com")[:2], ("espressolab", True))
+    check("候補が複数でドメインが合わなければ結びつけない",
+          key("Coffee Lab", "other.example")[1], False)
     # 何度呼んでも同じ鍵。毎回変わると、豆が別の店に移り続ける
     check("鍵は毎回同じ",
           key("Luna", "enjoylunacoffee.com")[0], key("Luna", "enjoylunacoffee.com")[0])
