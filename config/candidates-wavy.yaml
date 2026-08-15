@@ -1,0 +1,47 @@
+# Wavy Coffee を探すための候補。
+#
+# 図鑑にも巡回一覧にも「Wavy」は無い。ドメインが分からないので、
+# ありそうな綴りを並べて叩き、応答したものを見る。
+#
+# 名前だけで決め打ちすると、同じ名前の別の店を入れてしまう。
+# 応答した店の所在地と商品名を見てから config/roasters.yaml に写す。
+
+settings:
+  max_pages: 2
+  timeout_sec: 10
+  retries: 1
+  concurrency: 6
+
+roasters:
+  - name: "Wavy Coffee (wavycoffee.com)"
+    country: "JP"
+    url: https://wavycoffee.com
+    currency: JPY
+  - name: "Wavy Coffee (wavy.coffee)"
+    country: "JP"
+    url: https://wavy.coffee
+    currency: JPY
+  - name: "Wavy Coffee (wavycoffee.jp)"
+    country: "JP"
+    url: https://wavycoffee.jp
+    currency: JPY
+  - name: "Wavy Coffee (wavycoffeeroasters.com)"
+    country: "JP"
+    url: https://wavycoffeeroasters.com
+    currency: JPY
+  - name: "Wavy Coffee (wavy-coffee.com)"
+    country: "JP"
+    url: https://wavy-coffee.com
+    currency: JPY
+  - name: "Wavy Coffee (wavycoffee.co)"
+    country: "JP"
+    url: https://wavycoffee.co
+    currency: JPY
+  - name: "Wavy Coffee (wavycoffee.com.au)"
+    country: "AU"
+    url: https://wavycoffee.com.au
+    currency: AUD
+  - name: "Wavy Coffee (wavycoffee.co.uk)"
+    country: "GB"
+    url: https://wavycoffee.co.uk
+    currency: GBP
