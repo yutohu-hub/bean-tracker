@@ -96,6 +96,7 @@ crawler._ROBOTS.clear()
 # 「sitemapに商品ページが無い」になっていた。在りもしない sitemap の
 # 不具合を探させることになるので、ここで理由まで縛る。
 import asyncio  # noqa: E402
+import httpx    # noqa: E402
 
 
 class Resp:
@@ -142,6 +143,32 @@ check("断らない店は叩きに行く",
 check("断らない店に断りの理由をつけない",
       "robots.txt" in crawler.LAST_REASON.get("断らない店", ""), False)
 
+# robots.txt が取れない店。粘ったうえで、駄目なら通す（方針）。
+# 実測: Puchero は監査では断っていたのに、巡回のときだけ ConnectError で
+# robots.txt が届かず素通りした。1回で諦めていたことが効いている。
+class Unreachable(Shop):
+    async def get(self, url, params=None):
+        self.asked.append(url)
+        if url.endswith("/robots.txt"):
+            raise httpx.ConnectError("届かない")
+        return Resp("<urlset></urlset>")
+
+
+crawler._ROBOTS.clear()
+crawler._REFUSED.clear()
+crawler.RETRIES, keep = 2, crawler.RETRIES
+try:
+    shop3 = Unreachable("")
+    asyncio.run(crawler.crawl_roaster(
+        shop3, {**r, "name": "robotsが届かない店"}, 2, asyncio.Semaphore(1)))
+finally:
+    crawler.RETRIES = keep
+
+check("robots.txt が取れなければ粘る",
+      sum(1 for u in shop3.asked if u.endswith("/robots.txt")) > 1, True)
+check("粘っても駄目なら通す（止めない）",
+      any(not u.endswith("/robots.txt") for u in shop3.asked), True)
+
 crawler._ROBOTS.clear()
 crawler._REFUSED.clear()
 
@@ -150,4 +177,4 @@ if fails:
     for f in fails:
         print("   " + f)
     raise SystemExit(1)
-print("✓ robots.txt の判定と、巡回がそれに従うこと 30件")
+print("✓ robots.txt の判定と、巡回がそれに従うこと 32件")

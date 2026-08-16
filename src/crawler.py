@@ -610,16 +610,18 @@ async def load_robots(client: httpx.AsyncClient, url: str) -> None:
     実測では455店のうち95店が robots.txt を置いていない（404 / HTMLが返る /
     そもそも繋がらない）。置いていないことを「断り」と読むと、その95店が
     まるごと図鑑から消える。無いものは無いとして通す。
+
+    その代わり、一時的に取れなかっただけの店も通ってしまう。実測でそうなった
+    ——監査では断っていた Puchero が、巡回のときだけ robots.txt が
+    ConnectError で届かず、素通りした。区別する手立ては無いので、せめて
+    他の取得と同じ回数だけ粘る。粘っても駄目なら通す（方針は変えない）。
     """
     org = origin_of(url)
     if not org or org in _ROBOTS:
         return
     _ROBOTS[org] = []                     # 取れなくても2度は叩かない
-    try:
-        resp = await client.get(f"{org}/robots.txt")
-    except httpx.HTTPError:
-        return
-    if resp.status_code != 200:
+    resp, _ = await _get_with_retry(client, f"{org}/robots.txt", {})
+    if resp is None or resp.status_code != 200:
         return
     txt = resp.text
     if "<html" in txt[:400].lower():      # robots.txt が無く404ページが返る店
