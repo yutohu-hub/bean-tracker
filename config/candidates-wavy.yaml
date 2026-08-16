@@ -1,0 +1,16 @@
+# Wavy Coffee。URL は本人から教わったもの。
+#
+# 前に当てずっぽうで8つのドメインを試して全部外した。推測でドメインを
+# 並べるのは、当たらないうえに他所のサイトを叩くだけなので、もうしない。
+
+settings:
+  max_pages: 4
+  timeout_sec: 20
+  retries: 2
+  concurrency: 2
+
+roasters:
+  - name: "Wavy Coffee"
+    country: "JP"
+    url: https://shop.wavycoffee.jp
+    currency: JPY
