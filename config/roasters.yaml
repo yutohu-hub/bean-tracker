@@ -891,6 +891,10 @@ roasters:
     country: "JP"
     url: https://arabica.com
     currency: JPY
+  - name: "Allpress Espresso Japan"
+    country: "JP"
+    url: https://jp.shop.allpressespresso.com
+    currency: JPY
   - name: "Amameria Espresso"
     country: "JP"
     url: https://amameria.com
@@ -926,6 +930,22 @@ roasters:
   - name: "Golpie Coffee"
     country: "JP"
     url: https://golpiecoffee.jp
+    currency: JPY
+  - name: "FINETIME COFFEE ROASTERS"
+    country: "JP"
+    url: https://finetime.theshop.jp
+    currency: JPY
+  - name: "G☆P COFFEE ROASTER"
+    country: "JP"
+    url: https://gpcoffee.base.shop
+    currency: JPY
+  - name: "IFNi ROASTING & CO."
+    country: "JP"
+    url: https://ifni.theshop.jp
+    currency: JPY
+  - name: "ILMIIO ROASTERY Lab."
+    country: "JP"
+    url: https://ilmiioroastery.com
     currency: JPY
   - name: "Kaikado Café"
     country: "JP"
@@ -978,6 +998,10 @@ roasters:
   - name: "Morihico"
     country: "JP"
     url: https://morihico.com
+    currency: JPY
+  - name: "MOUNT COFFEE"
+    country: "JP"
+    url: https://mount-coffee.myshopify.com
     currency: JPY
   - name: "Möwe Coffee"
     country: "JP"
@@ -1046,6 +1070,18 @@ roasters:
   - name: "Setouchi Coffee"
     country: "JP"
     url: https://setouchicoffee.jp
+    currency: JPY
+  - name: "SOT Coffee Roaster"
+    country: "JP"
+    url: https://www.sotcoffee.com
+    currency: JPY
+  - name: "3s... COFFEE ROASTER"
+    country: "JP"
+    url: https://3scr.base.shop
+    currency: JPY
+  - name: "27 COFFEE ROASTERS"
+    country: "JP"
+    url: https://27coffee.jp
     currency: JPY
   - name: "Single O Japan"
     country: "JP"
