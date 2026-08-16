@@ -535,6 +535,12 @@ RETRIES = 3
 # つまり守っても図鑑は痩せない。0件だと分かったうえで入れている。
 _ROBOTS: dict[str, list[tuple[str, str]]] = {}
 
+# 断られて取りに行かなかった回数（店の入口ごと）。
+# 断られた店は、そのあと必ず別の理由で失敗する。sitemap を断られれば
+# 「sitemapに商品ページが無い」と出る——実測でその通りに出た。それを見た人は
+# 在りもしない sitemap の不具合を探すことになる。断りは断りとして残す。
+_REFUSED: dict[str, int] = {}
+
 
 def origin_of(url: str) -> str:
     m = re.match(r"(https?://[^/]+)", url or "")
@@ -621,10 +627,26 @@ async def load_robots(client: httpx.AsyncClient, url: str) -> None:
     _ROBOTS[org] = robots_rules(txt)
 
 
+async def _get(client, url: str, params: dict | None = None):
+    """robots.txt を見てから取りに行く。断られていれば None。
+
+    店を叩く入口はこの1つに絞る。判定を呼ぶ側に書き足す形にすると、書き忘れた
+    経路だけが断りを踏み続ける。実測でそうなった——_get_with_retry にだけ
+    入れたところ、meta.json / cart.js / sitemap / 商品ページの4経路が
+    素通りしていた。
+    """
+    if not path_allowed(url):
+        org = origin_of(url)
+        _REFUSED[org] = _REFUSED.get(org, 0) + 1
+        return None
+    return await client.get(url, params=params)
+
+
 async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
                           retries: int = 0) -> tuple[httpx.Response | None, str]:
-    # 全ての取得はここを通る。断られている道はここで止める
     if not path_allowed(url):
+        org = origin_of(url)
+        _REFUSED[org] = _REFUSED.get(org, 0) + 1
         return None, "robots.txt で断られている"
     resp, why = None, "接続失敗"
     for attempt in range(retries or RETRIES):
@@ -678,8 +700,8 @@ async def _shop_currencies(client: httpx.AsyncClient, base: str) -> tuple[str, s
         return _SHOP_CUR[base]
     home = presentment = ""
     try:
-        resp = await client.get(f"{base}/meta.json")
-        if resp.status_code == 200:
+        resp = await _get(client, f"{base}/meta.json")
+        if resp is not None and resp.status_code == 200:
             meta = resp.json()
             home = (meta.get("currency") or "").upper()
             SHOP_PLACE[base] = {
@@ -690,8 +712,8 @@ async def _shop_currencies(client: httpx.AsyncClient, base: str) -> tuple[str, s
     except (httpx.HTTPError, json.JSONDecodeError, AttributeError, ValueError):
         pass
     try:
-        resp = await client.get(f"{base}/cart.js")
-        if resp.status_code == 200:
+        resp = await _get(client, f"{base}/cart.js")
+        if resp is not None and resp.status_code == 200:
             presentment = (resp.json().get("currency") or "").upper()
     except (httpx.HTTPError, json.JSONDecodeError, AttributeError, ValueError):
         pass
@@ -1177,10 +1199,10 @@ async def _sitemap_product_urls(client: httpx.AsyncClient, base: str) -> list[st
         target = queue.pop(0)
         depth += 1
         try:
-            resp = await client.get(target)
+            resp = await _get(client, target)
         except httpx.HTTPError:
             continue
-        if resp.status_code != 200 or "<loc" not in resp.text:
+        if resp is None or resp.status_code != 200 or "<loc" not in resp.text:
             continue
         for raw in _LOC.findall(resp.text):
             # sitemap の <loc> は仕様上は絶対URLだが、相対パスを書いている店がある。
@@ -1251,10 +1273,10 @@ async def _fetch_generic(client: httpx.AsyncClient, r: dict) -> list[Product] | 
     products: list[Product] = []
     for u in urls:
         try:
-            resp = await client.get(u)
+            resp = await _get(client, u)
         except httpx.HTTPError:
             continue
-        if resp.status_code != 200:
+        if resp is None or resp.status_code != 200:
             continue
         p = _product_from_ld(r, u, resp.text)
         if p:
@@ -1333,6 +1355,13 @@ async def _crawl_roaster(client, r, max_pages, sem) -> tuple[dict, list[Product]
                 if res is not None:
                     print(f"  ↻ {r['name']} — {alt} で取得")
                     return r, res
+        # 断られた店は、そのあと必ず別の理由で失敗する（sitemap を断られれば
+        # 「sitemapに商品ページが無い」）。最後に書かれた理由が残ると、断りが
+        # 見えなくなる。断られた回数があるなら、そちらを本当の理由として書く。
+        n = sum(_REFUSED.get(origin_of(u), 0)
+                for u in (r["url"], _alt_host(r["url"])) if u)
+        if n:
+            LAST_REASON[r["name"]] = f"robots.txt で断られている（{n}本の道を試さなかった）"
         return r, None
 
 

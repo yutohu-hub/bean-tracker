@@ -88,9 +88,66 @@ crawler._ROBOTS["https://c.example"] = []
 check("robots.txt が無い店は通す", path_allowed("https://c.example/products.json"), True)
 crawler._ROBOTS.clear()
 
+
+# ---- 巡回そのものが断りを守り、断りを理由として残すこと ----
+#
+# 判定が正しいことと、判定が取得経路に効いていることは別の話。
+# 実測（runner, 該当3店）では止まってはいたが、理由が
+# 「sitemapに商品ページが無い」になっていた。在りもしない sitemap の
+# 不具合を探させることになるので、ここで理由まで縛る。
+import asyncio  # noqa: E402
+
+
+class Resp:
+    def __init__(self, text, status=200):
+        self.text, self.status_code = text, status
+        self.content = text.encode()
+
+
+class Shop:
+    """全部断る店。何を取りに来たかを記録する。"""
+
+    def __init__(self, robots):
+        self.robots, self.asked = robots, []
+
+    async def get(self, url, params=None):
+        self.asked.append(url)
+        if url.endswith("/robots.txt"):
+            return Resp(self.robots)
+        return Resp("<urlset><url><loc>https://z.example/products/a</loc></url></urlset>")
+
+
+crawler._ROBOTS.clear()
+crawler._REFUSED.clear()
+shop = Shop("User-agent: *\nDisallow: /")
+r = {"name": "断る店", "url": "https://z.example", "country": "JP", "currency": "JPY"}
+_, res = asyncio.run(crawler.crawl_roaster(shop, r, 2, asyncio.Semaphore(1)))
+
+check("断る店から商品を取らない", res, None)
+check("robots.txt は読みに行く", "https://z.example/robots.txt" in shop.asked, True)
+check("断られた道は叩かない",
+      [u for u in shop.asked if not u.endswith("/robots.txt")], [])
+check("理由が断りとして残る",
+      "robots.txt" in crawler.LAST_REASON.get("断る店", ""), True)
+
+# 断っていない店では、今までどおり取りに行く
+crawler._ROBOTS.clear()
+crawler._REFUSED.clear()
+crawler.LAST_REASON.pop("断らない店", None)
+shop2 = Shop("User-agent: *\nDisallow: /admin")
+asyncio.run(crawler.crawl_roaster(
+    shop2, {**r, "name": "断らない店"}, 2, asyncio.Semaphore(1)))
+check("断らない店は叩きに行く",
+      any(not u.endswith("/robots.txt") for u in shop2.asked), True)
+check("断らない店に断りの理由をつけない",
+      "robots.txt" in crawler.LAST_REASON.get("断らない店", ""), False)
+
+crawler._ROBOTS.clear()
+crawler._REFUSED.clear()
+
 if fails:
     print("✗ robots.txt の判定")
     for f in fails:
         print("   " + f)
     raise SystemExit(1)
-print("✓ robots.txt の判定 24件")
+print("✓ robots.txt の判定と、巡回がそれに従うこと 30件")
