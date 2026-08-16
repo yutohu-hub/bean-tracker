@@ -1023,9 +1023,10 @@ roasters:
     country: "JP"
     url: https://obscura-coffee.com
     currency: JPY
+  # oc-ogawa.co.jp は会社案内で商品が無く、豆0件だった。売り場はこちら
   - name: "Ogawa Coffee"
     country: "JP"
-    url: https://oc-ogawa.co.jp
+    url: https://oc-shop.co.jp
     currency: JPY
   - name: "Okaffe Kyoto"
     country: "JP"
@@ -1118,6 +1119,14 @@ roasters:
   - name: "Walden Woods Kyoto"
     country: "JP"
     url: https://walden-woods.com
+    currency: JPY
+  - name: "WIFE&HUSBAND"
+    country: "JP"
+    url: https://wandh.buyshop.jp
+    currency: JPY
+  - name: "DRIP & DROP COFFEE SUPPLY"
+    country: "JP"
+    url: https://drpdrp.com
     currency: JPY
   # URL は本人から教わったもの。当てずっぽうで試した8つは全部外れていた
   - name: "Wavy Coffee"
