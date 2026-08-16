@@ -28,11 +28,12 @@ on:
           - sheet           # 情報シート（産地・精製・風味・内容量）の欠けを数える
           - page            # 商品ページのHTMLを読むと空欄が埋まるか試す
           - notes           # 風味がどれだけ取れて、どれだけ正しいかを測る
+          - robots          # robots.txt で断られている店を数える
       arg:
         description: >-
           道具に渡すもの。
           candidates=候補ファイル / diagnose=店のURL /
-          types・markers・instagram・sheet=店数（all で全店）/
+          types・markers・instagram・sheet・robots=店数（all で全店）/
           page・notes="店数 商品数"（例: 20 6）。空なら道具ごとの既定値
         default: ""
 
@@ -115,3 +116,9 @@ jobs:
       - name: 風味の精度を測る
         if: inputs.tool == 'notes'
         run: python scripts/audit_notes.py ${{ inputs.arg }}
+
+      # 店が robots.txt で断っている道を、巡回が通っていないか。
+      # 巡回本体は robots.txt を読んでいない（診断ツールだけが読んでいた）
+      - name: robots.txt を確かめる
+        if: inputs.tool == 'robots'
+        run: python scripts/audit_robots.py "${{ inputs.arg == 'all' && '0' || inputs.arg }}"
