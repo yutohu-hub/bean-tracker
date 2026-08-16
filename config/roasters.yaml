@@ -45,6 +45,34 @@ roasters:
     country: JP
     url: https://kurasu.kyoto
     currency: JPY
+  # ---- 日本 追加分（config/candidates-japan.yaml で20店を叩き、
+  #      実際に商品が取れた6店だけを写した）----
+  - name: "Sol's Coffee"
+    country: "JP"
+    url: https://solscoffee.com
+    currency: JPY
+  - name: "Cafe Facon"
+    country: "JP"
+    url: https://cafe-facon.jp
+    currency: JPY
+  - name: "Life Size Cribe"
+    country: "JP"
+    url: https://lifesizecribe.com
+    currency: JPY
+  - name: "Bach Kaffee"
+    country: "JP"
+    url: https://www.bach-kaffee.co.jp
+    currency: JPY
+  # 米国の Blue Bottle / Verve Coffee は別に入っている。日本法人は別ストア・
+  # 別通貨で、扱う豆も違う（Single O と Single O Japan と同じ関係）
+  - name: "Blue Bottle Coffee Japan"
+    country: "JP"
+    url: https://store.bluebottlecoffee.jp
+    currency: JPY
+  - name: "Verve Coffee Roasters Japan"
+    country: "JP"
+    url: https://www.vervecoffee.jp
+    currency: JPY
 
   # ---- 北欧 ----
   - name: Tim Wendelboe
