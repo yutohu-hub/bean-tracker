@@ -131,8 +131,10 @@ def main() -> None:
 
     orig, crawler._fetch_any = crawler._fetch_any, boom
     try:
+        # client は robots.txt を読むのに実際に使われる（None は渡せない）
         _, res = asyncio.run(crawler.crawl_roaster(
-            None, {"name": "壊れた店", "url": "https://x.example"}, 2, asyncio.Semaphore(1)))
+            FakeClient(), {"name": "壊れた店", "url": "https://x.example"}, 2,
+            asyncio.Semaphore(1)))
     finally:
         crawler._fetch_any = orig
     assert res is None, "例外を投げた店が成功扱いになっている"

@@ -519,8 +519,113 @@ LAST_DROPPED: dict[str, int] = {}
 RETRIES = 3
 
 
+# ---------------- robots.txt ----------------
+#
+# 店が robots.txt で断っている道は通らない。技術的に取れるかどうかより先に、
+# 取っていいかどうかを見る。
+#
+# この方針は診断ツール（scripts/diagnose_shop.py）にだけ書かれていて、毎時455店を
+# 叩いている巡回の本体には入っていなかった。入れる前に何店が該当するかを数えた
+# （scripts/audit_robots.py, 2026-08-16, 455店）:
+#
+#   robots.txt があった          360店
+#   巡回する道を断っている店       2店（Atmans Coffee / Bear Pond Espresso）
+#   その2店が今出している豆        0件
+#
+# つまり守っても図鑑は痩せない。0件だと分かったうえで入れている。
+_ROBOTS: dict[str, list[tuple[str, str]]] = {}
+
+
+def origin_of(url: str) -> str:
+    m = re.match(r"(https?://[^/]+)", url or "")
+    return m.group(1) if m else ""
+
+
+def robots_rules(txt: str) -> list[tuple[str, str]]:
+    """User-agent: * に向けた Allow / Disallow を取り出す。
+
+    User-agent 行は続けて何行も書ける。
+
+        User-agent: GPTBot
+        User-agent: *
+        Disallow: /
+
+    これは両方に向けた1つのまとまりで、* も断られている。
+    1行ずつ上書きすると後の行だけを見てしまい、この形を読み落とす。
+    """
+    rules: list[tuple[str, str]] = []
+    applies, in_group = False, False
+    for line in (txt or "").splitlines():
+        line = line.split("#")[0].strip()
+        if not line:
+            continue
+        k, _, v = line.partition(":")
+        k, v = k.strip().lower(), v.strip()
+        if k == "user-agent":
+            if in_group:                  # 規則をはさんだら次のまとまり
+                applies, in_group = False, False
+            applies = applies or v == "*"
+        elif k in ("disallow", "allow"):
+            in_group = True
+            if applies and v:
+                rules.append((k, v))
+    return rules
+
+
+def robots_match(rules: list[tuple[str, str]], path: str) -> tuple[str, str]:
+    """path に当たる規則のうち、いちばん長く前方一致するもの。
+
+    当たらなければ ("", "")。同じ長さなら Allow が勝つ（許す側に倒す）。
+    """
+    best = ("", "")
+    for k, v in rules:
+        if path.startswith(v) and (len(v) > len(best[1])
+                                   or (len(v) == len(best[1]) and k == "allow")):
+            best = (k, v)
+    return best
+
+
+def robots_allows(rules: list[tuple[str, str]], path: str) -> bool:
+    return robots_match(rules, path)[0] != "disallow"
+
+
+def path_allowed(url: str) -> bool:
+    """この URL を取りに行っていいか。robots.txt を読んでいない店は通す。"""
+    org = origin_of(url)
+    rules = _ROBOTS.get(org)
+    if not rules:
+        return True
+    return robots_allows(rules, url[len(org):] or "/")
+
+
+async def load_robots(client: httpx.AsyncClient, url: str) -> None:
+    """店の robots.txt を1度だけ読む。読めない店は「断られていない」扱い。
+
+    実測では455店のうち95店が robots.txt を置いていない（404 / HTMLが返る /
+    そもそも繋がらない）。置いていないことを「断り」と読むと、その95店が
+    まるごと図鑑から消える。無いものは無いとして通す。
+    """
+    org = origin_of(url)
+    if not org or org in _ROBOTS:
+        return
+    _ROBOTS[org] = []                     # 取れなくても2度は叩かない
+    try:
+        resp = await client.get(f"{org}/robots.txt")
+    except httpx.HTTPError:
+        return
+    if resp.status_code != 200:
+        return
+    txt = resp.text
+    if "<html" in txt[:400].lower():      # robots.txt が無く404ページが返る店
+        return
+    _ROBOTS[org] = robots_rules(txt)
+
+
 async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
                           retries: int = 0) -> tuple[httpx.Response | None, str]:
+    # 全ての取得はここを通る。断られている道はここで止める
+    if not path_allowed(url):
+        return None, "robots.txt で断られている"
     resp, why = None, "接続失敗"
     for attempt in range(retries or RETRIES):
         try:
@@ -1213,6 +1318,7 @@ async def crawl_roaster(client, r, max_pages, sem) -> tuple[dict, list[Product] 
 async def _crawl_roaster(client, r, max_pages, sem) -> tuple[dict, list[Product] | None]:
     async with sem:
         await asyncio.sleep(random.uniform(0.3, 1.2))  # 一斉アクセスを避けて間隔をあける
+        await load_robots(client, r["url"])            # 何を取るより先に、断りを読む
         res = await _fetch_any(client, r, max_pages)
         if res is not None:
             return r, res
@@ -1222,6 +1328,7 @@ async def _crawl_roaster(client, r, max_pages, sem) -> tuple[dict, list[Product]
             alt = _alt_host(r["url"])
             if alt:
                 LAST_REASON.pop(r["name"], None)
+                await load_robots(client, alt)   # 別ホストは別の robots.txt
                 res = await _fetch_any(client, {**r, "url": alt}, max_pages)
                 if res is not None:
                     print(f"  ↻ {r['name']} — {alt} で取得")

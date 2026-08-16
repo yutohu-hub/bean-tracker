@@ -18,7 +18,8 @@ import httpx
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from crawler import REQ_HEADERS, _SITEMAPS, _PROD_URL, _LD_BLOCK  # noqa: E402
+from crawler import (REQ_HEADERS, _SITEMAPS, _PROD_URL, _LD_BLOCK,  # noqa: E402
+                     robots_rules, robots_match)
 
 # 商品ページへのリンクらしきもの。sitemap が無い店では、一覧ページの
 # <a href> から拾えるかどうかが次の手がかりになる。
@@ -26,29 +27,18 @@ _HREF = re.compile(r'href="([^"]+)"')
 
 
 def allowed(robots: str, path: str) -> str:
-    """User-agent: * の Disallow に照らして、その道を通っていいか。
+    """その道を通っていいかを、人が読む文で返す。
 
-    店が robots.txt で断っているものを、こちらの都合で取りに行かない。
-    技術的に取れるかどうかより先に、取っていいかどうかを見る。 """
-    rules, applies = [], False
-    for line in robots.splitlines():
-        line = line.split("#")[0].strip()
-        if not line:
-            continue
-        k, _, v = line.partition(":")
-        k, v = k.strip().lower(), v.strip()
-        if k == "user-agent":
-            applies = v == "*"
-        elif applies and k in ("disallow", "allow") and v:
-            rules.append((k, v))
-    # 長く一致する規則が勝つ（Allow が同じ長さなら Allow が勝つ）
-    best = ("", "")
-    for k, v in rules:
-        if path.startswith(v) and (len(v) > len(best[1]) or (len(v) == len(best[1]) and k == "allow")):
-            best = (k, v)
-    if not best[0]:
+    判定そのものは巡回の本体（crawler.robots_match）と同じものを使う。
+    診断と巡回で答えが食い違うと、診断を見て直したのに巡回が変わらない、
+    という一番たちの悪い形になる。
+    """
+    kind, rule = robots_match(robots_rules(robots), path)
+    if not kind:
         return "断られていない（規則に当たらない）"
-    return f"許されている（Allow: {best[1]}）" if best[0] == "allow" else f"★断られている（Disallow: {best[1]}）"
+    if kind == "allow":
+        return f"許されている（Allow: {rule}）"
+    return f"★断られている（Disallow: {rule}）"
 
 
 def show(label: str, resp: httpx.Response | None, head: int = 220) -> None:
