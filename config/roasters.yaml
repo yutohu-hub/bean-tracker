@@ -1083,6 +1083,11 @@ roasters:
     country: "JP"
     url: https://walden-woods.com
     currency: JPY
+  # URL は本人から教わったもの。当てずっぽうで試した8つは全部外れていた
+  - name: "Wavy Coffee"
+    country: "JP"
+    url: https://shop.wavycoffee.jp
+    currency: JPY
   - name: "Weekenders Coffee"
     country: "JP"
     url: https://weekenderscoffee.com
