@@ -787,6 +787,27 @@ _NOT_COFFEE_TAG = ("classes", "class", "workshop", "training", "artwork", "art",
                    "merch", "equipment", "hardware", "machines")
 
 
+def shop_denies_hard(p: dict) -> bool:
+    """店が「これはコーヒーではない」とはっきり書いているか。
+
+    _HARD_NOT_COFFEE と _NOT_COFFEE_TAG だけを見る。器具・雑貨・講座・書籍の
+    たぐいで、豆がこの種類に置かれることはまず無い。
+
+    _SOFT_NOT_COFFEE（tea / food / beverage / chocolate …）は見ない。
+    店によっては豆をそこに置く。強い否定と弱い否定を混ぜると豆を巻き添えにする。
+
+    店の申告は言語に依らない。こちらが「濾杯」も「aansteker」も知らなくても、
+    店が Equipment と書いていれば分かる。
+    """
+    ptype = (p.get("product_type") or "").strip().lower()
+    tags = p.get("tags") or []
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.split(",")]
+    if {str(t).strip().lower() for t in tags} & set(_NOT_COFFEE_TAG):
+        return True
+    return bool(ptype) and any(x in ptype for x in _HARD_NOT_COFFEE)
+
+
 def shop_says(p: dict) -> str:
     """店の申告を1文字で返す。
 

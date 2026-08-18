@@ -42,6 +42,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 from crawler import (REQ_HEADERS, _grams_from_text, html_to_text,  # noqa: E402
                      shop_says, bean_markers, _looks_like_coffee, option_text,
+                     has_bean_evidence, shop_denies_hard,
                      STRONG, WEAK)
 
 CONCURRENCY = 24
@@ -112,7 +113,9 @@ async def run(shops: list) -> None:
                          markers_of(p), shop_says(p) == "c",
                          _looks_like_coffee(p), r["name"],
                          (p.get("product_type") or "").strip(),
-                         int((p.get("variants") or [{}])[0].get("grams") or 0)))
+                         int((p.get("variants") or [{}])[0].get("grams") or 0),
+                         has_bean_evidence(p), shop_denies_hard(p),
+                         (p.get("tags") or [])))
             if any(w in title.lower() for w in WATCH):
                 watched.append((r["name"], title, p))
 
@@ -133,15 +136,15 @@ async def run(shops: list) -> None:
 
     # 商品の種類を1つも書いていない店。そういう店では店の申告が使えないので、
     # 門が不当に厳しくなる（Tim Wendelboe がこれ。全商品で product_type が空）。
-    silent_shops = {s for _, _, _, _, _, s, _, _ in rows}
-    for _, _, _, _, _, shop, ptype, _ in rows:
+    silent_shops = {s for _, _, _, _, _, s, *_ in rows}
+    for _, _, _, _, _, shop, ptype, *_ in rows:
         if ptype:
             silent_shops.discard(shop)
     print(f"■ 商品の種類を1つも書いていない店 {len(silent_shops)} 軒: "
           f"{', '.join(sorted(silent_shops)[:12])}\n")
 
     each: Counter = Counter()
-    for _, _, m, _, _, _, _, _ in rows:
+    for _, _, m, _, _, _, _, *_ in rows:
         for k in m:
             each[k] += 1
     print("■ 証拠ごとの件数")
@@ -153,10 +156,12 @@ async def run(shops: list) -> None:
         print(f"    {k} {label:<6} {each[k]:>6} 件 ({each[k] / max(total, 1) * 100:5.1f}%)")
     print(f"  参考  g 重量欄 {each['g']:>6} 件 / c 店の申告 {each['c']:>6} 件")
 
+    report_hard_deny(rows, total)
+
     rnd = random.Random(0)
     for name, ok in RULES.items():
         kept, dropped_declared, kept_undeclared = [], [], []
-        for shop, title, m, declared, old, _s, _pt, _g in rows:
+        for shop, title, m, declared, old, _s, _pt, _g, *_ in rows:
             S = sum(1 for k in STRONG if k in m)
             K = sum(1 for k in WEAK if k in m)
             passed = ok(S, K, "g" in m, declared)
@@ -227,3 +232,36 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def report_hard_deny(rows: list, total: int) -> None:
+    """店が「器具・雑貨・講座」と書いているのに、いまの門を通っている物を数える。
+
+    いまの門（has_bean_evidence）は「豆の証拠が1つでもあれば通す」ので、
+    店の否定より名前の中の産地が勝つ。実データでは Fellow の器具が
+    "Fellow Costa Rica, La Guaca" という名前で図鑑に並んでいた。
+
+    ここで出すのは2つだけ。
+      ・この規則を足すと消える件数と、その中身
+      ・そのうち「本物の豆かもしれない物」＝店の否定と豆の証拠が食い違う物
+    """
+    import random
+    passes = [r for r in rows if r[8]]
+    denied = [r for r in passes if r[9]]
+    print(f"\n{'=' * 74}")
+    print("■ 店がはっきり「コーヒーではない」と書いているのに、いまの門を通る物")
+    print(f"  いまの門を通る {len(passes)} 件 / うち店が否定 {len(denied)} 件"
+          f" （通る物の {len(denied) / max(len(passes), 1) * 100:.1f}%）")
+    kinds: Counter = Counter(r[6].lower() for r in denied)
+    print("  店が書いている種類（多い順）")
+    for k, n in kinds.most_common(12):
+        print(f"      {(k or '(タグでの否定)')[:34]:<36} {n:>5} 件")
+    rnd = random.Random(1)
+    print("  中身（無作為20件）")
+    for shop, title, *_rest in rnd.sample(denied, min(20, len(denied))):
+        print(f"      {shop:<14} {title}")
+    # 否定されているのに強い証拠が2つ以上ある物。豆を切る危険はここに出る
+    risky = [r for r in denied if sum(1 for k in STRONG if k in r[2]) >= 2]
+    print(f"  うち強い証拠が2つ以上ある物 {len(risky)} 件 ← 豆を切る危険はここ")
+    for shop, title, *_rest in rnd.sample(risky, min(20, len(risky))):
+        print(f"      {shop:<14} {title}")
