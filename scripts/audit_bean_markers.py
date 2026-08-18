@@ -98,6 +98,7 @@ async def run(shops: list) -> None:
         results = await asyncio.gather(*(fetch(client, sem, r) for r in shops))
 
     rows: list = []          # (店名, 商品名, 証拠, 店の申告, いまの引き算で通るか)
+    extra: list = []         # rows と同じ順で (いまの門を通るか, 店がはっきり否定しているか)
     reached = 0
     # 落ちた理由を1件ずつ確かめたい商品。実物の中身を出す。
     # 「なぜ落ちたのか」を想像で語らないため。
@@ -113,9 +114,9 @@ async def run(shops: list) -> None:
                          markers_of(p), shop_says(p) == "c",
                          _looks_like_coffee(p), r["name"],
                          (p.get("product_type") or "").strip(),
-                         int((p.get("variants") or [{}])[0].get("grams") or 0),
-                         has_bean_evidence(p), shop_denies_hard(p),
-                         (p.get("tags") or [])))
+                         int((p.get("variants") or [{}])[0].get("grams") or 0)))
+            # 行の形は他の集計が展開しているので変えない。新しい判定は同じ順の別配列で持つ
+            extra.append((has_bean_evidence(p), shop_denies_hard(p)))
             if any(w in title.lower() for w in WATCH):
                 watched.append((r["name"], title, p))
 
@@ -156,7 +157,7 @@ async def run(shops: list) -> None:
         print(f"    {k} {label:<6} {each[k]:>6} 件 ({each[k] / max(total, 1) * 100:5.1f}%)")
     print(f"  参考  g 重量欄 {each['g']:>6} 件 / c 店の申告 {each['c']:>6} 件")
 
-    report_hard_deny(rows, total)
+    report_hard_deny(rows, extra)
 
     rnd = random.Random(0)
     for name, ok in RULES.items():
@@ -230,7 +231,7 @@ def main() -> None:
     asyncio.run(run(shops))
 
 
-def report_hard_deny(rows: list, total: int) -> None:
+def report_hard_deny(rows: list, extra: list) -> None:
     """店が「器具・雑貨・講座」と書いているのに、いまの門を通っている物を数える。
 
     いまの門（has_bean_evidence）は「豆の証拠が1つでもあれば通す」ので、
@@ -242,8 +243,9 @@ def report_hard_deny(rows: list, total: int) -> None:
       ・そのうち「本物の豆かもしれない物」＝店の否定と豆の証拠が食い違う物
     """
     import random
-    passes = [r for r in rows if r[8]]
-    denied = [r for r in passes if r[9]]
+    pairs = [(r, e) for r, e in zip(rows, extra)]
+    passes = [r for r, e in pairs if e[0]]
+    denied = [r for r, e in pairs if e[0] and e[1]]
     print(f"\n{'=' * 74}")
     print("■ 店がはっきり「コーヒーではない」と書いているのに、いまの門を通る物")
     print(f"  いまの門を通る {len(passes)} 件 / うち店が否定 {len(denied)} 件"
