@@ -157,8 +157,6 @@ async def run(shops: list) -> None:
         print(f"    {k} {label:<6} {each[k]:>6} 件 ({each[k] / max(total, 1) * 100:5.1f}%)")
     print(f"  参考  g 重量欄 {each['g']:>6} 件 / c 店の申告 {each['c']:>6} 件")
 
-    report_hard_deny(rows, extra)
-
     rnd = random.Random(0)
     for name, ok in RULES.items():
         kept, dropped_declared, kept_undeclared = [], [], []
@@ -219,6 +217,9 @@ async def run(shops: list) -> None:
         print("  新たに落ちるもの（20件を無作為に）:")
         for shop, title in rnd.sample(newly_cut, min(20, len(newly_cut))):
             print(f"      {shop:<14} {title}")
+
+    # これはいちばん最後に出す。ログの末尾だけ見れば分かるようにしておく
+    report_hard_deny(rows, extra)
 
 
 def main() -> None:
