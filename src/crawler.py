@@ -882,6 +882,24 @@ def has_bean_evidence(p: dict, shop_writes_type: bool = True) -> bool:
     _looks_like_coffee と表示側の isCoffeeBean が受け持つ。
     門は、名前を知りようがないものだけを担当する。
     """
+    # 店が「これはコーヒーではない」とはっきり書いているなら、名前に何が
+    # 書いてあっても取らない。名前だけでは見分けがつかない物が実在する。
+    # 実測（2026-08、応答した店の2382件）:
+    #
+    #   店が否定しているのに通っていた            128件（5.4%）
+    #     merchandise 40 / accessories 12 / subscription 9 / equipment 9 …
+    #   そのうち強い証拠が2つ以上ある物             7件
+    #     Archers Washed Geisha Club Cap（帽子）、Sencha Tea、蜂蜜、定期便 …
+    #
+    # "Archers Washed Geisha Club Cap" は Washed も Geisha も入っているので
+    # 名前では豆と区別できない。店の申告なら言語に依らず分かる。
+    #
+    # 代償: 7件のうち "George Howell / San Martin, Guatemala" だけは本物の
+    # 豆に見える。店が種類を書き間違えている店では、こうして豆が落ちる。
+    # 128件を止めて豆1件を巻き添えにする勘定で、そちらを採った。
+    if shop_denies_hard(p):
+        return False
+
     tags = p.get("tags") or []
     tagtext = " ".join(tags) if isinstance(tags, list) else str(tags)
     opts = option_text(p)

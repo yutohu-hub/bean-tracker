@@ -81,6 +81,15 @@ MUST_PASS = [
 # --- 落ちてほしいもの（雑貨・器具） -----------------------------------------
 # こちらが語を知らなくても落ちること、が要点。
 MUST_DROP = [
+    # 店が「これはコーヒーではない」と書いている物。名前に産地・精製・品種が
+    # 並んでいても取らない。実データで、名前だけでは豆と見分けがつかない物が
+    # 図鑑に並んでいた（2026-08、応答した店の2382件中128件）。
+    prod("Archers Washed Geisha Club Cap", "Merchandise"),
+    prod("Fellow Costa Rica, La Guaca", "Equipment"),
+    prod("Premium Espresso Subscription", "Subscription"),
+    prod("China Sencha Tea", "Merchandise"),
+    prod("Brewing Class", "", tags=["classes"]),
+
     # 実データで「証拠ゼロ」だったもの
     prod("Gift Card"),
     prod("Digital Gift Card"),
