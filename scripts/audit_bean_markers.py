@@ -230,10 +230,6 @@ def main() -> None:
     asyncio.run(run(shops))
 
 
-if __name__ == "__main__":
-    main()
-
-
 def report_hard_deny(rows: list, total: int) -> None:
     """店が「器具・雑貨・講座」と書いているのに、いまの門を通っている物を数える。
 
@@ -265,3 +261,8 @@ def report_hard_deny(rows: list, total: int) -> None:
     print(f"  うち強い証拠が2つ以上ある物 {len(risky)} 件 ← 豆を切る危険はここ")
     for shop, title, *_rest in rnd.sample(risky, min(20, len(risky))):
         print(f"      {shop:<14} {title}")
+
+
+if __name__ == "__main__":
+    main()
+
