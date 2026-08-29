@@ -20,6 +20,15 @@ REQ_HEADERS = {
     "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
 }
 
+# HTML のページを取りに行くときの見出し。REQ_HEADERS は products.json 用で
+# Accept が JSON になっており、そのまま HTML を求めると食い違いを見て 403 を
+# 返す店がある（実測13軒: Blue Bottle・GABEE・Taf Coffee・43 Factory ほか）。
+# 同じものを scripts 側で2度書いていたので、ここ1か所に置く。
+HTML_HEADERS = dict(REQ_HEADERS, **{
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Upgrade-Insecure-Requests": "1",
+})
+
 # 産地の名前。店ごとに書き方が違うので、次の3つを見る。
 #   1. 英語の国名
 #   2. その国の言葉での呼び方・つづり違い（Etiopía / Perú / Brasil / 衣索比亞 …）

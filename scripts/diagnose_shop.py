@@ -18,16 +18,9 @@ import httpx
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from crawler import (REQ_HEADERS, _SITEMAPS, _PROD_URL, _LD_BLOCK,  # noqa: E402
-                     robots_rules, robots_match)
+from crawler import (REQ_HEADERS, HTML_HEADERS, _SITEMAPS, _PROD_URL,  # noqa: E402
+                     _LD_BLOCK, robots_rules, robots_match)
 
-# 巡回の見出しは products.json 用で Accept が JSON になっている。
-# HTML のページに JSON を求めると、食い違いを見て 403 を返す作りの店がある。
-# 「断られている」のか「求め方が悪い」のかを分けるため、両方で叩いて並べる。
-HTML_HEADERS = dict(REQ_HEADERS, **{
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Upgrade-Insecure-Requests": "1",
-})
 
 # 商品ページへのリンクらしきもの。sitemap が無い店では、一覧ページの
 # <a href> から拾えるかどうかが次の手がかりになる。
@@ -87,7 +80,7 @@ def main() -> None:
     print(f"調べる店: {base}\n")
 
     with httpx.Client(headers=REQ_HEADERS, timeout=20, follow_redirects=True) as c, \
-         httpx.Client(headers=HTML_HEADERS, timeout=20, follow_redirects=True) as h:
+         httpx.Client(headers=HTML_HEADERS, timeout=20, follow_redirects=True) as ch:
         print("■ robots.txt")
         r = get(c, f"{base}/robots.txt")
         if r is None or r.status_code != 200:
@@ -108,29 +101,28 @@ def main() -> None:
         # 分けないと打つ手が決まらない。両方の見出しで叩いて並べる。
         print("\n■ 巡回がいま試している sitemap（求め方を変えて比べる）")
         for p in _SITEMAPS:
-            show2(p, get(c, f"{base}{p}"), get(h, f"{base}{p}"))
+            show2(p, get(c, f"{base}{p}"), get(ch, f"{base}{p}"))
 
         print("\n■ よくある置き場所（試していないもの）")
         for p in ("/sitemap-index.xml", "/sitemaps.xml", "/sitemap1.xml",
                   "/sitemap/sitemap.xml", "/wp-sitemap.xml"):
-            show2(p, get(c, f"{base}{p}"), get(h, f"{base}{p}"))
+            show2(p, get(c, f"{base}{p}"), get(ch, f"{base}{p}"))
 
         print("\n■ 商品APIの形（Shopify / WooCommerce）")
         for p in ("/products.json?limit=1", "/collections/all/products.json?limit=1",
                   "/wp-json/wc/store/products?per_page=1", "/meta.json", "/cart.js"):
-            show2(p, get(c, f"{base}{p}"), get(h, f"{base}{p}"), 100)
+            show2(p, get(c, f"{base}{p}"), get(ch, f"{base}{p}"), 100)
 
         print("\n■ トップページ（求め方を変えて比べる）")
-        show2("/", get(c, base), get(h, base))
-        top = get(h, base)
-        show("/", top, 120)
+        top = get(ch, base)                      # 中身を見るのは HTML で求めた方
+        show2("/", get(c, base), top)
         if top is not None and top.status_code == 200:
             html = top.text
-            hrefs = [h for h in _HREF.findall(html)]
-            prod = [h for h in hrefs if _PROD_URL.search(h.split("?")[0])]
+            hrefs = _HREF.findall(html)
+            prod = [u for u in hrefs if _PROD_URL.search(u.split("?")[0])]
             print(f"  リンク {len(hrefs)} 本 / うち商品ページらしいもの {len(prod)} 本")
-            for h in list(dict.fromkeys(prod))[:6]:
-                print(f"    {h}")
+            for u in list(dict.fromkeys(prod))[:6]:
+                print(f"    {u}")
             lds = _LD_BLOCK.findall(html)
             print(f"  JSON-LD のブロック: {len(lds)} 個")
             for b in lds[:2]:

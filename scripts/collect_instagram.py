@@ -45,20 +45,12 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from crawler import REQ_HEADERS  # noqa: E402
+from crawler import REQ_HEADERS, HTML_HEADERS  # noqa: E402
 
 CONCURRENCY = 6      # 24 で叩いたら 447店中199軒が429だった
 TIMEOUT = 20.0
 OUT = ROOT / "config" / "instagram.yaml"
 
-# 巡回本体の REQ_HEADERS は products.json 用で、Accept が JSON になっている。
-# ここで欲しいのは店のトップページ（HTML）なので、そのように名乗る。
-# 実測で13軒が 403 だった（Blue Bottle・GABEE・Taf Coffee など）。
-# JSON を求めながら HTML のページを取りに行くと、断る作りの店がある。
-HTML_HEADERS = dict(REQ_HEADERS, **{
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Upgrade-Insecure-Requests": "1",
-})
 
 _LINK = re.compile(
     r"(?:https?:)?//(?:www\.)?instagram\.com/([^/?\"'\s>&#]+)", re.I)
