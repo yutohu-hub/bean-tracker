@@ -21,6 +21,14 @@ sys.path.insert(0, str(ROOT / "src"))
 from crawler import (REQ_HEADERS, _SITEMAPS, _PROD_URL, _LD_BLOCK,  # noqa: E402
                      robots_rules, robots_match)
 
+# 巡回の見出しは products.json 用で Accept が JSON になっている。
+# HTML のページに JSON を求めると、食い違いを見て 403 を返す作りの店がある。
+# 「断られている」のか「求め方が悪い」のかを分けるため、両方で叩いて並べる。
+HTML_HEADERS = dict(REQ_HEADERS, **{
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Upgrade-Insecure-Requests": "1",
+})
+
 # 商品ページへのリンクらしきもの。sitemap が無い店では、一覧ページの
 # <a href> から拾えるかどうかが次の手がかりになる。
 _HREF = re.compile(r'href="([^"]+)"')
@@ -49,6 +57,20 @@ def show(label: str, resp: httpx.Response | None, head: int = 220) -> None:
     print(f"  {label:<34} {resp.status_code}  {len(resp.content):>7} bytes  {body[:head]}")
 
 
+def show2(label: str, a: httpx.Response | None, b: httpx.Response | None,
+          head: int = 120) -> None:
+    """JSON を求めた場合と HTML を求めた場合を並べる。
+
+    片方だけ 403 なら、店が断っているのではなく、こちらの求め方が
+    合っていないだけ。両方 403 なら店側で弾かれている。
+    """
+    sa = "届かない" if a is None else str(a.status_code)
+    sb = "届かない" if b is None else str(b.status_code)
+    mark = "  ←求め方の違いで変わる" if sa != sb else ""
+    body = "" if b is None else (b.text or "").strip().replace("\n", " ")[:head]
+    print(f"  {label:<30} JSONで{sa:>8} / HTMLで{sb:>8}{mark}  {body}")
+
+
 def get(client: httpx.Client, url: str) -> httpx.Response | None:
     try:
         return client.get(url)
@@ -64,7 +86,8 @@ def main() -> None:
         raise SystemExit(2)
     print(f"調べる店: {base}\n")
 
-    with httpx.Client(headers=REQ_HEADERS, timeout=20, follow_redirects=True) as c:
+    with httpx.Client(headers=REQ_HEADERS, timeout=20, follow_redirects=True) as c, \
+         httpx.Client(headers=HTML_HEADERS, timeout=20, follow_redirects=True) as h:
         print("■ robots.txt")
         r = get(c, f"{base}/robots.txt")
         if r is None or r.status_code != 200:
@@ -75,24 +98,31 @@ def main() -> None:
             for line in r.text.splitlines():
                 if line.strip():
                     print(f"    {line.rstrip()}")
-            print(f"\n  → 商品ページ (/items/…) は {allowed(r.text, '/items/x')}")
+            print("\n  → 巡回が実際に叩く道の可否")
+            for path in ("/products.json", "/collections/all.atom",
+                         "/wp-json/wc/store/products", "/sitemap.xml",
+                         "/meta.json", "/cart.js", "/items/x", "/"):
+                print(f"      {path:<30} {allowed(r.text, path)}")
 
-        print("\n■ 巡回がいま試している sitemap")
+        # 403 が返るとき、店が弾いているのか、こちらの求め方が合っていないのかを
+        # 分けないと打つ手が決まらない。両方の見出しで叩いて並べる。
+        print("\n■ 巡回がいま試している sitemap（求め方を変えて比べる）")
         for p in _SITEMAPS:
-            show(p, get(c, f"{base}{p}"))
+            show2(p, get(c, f"{base}{p}"), get(h, f"{base}{p}"))
 
         print("\n■ よくある置き場所（試していないもの）")
         for p in ("/sitemap-index.xml", "/sitemaps.xml", "/sitemap1.xml",
                   "/sitemap/sitemap.xml", "/wp-sitemap.xml"):
-            show(p, get(c, f"{base}{p}"))
+            show2(p, get(c, f"{base}{p}"), get(h, f"{base}{p}"))
 
         print("\n■ 商品APIの形（Shopify / WooCommerce）")
         for p in ("/products.json?limit=1", "/collections/all/products.json?limit=1",
                   "/wp-json/wc/store/products?per_page=1", "/meta.json", "/cart.js"):
-            show(p, get(c, f"{base}{p}"), 160)
+            show2(p, get(c, f"{base}{p}"), get(h, f"{base}{p}"), 100)
 
-        print("\n■ トップページの中身")
-        top = get(c, base)
+        print("\n■ トップページ（求め方を変えて比べる）")
+        show2("/", get(c, base), get(h, base))
+        top = get(h, base)
         show("/", top, 120)
         if top is not None and top.status_code == 200:
             html = top.text
