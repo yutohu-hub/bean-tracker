@@ -55,7 +55,10 @@ ORIGIN_ALIASES: dict[str, tuple[str, ...]] = {
                "esmeralda", "jaramillo", "elida", "janson", "finca deborah"),
     "Brazil": ("brazil", "brasil", "brasilien", "bresil", "ブラジル", "巴西",
                "cerrado", "mogiana", "sul de minas", "minas gerais", "mantiqueira"),
-    "Peru": ("peru", "perou", "ペルー", "cajamarca", "chanchamayo", "amazonas"),
+    # 台湾の店は「祕魯」とも「秘魯」とも書く。実測で Coffee Stopover の
+    # 同じ棚に両方あり、片方だけ産地が読めていなかった。
+    "Peru": ("peru", "perou", "ペルー", "祕魯", "秘魯",
+             "cajamarca", "chanchamayo", "amazonas"),
     "Guatemala": ("guatemala", "グアテマラ", "瓜地馬拉", "危地马拉",
                   "antigua", "huehuetenango", "acatenango", "atitlan", "fraijanes"),
     "Costa Rica": ("costa rica", "コスタリカ", "哥斯大黎加", "哥斯达黎加",
@@ -117,6 +120,16 @@ PROCESS_WORDS = [
     ("thermal shock", "Thermal Shock"), ("honey", "Honey"),
     ("natural", "Natural"), ("washed", "Washed"),
     ("ナチュラル", "Natural"), ("ウォッシュ", "Washed"), ("ハニー", "Honey"),
+    # 中国語圏の店。実測で Coffee Stopover（台湾）の40件は産地こそ読めたが、
+    # 精製が1件も読めていなかった（水洗・日曬・蜜處理と書いてある）。
+    # 長い語を先に置く——「厭氧日曬」を「日曬」で先に取ると嫌気性が消える。
+    ("厭氧日曬", "Anaerobic Natural"), ("厭氧水洗", "Anaerobic Washed"),
+    ("厌氧日晒", "Anaerobic Natural"), ("厌氧水洗", "Anaerobic Washed"),
+    ("厭氧", "Anaerobic"), ("厌氧", "Anaerobic"),
+    ("黑蜜", "Honey"), ("紅蜜", "Honey"), ("白蜜", "Honey"),
+    ("蜜處理", "Honey"), ("蜜处理", "Honey"),
+    ("日曬", "Natural"), ("日晒", "Natural"),
+    ("水洗", "Washed"), ("濕剝", "Wet Hulled"), ("湿刨", "Wet Hulled"),
 ]
 
 
@@ -488,6 +501,22 @@ def _grams_from_text(text: str) -> int:
     """
     m = re.search(r"(\d+(?:\.\d+)?)\s*(kg|lbs?|oz|g)\b", text.lower())
     if not m:
+        # 中国語圏はポンドを「磅」と書き、分数で刻む（1/4磅＝約113g）。
+        # 実測で Coffee Stopover の40件すべてが "1/4磅" で、内容量が読めず
+        # 100gあたりの値段が出せていなかった。
+        # 既にグラム等が読めたときは触らない——ここは読めなかったときだけ。
+        p = re.search(r"(?:(\d+)\s*/\s*(\d+)|(\d+(?:\.\d+)?))\s*(?:磅|英磅)", text)
+        if p:
+            val = (float(p.group(1)) / float(p.group(2))
+                   if p.group(2) and float(p.group(2)) else float(p.group(3) or 0))
+            return int(val * 453.6)
+        # 中国語圏の「克」はグラム、「公斤」はキロ
+        k = re.search(r"(\d+(?:\.\d+)?)\s*公斤", text)
+        if k:
+            return int(float(k.group(1)) * 1000)
+        gz = re.search(r"(\d+(?:\.\d+)?)\s*克", text)
+        if gz:
+            return int(float(gz.group(1)))
         return 0
     val, unit = float(m.group(1)), m.group(2)
     if unit == "kg":
