@@ -17,7 +17,12 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
      全部出すと 6,031 点になり、点の面積だけで枠の 14 倍になって必ず重なる。
      しかも 73% は産地と精製から推定した座標で、重なった塊はコーヒーの性質では
      なく仕組みの影。少ないほうが読めるし、正しい。 */
-  const [notesOnly, setNotesOnly] = useState(true);  // 店のノートで座標を決めた豆だけに絞る
+  /* 座標の出どころで絞る。既定はいちばん確かなものだけ。
+     "sure"  店が見出しを付けて書いた風味（Grape, Guava, Floral のような列挙）
+     "notes" 見出しの無い説明文から拾った分も足す（地の文が混ざり、座標がぶれる）
+     "all"   産地・精製からの推定も足す（入力が2種類しかないので点が固まる）
+     精度を落とす向きにしか動かないので、進むほど件数は増えるが確からしさは下がる。 */
+  const [srcLevel, setSrcLevel] = useState(null);   // null = まだ選んでいない
   const [procF, setProcF] = useState(null);       // 精製ハイライト
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(0);
@@ -32,7 +37,12 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
   const all = BEANS.filter((b) => b.status === "now" && ROASTERS[b.r] && ROASTERS[b.r].url && (!procOnly || processKey(b.process) === procOnly));
   // 座標の出どころ。店のノートから出したものと、産地・精製から推定したものを区別する
   const noted = all.filter((b) => flavorOf(b).src === "notes");
-  const beans = notesOnly ? noted : all;
+  const sure = noted.filter((b) => flavorOf(b).noteSrc === "label");
+  /* 既定は「確かな風味」。ただし出どころは巡回が付けるので、一周し終わるまでは
+     どの豆にも付いていない。そのとき既定にすると地図が空に見えるので、
+     1件も無いあいだは「説明文も」に落とす。人が選んだあとはその選びを守る。 */
+  const level = srcLevel || (sure.length ? "sure" : "notes");
+  const beans = level === "sure" ? sure : level === "notes" ? noted : all;
   // 図鑑からの遷移時は、その豆の系統をハイライト
   useEffect(() => { if (initialFam) setFamF(initialFam); }, [initialFam, focusId]);
   // now豆に存在する精製方法だけ（柑橘などの系統の上に提示するチップ用）
@@ -228,19 +238,32 @@ export function FlavorMapView({ onOpen, initialFam = null, focusId = null, procO
         </>
       )}
 
-      {/* 座標の出どころを隠さない。店が書いたノートで置いた豆と、産地・精製から推定した豆は
-          精度がまるで違うので、件数を出して絞り込めるようにする */}
-      <button onClick={() => setNotesOnly(!notesOnly)}
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%",
-          marginBottom: 10, padding: "9px 12px", background: notesOnly ? INK : "none", color: notesOnly ? PAPER : INK,
-          border: `1px solid ${notesOnly ? INK : LINE}`, borderRadius: 8, fontSize: FS.meta, cursor: "pointer", textAlign: "left" }}>
-        <span style={{ fontWeight: 700 }}>
-          {notesOnly ? "✓ 店のノートで置いた豆だけ" : "店のノートで置いた豆だけを見る"}
-        </span>
-        <span style={{ fontFamily: "ui-monospace, monospace", fontSize: FS.meta, opacity: 0.8 }}>
-          {noted.length} / {all.length}
-        </span>
-      </button>
+      {/* 座標の出どころを隠さない。
+          同じ「ノートから置いた」でも、見出しのある列挙と、説明文の地の文では
+          座標の確からしさが違う。件数を出して選べるようにする。
+          既定はいちばん確かなものだけ（件数より確からしさを優先する）。 */}
+      <div style={{ marginBottom: 4, fontSize: FS.meta, color: GRAY, letterSpacing: "0.1em" }}>
+        座標の出どころ
+      </div>
+      <div style={{ display: "flex", gap: 0, marginBottom: 6, border: `1px solid ${LINE}`, borderRadius: 8, overflow: "hidden" }}>
+        {[["sure", "確かな風味", sure.length],
+          ["notes", "説明文も", noted.length],
+          ["all", "推定も", all.length]].map(([k, label, n]) => (
+          <button key={k} onClick={() => setSrcLevel(k)}
+            style={{ flex: 1, padding: "8px 4px", background: level === k ? INK : PAPER,
+              color: level === k ? PAPER : GRAY, border: "none", cursor: "pointer",
+              fontSize: FS.meta, fontWeight: level === k ? 700 : 400 }}>
+            {label} <span style={{ fontFamily: "ui-monospace, monospace", opacity: 0.8 }}>{n}</span>
+          </button>
+        ))}
+      </div>
+      <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginBottom: 10 }}>
+        {level === "sure"
+          ? "店が「Tasting Notes」として書いた風味だけで置いています。いちばん確かです。"
+          : level === "notes"
+            ? "見出しの無い説明文から拾った風味も足しています。間違ってはいませんが、地の文が混ざるぶん座標がぶれます。"
+            : "産地と精製からの推定も足しています。入力が2種類しかないので、点が同じ場所に固まります。"}
+      </div>
 
       {/* 系統の凡例（タップでハイライト） */}
       <div style={{ fontSize: FS.meta, color: GRAY, letterSpacing: "0.1em", marginBottom: 4 }}>系統</div>

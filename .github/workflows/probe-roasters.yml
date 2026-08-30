@@ -1,31 +1,46 @@
-name: 候補の店から商品が取れるか確かめる
+name: 店を調べる道具
 
-# 巡回対象に加える前の下見。config/candidates.yaml の店を実際に叩いて、
-# 商品が取れるか・値段と内容量がそろうかを見る。
-# 開発環境からは外に出られないので、ネットのある runner で確かめる
-# （座標の照合を verify-positions.yml でやっているのと同じ理由）。
+# 開発環境からは外に出られないので、店を実際に叩いて確かめる作業はここで動かす。
+# （座標の照合を verify-positions.yml でやっているのと同じ理由）
+#
+# ■ 道具ごとに入力欄を分けるのをやめた理由
+#
+# 道具が増えるたびに入力欄を足し、既定の巡回を止めるための条件
+#   if: inputs.diagnose == '' && inputs.videos == '' && … （9個並ぶ）
+# を手で伸ばしていた。1つ書き忘れると、狙った道具と一緒に既定の巡回まで走る。
+# 道具は今後も増えるので、選ぶ形にして条件そのものを無くした。
 
 on:
   workflow_dispatch:
     inputs:
-      file:
-        description: "候補ファイル"
-        default: "config/candidates.yaml"
-      diagnose:
-        description: "1店だけ詳しく調べる（URL。指定すると候補ファイルは見ない）"
-        default: ""
-      videos:
-        description: "レシピに貼った動画が本人の回か確かめる（true）"
-        default: ""
-      products:
-        description: "名前では判断が付かない商品を店のページで確かめる（true）"
-        default: ""
-      types:
-        description: "店が product_type に何と書いているかを集計する（店数。空なら全店）"
+      tool:
+        description: "動かす道具"
+        type: choice
+        default: candidates
+        options:
+          - candidates      # 候補の店から商品が取れるか下見する
+          - diagnose        # 取れない店を1軒だけ詳しく調べる（arg にURL）
+          - videos          # レシピに貼った動画が本人の回か照合する
+          - products        # 名前では豆か器具か分からない商品を店のページで確かめる
+          - types           # 店が product_type に何と書いているかを集計する
+          - markers         # 「豆である証拠」がどれだけ揃うかを数える
+          - instagram       # Instagramのアカウント名を集めて config に貯める
+          - sheet           # 情報シート（産地・精製・風味・内容量）の欠けを数える
+          - page            # 商品ページのHTMLを読むと空欄が埋まるか試す
+          - notes           # 風味がどれだけ取れて、どれだけ正しいかを測る
+          - robots          # robots.txt で断られている店を数える
+          - discovery       # 商品ページが見つからない理由を店ごとに分ける（arg に候補ファイル）
+      arg:
+        description: >-
+          道具に渡すもの。
+          candidates=候補ファイル / diagnose=店のURL /
+          types・markers・instagram・sheet・robots=店数（all で全店）/
+          page・notes="店数 商品数"（例: 20 6）。空なら道具ごとの既定値
         default: ""
 
+# instagram だけ config/instagram.yaml を書き戻すので write が要る
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   probe:
@@ -38,26 +53,79 @@ jobs:
           python-version: "3.12"
       - name: 依存インストール
         run: pip install httpx pyyaml
+
+      # 「商品ページが見つからない」の中身を分ける。sitemapが無いのか、
+      # 商品ページが載っていないのか、URLの形が合っていないのか、店ごと403なのか
+      - name: 見つからない理由を分ける
+        if: inputs.tool == 'discovery'
+        run: python scripts/probe_discovery.py "${{ inputs.arg || 'config/candidates-zero-beans.yaml' }}"
+
+      # 巡回対象に加える前の下見。商品が取れるか・値段と内容量がそろうかを見る
       - name: 候補を叩く
-        if: inputs.diagnose == '' && inputs.videos == '' && inputs.products == '' && inputs.types == ''
-        run: python scripts/probe_roasters.py "${{ inputs.file }}"
+        if: inputs.tool == 'candidates'
+        run: python scripts/probe_roasters.py "${{ inputs.arg || 'config/candidates.yaml' }}"
+
+      # 取れない店について、何が足りないのかを応答から調べる
+      - name: 1店を詳しく調べる
+        if: inputs.tool == 'diagnose'
+        run: python scripts/diagnose_shop.py "${{ inputs.arg }}"
 
       # 動画IDは1文字違うと別人の回が載る。目では気づけないので貼る前に照合する
       - name: レシピの動画を確かめる
-        if: inputs.videos != ''
+        if: inputs.tool == 'videos'
         run: python scripts/verify_videos.py
 
       # 名前だけでは豆か器具か分からない商品を、店の product_type で確かめる
       - name: 商品の種類を確かめる
-        if: inputs.products != ''
+        if: inputs.tool == 'products'
         run: python scripts/check_products.py
 
       # 「店の申告を読む」判定が、本物の豆を落としていないかを実データで見る
       - name: 分類の集計
-        if: inputs.types != ''
-        run: python scripts/audit_product_types.py "${{ inputs.types == 'all' && '0' || inputs.types }}"
+        if: inputs.tool == 'types'
+        run: python scripts/audit_product_types.py "${{ inputs.arg == 'all' && '0' || inputs.arg }}"
 
-      # 取れない店について、何が足りないのかを応答から調べる
-      - name: 1店を詳しく調べる
-        if: inputs.diagnose != ''
-        run: python scripts/diagnose_shop.py "${{ inputs.diagnose }}"
+      # 「豆である証拠がある物だけ取る」に変えたとき、何が落ちるかを数える
+      - name: 豆の証拠を数える
+        if: inputs.tool == 'markers'
+        run: python scripts/audit_bean_markers.py "${{ inputs.arg == 'all' && '0' || inputs.arg }}"
+
+      # 店のページから Instagram のアカウント名を集めて貯める。
+      # 一度に全店を叩くと429で落ちるので、少しずつ回して足していく。
+      - name: Instagramのアカウント名を集める
+        if: inputs.tool == 'instagram'
+        run: python scripts/collect_instagram.py "${{ inputs.arg == 'all' && '0' || inputs.arg }}"
+
+      - name: 集めた結果を残す
+        if: inputs.tool == 'instagram'
+        run: |
+          if [ -n "$(git status --porcelain config/instagram.yaml)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add config/instagram.yaml
+            git commit -m "Instagram のアカウント名を集める（自動）"
+            git push
+          else
+            echo "変更なし"
+          fi
+
+      # 情報シートの空欄が「店が書いていない」のか「取り方が悪い」のかを分ける
+      - name: 情報シートの欠けを数える
+        if: inputs.tool == 'sheet'
+        run: python scripts/audit_sheet.py "${{ inputs.arg == 'all' && '0' || inputs.arg }}"
+
+      # products.json に無い情報が、商品ページのHTMLにあるかを試す
+      - name: 商品ページを読んで試す
+        if: inputs.tool == 'page'
+        run: python scripts/audit_product_page.py ${{ inputs.arg }}
+
+      # 風味の「量」と「質」を分けて測る。量だけ増やしても、別の豆の風味なら害になる
+      - name: 風味の精度を測る
+        if: inputs.tool == 'notes'
+        run: python scripts/audit_notes.py ${{ inputs.arg }}
+
+      # 店が robots.txt で断っている道を、巡回が通っていないか。
+      # 巡回本体は robots.txt を読んでいない（診断ツールだけが読んでいた）
+      - name: robots.txt を確かめる
+        if: inputs.tool == 'robots'
+        run: python scripts/audit_robots.py "${{ inputs.arg == 'all' && '0' || inputs.arg }}"

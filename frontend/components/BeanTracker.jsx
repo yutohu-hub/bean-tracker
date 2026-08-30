@@ -12,7 +12,10 @@ import { FS, INK, PAPER, GRAY, LINE, GREEN } from "./lib/theme";
 import { ORIGIN_GROUPS } from "./lib/constants";
 import { syncArchive } from "./lib/store";
 import { captureSessionFromUrl, ensureFreshSession } from "./lib/account";
-import { purgeLegacyPlan, keepForever } from "./lib/store";
+import { purgeLegacyPlan, keepForever, getTastings, applyRelink,
+         getRestocks, applyRestockRelink } from "./lib/store";
+import { planRelink, isLegacyId } from "./lib/relink";
+import { movePhotos } from "./lib/photos";
 import { refreshPlan } from "./lib/usePlan";
 import { isReturningFromCheckout } from "./lib/billing";
 import { readUrlState, writeUrlState, onUrlChange } from "./lib/urlState";
@@ -51,6 +54,20 @@ import { AboutView } from "./views/AboutView";
 
 const ROWS_PER_PAGE = 10; // 1ページの行数（列数は可変）
 
+/* Instagram の印。画像は読み込まず、線で描く。
+   図鑑は静的に書き出して配信するので、外から画像を取りに行くと
+   その1枚のために別の通信が要る（表示も遅れる）。 */
+function InstagramMark({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5.5" />
+      <circle cx="12" cy="12" r="4.2" />
+      <circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 /* ---------- メイン ---------- */
 export default function BeanTracker() {
   const [view, setView] = useState("zukan"); // zukan | roaster
@@ -83,12 +100,39 @@ export default function BeanTracker() {
   const [autoCols, setAutoCols] = useState(4); // 画面幅から決まる列数
   const [zukanMode, setZukanMode] = useState("beans"); // beans | roasters
   const [meTab, setMeTab] = useState("log"); // マイページ内: log | premium
+  const [beanIds, setBeanIds] = useState([]); // 人から送られてきた「好きな豆」の並び
   const [legendOpen, setLegendOpen] = useState(false); // 色の凡例を開いているか
   const [filtersOpen, setFiltersOpen] = useState(false); // 絞り込みを開いているか
   const [tabsOverflow, setTabsOverflow] = useState(false); // タブが画面に収まらないか
   const tabsRef = useRef(null);
   const [flavorMode, setFlavorMode] = useState("one"); // 味わいマップ: one | proc
   const [authNotice, setAuthNotice] = useState(null); // メールリンクからのログイン結果
+  /* 昔の豆番号で残っている記録を、いまの番号に付け替える。
+     豆の番号は前まで巡回のたびにずれていたので、記録が別の豆に付いて見えていた。
+     番号の作り方は直したが、手元に残っている記録は昔のままなので、ここで直す。
+     付け替えるものが無ければ何もしない（毎回走っても実害が出ない作り）。 */
+  useEffect(() => {
+    try {
+      const list = getTastings();
+      const watches = getRestocks();
+      const stale = list.some((t) => isLegacyId(t.beanId))
+        || watches.some((x) => isLegacyId(x.beanId));
+      if (!stale) return;
+      const catalog = BEANS.map((b) => ({
+        id: b.id, name: b.name, roasterName: (ROASTERS[b.r] || {}).name || b.r,
+      }));
+      // 再入荷ウォッチも beanId が鍵。放っておくと「知らせる」が外れて見える
+      const wPlan = planRelink(watches, catalog);
+      if (wPlan.length) { try { applyRestockRelink(wPlan); } catch {} }
+
+      const plan = planRelink(list, catalog);
+      if (!plan.length) return;
+      // 写真を先に動かす。記録を先に書き替えると、途中で失敗したときに
+      // 写真だけが昔の番号に取り残されて、二度と結び付かなくなる
+      movePhotos(plan).finally(() => { try { applyRelink(plan); } catch {} });
+    } catch {}
+  }, []);
+
   // 色の凡例を開いているか。既定は畳んだ状態（豆を早く見せる）
   useEffect(() => { if (localStorage.getItem("bt_legend") === "1") setLegendOpen(true); }, []);
   useEffect(() => { try { localStorage.setItem("bt_legend", legendOpen ? "1" : "0"); } catch {} }, [legendOpen]);
@@ -141,6 +185,7 @@ export default function BeanTracker() {
     if (u.status) setStatusF(u.status);
     if (u.sortBy) setSortBy(u.sortBy);
     if (u.meTab) setMeTab(u.meTab);
+    setBeanIds(Array.isArray(u.beanIds) ? u.beanIds : []);
     // 豆は id から実体を引く。消えた豆のリンクを踏んでも落ちないよう存在確認する
     setOpen(u.bean ? BEANS.find((b) => b.id === u.bean) || null : null);
   };
@@ -159,7 +204,7 @@ export default function BeanTracker() {
   const urlState = () => ({
     view, bean: open ? open.id : null, roaster: roasterId,
     roasterTab, process: view === "process" ? procKey : null,
-    query, origin, status: statusF, sortBy, meTab,
+    query, origin, status: statusF, sortBy, meTab, beanIds,
   });
   const navWroteRef = useRef(false);
   const filterWroteRef = useRef(false);
@@ -302,6 +347,16 @@ export default function BeanTracker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [origin, statusF, priceF, processF, query, sortBy, fxVersion]);
 
+  /* 人から送られてきた「好きな豆」の一覧。URLに ?bs=... が付いているときだけ働く。
+     送り手が並べた順のまま出す。おすすめは順番にも意味があるため。
+     すでに売り切れた豆や図鑑から消えた豆は、ここで静かに落ちる。 */
+  const sharedBeans = useMemo(() => {
+    if (!beanIds.length) return [];
+    const byId = new Map(BEANS.map((b) => [b.id, b]));
+    return beanIds.map((id) => byId.get(id)).filter(Boolean);
+  }, [beanIds]);
+  const shownBeans = beanIds.length ? sharedBeans : filtered;
+
   const nowCountByRoaster = useMemo(() => countNowByRoaster(BEANS), []);
   const filteredRoasters = useMemo(
     () => filterRoasters(ROASTERS, nowCountByRoaster, { query }),
@@ -314,7 +369,7 @@ export default function BeanTracker() {
   const effCols = autoCols;
   const perPage = effCols * ROWS_PER_PAGE;
   const gridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: effCols >= 5 ? 8 : 10, marginTop: 12 };
-  const activeList = zukanMode === "roasters" ? filteredRoasters : filtered;
+  const activeList = zukanMode === "roasters" ? filteredRoasters : shownBeans;
   const pageCount = Math.max(1, Math.ceil(activeList.length / perPage));
   const curPage = Math.min(page, pageCount - 1);
   const pageItems = activeList.slice(curPage * perPage, curPage * perPage + perPage);
@@ -482,7 +537,29 @@ export default function BeanTracker() {
           <>
             {/* 操作系は640pxに集約（グリッドはワイド） */}
             <div style={{ maxWidth: 640, margin: "0 auto" }}>
-            {/* 表示切替：豆 / ロースター */}
+            {/* 人から送られてきた「好きな豆」を開いたとき。
+                そうと分からないまま図鑑が数件しかない画面に見えると、
+                壊れていると思われる。何を見ているのかを最初に書く。 */}
+            {beanIds.length > 0 && (
+              <div style={{ border: `1px solid ${INK}`, borderRadius: 10, padding: "12px 14px", marginBottom: 12, background: PAPER }}>
+                <div style={{ fontSize: FS.body, fontWeight: 700, color: INK }}>
+                  おすすめされた豆 {sharedBeans.length}件
+                </div>
+                {sharedBeans.length < beanIds.length && (
+                  <div style={{ fontSize: FS.meta, color: GRAY, marginTop: 4, lineHeight: 1.7 }}>
+                    {beanIds.length - sharedBeans.length}件は、いまの図鑑にありません（売り切れて外れた可能性があります）。
+                  </div>
+                )}
+                <button onClick={() => setBeanIds([])}
+                  style={{ marginTop: 8, background: "none", border: "none", padding: 0, cursor: "pointer",
+                    fontSize: FS.meta, color: INK, textDecoration: "underline", textUnderlineOffset: 2 }}>
+                  図鑑をすべて見る
+                </button>
+              </div>
+            )}
+            {/* 表示切替：豆 / ロースター。送られた一覧のときは出さない
+                （絞り込みや並び替えは、送り手が並べた順を壊すだけで役に立たない） */}
+            {beanIds.length === 0 && (<>
             <div style={{ display: "inline-flex", border: `1px solid ${INK}`, borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
               {[["beans", "豆"], ["roasters", "ロースター"]].map(([k, l]) => (
                 <button key={k} onClick={() => setZukanMode(k)}
@@ -578,6 +655,7 @@ export default function BeanTracker() {
               ))}
               <div style={{ marginLeft: "auto", fontFamily: "ui-monospace, monospace", fontSize: FS.meta, color: GRAY, alignSelf: "center" }}>{/* アーカイブはロースターのカードが並ぶため、枚数と件数が食い違って見えないよう軒数も出す */}{statusF === "archive" ? `${Object.keys(archiveByRoaster).length} 店 / ${archiveBeans.length} 銘柄` : `${filtered.length} 銘柄`}</div>
             </div>
+            </>)}
             {/* 色の凡例（精製方法／レア）。
                 7つで2行を占め、操作系と豆の間に常に居座っていた。画面の狭い端末では、
                 この2行のぶんだけ豆が下に押し出される。一度読めば足りる説明なので、
@@ -610,14 +688,31 @@ export default function BeanTracker() {
                 {/* ロースター図鑑 */}
                 <div style={gridStyle}>
                   {pageItems.map(([rid, r]) => (
-                    <button key={rid} onClick={() => goRoaster(rid, "now")} className="bt-card"
-                      style={{ display: "flex", flexDirection: "column", gap: 5, background: PAPER, border: `1px solid ${LINE}`, borderRadius: 10, padding: "11px 11px", cursor: "pointer", textAlign: "left" }}>
-                      <div style={{ fontSize: FS.body, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
-                      <div style={{ fontSize: FS.meta, color: GRAY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.city} · {r.country}</div>
-                      <div style={{ marginTop: 2, fontFamily: "ui-monospace, monospace", fontSize: FS.meta }}>
-                        <span style={{ color: (nowCountByRoaster[rid] || 0) ? GREEN : GRAY }}>NOW {nowCountByRoaster[rid] || 0}</span>
-                      </div>
-                    </button>
+                    /* Instagram の導線をカードの中に置く。
+                       カード自体が <button> なので、その中に <a> を入れると
+                       入れ子の押せる要素になり、どちらが反応するか定まらない。
+                       同じ場所に重ねて置き、店を開く操作とぶつからないようにする。
+                       アカウント名を持っている店にだけ出す（持っていない店には何も出さない）。 */
+                    <div key={rid} style={{ position: "relative" }}>
+                      <button onClick={() => goRoaster(rid, "now")} className="bt-card"
+                        style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%", height: "100%", background: PAPER, border: `1px solid ${LINE}`, borderRadius: 10, padding: "11px 11px", cursor: "pointer", textAlign: "left" }}>
+                        <div style={{ fontSize: FS.body, fontWeight: 700, color: INK, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                        <div style={{ fontSize: FS.meta, color: GRAY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.city} · {r.country}</div>
+                        <div style={{ marginTop: 2, fontFamily: "ui-monospace, monospace", fontSize: FS.meta }}>
+                          <span style={{ color: (nowCountByRoaster[rid] || 0) ? GREEN : GRAY }}>NOW {nowCountByRoaster[rid] || 0}</span>
+                        </div>
+                      </button>
+                      {r.instagram && (
+                        <a href={`https://www.instagram.com/${r.instagram}/`}
+                          target="_blank" rel="noopener noreferrer"
+                          aria-label={`${r.name} の Instagram を開く`}
+                          title={`@${r.instagram}`}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ position: "absolute", right: 7, bottom: 6, display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, color: GRAY, borderRadius: 6 }}>
+                          <InstagramMark />
+                        </a>
+                      )}
+                    </div>
                   ))}
                 </div>
                 {activeList.length === 0 && (
@@ -673,8 +768,12 @@ export default function BeanTracker() {
                 <div style={gridStyle}>
                   {pageItems.map((b) => <BeanCard key={b.id} bean={b} onOpen={setOpen} onRoaster={goRoaster} cur={displayCur} />)}
                 </div>
-                {filtered.length === 0 && (
-                  <div style={{ textAlign: "center", color: GRAY, fontSize: FS.body, padding: "50px 0" }}>該当する豆がありません。フィルタを変えてみてください。</div>
+                {shownBeans.length === 0 && (
+                  <div style={{ textAlign: "center", color: GRAY, fontSize: FS.body, padding: "50px 0" }}>
+                    {beanIds.length
+                      ? "送られた豆は、いまの図鑑では見つかりませんでした。売り切れて図鑑から外れたのかもしれません。"
+                      : "該当する豆がありません。フィルタを変えてみてください。"}
+                  </div>
                 )}
                 {pagerEl}
               </>

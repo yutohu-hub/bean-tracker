@@ -16,7 +16,8 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 from crawler import (crawl_all, products_to_dicts, _guess_origin, shop_says,  # noqa: E402
                      _guess_process, extract_notes, html_to_text)
-from state import open_db, apply_snapshot, export_for_site  # noqa: E402
+from state import (open_db, apply_snapshot, export_for_site,  # noqa: E402
+                   prune_missing_roasters, record_health, due_shops)
 from build_site import build  # noqa: E402
 from notify import notify  # noqa: E402
 from push_notify import push  # noqa: E402
@@ -72,6 +73,9 @@ def main() -> None:
     t0 = time.time()
     config = yaml.safe_load((ROOT / "config" / "roasters.yaml").read_text(encoding="utf-8"))
     settings = config.get("settings", {})
+    # 分割巡回で config["roasters"] は縮むので、全部の名前を先に控えておく。
+    # 「図鑑に載せる店」の一覧は、今回見る店ではなく、こちらが正しい
+    all_names = {r["name"] for r in config["roasters"]}
 
     if "--shard" in sys.argv:
         spec = sys.argv[sys.argv.index("--shard") + 1]
@@ -79,25 +83,45 @@ def main() -> None:
         config["roasters"] = apply_shard(every, spec)
         print(f"分割巡回 {spec}: {len(config['roasters'])}/{len(every)}店舗")
 
+    (ROOT / "data").mkdir(exist_ok=True)
+    con = open_db(str(ROOT / "data" / "state.db"))
+
     if "--mock" in sys.argv:
         fixture_dir = sys.argv[sys.argv.index("--mock") + 1]
         print(f"[mock] fixtures: {fixture_dir}")
         products = load_mock(fixture_dir)
         failed: list[str] = []
     else:
+        # 続けて失敗している店は、毎回叩いても同じ結果になることが多い。
+        # 24時間に1回だけ試すことにして、空いた枠を取れる店に回す。
+        # 見捨てるのではなく頻度を落とすだけなので、復活すれば1日で戻る。
+        names = [r["name"] for r in config["roasters"]]
+        due, skip = due_shops(con, names)
+        if skip:
+            print(f"今回は飛ばす（10回以上続けて取れていない店）: {len(skip)}店")
+            config["roasters"] = [r for r in config["roasters"] if r["name"] in set(due)]
         print(f"巡回開始: {len(config['roasters'])}店舗")
         raw, failed = asyncio.run(crawl_all(config))
         products = products_to_dicts(raw)
+        record_health(con, {r["name"] for r in config["roasters"]} - set(failed),
+                      set(failed))
 
     # ノートの取得率は味わいマップの精度そのものなので、毎回ログに出して追えるようにする
     noted = sum(1 for p in products if (p.get("notes") or "").strip())
     pct = round(noted / len(products) * 100, 1) if products else 0.0
     print(f"取得: {len(products)}商品（失敗 {len(failed)}店舗） / ノートあり {noted}件 {pct}%")
 
-    (ROOT / "data").mkdir(exist_ok=True)
-    con = open_db(str(ROOT / "data" / "state.db"))
+    # 図鑑から外した店の商品を消す。外しただけでは消えず、在庫ありのまま残る。
+    # mock は fixtures の店名なので対象にしない（本物の一覧と噛み合わない）
+    if "--mock" not in sys.argv:
+        for name, n in prune_missing_roasters(con, all_names):
+            print(f"図鑑から外した店の商品を消した: {name} {n}件")
+
     stats = apply_snapshot(con, products, float(settings.get("min_oos_hours", 12)))
     print(f"イベント: 新着{stats['new']} / 再入荷{stats['restock']} / 売り切れ{stats['soldout']}")
+    # 棚から消えた商品。数が急に跳ねたら、門が効きすぎているか店側の不調を疑う
+    if stats.get("gone"):
+        print(f"棚から消えたので在庫なしに倒した: {stats['gone']}件")
 
     site_data = export_for_site(con)
     build(site_data, failed)

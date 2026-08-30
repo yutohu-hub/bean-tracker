@@ -18,7 +18,9 @@ import httpx
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from crawler import REQ_HEADERS, _SITEMAPS, _PROD_URL, _LD_BLOCK  # noqa: E402
+from crawler import (REQ_HEADERS, HTML_HEADERS, _SITEMAPS, _PROD_URL,  # noqa: E402
+                     _LD_BLOCK, robots_rules, robots_match)
+
 
 # 商品ページへのリンクらしきもの。sitemap が無い店では、一覧ページの
 # <a href> から拾えるかどうかが次の手がかりになる。
@@ -26,29 +28,18 @@ _HREF = re.compile(r'href="([^"]+)"')
 
 
 def allowed(robots: str, path: str) -> str:
-    """User-agent: * の Disallow に照らして、その道を通っていいか。
+    """その道を通っていいかを、人が読む文で返す。
 
-    店が robots.txt で断っているものを、こちらの都合で取りに行かない。
-    技術的に取れるかどうかより先に、取っていいかどうかを見る。 """
-    rules, applies = [], False
-    for line in robots.splitlines():
-        line = line.split("#")[0].strip()
-        if not line:
-            continue
-        k, _, v = line.partition(":")
-        k, v = k.strip().lower(), v.strip()
-        if k == "user-agent":
-            applies = v == "*"
-        elif applies and k in ("disallow", "allow") and v:
-            rules.append((k, v))
-    # 長く一致する規則が勝つ（Allow が同じ長さなら Allow が勝つ）
-    best = ("", "")
-    for k, v in rules:
-        if path.startswith(v) and (len(v) > len(best[1]) or (len(v) == len(best[1]) and k == "allow")):
-            best = (k, v)
-    if not best[0]:
+    判定そのものは巡回の本体（crawler.robots_match）と同じものを使う。
+    診断と巡回で答えが食い違うと、診断を見て直したのに巡回が変わらない、
+    という一番たちの悪い形になる。
+    """
+    kind, rule = robots_match(robots_rules(robots), path)
+    if not kind:
         return "断られていない（規則に当たらない）"
-    return f"許されている（Allow: {best[1]}）" if best[0] == "allow" else f"★断られている（Disallow: {best[1]}）"
+    if kind == "allow":
+        return f"許されている（Allow: {rule}）"
+    return f"★断られている（Disallow: {rule}）"
 
 
 def show(label: str, resp: httpx.Response | None, head: int = 220) -> None:
@@ -57,6 +48,20 @@ def show(label: str, resp: httpx.Response | None, head: int = 220) -> None:
         return
     body = (resp.text or "").strip().replace("\n", " ")
     print(f"  {label:<34} {resp.status_code}  {len(resp.content):>7} bytes  {body[:head]}")
+
+
+def show2(label: str, a: httpx.Response | None, b: httpx.Response | None,
+          head: int = 120) -> None:
+    """JSON を求めた場合と HTML を求めた場合を並べる。
+
+    片方だけ 403 なら、店が断っているのではなく、こちらの求め方が
+    合っていないだけ。両方 403 なら店側で弾かれている。
+    """
+    sa = "届かない" if a is None else str(a.status_code)
+    sb = "届かない" if b is None else str(b.status_code)
+    mark = "  ←求め方の違いで変わる" if sa != sb else ""
+    body = "" if b is None else (b.text or "").strip().replace("\n", " ")[:head]
+    print(f"  {label:<30} JSONで{sa:>8} / HTMLで{sb:>8}{mark}  {body}")
 
 
 def get(client: httpx.Client, url: str) -> httpx.Response | None:
@@ -74,7 +79,8 @@ def main() -> None:
         raise SystemExit(2)
     print(f"調べる店: {base}\n")
 
-    with httpx.Client(headers=REQ_HEADERS, timeout=20, follow_redirects=True) as c:
+    with httpx.Client(headers=REQ_HEADERS, timeout=20, follow_redirects=True) as c, \
+         httpx.Client(headers=HTML_HEADERS, timeout=20, follow_redirects=True) as ch:
         print("■ robots.txt")
         r = get(c, f"{base}/robots.txt")
         if r is None or r.status_code != 200:
@@ -85,32 +91,68 @@ def main() -> None:
             for line in r.text.splitlines():
                 if line.strip():
                     print(f"    {line.rstrip()}")
-            print(f"\n  → 商品ページ (/items/…) は {allowed(r.text, '/items/x')}")
+            print("\n  → 巡回が実際に叩く道の可否")
+            for path in ("/products.json", "/collections/all.atom",
+                         "/wp-json/wc/store/products", "/sitemap.xml",
+                         "/meta.json", "/cart.js", "/items/x", "/"):
+                print(f"      {path:<30} {allowed(r.text, path)}")
 
-        print("\n■ 巡回がいま試している sitemap")
+        # 403 が返るとき、店が弾いているのか、こちらの求め方が合っていないのかを
+        # 分けないと打つ手が決まらない。両方の見出しで叩いて並べる。
+        print("\n■ 巡回がいま試している sitemap（求め方を変えて比べる）")
         for p in _SITEMAPS:
-            show(p, get(c, f"{base}{p}"))
+            show2(p, get(c, f"{base}{p}"), get(ch, f"{base}{p}"))
 
         print("\n■ よくある置き場所（試していないもの）")
         for p in ("/sitemap-index.xml", "/sitemaps.xml", "/sitemap1.xml",
                   "/sitemap/sitemap.xml", "/wp-sitemap.xml"):
-            show(p, get(c, f"{base}{p}"))
+            show2(p, get(c, f"{base}{p}"), get(ch, f"{base}{p}"))
 
         print("\n■ 商品APIの形（Shopify / WooCommerce）")
         for p in ("/products.json?limit=1", "/collections/all/products.json?limit=1",
                   "/wp-json/wc/store/products?per_page=1", "/meta.json", "/cart.js"):
-            show(p, get(c, f"{base}{p}"), 160)
+            show2(p, get(c, f"{base}{p}"), get(ch, f"{base}{p}"), 100)
 
-        print("\n■ トップページの中身")
-        top = get(c, base)
-        show("/", top, 120)
+        # 店が返す値段そのものを見る。
+        #
+        # FILTER SUPPLY と ignis coffee で、Panama Geisha が「39 JPY」、
+        # 瓶入りが「15 JPY」と出た。桁が100分の1になっている疑いがある。
+        # 巡回は products.json の price をそのまま使うので、店が返す生の値と
+        # 見比べないと、こちらの読み違いか店の書き方かが分からない。
+        # 間違った値段を図鑑に並べるのは、値段が無いより悪い。
+        print("\n■ 店が返す値段そのもの")
+        pj = get(c, f"{base}/products.json?limit=2")
+        if pj is not None and pj.status_code == 200:
+            try:
+                for prod in pj.json().get("products", [])[:2]:
+                    print(f"    {prod.get('title','')[:40]}")
+                    for v in (prod.get("variants") or [])[:3]:
+                        print(f"      variant {str(v.get('title',''))[:22]:<24} "
+                              f"price={v.get('price')!r:>12} "
+                              f"compare={v.get('compare_at_price')!r:>10} "
+                              f"grams={v.get('grams')!r}")
+            except (ValueError, AttributeError) as e:
+                print(f"    JSONとして読めない: {type(e).__name__}")
+        for path in ("/meta.json", "/cart.js"):
+            resp = get(c, f"{base}{path}")
+            if resp is not None and resp.status_code == 200:
+                try:
+                    d = resp.json()
+                    print(f"    {path:<12} currency={d.get('currency')!r} "
+                          f"country={d.get('country')!r}")
+                except ValueError:
+                    pass
+
+        print("\n■ トップページ（求め方を変えて比べる）")
+        top = get(ch, base)                      # 中身を見るのは HTML で求めた方
+        show2("/", get(c, base), top)
         if top is not None and top.status_code == 200:
             html = top.text
-            hrefs = [h for h in _HREF.findall(html)]
-            prod = [h for h in hrefs if _PROD_URL.search(h.split("?")[0])]
+            hrefs = _HREF.findall(html)
+            prod = [u for u in hrefs if _PROD_URL.search(u.split("?")[0])]
             print(f"  リンク {len(hrefs)} 本 / うち商品ページらしいもの {len(prod)} 本")
-            for h in list(dict.fromkeys(prod))[:6]:
-                print(f"    {h}")
+            for u in list(dict.fromkeys(prod))[:6]:
+                print(f"    {u}")
             lds = _LD_BLOCK.findall(html)
             print(f"  JSON-LD のブロック: {len(lds)} 個")
             for b in lds[:2]:

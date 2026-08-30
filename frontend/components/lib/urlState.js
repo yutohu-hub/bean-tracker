@@ -26,11 +26,32 @@ const KEYS = {
   s: "status",      // 在庫
   sb: "sortBy",     // 並び替え
   me: "meTab",      // マイページの中のタブ
+  bs: "beanIds",    // まとめて見せる豆（好きな豆を人に送るときに使う）
 };
+
+/* 豆番号の並び。URLでは "12,34,56" の形にする。
+   番号は key から作っていて巡回しても動かないので、送ったリンクは後から壊れない
+   （前は上から順に振っていたので、翌時間には別の豆を指していた）。
+
+   送りすぎるとURLが長くなって貼れない相手が出るので上限を置く。
+   1件13桁ほどなので、100件で1400字ほど。多くのアプリが扱える範囲に収まる。 */
+export const MAX_SHARED_BEANS = 100;
+
+function parseIds(v) {
+  const out = [];
+  for (const s of String(v || "").split(",")) {
+    const n = Number(s);
+    // 番号として読めないものは黙って捨てる。人が触ったURLでも落ちないように
+    if (Number.isFinite(n) && n > 0 && !out.includes(n)) out.push(n);
+    if (out.length >= MAX_SHARED_BEANS) break;
+  }
+  return out;
+}
 
 const DEFAULTS = {
   view: "zukan", bean: null, roaster: null, roasterTab: "now",
   process: null, query: "", origin: "すべて", status: "all", sortBy: "default", meTab: "log",
+  beanIds: [],
 };
 
 export function readUrlState() {
@@ -40,9 +61,26 @@ export function readUrlState() {
   for (const [short, name] of Object.entries(KEYS)) {
     const v = sp.get(short);
     if (v === null || v === "") continue;
-    out[name] = name === "bean" ? Number(v) || null : v;
+    if (name === "beanIds") out[name] = parseIds(v);
+    else if (name === "bean") out[name] = Number(v) || null;
+    else out[name] = v;
   }
   return out;
+}
+
+// 状態 → クエリ。読むときと書くときで形がずれないよう、1か所にまとめる
+function toParams(state) {
+  const sp = new URLSearchParams();
+  for (const [short, name] of Object.entries(KEYS)) {
+    const v = state[name];
+    if (name === "beanIds") {
+      if (Array.isArray(v) && v.length) sp.set(short, v.slice(0, MAX_SHARED_BEANS).join(","));
+      continue;
+    }
+    if (v === null || v === undefined || v === "" || v === DEFAULTS[name]) continue;
+    sp.set(short, String(v));
+  }
+  return sp;
 }
 
 /* いまの状態をURLに書き戻す。履歴に積むかどうかは呼び出し側が決める。
@@ -51,13 +89,7 @@ export function readUrlState() {
    そういうものは push=false で置き換える。 */
 export function writeUrlState(state, { push = false } = {}) {
   if (typeof window === "undefined") return;
-  const sp = new URLSearchParams();
-  for (const [short, name] of Object.entries(KEYS)) {
-    const v = state[name];
-    if (v === null || v === undefined || v === "" || v === DEFAULTS[name]) continue;
-    sp.set(short, String(v));
-  }
-  const qs = sp.toString();
+  const qs = toParams(state).toString();
   const url = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
   if (url === window.location.pathname + window.location.search + window.location.hash) return;
   try {
@@ -77,12 +109,6 @@ export function onUrlChange(fn) {
 // 共有用の絶対URL（「リンクをコピー」で使う）
 export function shareUrl(state) {
   if (typeof window === "undefined") return "";
-  const sp = new URLSearchParams();
-  for (const [short, name] of Object.entries(KEYS)) {
-    const v = state[name];
-    if (v === null || v === undefined || v === "" || v === DEFAULTS[name]) continue;
-    sp.set(short, String(v));
-  }
-  const qs = sp.toString();
+  const qs = toParams(state).toString();
   return `${window.location.origin}${window.location.pathname}${qs ? `?${qs}` : ""}`;
 }

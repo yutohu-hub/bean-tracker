@@ -137,5 +137,86 @@ check("ログアウト中でも、この端末に何件しまってあるかは�
   assert.equal(store.keptTastingCount(), 2, "0件の画面だけ見せると「消えた」と思わせる");
 });
 
+/* 豆番号の付け替え（昔の番号 → key から作った番号）。
+   クラウドの行は bean_id が鍵なので、こちらで番号を変えても向こうには
+   昔の番号の行が残る。取り込むと同じ豆が2件に並ぶ。実際に再現した。 */
+check("番号を付け替えても、同じ豆が2件に増えない", () => {
+  localStorage.m.clear();
+  signIn("A");
+  store.upsertTasting({ beanId: 100001, name: "Kenya Karatina AA", rating: 5, at: 1750000000000 });
+  store.applyRelink([{ from: 100001, to: 2020077693920 }]);
+  assert.deepEqual(store.getTastings().map((t) => t.beanId), [2020077693920]);
+  // 次の同期で、クラウドに残っていた昔の番号の行が返ってくる
+  store.mergeTastings([{ beanId: 100001, name: "Kenya Karatina AA", rating: 5, at: 1750000000000 }]);
+  assert.deepEqual(store.getTastings().map((t) => t.beanId), [2020077693920],
+    "昔の番号の行が復活して、同じ豆が2件に並んでいる");
+});
+
+check("付け替えたら、昔の番号をクラウドからも消せるようにする", () => {
+  localStorage.m.clear();
+  signIn("A");
+  store.upsertTasting({ beanId: 100002, name: "豆", rating: 4 });
+  store.applyRelink([{ from: 100002, to: 3007400960121 }]);
+  // 同期はこの墓標を見て、向こうの行を消しにいく
+  assert.deepEqual(store.getTombstones().map((d) => d.beanId), [100002]);
+});
+
+check("付け替えても、評価もメモも飲んだ日も残る", () => {
+  localStorage.m.clear();
+  signIn("A");
+  store.upsertTasting({ beanId: 100003, name: "豆", rating: 5, notes: "ベリー", at: 1700000000000 });
+  const before = store.getTastings()[0];
+  store.applyRelink([{ from: 100003, to: 3844799830686 }]);
+  const after = store.getTastings()[0];
+  assert.equal(after.beanId, 3844799830686);
+  assert.equal(after.rating, before.rating);
+  assert.equal(after.notes, before.notes);
+  assert.equal(after.at, before.at, "飲んだ日が動くと、カレンダーも一覧も別の日になる");
+  assert.equal(after.updatedAt, before.updatedAt,
+    "直した時刻が動くと、他の端末で直した内容を巻き戻す");
+});
+
+/* 再入荷ウォッチも beanId が鍵。付け替えないと「知らせる」が外れて見える。
+   しかも昔の番号の分が残り続け、無料プランのウォッチ上限を食う。 */
+check("再入荷ウォッチの番号も付け替わる", () => {
+  localStorage.m.clear();
+  signIn("A");
+  store.toggleRestock({ beanId: 100050, r: "t", name: "Kenya AA", roaster: "T" });
+  store.applyRestockRelink([{ from: 100050, to: 2020077693920 }]);
+  assert.equal(store.isRestock(2020077693920), true, "新しい番号で引けない＝ウォッチが外れて見える");
+  assert.equal(store.isRestock(100050), false);
+  assert.equal(store.getRestocks().length, 1, "昔の分が残ると上限を食う");
+});
+
+/* 控えは図鑑から消えた豆を残すためのもの。番号で重複を見ていたので、
+   豆の番号が変わると同じ豆をもう一度足していた（控えが倍に増える）。
+   控えの豆はもう図鑑に無いので、番号の付け替えでは拾えない。鍵の方を変えた。 */
+check("豆の番号が変わっても、控えが二重にならない", () => {
+  localStorage.m.clear();
+  signIn("A");
+  store.syncArchive([{ id: 100060, r: "t", name: "Ethiopia Guji", status: "archive" }]);
+  // 巡回で番号が振り直された。中身は同じ豆
+  store.syncArchive([{ id: 2363981440412, r: "t", name: "Ethiopia Guji", status: "archive" }]);
+  assert.equal(store.getArchivedBeans().length, 1, "同じ豆が2件になっている");
+});
+
+check("別の豆はちゃんと控えに増える", () => {
+  localStorage.m.clear();
+  signIn("A");
+  store.syncArchive([{ id: 1, r: "t", name: "豆A" }]);
+  store.syncArchive([{ id: 2, r: "t", name: "豆B" }]);
+  store.syncArchive([{ id: 3, r: "u", name: "豆A" }]);   // 別の店の同名は別の豆
+  assert.equal(store.getArchivedBeans().length, 3);
+});
+
+check("付け替えるものが無ければ、何も触らない", () => {
+  localStorage.m.clear();
+  signIn("A");
+  store.upsertTasting({ beanId: 2020077693920, name: "豆", rating: 5 });
+  assert.equal(store.applyRelink([]), 0);
+  assert.equal(store.applyRelink(null), 0);
+  assert.deepEqual(store.getTombstones(), [], "無関係な墓標を作ってはいけない");
+});
+
 if (ng) { console.log(`\n★ ${ng} 件おかしい。記録が失われる筋道が残っている。`); process.exit(1); }
 console.log("\n記録の出入りは、すべて期待どおり。");
