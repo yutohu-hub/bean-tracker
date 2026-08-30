@@ -113,6 +113,36 @@ def main() -> None:
                   "/wp-json/wc/store/products?per_page=1", "/meta.json", "/cart.js"):
             show2(p, get(c, f"{base}{p}"), get(ch, f"{base}{p}"), 100)
 
+        # 店が返す値段そのものを見る。
+        #
+        # FILTER SUPPLY と ignis coffee で、Panama Geisha が「39 JPY」、
+        # 瓶入りが「15 JPY」と出た。桁が100分の1になっている疑いがある。
+        # 巡回は products.json の price をそのまま使うので、店が返す生の値と
+        # 見比べないと、こちらの読み違いか店の書き方かが分からない。
+        # 間違った値段を図鑑に並べるのは、値段が無いより悪い。
+        print("\n■ 店が返す値段そのもの")
+        pj = get(c, f"{base}/products.json?limit=2")
+        if pj is not None and pj.status_code == 200:
+            try:
+                for prod in pj.json().get("products", [])[:2]:
+                    print(f"    {prod.get('title','')[:40]}")
+                    for v in (prod.get("variants") or [])[:3]:
+                        print(f"      variant {str(v.get('title',''))[:22]:<24} "
+                              f"price={v.get('price')!r:>12} "
+                              f"compare={v.get('compare_at_price')!r:>10} "
+                              f"grams={v.get('grams')!r}")
+            except (ValueError, AttributeError) as e:
+                print(f"    JSONとして読めない: {type(e).__name__}")
+        for path in ("/meta.json", "/cart.js"):
+            resp = get(c, f"{base}{path}")
+            if resp is not None and resp.status_code == 200:
+                try:
+                    d = resp.json()
+                    print(f"    {path:<12} currency={d.get('currency')!r} "
+                          f"country={d.get('country')!r}")
+                except ValueError:
+                    pass
+
         print("\n■ トップページ（求め方を変えて比べる）")
         top = get(ch, base)                      # 中身を見るのは HTML で求めた方
         show2("/", get(c, base), top)
