@@ -81,7 +81,7 @@ async def look(sem, r) -> dict:
     base = r["url"].rstrip("/")
     out = {"name": r["name"], "base": base, "robots": "", "sitemap": 0,
            "locs": 0, "sm_prod": 0, "top": 0, "top_prod": 0, "ld": "",
-           "shapes": []}
+           "shapes": [], "sampled": 0, "sample_hit": 0}
     async with sem:
         async with httpx.AsyncClient(headers=REQ_HEADERS, timeout=TIMEOUT,
                                      follow_redirects=True) as c, \
@@ -108,8 +108,28 @@ async def look(sem, r) -> dict:
                 out["sm_prod"] = sum(1 for u in locs
                                      if _PROD_URL.search(u) and not _SKIP_URL.search(u))
                 out["shapes"] = [url_shape(u) for u in locs]
+                out["locs_all"] = locs
                 if out["sm_prod"]:
                     break
+
+            # 商品ページの目印が無い店（sitemapのURLが /名前 の1段だけ）で、
+            # 実際に開いたら Product の JSON-LD があるかを標本で見る。
+            #
+            # URLの形を広げる手は使えない。/ethiopia-guji と /about と
+            # /blog-title は形が同じで、開くまで区別がつかない。
+            # 残る手は「開いて中身で決める」だが、それは1店あたりの往復が
+            # 一気に増える。実って初めて割に合うので、先に率を測る。
+            if out["sitemap"] and not out["sm_prod"]:
+                cand = [u for u in out.get("locs_all", [])
+                        if not _SKIP_URL.search(u)
+                        and not re.search(r"(?i)/(blog|news|post|author|autor|category|"
+                                          r"page|tag|quote|promo)/", u)
+                        and u.rstrip("/") != base]
+                for u in cand[:10]:
+                    pr = await get(ch, u)
+                    out["sampled"] += 1
+                    if pr is not None and pr.status_code == 200 and _ld_products(pr.text):
+                        out["sample_hit"] += 1
 
             # 4 と、一覧ページから拾える見込み
             top = await get(ch, base)
@@ -160,14 +180,14 @@ async def main() -> None:
     res = await asyncio.gather(*[look(sem, r) for r in rs])
 
     print(f"{'店':<30} {'sitemap':>7} {'<loc>':>6} {'商品':>5} "
-          f"{'top':>4} {'一覧の商品':>6} {'JSON-LD':>7}  状態")
+          f"{'top':>4} {'一覧':>4} {'LD':>4} {'標本':>5} {'当り':>4}  状態")
     tally: dict[str, int] = {}
     for o in sorted(res, key=lambda x: x["name"]):
         v = verdict(o)
         tally[v] = tally.get(v, 0) + 1
         print(f"{o['name'][:29]:<30} {o['sitemap'] or '-':>7} {o['locs']:>6} "
-              f"{o['sm_prod']:>5} {o['top'] or '-':>4} {o['top_prod']:>6} "
-              f"{o['ld'] or '-':>7}  {v}")
+              f"{o['sm_prod']:>5} {o['top'] or '-':>4} {o['top_prod']:>4} "
+              f"{o['ld'] or '-':>4} {o['sampled']:>5} {o['sample_hit']:>4}  {v}")
 
     print("\n" + "=" * 68)
     for v, n in sorted(tally.items(), key=lambda x: -x[1]):
@@ -189,6 +209,17 @@ async def main() -> None:
         for sh, n in sorted(shops_with.items(), key=lambda x: -x[1])[:25]:
             hit = "" if not _PROD_URL.search(sh.replace("*", "x")) else "  ← 今も拾える形"
             print(f"    {n:>4}店  {sh}{hit}")
+
+        # 開いて中身で決める手が、実際に何店で実るか
+        tried = [o for o in res if o["sampled"]]
+        won = [o for o in tried if o["sample_hit"]]
+        pages = sum(o["sampled"] for o in tried)
+        print(f"\n■ 目印の無いURLを開いて中身で決めたら")
+        print(f"    {len(tried)}店で {pages}枚を開き、Product の JSON-LD があったのは "
+              f"{len(won)}店（{sum(o['sample_hit'] for o in tried)}枚）")
+        for o in sorted(won, key=lambda x: -x["sample_hit"])[:20]:
+            print(f"      {o['name'][:28]:<30} {o['sample_hit']:>2}/{o['sampled']:<3} "
+                  f"{o['locs']:>5}本中")
 
 
 if __name__ == "__main__":
