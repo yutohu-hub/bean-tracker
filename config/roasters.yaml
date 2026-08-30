@@ -567,6 +567,10 @@ roasters:
     country: "ES"
     url: https://cafeselmagnifico.com
     currency: EUR
+  - name: "Cafés Guayacán"
+    country: "ES"
+    url: https://cafesguayacan.com
+    currency: EUR
   - name: "Hola Coffee"
     country: "ES"
     url: https://holacoffee.es
@@ -771,6 +775,10 @@ roasters:
     country: "GR"
     url: https://cafetaf.gr
     currency: EUR
+  - name: "Family Bonds"
+    country: "GT"
+    url: https://familybondscoffee.com
+    currency: GTQ
   - name: "Coffee Roasters Asia"
     country: "HK"
     url: https://coffeeroasters.com.hk
@@ -1179,6 +1187,20 @@ roasters:
   - name: "堀口珈琲"
     country: "JP"
     url: https://horiguchicoffee.com
+    currency: JPY
+  # ---- 日本 追加分（TYPICA の一覧から。config/candidates-typica.yaml で
+  #      叩き、商品が取れた店だけを写した）----
+  - name: "ConnectCoffee"
+    country: "JP"
+    url: https://connectcoffe.thebase.in
+    currency: JPY
+  - name: "Gluck Coffee Spot"
+    country: "JP"
+    url: https://gluckcoffee.base.shop
+    currency: JPY
+  - name: "JUNCTION Coffee Roaster"
+    country: "JP"
+    url: https://junction-coffee.com
     currency: JPY
   - name: "Vava Coffee"
     country: "KE"
@@ -1769,6 +1791,10 @@ roasters:
     country: "US"
     url: https://kumacoffee.com
     currency: USD
+  - name: "Kustomcoffee"
+    country: "US"
+    url: https://kustomcoffee.com
+    currency: USD
   - name: "LAMILL Coffee"
     country: "US"
     url: https://lamillcoffee.com
@@ -1804,6 +1830,10 @@ roasters:
   - name: "Milstead & Co"
     country: "US"
     url: https://milsteadandco.com
+    currency: USD
+  - name: "New Heights Coffee Roasters"
+    country: "US"
+    url: https://newheightscoffee.com
     currency: USD
   - name: "Novo Coffee"
     country: "US"

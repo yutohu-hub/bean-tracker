@@ -169,6 +169,39 @@ check("robots.txt が取れなければ粘る",
 check("粘っても駄目なら通す（止めない）",
       any(not u.endswith("/robots.txt") for u in shop3.asked), True)
 
+# 通貨を見るための道（meta.json / cart.js）が断られても、それは
+# 「商品が取れなかった理由」ではない。
+#
+# 実測: KIELO COFFEE（kielocoffee.shop）の robots.txt は Disallow: /cart
+# だけを書いていて、sitemap も商品ページも断っていない。取れなかった本当の
+# 理由は全経路が 403 を返すこと。それなのに /cart.js の1本が数に入り、
+# 理由が「robots.txt で断られている（1本の道を試さなかった）」になっていた。
+# これを見た人は、店が断っていないのに断られたと思って引き返す。
+# Disallow: /cart は STORES・BASE・Shopify にごく普通にある書き方なので、
+# 1店の話では済まない。
+class Cart(Shop):
+    """/cart だけ断り、商品の道は断らない店。ただし全部 403 を返す。"""
+
+    async def get(self, url, params=None):
+        self.asked.append(url)
+        if url.endswith("/robots.txt"):
+            return Resp("User-agent: *\nDisallow: /cart")
+        return Resp("", 403)
+
+
+crawler._ROBOTS.clear()
+crawler._REFUSED.clear()
+shop4 = Cart("")
+asyncio.run(crawler.crawl_roaster(
+    shop4, {**r, "name": "cartだけ断る店"}, 2, asyncio.Semaphore(1)))
+
+check("cart.js は断りとして数えない",
+      "robots.txt" in crawler.LAST_REASON.get("cartだけ断る店", ""), False)
+check("商品の道は叩きに行く",
+      any("/sitemap" in u for u in shop4.asked), True)
+check("断られた cart.js は叩かない",
+      any(u.endswith("/cart.js") for u in shop4.asked), False)
+
 crawler._ROBOTS.clear()
 crawler._REFUSED.clear()
 
@@ -177,4 +210,4 @@ if fails:
     for f in fails:
         print("   " + f)
     raise SystemExit(1)
-print("✓ robots.txt の判定と、巡回がそれに従うこと 32件")
+print("✓ robots.txt の判定と、巡回がそれに従うこと 35件")

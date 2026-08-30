@@ -638,17 +638,23 @@ async def load_robots(client: httpx.AsyncClient, url: str) -> None:
     _ROBOTS[org] = robots_rules(txt)
 
 
-async def _get(client, url: str, params: dict | None = None):
+async def _get(client, url: str, params: dict | None = None,
+               count_refusal: bool = True):
     """robots.txt を見てから取りに行く。断られていれば None。
 
     店を叩く入口はこの1つに絞る。判定を呼ぶ側に書き足す形にすると、書き忘れた
     経路だけが断りを踏み続ける。実測でそうなった——_get_with_retry にだけ
     入れたところ、meta.json / cart.js / sitemap / 商品ページの4経路が
     素通りしていた。
+
+    count_refusal=False は「断られても、商品が取れなかった理由ではない」道。
+    通貨や所在地を見るための meta.json / cart.js がそれにあたる。
+    数に入れると、失敗の理由がその1本に乗っ取られる（下の LAST_REASON）。
     """
     if not path_allowed(url):
-        org = origin_of(url)
-        _REFUSED[org] = _REFUSED.get(org, 0) + 1
+        if count_refusal:
+            org = origin_of(url)
+            _REFUSED[org] = _REFUSED.get(org, 0) + 1
         return None
     return await client.get(url, params=params)
 
@@ -711,7 +717,7 @@ async def _shop_currencies(client: httpx.AsyncClient, base: str) -> tuple[str, s
         return _SHOP_CUR[base]
     home = presentment = ""
     try:
-        resp = await _get(client, f"{base}/meta.json")
+        resp = await _get(client, f"{base}/meta.json", count_refusal=False)
         if resp is not None and resp.status_code == 200:
             meta = resp.json()
             home = (meta.get("currency") or "").upper()
@@ -723,7 +729,7 @@ async def _shop_currencies(client: httpx.AsyncClient, base: str) -> tuple[str, s
     except (httpx.HTTPError, json.JSONDecodeError, AttributeError, ValueError):
         pass
     try:
-        resp = await _get(client, f"{base}/cart.js")
+        resp = await _get(client, f"{base}/cart.js", count_refusal=False)
         if resp is not None and resp.status_code == 200:
             presentment = (resp.json().get("currency") or "").upper()
     except (httpx.HTTPError, json.JSONDecodeError, AttributeError, ValueError):
