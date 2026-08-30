@@ -1145,6 +1145,25 @@ roasters:
     country: "JP"
     url: https://yanaka-coffeeten.com
     currency: JPY
+  # 世田谷・千歳船橋（BASE）
+  - name: "IRON COFFEE"
+    country: "JP"
+    url: https://ironcoffee.official.ec
+    currency: JPY
+  # 武蔵野・吉祥寺（BASE）
+  - name: "SACHIOPIA COFFEE"
+    country: "JP"
+    url: https://sachiopia.base.ec
+    currency: JPY
+  - name: "Scrop COFFEE ROASTERS"
+    country: "JP"
+    url: https://scrop-coffee-roasters.com
+    currency: JPY
+  # 中央区・築地（BASE）
+  - name: "YAZAWA COFFEE ROASTERS"
+    country: "JP"
+    url: https://yazawacoffee.base.shop
+    currency: JPY
   - name: "Zhyvago Coffee"
     country: "JP"
     url: https://zhyvago-okinawa.com
