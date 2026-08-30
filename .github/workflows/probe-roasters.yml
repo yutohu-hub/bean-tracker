@@ -29,6 +29,7 @@ on:
           - page            # 商品ページのHTMLを読むと空欄が埋まるか試す
           - notes           # 風味がどれだけ取れて、どれだけ正しいかを測る
           - robots          # robots.txt で断られている店を数える
+          - discovery       # 商品ページが見つからない理由を店ごとに分ける（arg に候補ファイル）
       arg:
         description: >-
           道具に渡すもの。
@@ -52,6 +53,12 @@ jobs:
           python-version: "3.12"
       - name: 依存インストール
         run: pip install httpx pyyaml
+
+      # 「商品ページが見つからない」の中身を分ける。sitemapが無いのか、
+      # 商品ページが載っていないのか、URLの形が合っていないのか、店ごと403なのか
+      - name: 見つからない理由を分ける
+        if: inputs.tool == 'discovery'
+        run: python scripts/probe_discovery.py "${{ inputs.arg || 'config/candidates-zero-beans.yaml' }}"
 
       # 巡回対象に加える前の下見。商品が取れるか・値段と内容量がそろうかを見る
       - name: 候補を叩く
