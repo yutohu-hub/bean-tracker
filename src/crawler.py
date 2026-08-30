@@ -7,6 +7,7 @@ import random
 import re
 import unicodedata
 from dataclasses import dataclass, asdict
+from html import unescape   # 引数名 html に隠れないよう、名前で取る
 from urllib.parse import urljoin
 
 import httpx
@@ -1362,6 +1363,91 @@ def _product_from_ld(r: dict, url: str, html: str) -> Product | None:
     )
 
 
+# og: / product: の見出し。JSON-LD を置いていない店から中身を取るのに使う。
+_META = re.compile(
+    r'(?is)<meta[^>]+(?:property|name|itemprop)\s*=\s*["\']([^"\']+)["\'][^>]*>')
+_META_CONTENT = re.compile(r'(?is)content\s*=\s*["\']([^"\']*)["\']')
+_TITLE_TAG = re.compile(r"(?is)<title[^>]*>(.*?)</title>")
+
+
+def _metas(html: str) -> dict[str, str]:
+    """<meta> を {名前: 中身} にする。同じ名前が並ぶときは先に出た方を採る。"""
+    out: dict[str, str] = {}
+    for m in re.finditer(r"(?is)<meta\s[^>]*>", html):
+        tag = m.group(0)
+        k = _META.match(tag)
+        v = _META_CONTENT.search(tag)
+        if not k or not v:
+            continue
+        name = k.group(1).strip().lower()
+        if name not in out:
+            out[name] = unescape(v.group(1)).strip()
+    return out
+
+
+def _first(d: dict[str, str], *keys: str) -> str:
+    for k in keys:
+        if d.get(k):
+            return d[k]
+    return ""
+
+
+def _product_from_meta(r: dict, url: str, html: str) -> Product | None:
+    """JSON-LD を置いていない商品ページから、og: の見出しで組み立てる。
+
+    JSON-LD が有る店には触らない。呼ばれるのは _product_from_ld が
+    作れなかったときだけなので、いま取れているものは1件も変わらない。
+
+    ■ 値段が無いページは商品ページではない、として弾く
+
+    og:title と og:image はどのページにも付いている。それだけで通すと
+    /about も /blog/… も商品として並ぶ。値段の見出し（og:price:amount /
+    product:price:amount / itemprop=price）があることを条件にすると、
+    店が「これは売り物だ」と書いたページだけが残る。
+
+    実測（豆0件165店）: 商品ページに JSON-LD が無い店は16店あった。
+    Coffee Stopover は sitemap に商品URLが256本あるのに、40枚開いて
+    JSON-LD は0枚だった。
+    """
+    d = _metas(html)
+    price_s = _first(d, "og:price:amount", "product:price:amount",
+                     "twitter:data1", "price", "itemprop:price")
+    if not price_s:
+        return None
+    try:
+        price = float(re.sub(r"[^\d.]", "", price_s.replace(",", "")) or 0)
+    except ValueError:
+        return None
+    if price <= 0:
+        return None
+
+    title = _first(d, "og:title", "twitter:title")
+    if not title:
+        m = _TITLE_TAG.search(html)
+        title = unescape(m.group(1)).strip() if m else ""
+    if not title:
+        return None
+
+    desc = _first(d, "og:description", "description", "twitter:description")
+    cur = _first(d, "og:price:currency", "product:price:currency") or r.get("currency", "")
+    avail = _first(d, "og:availability", "product:availability",
+                   "product:availability:type").lower().replace(" ", "").replace("_", "")
+    grams = _grams_from_text(title) or _grams_from_text(desc)
+    deep = f"{title} {html_to_text(desc)[:DEEP_CHARS]}"
+    gen = extract_notes_src(desc, title)
+    return Product(
+        key=f"{r['name']}::{url.rstrip('/').rsplit('/', 1)[-1]}",
+        roaster=r["name"], country=r.get("country", ""),
+        title=title, url=url, image=_first(d, "og:image", "twitter:image"),
+        price=price, currency=cur.upper(),
+        grams=grams, per100=round(price / grams * 100, 2) if grams and price else None,
+        available=("outofstock" not in avail and "soldout" not in avail),
+        origin=_guess_origin(title) or _guess_origin(deep),
+        process=_guess_process(title) or _guess_process(deep),
+        tags=title[:300], notes=gen[0], note_src=gen[1],
+    )
+
+
 async def _fetch_generic(client: httpx.AsyncClient, r: dict) -> list[Product] | None:
     base = r["url"].rstrip("/")
     untagged: list[str] = []
@@ -1396,7 +1482,7 @@ async def _fetch_generic(client: httpx.AsyncClient, r: dict) -> list[Product] | 
             continue
         if resp is None or resp.status_code != 200:
             continue
-        p = _product_from_ld(r, u, resp.text)
+        p = _product_from_ld(r, u, resp.text) or _product_from_meta(r, u, resp.text)
         if p:
             products.append(p)
     if not products:

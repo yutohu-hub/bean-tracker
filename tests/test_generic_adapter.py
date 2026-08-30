@@ -210,6 +210,54 @@ def main() -> None:
     assert on and len(on) == 1, f"scan_pages を指定しても拾えていない: {on}"
     assert on[0].title == "Ethiopia Guji Natural 200g", on[0].title
 
+
+    # ---- JSON-LD を置いていない店から og: の見出しで組み立てる ----
+    #
+    # 実測（豆0件165店）: 商品ページに JSON-LD が無い店が16店あった。
+    # Coffee Stopover は sitemap に商品URLが256本あるのに、40枚開いて0枚。
+    #
+    # 呼ばれるのは _product_from_ld が作れなかったときだけなので、
+    # JSON-LD がある店の結果は1件も変わらない。
+    PAGE_OG = """<html><head>
+    <meta property="og:title" content="Colombia Huila Washed 250g">
+    <meta property="og:image" content="https://img.example/huila.jpg">
+    <meta property="og:description" content="Tasting notes: caramel, apple">
+    <meta property="og:price:amount" content="2,400">
+    <meta property="og:price:currency" content="JPY">
+    <meta property="og:availability" content="in stock">
+    </head><body></body></html>"""
+
+    # 値段の見出しが無いページ。これを通すと /about が図鑑に並ぶ
+    PAGE_ABOUT = """<html><head>
+    <meta property="og:title" content="お店について">
+    <meta property="og:image" content="https://img.example/shop.jpg">
+    </head><body></body></html>"""
+
+    SM_OG = """<?xml version="1.0"?>
+    <urlset>
+      <url><loc>https://shop.example/items/colombia-huila-washed-250g</loc></url>
+      <url><loc>https://shop.example/items/about-our-shop</loc></url>
+    </urlset>"""
+
+    class OgShop(FakeClient):
+        async def get(self, url, params=None, headers=None):
+            self.seen.append(url)
+            if url == "https://shop.example/sitemap.xml":
+                return FakeResponse(SM_OG)
+            if url.endswith("/colombia-huila-washed-250g"):
+                return FakeResponse(PAGE_OG)
+            if url.endswith("/about-our-shop"):
+                return FakeResponse(PAGE_ABOUT)
+            return FakeResponse("", 404)
+
+    og = asyncio.run(crawler._fetch_generic(OgShop(), {**r, "name": "Og Shop"}))
+    assert og is not None, "og: の見出しから組み立てられていない"
+    assert len(og) == 1, f"値段の無いページまで商品にしている: {[x.title for x in og]}"
+    assert og[0].title == "Colombia Huila Washed 250g", og[0].title
+    assert og[0].price == 2400.0 and og[0].grams == 250, (og[0].price, og[0].grams)
+    assert og[0].origin == "Colombia" and og[0].process == "Washed", og[0]
+    assert "caramel" in og[0].notes, og[0].notes
+
     print(f"OK  商品{len(got)}件 / 開いたURL {len(client.seen)}本")
     for p in got:
         print(f"   {p.title[:34]:36s} {p.price:>8,.0f} {p.currency} "
