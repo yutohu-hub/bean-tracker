@@ -1204,6 +1204,18 @@ roasters:
     country: "JP"
     url: https://junction-coffee.com
     currency: JPY
+  # ---- 日本 追加分（教わった店。叩いて商品と通貨を確かめたもの）----
+  # 福岡・高砂 / Shopify。店の通貨は JPY だが、こちらの居場所では USD で
+  # 返ってくる（Shopify Markets）。通貨の見分けは _shop_currencies にある
+  - name: "FILTER SUPPLY"
+    country: "JP"
+    url: https://filter-supply.jp
+    currency: JPY
+  # 東京・千駄木 / Shopify。FILTER SUPPLY と同じく USD で返ってくる
+  - name: "ignis coffee"
+    country: "JP"
+    url: https://igniscoffee.jp
+    currency: JPY
   - name: "Vava Coffee"
     country: "KE"
     url: https://vavacoffee.com

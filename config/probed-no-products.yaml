@@ -211,3 +211,9 @@ roasters:
     country: "JP"
     url: https://coffeedot.stores.jp
     currency: JPY
+
+  # acid coffee（東京・代々木上原 / acidcoffee.stores.jp）
+  #   教わった店。2026-08-30 に叩いて「sitemapに商品ページが無い」。
+  #   STORES の売り場で、トップの一覧からも商品リンクが拾えない。
+  #   同じ STORES の COFFEE DOT は全経路403だった。売り場は人には見えるが、
+  #   機械には商品が出ていない。別のドメインがあれば取れる見込みがある。
