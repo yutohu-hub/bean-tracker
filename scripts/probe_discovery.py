@@ -36,21 +36,52 @@ from crawler import (REQ_HEADERS, HTML_HEADERS, _SITEMAPS, _LOC,  # noqa: E402
                      robots_rules, robots_allows)
 
 _HREF = re.compile(r'href="([^"]+)"')
-TIMEOUT = 12
+TIMEOUT = 20
+
+# URLを「形」に潰す。末尾の名前と数字を伏せると、店が違っても同じ形は同じになる。
+#   https://x.jp/product-page/ethiopia-guji  →  /product-page/*
+# 商品ページが載っているのに拾えていないなら、その形が _PROD_URL に
+# 当たっていないということ。何を足せばいいかは、多い形を見ないと決まらない。
+_SEG_NUM = re.compile(r"^\d+$")
+
+
+def url_shape(u: str) -> str:
+    path = re.sub(r"https?://[^/]+", "", u.split("?")[0]).strip("/")
+    if not path:
+        return "/"
+    segs = path.split("/")
+    out = []
+    for i, sgroup in enumerate(segs):
+        if i == len(segs) - 1:
+            out.append("*")
+        elif _SEG_NUM.match(sgroup):
+            out.append("#")
+        else:
+            out.append(sgroup)
+    return "/" + "/".join(out[:3])
 
 
 async def get(client, url):
-    try:
-        return await client.get(url)
-    except httpx.HTTPError:
-        return None
+    """1度だけ粘る。
+
+    最初の測定で43店が「つながらない」になったが、その中に堀口珈琲のような
+    生きている店が混ざっていた。同時に12店叩いているので、こちら側の都合で
+    落ちたものを店の状態として数えると、直す先を見誤る。
+    """
+    for _ in range(2):
+        try:
+            return await client.get(url)
+        except httpx.HTTPError:
+            await asyncio.sleep(0.5)
+    return None
 
 
 async def look(sem, r) -> dict:
     """1店ぶんの事実。数えるだけで、直し方の判断はしない。"""
     base = r["url"].rstrip("/")
     out = {"name": r["name"], "base": base, "robots": "", "sitemap": 0,
-           "locs": 0, "sm_prod": 0, "top": 0, "top_prod": 0, "ld": ""}
+           "locs": 0, "sm_prod": 0, "top": 0, "top_prod": 0, "ld": "",
+           "shapes": []}
     async with sem:
         async with httpx.AsyncClient(headers=REQ_HEADERS, timeout=TIMEOUT,
                                      follow_redirects=True) as c, \
@@ -76,6 +107,7 @@ async def look(sem, r) -> dict:
                 out["locs"] = len(locs)
                 out["sm_prod"] = sum(1 for u in locs
                                      if _PROD_URL.search(u) and not _SKIP_URL.search(u))
+                out["shapes"] = [url_shape(u) for u in locs]
                 if out["sm_prod"]:
                     break
 
@@ -142,6 +174,21 @@ async def main() -> None:
         print(f"  {n:>4}店  {v}")
     rescue = tally.get("★一覧から拾えば取れる", 0)
     print(f"\n一覧ページから拾う手を足すと取れるようになる店: {rescue}店 / {len(rs)}店")
+
+    # いちばん多い形（sitemapはあるが商品ページが載っていない）の中身を見る。
+    # 本当に商品が無いのか、こちらのURLの形が合っていないだけなのかで
+    # 打つ手が変わる。店の数で数える——1店に1万本ある店に引きずられないため。
+    miss = [o for o in res if verdict(o) == "sitemapはあるが商品ページが載っていない"]
+    if miss:
+        shops_with: dict[str, int] = {}
+        for o in miss:
+            for sh in set(o["shapes"]):
+                shops_with[sh] = shops_with.get(sh, 0) + 1
+        print(f"\n■ 商品ページが載っていない{len(miss)}店の sitemap に、"
+              f"どんな形のURLが入っているか（その形を持つ店の数）")
+        for sh, n in sorted(shops_with.items(), key=lambda x: -x[1])[:25]:
+            hit = "" if not _PROD_URL.search(sh.replace("*", "x")) else "  ← 今も拾える形"
+            print(f"    {n:>4}店  {sh}{hit}")
 
 
 if __name__ == "__main__":
