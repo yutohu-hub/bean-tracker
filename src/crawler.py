@@ -771,12 +771,33 @@ async def _shop_currencies(client: httpx.AsyncClient, base: str) -> tuple[str, s
 
 
 def _first_price(payload: dict) -> str:
-    """先頭商品の先頭バリアントの値段。?currency= が効いたかの判定に使う。"""
+    """先頭商品の先頭バリアントの値段。"""
     prods = payload.get("products") or []
     if not prods:
         return ""
     variants = prods[0].get("variants") or []
     return str(variants[0].get("price")) if variants else ""
+
+
+def _price_list(payload: dict, n: int = 12) -> list[str]:
+    """先頭から n 件ぶんの値段。?currency= が効いたかの判定に使う。
+
+    1件だけで比べると取り違える。実測（FILTER SUPPLY / 福岡）:
+    店の通貨は JPY（meta.json）だが、こちらの居場所では USD で返ってくる
+    （cart.js が USD）。?currency=JPY を付けた応答と付けない応答で
+    先頭の1件だけが違ったため「効いた」と判断し、実際には USD のままの
+    値段を JPY と名乗って取り込んでいた。COLOMBIA LOS PINOS 100g が
+    「11 JPY」になる（本当は $11 ≒ ¥1,650）。
+
+    値段が無いより、間違った値段のほうが悪い。複数件で見る。
+    """
+    out: list[str] = []
+    for prod in (payload.get("products") or []):
+        for v in (prod.get("variants") or []):
+            out.append(str(v.get("price")))
+            if len(out) >= n:
+                return out
+    return out
 
 
 # 店が product_type / tags に書いている「種類」を読む。
@@ -1079,16 +1100,23 @@ async def _fetch_shopify_path(client: httpx.AsyncClient, r: dict, max_pages: int
     # 判定には1ページ目の応答をそのまま使う（確認のためだけの往復を増やさない）。
     ask = {}
     if home and presentment and home != presentment:
-        plain, _ = await _get_with_retry(client, f"{base}{path}", {"limit": 1})
+        plain, _ = await _get_with_retry(client, f"{base}{path}", {"limit": 5})
         asked, _ = await _get_with_retry(client, f"{base}{path}",
-                                         {"limit": 1, "currency": home})
+                                         {"limit": 5, "currency": home})
         try:
             if (plain is not None and asked is not None
-                    and plain.status_code == 200 and asked.status_code == 200
-                    and _first_price(plain.json()) != _first_price(asked.json())):
-                ask = {"currency": home}          # 効いた。現地建てで取る
+                    and plain.status_code == 200 and asked.status_code == 200):
+                a, b = _price_list(plain.json()), _price_list(asked.json())
+                # 「効いた」と言えるのは、値段がひとつ残らず入れ替わったとき。
+                # 1件でも同じなら、それは通貨が変わったのではなく並びが
+                # 変わっただけかもしれない。迷ったら、返ってくる通貨で名乗る。
+                worked = bool(a) and len(a) == len(b) and all(
+                    x != y for x, y in zip(a, b))
+                ask = {"currency": home} if worked else {}
+                if not worked:
+                    currency = presentment        # 無視された。返ってくる通貨で名乗る
             else:
-                currency = presentment            # 無視された。返ってくる通貨で名乗る
+                currency = presentment
         except json.JSONDecodeError:
             currency = presentment
     # まず全ページを集める。門の判断に「その店が商品の種類を書く店かどうか」が

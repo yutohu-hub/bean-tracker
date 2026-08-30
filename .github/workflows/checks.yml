@@ -54,6 +54,7 @@ jobs:
           python tests/test_robots.py
           python tests/test_shop_denies.py
           python tests/test_cjk_spec.py
+          python tests/test_currency.py
 
       # ネットに出ずに一巡できるかを見る。ECの仕様変更とは無関係に、
       # 差分検知と書き出しの配線が生きているかの確認
