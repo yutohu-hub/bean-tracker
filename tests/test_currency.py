@@ -50,12 +50,29 @@ def page(prices, handle="p"):
         for i, p in enumerate(prices)]}
 
 
-class Shop:
-    """通貨の返し方を変えられる偽の店。"""
+class Html:
+    """HTMLを返す応答。トップページから通貨を読むために使う。"""
 
-    def __init__(self, home, presentment, plain, asked):
+    def __init__(self, text, status=200):
+        self.text, self.status_code = text, status
+        self.content = text.encode()
+
+    def json(self):
+        raise ValueError("HTML")
+
+
+class Shop:
+    """通貨の返し方を変えられる偽の店。
+
+    cart_ok=False は cart.js が読めない店。robots.txt が Disallow: /cart と
+    書いている店（実測: FILTER SUPPLY / KIELO / BRÜCKE / LUSH-COFFEE）と、
+    店が弾く店がある。そのときはトップページの Shopify.currency から読む。
+    """
+
+    def __init__(self, home, presentment, plain, asked, cart_ok=True):
         self.home, self.presentment = home, presentment
         self.plain, self.asked = plain, asked
+        self.cart_ok = cart_ok
 
     async def get(self, url, params=None, headers=None):
         params = params or {}
@@ -65,19 +82,25 @@ class Shop:
             return Resp({"currency": self.home, "city": "福岡市",
                          "province": "", "country": "JP"})
         if url.endswith("/cart.js"):
+            if not self.cart_ok:
+                return Resp({}, 404)
             return Resp({"currency": self.presentment})
         if "products.json" in url:
             return Resp(page(self.asked if params.get("currency") else self.plain))
+        if url == "https://t.example":
+            return Html('<html><script>var Shopify = {};'
+                        'Shopify.currency = {"active":"%s","rate":"1.0"};'
+                        '</script></html>' % self.presentment)
         return Resp({}, 404)
 
 
-def run(home, presentment, plain, asked):
+def run(home, presentment, plain, asked, cart_ok=True):
     crawler._SHOP_CUR.clear()
     crawler._ROBOTS.clear()
     crawler._REFUSED.clear()
     r = {"name": "T", "url": "https://t.example", "country": "JP", "currency": "JPY"}
     got = asyncio.run(crawler._fetch_shopify_path(
-        Shop(home, presentment, plain, asked), r, 1, "/products.json"))
+        Shop(home, presentment, plain, asked, cart_ok), r, 1, "/products.json"))
     return got
 
 
@@ -109,6 +132,34 @@ check("食い違わない店の値段", got[0].price if got else None, 1650.0)
 got = run("", "", ["1650.00"], ["1650.00"])
 check("読めなければ設定の通貨", got[0].currency if got else None, "JPY")
 
+# ---- cart.js が読めない店 ----
+#
+# 実測（FILTER SUPPLY / 福岡）: robots.txt が Disallow: /cart と書いているので
+# cart.js を叩かない。返ってくる通貨が分からず、店の通貨 JPY で名乗っていた。
+# 値段は USD建てなので COLOMBIA LOS PINOS 100g が「11円」になる。
+# トップページの Shopify.currency から読めば、USD と名乗れる。
+got = run("JPY", "USD", ["11.00", "20.00"], ["11.00", "20.00"], cart_ok=False)
+check("cart.jsが読めなくてもトップから読む", got[0].currency if got else None, "USD")
+check("そのときの値段", got[0].price if got else None, 11.0)
+
+# トップページからも読めない店は、店の通貨のまま（今までどおり）
+crawler._SHOP_CUR.clear()
+crawler._ROBOTS.clear()
+
+
+class NoTop(Shop):
+    async def get(self, url, params=None, headers=None):
+        if url == "https://t.example":
+            return Resp({}, 404)
+        return await super().get(url, params, headers)
+
+
+r0 = {"name": "T", "url": "https://t.example", "country": "JP", "currency": "JPY"}
+got = asyncio.run(crawler._fetch_shopify_path(
+    NoTop("JPY", "USD", ["1650.00"], ["1650.00"], cart_ok=False), r0, 1,
+    "/products.json"))
+check("どこからも読めなければ店の通貨", got[0].currency if got else None, "JPY")
+
 # ---- 値段の並びを取り出す ----
 check("値段の並び", crawler._price_list(page(["1", "2"])), ["1", "2"])
 check("商品が無い", crawler._price_list({}), [])
@@ -120,4 +171,4 @@ if fails:
     for f in fails:
         print("   " + f)
     raise SystemExit(1)
-print("✓ 店が返す通貨と名札が合っていること 10件")
+print("✓ 店が返す通貨と名札が合っていること 13件")

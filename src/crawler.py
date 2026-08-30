@@ -739,6 +739,12 @@ async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict,
 # ?currency= を付ければ店が実際につけている値段が返る。ドル換算値ではなく
 # 買う人が払う額なので、そちらを取る。
 _SHOP_CUR: dict[str, tuple[str, str]] = {}   # base -> (home, presentment)
+
+# Shopify の売り場が全ページに書き出している、いま返している通貨。
+#   Shopify.currency = {"active":"USD","rate":"1.0"};
+# cart.js が読めない店（robots.txt の Disallow: /cart など）でも、これは読める。
+_SHOPIFY_CUR = re.compile(
+    r'Shopify\.currency\s*=\s*\{[^}]*"active"\s*:\s*"([A-Za-z]{3})"')
 # 店の所在地。/meta.json は通貨と一緒に city / province も返すので、同じ応答から取る。
 SHOP_PLACE: dict[str, dict] = {}            # base -> {city, province, country}
 
@@ -766,6 +772,29 @@ async def _shop_currencies(client: httpx.AsyncClient, base: str) -> tuple[str, s
             presentment = (resp.json().get("currency") or "").upper()
     except (httpx.HTTPError, json.JSONDecodeError, AttributeError, ValueError):
         pass
+
+    # cart.js が読めない店がある。robots.txt が Disallow: /cart と書いていれば
+    # 断りを守って叩かないし、店が弾くこともある。
+    #
+    # 返ってくる通貨が分からないと、店の通貨（meta.json）で名乗るしかない。
+    # だが Shopify Markets の店は、こちらの居場所に合わせた通貨で値段を返す。
+    # 実測（FILTER SUPPLY / 福岡）: meta.json は JPY、返ってくるのは USD。
+    # JPY と名乗ると COLOMBIA LOS PINOS 100g が「11円」になる（$11 ≒ ¥1,650）。
+    #
+    # Shopify の売り場は、どのページにも
+    #   Shopify.currency = {"active":"USD","rate":"..."}
+    # を書き出している。断られていない道なので、ここから読む。
+    if not presentment:
+        try:
+            resp = await _get(client, base, count_refusal=False,
+                              headers=HTML_HEADERS)
+            if resp is not None and resp.status_code == 200:
+                m = _SHOPIFY_CUR.search(resp.text)
+                if m:
+                    presentment = m.group(1).upper()
+        except httpx.HTTPError:
+            pass
+
     _SHOP_CUR[base] = (home, presentment)
     return home, presentment
 
