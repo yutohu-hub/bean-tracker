@@ -1,0 +1,57 @@
+# 逃げ道を2つ足したあと、狙った9店が本当に取れるかを確かめる。
+#
+# 単体テストは偽の店で通っている。だが判定が正しいことと、実店舗で
+# 効いていることは別の話で、robots.txt のときに1度それで外している
+# （判定は通っていたのに、4経路が判定を素通りしていた）。
+#
+# 上6店は scan_pages を書いた店、下3店はトップの一覧から拾う店。
+
+settings:
+  max_pages: 4
+  timeout_sec: 20
+  retries: 2
+  concurrency: 4
+
+roasters:
+  - name: "Coffee Circle"
+    country: "DE"
+    url: https://coffeecircle.com
+    currency: EUR
+    scan_pages: 40
+  - name: "Coffee Tonya PH"
+    country: "PH"
+    url: https://coffeetonyaph.com
+    currency: PHP
+    scan_pages: 40
+  - name: "Fritz Coffee"
+    country: "KR"
+    url: https://fritz.co.kr
+    currency: KRW
+    scan_pages: 40
+  - name: "Manufact Coffee"
+    country: "KR"
+    url: https://manufact.co.kr
+    currency: KRW
+    scan_pages: 40
+  - name: "Coffee Libre"
+    country: "KR"
+    url: https://coffeelibre.kr
+    currency: KRW
+    scan_pages: 40
+  - name: "Laynes Espresso"
+    country: "GB"
+    url: https://laynesespresso.co.uk
+    currency: GBP
+    scan_pages: 8
+  - name: "Doubleshot"
+    country: "CZ"
+    url: https://doubleshot.cz
+    currency: CZK
+  - name: "Kaffa"
+    country: "NO"
+    url: https://kaffa.no
+    currency: NOK
+  - name: "Ogawa Coffee"
+    country: "JP"
+    url: https://oc-shop.co.jp
+    currency: JPY
