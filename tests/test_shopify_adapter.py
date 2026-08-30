@@ -77,7 +77,7 @@ class FakeClient:
     def __init__(self):
         self.seen = []
 
-    async def get(self, url, params=None):
+    async def get(self, url, params=None, headers=None):
         self.seen.append(url)
         if url.endswith("/meta.json"):
             return FakeResponse(META)
