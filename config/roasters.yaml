@@ -483,6 +483,7 @@ roasters:
     country: "DE"
     url: https://coffeecircle.com
     currency: EUR
+    scan_pages: 40
   - name: "Companion Coffee"
     country: "DE"
     url: https://companioncoffee.com
@@ -731,6 +732,7 @@ roasters:
     country: "GB"
     url: https://laynesespresso.co.uk
     currency: GBP
+    scan_pages: 8
   - name: "Modern Standard"
     country: "GB"
     url: https://modernstandardcoffee.co.uk
@@ -1222,6 +1224,7 @@ roasters:
     country: "KR"
     url: https://coffeelibre.kr
     currency: KRW
+    scan_pages: 40
   - name: "Felt Coffee"
     country: "KR"
     url: https://felt.coffee
@@ -1230,10 +1233,12 @@ roasters:
     country: "KR"
     url: https://fritz.co.kr
     currency: KRW
+    scan_pages: 40
   - name: "Manufact Coffee"
     country: "KR"
     url: https://manufact.co.kr
     currency: KRW
+    scan_pages: 40
   - name: "Momos Coffee"
     country: "KR"
     url: https://momos.co.kr
@@ -1418,6 +1423,7 @@ roasters:
     country: "PH"
     url: https://coffeetonyaph.com
     currency: PHP
+    scan_pages: 40
   - name: "Coffeellera"
     country: "PH"
     url: https://coffeellera.com

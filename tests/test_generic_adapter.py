@@ -81,7 +81,7 @@ class FakeClient:
     def __init__(self):
         self.seen: list[str] = []
 
-    async def get(self, url: str, params: dict | None = None):
+    async def get(self, url: str, params: dict | None = None, headers=None):
         self.seen.append(url)
         if url in PAGES:
             return FakeResponse(PAGES[url])
@@ -142,12 +142,73 @@ def main() -> None:
 
     # sitemap が無い店は、理由を残して None を返す
     class Empty(FakeClient):
-        async def get(self, url, params=None):
+        async def get(self, url, params=None, headers=None):
             return FakeResponse("", 404)
 
     none = asyncio.run(crawler._fetch_generic(Empty(), {**r, "name": "No Sitemap"}))
     assert none is None, "sitemap が無いのに商品を返している"
     assert "sitemap" in crawler.LAST_REASON["No Sitemap"], crawler.LAST_REASON
+
+
+    # ---- sitemapで拾えない店に用意した2つの逃げ道 ----
+    #
+    # どちらも「sitemapから1本も拾えなかったとき」しか動かない。
+    # 取れている店の経路には触らないので、増えることはあっても減らない。
+
+    # (1) トップページの <a href> から拾う。
+    #     実測（豆0件165店）で Doubleshot・Kaffa・小川珈琲の3店がこの形。
+    TOP = ("""<html><body>
+      <a href="/about">about</a>
+      <a href="/products/ethiopia-guji-natural-200g">豆</a>
+      <a href="/collections/all">一覧</a>
+      <a href="https://other.example/products/x">よその店</a>
+    </body></html>""")
+
+    class TopOnly(FakeClient):
+        """sitemapは空。トップにだけ商品リンクがある店。"""
+
+        async def get(self, url, params=None, headers=None):
+            self.seen.append(url)
+            if url == "https://shop.example":
+                return FakeResponse(TOP)
+            if url == "https://shop.example/products/ethiopia-guji-natural-200g":
+                return FakeResponse(PAGE_PLAIN)
+            return FakeResponse("", 404)
+
+    t = TopOnly()
+    got2 = asyncio.run(crawler._fetch_generic(t, {**r, "name": "Top Only"}))
+    assert got2 and len(got2) == 1, f"トップの一覧から拾えていない: {got2}"
+    assert got2[0].title == "Ethiopia Guji Natural 200g", got2[0].title
+    assert not any("collections/all" in u for u in t.seen), "一覧ページを開いている"
+    assert not any(u.startswith("https://other.example") for u in t.seen), \
+        "よその店のURLを開いている"
+
+    # (2) 目印の無いURL（/名前 の1段）を開いて、中身で決める。
+    #     全店でやると割に合わない（実測: 54店454枚で当たり6店）ので、
+    #     店ごとに scan_pages で頼まれたときだけ。
+    SM_BARE = """<?xml version="1.0"?>
+    <urlset><url><loc>https://shop.example/about</loc></url>
+    <url><loc>https://shop.example/ethiopia-guji</loc></url></urlset>"""
+
+    class Bare(FakeClient):
+        async def get(self, url, params=None, headers=None):
+            self.seen.append(url)
+            if url == "https://shop.example/sitemap.xml":
+                return FakeResponse(SM_BARE)
+            if url == "https://shop.example/ethiopia-guji":
+                return FakeResponse(PAGE_PLAIN)
+            return FakeResponse("", 404)
+
+    b = Bare()
+    off = asyncio.run(crawler._fetch_generic(b, {**r, "name": "Bare Off"}))
+    assert off is None, "頼まれていないのに目印の無いページを開いている"
+    assert "https://shop.example/ethiopia-guji" not in b.seen, b.seen
+
+    b2 = Bare()
+    on = asyncio.run(crawler._fetch_generic(
+        b2, {**r, "name": "Bare On", "scan_pages": 5}))
+    assert on and len(on) == 1, f"scan_pages を指定しても拾えていない: {on}"
+    assert on[0].title == "Ethiopia Guji Natural 200g", on[0].title
 
     print(f"OK  商品{len(got)}件 / 開いたURL {len(client.seen)}本")
     for p in got:

@@ -111,7 +111,7 @@ class Shop:
     def __init__(self, robots):
         self.robots, self.asked = robots, []
 
-    async def get(self, url, params=None):
+    async def get(self, url, params=None, headers=None):
         self.asked.append(url)
         if url.endswith("/robots.txt"):
             return Resp(self.robots)
@@ -147,7 +147,7 @@ check("断らない店に断りの理由をつけない",
 # 実測: Puchero は監査では断っていたのに、巡回のときだけ ConnectError で
 # robots.txt が届かず素通りした。1回で諦めていたことが効いている。
 class Unreachable(Shop):
-    async def get(self, url, params=None):
+    async def get(self, url, params=None, headers=None):
         self.asked.append(url)
         if url.endswith("/robots.txt"):
             raise httpx.ConnectError("届かない")
@@ -182,7 +182,7 @@ check("粘っても駄目なら通す（止めない）",
 class Cart(Shop):
     """/cart だけ断り、商品の道は断らない店。ただし全部 403 を返す。"""
 
-    async def get(self, url, params=None):
+    async def get(self, url, params=None, headers=None):
         self.asked.append(url)
         if url.endswith("/robots.txt"):
             return Resp("User-agent: *\nDisallow: /cart")

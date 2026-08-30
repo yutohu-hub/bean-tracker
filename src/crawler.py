@@ -639,7 +639,7 @@ async def load_robots(client: httpx.AsyncClient, url: str) -> None:
 
 
 async def _get(client, url: str, params: dict | None = None,
-               count_refusal: bool = True):
+               count_refusal: bool = True, headers: dict | None = None):
     """robots.txt を見てから取りに行く。断られていれば None。
 
     店を叩く入口はこの1つに絞る。判定を呼ぶ側に書き足す形にすると、書き忘れた
@@ -656,6 +656,8 @@ async def _get(client, url: str, params: dict | None = None,
             org = origin_of(url)
             _REFUSED[org] = _REFUSED.get(org, 0) + 1
         return None
+    if headers:
+        return await client.get(url, params=params, headers=headers)
     return await client.get(url, params=params)
 
 
@@ -1245,8 +1247,14 @@ def _ld_offer(prod: dict) -> dict:
     return off
 
 
-async def _sitemap_product_urls(client: httpx.AsyncClient, base: str) -> list[str]:
-    """sitemap をたどって商品ページのURLを集める。"""
+async def _sitemap_product_urls(client: httpx.AsyncClient, base: str,
+                                untagged: list[str] | None = None) -> list[str]:
+    """sitemap をたどって商品ページのURLを集める。
+
+    untagged にリストを渡すと、商品の形に当たらなかったページのURLもそこに
+    入れて返す。目印を持たない店（実測40店の sitemap は /名前 の1段だけで、
+    /about と /ethiopia-guji が同じ形）を、頼まれたときだけ開くために使う。
+    """
     seen: set[str] = set()
     urls: list[str] = []
     queue = [f"{base}{p}" for p in _SITEMAPS]
@@ -1277,7 +1285,43 @@ async def _sitemap_product_urls(client: httpx.AsyncClient, base: str) -> list[st
                     queue.append(loc)
             elif _PROD_URL.search(loc) and not _SKIP_URL.search(loc):
                 urls.append(loc)
+            elif untagged is not None and not _SKIP_URL.search(loc):
+                untagged.append(loc)
     return urls[:MAX_GENERIC_PRODUCTS]
+
+
+# トップページから商品ページを拾うときに使う。診断ツールと同じ見方。
+_HREF = re.compile(r'href="([^"]+)"')
+
+
+async def _top_page_product_urls(client, base: str) -> list[str]:
+    """トップページの <a href> から商品ページを拾う。
+
+    sitemap から1本も拾えなかったときだけ呼ぶので、往復は1回だけ増える。
+
+    実測（豆0件165店）: sitemapで拾えない店のうち、トップに商品リンクがあり
+    その先に JSON-LD もあったのは Doubleshot・Kaffa・小川珈琲の3店だった。
+    3店のために全店の作りを変えるのは割に合わないが、この経路は
+    「いま0件の店」でしか動かないので、取れている店を壊しようがない。
+
+    見出しは HTML で求める。products.json 用の JSON の見出しのままだと、
+    HTMLのページに JSON を求める形になり、それを見て403を返す店がある
+    （COFFEE DOT で実測）。
+    """
+    try:
+        resp = await _get(client, base, headers=HTML_HEADERS)
+    except httpx.HTTPError:
+        return []
+    if resp is None or resp.status_code != 200:
+        return []
+    out: list[str] = []
+    for h in _HREF.findall(resp.text):
+        u = urljoin(base + "/", h)
+        if not u.startswith(base):
+            continue
+        if _PROD_URL.search(u.split("?")[0]) and not _SKIP_URL.search(u) and u not in out:
+            out.append(u)
+    return out[:MAX_GENERIC_PRODUCTS]
 
 
 def _product_from_ld(r: dict, url: str, html: str) -> Product | None:
@@ -1320,7 +1364,25 @@ def _product_from_ld(r: dict, url: str, html: str) -> Product | None:
 
 async def _fetch_generic(client: httpx.AsyncClient, r: dict) -> list[Product] | None:
     base = r["url"].rstrip("/")
-    urls = await _sitemap_product_urls(client, base)
+    untagged: list[str] = []
+    urls = await _sitemap_product_urls(client, base, untagged)
+    how = "sitemap"
+
+    # sitemap で1本も拾えない店に、順に別の手を試す。
+    # どちらも「いま0件の店」でしか動かないので、取れている店には触らない。
+    if not urls:
+        urls = await _top_page_product_urls(client, base)
+        how = "トップの一覧"
+
+    # 目印を持たない店（sitemapのURLが /名前 の1段だけ）を、頼まれたときだけ開く。
+    # 実測: 54店で454枚を開いて、Product の JSON-LD があったのは6店だけだった。
+    # 全店で無差別に開くと毎周454往復を捨てることになるので、店ごとに
+    # scan_pages で明示された店だけにする。
+    n = int(r.get("scan_pages") or 0)
+    if not urls and n:
+        urls = untagged[:n]
+        how = "目印の無いページを開いて中身で判定"
+
     # 最後に試した経路の結果で上書きする。setdefault だと Shopify の理由が
     # 残り続け、ログを見ても共通経路がどこで駄目だったのか分からなかった。
     if not urls:
@@ -1338,7 +1400,8 @@ async def _fetch_generic(client: httpx.AsyncClient, r: dict) -> list[Product] | 
         if p:
             products.append(p)
     if not products:
-        LAST_REASON[r["name"]] = f"商品ページにJSON-LDが無い（{len(urls)}枚見た）"
+        LAST_REASON[r["name"]] = (f"商品ページにJSON-LDが無い"
+                                  f"（{how}で{len(urls)}枚見た）")
         return None
     return products
 
