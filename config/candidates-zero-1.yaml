@@ -1,0 +1,234 @@
+# 図鑑に名前はあるのに豆が1件も出ていない165店の 1/3。
+#
+# 1本にまとめて叩いたら15分の上限に当たった。閉じたドメインが混ざると
+# 1店あたり最大 6経路×timeout かかるので、店数×待ち時間で上限を超える。
+# 3つに割り、待ち時間を8秒に縮め、同時に12店叩く。
+# 下見で知りたいのは「いまつながるか」だけなので、粘る意味はない。
+
+settings:
+  max_pages: 2
+  timeout_sec: 8
+  retries: 1
+  concurrency: 12
+
+roasters:
+  - name: "Kaffeefabrik"
+    country: "AT"
+    url: https://kaffefabrik.at
+    currency: EUR
+  - name: "Sample Coffee"
+    country: "AU"
+    url: https://samplecoffee.com.au
+    currency: AUD
+  - name: "Small Batch"
+    country: "AU"
+    url: https://smallbatch.com.au
+    currency: AUD
+  - name: "Toby's Estate Coffee Roasters"
+    country: "AU"
+    url: https://tobysestate.com.au
+    currency: AUD
+  - name: "Café Orfeu"
+    country: "BR"
+    url: https://orfeu.com.br
+    currency: BRL
+  - name: "Coffee Lab"
+    country: "BR"
+    url: https://coffeelab.com.br
+    currency: BRL
+  - name: "Lucca Cafés"
+    country: "BR"
+    url: https://luccacafes.com.br
+    currency: BRL
+  - name: "Octavio Café"
+    country: "BR"
+    url: https://octaviocafe.com.br
+    currency: BRL
+  - name: "Suplicy Cafés"
+    country: "BR"
+    url: https://suplicycafes.com.br
+    currency: BRL
+  - name: "Um Coffee Co"
+    country: "BR"
+    url: https://umcoffee.com.br
+    currency: BRL
+  - name: "Detour Coffee Roasters"
+    country: "CA"
+    url: https://detour.coffee
+    currency: CAD
+  - name: "Hatch Specialty Coffee"
+    country: "CA"
+    url: https://hatchcoffee.ca
+    currency: CAD
+  - name: "Rast Kaffee"
+    country: "CH"
+    url: https://rastkaffee.ch
+    currency: CHF
+  - name: "Seesaw Coffee"
+    country: "CN"
+    url: https://seesawcoffee.com
+    currency: CNY
+  - name: "Café San Alberto"
+    country: "CO"
+    url: https://cafesanalberto.co
+    currency: COP
+  - name: "Pergamino"
+    country: "CO"
+    url: https://pergamino.co
+    currency: COP
+  - name: "Doubleshot"
+    country: "CZ"
+    url: https://doubleshot.cz
+    currency: CZK
+  - name: "The Miners"
+    country: "CZ"
+    url: https://theminers.eu
+    currency: CZK
+  - name: "Coffee Circle"
+    country: "DE"
+    url: https://coffeecircle.com
+    currency: EUR
+  - name: "Companion Coffee"
+    country: "DE"
+    url: https://companioncoffee.com
+    currency: EUR
+  - name: "Tres Cabezas"
+    country: "DE"
+    url: https://tres-cabezas.de
+    currency: EUR
+  - name: "Van Dyck"
+    country: "DE"
+    url: https://vandyck.de
+    currency: EUR
+  - name: "Great Coffee"
+    country: "DK"
+    url: https://greatcoffee.dk
+    currency: DKK
+  - name: "Kontra Coffee"
+    country: "DK"
+    url: https://kontracoffee.com
+    currency: DKK
+  - name: "Risteriet Coffee"
+    country: "DK"
+    url: https://risteriet.dk
+    currency: DKK
+  - name: "Sonora Coffee"
+    country: "DK"
+    url: https://sonora.dk
+    currency: DKK
+  - name: "Puchero"
+    country: "ES"
+    url: https://puchero.es
+    currency: EUR
+  - name: "Toma Café"
+    country: "ES"
+    url: https://tomacafe.es
+    currency: EUR
+  - name: "Tomoca Coffee"
+    country: "ET"
+    url: https://tomocacoffee.com
+    currency: ETB
+  - name: "Helsinki Coffee Roastery"
+    country: "FI"
+    url: https://helsinginkahvipaahtimo.fi
+    currency: EUR
+  - name: "Mokkamestarit"
+    country: "FI"
+    url: https://mokkamestarit.fi
+    currency: EUR
+  - name: "Paahtimo Papu"
+    country: "FI"
+    url: https://papu.coffee
+    currency: EUR
+  - name: "Turun Kahvipaahtimo"
+    country: "FI"
+    url: https://turunkahvipaahtimo.fi
+    currency: EUR
+  - name: "Café Lomi"
+    country: "FR"
+    url: https://cafelomi.com
+    currency: EUR
+  - name: "Atkinsons Coffee"
+    country: "GB"
+    url: https://thecoffeehopper.com
+    currency: GBP
+  - name: "Extract Coffee"
+    country: "GB"
+    url: https://extractcoffee.co.uk
+    currency: GBP
+  - name: "Foundation Coffee"
+    country: "GB"
+    url: https://foundationcoffeehouse.com
+    currency: GBP
+  - name: "Laynes Espresso"
+    country: "GB"
+    url: https://laynesespresso.co.uk
+    currency: GBP
+  - name: "OddKin Coffee"
+    country: "GB"
+    url: https://oddkin.co.uk
+    currency: GBP
+  - name: "Origin Coffee"
+    country: "GB"
+    url: https://origincoffee.co.uk
+    currency: GBP
+  - name: "LCC Roastery"
+    country: "HK"
+    url: https://lccroastery.com
+    currency: HKD
+  - name: "Rias Coffee Roaster"
+    country: "HK"
+    url: https://riascoffeeroaster.com
+    currency: HKD
+  - name: "The Cupping Room"
+    country: "HK"
+    url: https://cuppingroom.hk
+    currency: HKD
+  - name: "Casino Mocca"
+    country: "HU"
+    url: https://casinomocca.com
+    currency: HUF
+  - name: "Anomali Coffee"
+    country: "ID"
+    url: https://anomalicoffee.com
+    currency: IDR
+  - name: "Seniman Coffee"
+    country: "ID"
+    url: https://senimancoffee.com
+    currency: IDR
+  - name: "Tanamera Coffee"
+    country: "ID"
+    url: https://tanameracoffee.co.id
+    currency: IDR
+  - name: "GB Roasters"
+    country: "IN"
+    url: https://gbroastery.com
+    currency: INR
+  - name: "KC Roasters"
+    country: "IN"
+    url: https://kcroasters.com
+    currency: INR
+  - name: "Kaffitár"
+    country: "IS"
+    url: https://kaffitar.is
+    currency: ISK
+  - name: "Te & Kaffi"
+    country: "IS"
+    url: https://teogkaffi.is
+    currency: ISK
+  - name: "Orsonero"
+    country: "IT"
+    url: https://www.orsonerocoffee.it
+    currency: EUR
+  - name: "% Arabica"
+    country: "JP"
+    url: https://arabica.com
+    currency: JPY
+  - name: "Amameria Espresso"
+    country: "JP"
+    url: https://amameria.com
+    currency: JPY
+  - name: "And Coffee Roasters"
+    country: "JP"
+    url: https://andcoffeeroasters.com
+    currency: JPY

@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import re
 import datetime
+import hashlib
 import sys
 from pathlib import Path
 
@@ -24,7 +25,32 @@ ROASTER_DIR = ROOT / "frontend" / "components" / "data" / "roasters"
 OUT = ROOT / "frontend" / "components" / "data" / "live.generated.json"
 
 STOP = re.compile(r"\b(coffee|roasters?|roastery|roasting|company|co|the|specialty|cafe|café|espresso|works|stand|brewers?|kaffe|koffie)\b")
-def norm(s: str) -> str: return re.sub(r"[^a-z0-9]", "", STOP.sub("", (s or "").lower()))
+def norm(s: str) -> str:
+    """店名を、突き合わせ用の形にする。
+
+    業種の言葉（Coffee / Roasters …）を落とすので、
+    「Onyx Coffee Lab」と図鑑の「Onyx」が同じ店として引ける。
+
+    ■ 日本語だけの店名が全部ひとつに潰れていた
+
+    英数字以外を捨てていたため、丸山珈琲も堀口珈琲も空文字になり、
+    図鑑の突き合わせ表では同じ鍵（""）を奪い合っていた。あとから読んだ方が
+    勝つので、実データでは seed[""] = horiguchi になり、丸山珈琲は
+    堀口珈琲として扱われていた。
+
+    実際に出ていた被害は、堀口珈琲のページに **丸山珈琲の Instagram**
+    （@maruyama_coffee）が出ていたこと。豆の付け替えも同じ理屈で起きるが、
+    この2店は巡回で商品が1件も取れていないので、実際に動いた豆は無い。
+    商品が取れるようになった時点で、豆も同じように混ざる。
+
+    英数字が1つも残らないときは、記号と空白だけを落とした形を返す。
+    こうすると丸山珈琲と堀口珈琲は別の鍵になる。英数字の名前の店では、
+    これまでと同じ結果になる（1文字も変わらない）。
+    """
+    t = re.sub(r"[^a-z0-9]", "", STOP.sub("", (s or "").lower()))
+    if t:
+        return t
+    return re.sub(r"[\s　_\-–—・･,.'\"()（）\[\]【】/|]+", "", (s or "").lower())
 def slug(s: str) -> str: return (re.sub(r"[^a-z0-9]", "", (s or "").lower())[:24] or "roaster")
 
 # --- 豆以外（器具/グッズ/ミルク/ティー/RTD/ドリップバッグ/インスタント/業務用 等）を巡回結果から除外して整理整頓 ---
@@ -230,6 +256,77 @@ def _origin_or_unknown(p: dict) -> str:
     return "ブレンド" if _BLEND_WORD.search(text) else "不明"
 
 
+# 豆の番号は 10億台から始める。それより小さい番号は、
+#   1〜99999      手で確認した種の豆(seedBeans)
+#   100000〜      昔の「上から順に振っていた」番号
+# なので、番号を見ただけでどちらの世代か分かる。表示側の付け替えがこれを見る。
+ID_BASE = 1_000_000_000
+ID_SPAN = 9_000_000_000_000        # JS の安全な整数(2^53)に十分収まる
+
+
+def bean_id(key: str, salt: int = 0) -> int:
+    """商品の key（roaster::handle）から、変わらない番号を作る。
+
+    ■ なぜ要るのか
+
+    前は 100000 から順に振っていた。並びは
+    `SELECT * FROM products ORDER BY last_seen DESC` が決めていて、
+    巡回のたびに変わる。つまり **同じ番号が翌時間には別の豆を指していた**。
+
+    味の記録は beanId だけで豆に結び付いている（store.js の getTasting）。
+    番号がずれると、自分が付けた評価・メモ・写真が別の豆に付いて見える。
+    写真も IndexedDB で beanId を鍵にしているので一緒にずれる。
+    共有リンク(?b=) も別の豆を開く。
+
+    実測: 手元の6件で並びを1つずらしただけで、4件が別の豆を指した。
+
+    ■ key を種にする理由
+
+    key は state.db の主キーで、店の名前と商品の handle から作る。
+    商品が増えても減っても、他の豆の key は動かない。
+    """
+    h = hashlib.sha1(f"{key}#{salt}".encode("utf-8")).digest()
+    return ID_BASE + int.from_bytes(h[:6], "big") % ID_SPAN
+
+
+def assign_bean_ids(products: list[dict]) -> dict:
+    """key → 番号 の対応を作る。
+
+    ぶつかったときのために key の順に並べてから振る。こうしておくと、
+    ぶつかった組み合わせが同じなら、何度作り直しても同じ結果になる。
+    （8千件を9兆通りに振るので、ぶつかる見込みは百万分の4ほど）
+    """
+    used: dict = {}
+    out: dict = {}
+    for key in sorted({p.get("key") or "" for p in products if p.get("key")}):
+        salt = 0
+        bid = bean_id(key)
+        while bid in used:
+            salt += 1
+            bid = bean_id(key, salt)
+        used[bid] = key
+        out[key] = bid
+    return out
+
+
+def load_instagram() -> dict:
+    """店名 → Instagram のアカウント名。無ければ空。
+
+    集めるのは scripts/collect_instagram.py（たまに走らせる）。
+    アカウント名はめったに変わらないので、毎時の巡回には混ぜていない。
+    """
+    p = ROOT / "config" / "instagram.yaml"
+    if not p.exists():
+        return {}
+    try:
+        import yaml
+        d = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        got = d.get("instagram") or {}
+        return {k: str(v).lstrip("@") for k, v in got.items() if v}
+    except Exception:
+        return {}
+
+
 def first_seen_date(p: dict, fallback: str) -> str:
     """その豆を初めて見つけた日（YYYY-MM-DD）。
 
@@ -256,12 +353,107 @@ PAL = [["#DCD6C8", "#8A3B2E"], ["#2E2A24", "#C8A96A"], ["#B8433A", "#F2E9DC"], [
        ["#F4F1E8", "#1A1815"], ["#6B2D3C", "#EFE9DA"]]
 
 
-def load_seed_keys() -> dict:
-    m = {}
+def load_seed_index() -> dict:
+    """図鑑（手書きの表）を、突き合わせ用の索引にする。
+
+      { 突き合わせ名: [(鍵, ドメイン), ...] }
+
+    ■ なぜ名前ひとつに複数を持つのか
+
+    以前は「名前 → 鍵」の1対1だった。ところが突き合わせ名は業種の言葉を
+    落とすので、図鑑の中でも別の店が同じ名前に潰れる。実測で3組あった。
+
+      Kaffa（kaffa.no）      と Kaffa Roastery（kaffaroastery.fi）
+      Coffee Lab（ブラジル） と The Espresso Lab（ドバイ）
+      Origin Coffee（英）    と Origin Coffee Roasting（南ア）
+
+    1対1の表では、あとから読んだ方が前の店を上書きする。上書きされた店は
+    どの巡回結果とも結びつかず、その店のページに豆が1件も入らない。
+    さらに、上書きした側のページには別の店の豆が入る。
+
+    候補を全部持っておき、ドメインで選び分ける（→ roaster_key）。
+    """
+    m: dict = {}
     for f in ROASTER_DIR.glob("*.js"):
-        for km in re.finditer(r'^\s+([a-z0-9]+): \{ name: "([^"]+)"', f.read_text(encoding="utf-8"), re.M):
-            m[norm(km.group(2))] = km.group(1)
+        for km in re.finditer(r'^\s+([a-z0-9]+): \{ name: "([^"]+)"(.*)$',
+                              f.read_text(encoding="utf-8"), re.M):
+            u = re.search(r'url: "([^"]+)"', km.group(3))
+            m.setdefault(norm(km.group(2)), []).append(
+                (km.group(1), bare_domain(u.group(1)) if u else ""))
     return m
+
+
+def roaster_key(rname: str, dom: str, index: dict, seed_keys: set) -> tuple[str, bool, str]:
+    """巡回で取れた店を、図鑑のどの店に結びつけるかを決める。
+
+    返すのは (鍵, 図鑑の店に結びついたか, ぶつかった図鑑の鍵)。
+
+    ■ 名前が一致しても、ドメインが違えば別の店
+
+    norm() は業種の言葉を落とすので、実データで別の店が同じ名前に潰れていた。
+
+      Luna（enjoylunacoffee.com）        → 図鑑 Luna Coffee（バンクーバー）
+      Coffee Lab（coffeelab.com.br）     → 図鑑 The Espresso Lab（ドバイ）
+      Origin Coffee（origincoffee.co.uk）→ 図鑑 Origin Coffee Roasting（南ア）
+      Kaffa（kaffa.no）                  → 図鑑 Kaffa Roastery（フィンランド）
+
+    このままだと豆が別の店のページに並ぶ。画面を見ても気づけない。
+
+    選び方は次のとおり。
+
+      1. ドメインが一致する候補があれば、それ（いちばん確か）
+      2. 候補が1つだけで、ドメインが食い違わないなら、それ
+      3. それ以外は結びつけず、その店の項目を新しく作る
+
+    同じ店なのにドメイン表記がずれているだけなら、図鑑側の url を直せば
+    またひとつに戻る。どちらの取り違えかは人にしか判断できないので、
+    呼び出し側が名前を出す。
+
+    ■ 分けた先が、図鑑の鍵とぶつかってはいけない
+
+    実測: Luna を分けたのに slug("Luna") が図鑑の "luna"（Luna Coffee）と
+    同じで、また同じ店に戻っていた。ドメインから決まる印を足して離す。
+    毎回同じ鍵になるので、次の巡回でも同じ店を指す。
+    """
+    cands = index.get(norm(rname)) or []
+    if dom:
+        for key, kdom in cands:
+            if kdom == dom:
+                return key, True, ""
+    if len(cands) == 1:
+        key, kdom = cands[0]
+        if not (kdom and dom and kdom != dom):
+            return key, True, ""
+    key = slug(rname)
+    if key in seed_keys:
+        key = f"{key}{hashlib.sha1((dom or rname).encode()).hexdigest()[:4]}"
+    return key, False, (cands[0][0] if cands else "")
+
+
+def load_shop_urls() -> dict:
+    """巡回対象の 店名 → EC の URL（config/roasters.yaml）。
+
+    Instagram の表は店名で引くが、図鑑の表と名前の書き方が違う店がある。
+    そのときにドメインで引き当てるために使う。
+    """
+    p = ROOT / "config" / "roasters.yaml"
+    if not p.exists():
+        return {}
+    try:
+        import yaml
+        d = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        return {r["name"]: r.get("url", "") for r in d.get("roasters", []) if r.get("name")}
+    except Exception:
+        return {}
+
+
+def bare_domain(url: str) -> str:
+    """URL から店を指す部分だけを残す。https も www も shop も落とす。"""
+    d = re.sub(r"^https?://", "", (url or "").strip().lower()).split("/")[0]
+    for pre in ("www.", "shop.", "store.", "online.", "ec."):
+        if d.startswith(pre):
+            d = d[len(pre):]
+    return d
 
 
 # レアロット画面のカテゴリはこの印で組まれている。銘柄名か店のタグから拾う。
@@ -334,7 +526,7 @@ def main() -> None:
         print("no site.json; wrote empty overlay")
         return
     data = json.loads(SITE.read_text(encoding="utf-8"))
-    seed = load_seed_keys()
+    seed = load_seed_index()
 
     # 店ごとに1つだけ (市区町村, 国) を集めて座標に直す。
     # 失敗しても空の辞書が返るだけで、国の代表座標に落ちる。
@@ -348,10 +540,18 @@ def main() -> None:
     roasters: dict = {}
     beans: list = []
     by_roaster: dict = {}
+    key_of_name: dict = {}
+    name_clash: list = []          # 名前は同じだがドメインが違った組
+    # 店の見分けに使う対応表。名前だけでは別の店が潰れるので、ドメインでも引く
+    shop_url = load_shop_urls()
+    # 図鑑がすでに使っている鍵と、鍵 → ドメイン
+    seed_keys = {k for v in seed.values() for k, _ in v}
+    key_dom = {k: d for v in seed.values() for k, d in v if d}
     for p in data.get("products", []):
         by_roaster.setdefault(p.get("roaster") or "Unknown", []).append(p)
 
-    bid = 100000
+    # 番号は key から決める。並び順には一切よらない（よると巡回のたびにずれる）
+    ids = assign_bean_ids(data.get("products", []))
     today = datetime.date.today().isoformat()
     # 豆名の重複判定用（日本語も残すため、区切り記号だけ除去）
     bnorm = lambda s: re.sub(r"[\s　_\-\[\]（）()／/|、。,.:：!！’'\"]", "", (s or "").lower())
@@ -385,8 +585,13 @@ def main() -> None:
         # 「新規」と判定され、手で書いた都市名・座標が国コードと国の代表座標で
         # 上書きされていた（Onyx は Rogers から米国の中心へ、Five Elephant は
         # ベルリンから大西洋へ飛んでいた）。
-        matched = norm(rname) in seed
-        key = seed[norm(rname)] if matched else slug(rname)
+        key, matched, clash = roaster_key(rname, bare_domain(shop_url.get(rname, "")),
+                                          seed, seed_keys)
+        if clash:
+            name_clash.append((rname, clash))
+        # 種にある店も含めて控える。Instagram のように「種にある店へ1欄だけ
+        # 足したい」ときに、この対応表が要る
+        key_of_name[rname] = key
         country = (prods[0].get("country") or "JP").upper()
         # 店が /meta.json で名乗っている市区町村。ここが取れていれば実際の街に置ける。
         city = (prods[0].get("city") or "").strip()
@@ -405,7 +610,11 @@ def main() -> None:
 
         for i, p in enumerate(prods):
             grams = int(p.get("grams") or 0)
-            col, acc = PAL[(bid) % len(PAL)]
+            bid = ids.get(p.get("key") or "")
+            if bid is None:                # key の無い商品は番号を作れないので出さない
+                continue
+            # 袋の色も番号から決める。番号が変わらないので、同じ豆は毎回同じ色になる
+            col, acc = PAL[bid % len(PAL)]
             seen = first_seen_date(p, today)
             bean = {
                 "id": bid, "r": key, "name": p.get("title") or "Lot",
@@ -459,8 +668,84 @@ def main() -> None:
                     bean["coeRank"] = rank
             if _is_cgle(title, bean["origin"]):
                 bean["cgle"] = True
+            # 風味をどの道で取ったか。"label"=店が見出しを付けている /
+            # "guess"=説明文から拾った。集計で確かな方だけを選べるようにする。
+            # 風味が無い豆には付けない（欄が増えるだけなので）
+            if bean.get("notes") and p.get("note_src"):
+                bean["noteSrc"] = p["note_src"]
             beans.append(bean)
-            bid += 1
+
+    # 店の Instagram。scripts/collect_instagram.py が集めたものを重ねる。
+    # 無い店には何も付けない（画面側は付いている店にだけ導線を出す）。
+    #
+    # ■ 店の見つけ方を2つ使う
+    #
+    # 実測で2回、届かない店が出た。
+    #
+    #   1回目: オーバーレイだけを見ていた。オーバーレイは「種データに無い店」
+    #          しか持たないので、318件のうち図鑑に出たのは9店だけだった。
+    #   2回目: 巡回で豆が取れた店だけを見ていた。図鑑にページはあるが、まだ
+    #          豆を取れていない店に付かず、79店が漏れた。
+    #
+    # 図鑑に店のページがある経路は2つある。種データ（手書き）と、巡回で
+    # 見つけた店。どちらの経路で載っている店にも付くように、両方を引く。
+    #
+    # どちらでも見つからない店には付けない。付けると、名前も街も持たない
+    # 「instagram だけの店」が図鑑に生まれる。
+    #
+    # 種にある店へ足すのは instagram の欄だけ。画面側は欄ごとに重ねるので、
+    # 手で書いた街・座標・紹介文は消えない（components/data/roasters.js）。
+    ig = load_instagram()
+
+    # 店ごとに「どのキーか」と「どれだけ確かか」を出す。
+    # ドメインは店ごとに違うので確か。名前は norm() が業種の言葉を落とすため、
+    # 別の店が同じキーに潰れることがある（Luna と Luna Coffee → どちらも luna）。
+    picked: dict = {}          # キー → (確からしさ, 店名, アカウント名)
+    skipped = []
+    for rname, h in ig.items():
+        dom = bare_domain(shop_url.get(rname, ""))
+        k, matched, _ = roaster_key(rname, dom, seed, seed_keys)
+        if matched:
+            # 図鑑の店と結びついた。ドメインが一致していればいちばん確か
+            key, rank = k, (2 if dom and key_dom.get(k) == dom else 1)
+        elif key_of_name.get(rname):
+            key, rank = key_of_name[rname], 1
+        else:
+            skipped.append(rname)
+            continue
+        cur = picked.get(key)
+        if cur is None or rank > cur[0]:
+            picked[key] = (rank, rname, h)
+        elif rank == cur[0]:
+            # 同じ確からしさで2店が同じキーに来た。どちらの店か決められないので
+            # 印を残す（あとで両方落とす）。間違った店のアカウントを出すより良い
+            picked[key] = (rank, None, None)
+
+    ambiguous = [k for k, v in picked.items() if v[1] is None]
+    hit = 0
+    for key, (_, rname, h) in picked.items():
+        if rname is None:
+            continue
+        roasters.setdefault(key, {})["instagram"] = h
+        hit += 1
+    if ig:
+        print(f"Instagram: {hit}/{len(ig)} 店に付けた")
+        if ambiguous:
+            print(f"    どの店か決められないので付けなかった: {len(ambiguous)} 件"
+                  f" — キー {', '.join(ambiguous[:8])}")
+        if skipped:
+            # 図鑑に店そのものが無いぶん。表の名前が古い疑いもあるので名前を出す
+            print(f"    図鑑に店が無いので付けなかった: {len(skipped)} 件"
+                  f" — {', '.join(skipped[:8])}")
+
+    # 名前は同じだがドメインが違った組。別の店として扱っている。
+    # 同じ店なのにドメイン表記がずれているだけなら、図鑑側の url を直せば
+    # ひとつに戻る。どちらなのかは人にしか判断できないので、必ず名前を出す。
+    if name_clash:
+        print(f"\n⚠ 名前が同じでドメインが違う店（別の店として扱った）: {len(name_clash)} 組")
+        for rname, key in name_clash:
+            print(f"    {rname[:28]:<28} {bare_domain(shop_url.get(rname, '')):<28}"
+                  f" ↔ 図鑑 {key}（{key_dom.get(key)}）")
 
     report_all_goods(all_goods)
     drop_impossible_prices(beans)

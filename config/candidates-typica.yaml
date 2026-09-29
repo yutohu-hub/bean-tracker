@@ -1,0 +1,105 @@
+# TYPICA のロースター一覧から拾った店と、東京の焙煎所リストから拾った店。
+#
+# ■ 前提
+#
+# typica.coffee はこの環境の外向き通信で遮断されていて、こちらからは開けない。
+# 一覧はユーザーが貼ったぶんだけを扱っている。住所と店名しか分からないので、
+# 売り場URLは1店ずつ検索で確かめた。推測でドメインを並べると、当たらないうえに
+# 無関係のサイトを叩くことになるので、確認できなかった店は入れない。
+#
+# ■ 入れなかった店と、その理由（測ったこと・調べたこと）
+#
+#   ROASTER'S COFFEE 焙煎屋（福岡・平尾/警固） … 30年以上カフェも通販も持たない店
+#   MANLY COFFEE（福岡）                      … すでに図鑑にある（Manly Coffee）
+#   GLITCH COFFEE & ROASTERS（神田錦町）      … すでに図鑑にある
+#   SHI-TEN（外神田5-4-12）                   … BRÜCKE で焙煎した豆を出す支店。
+#                                               焙煎所は BRÜCKE なので二重に数えない
+#   マメココロ（北千住ほか全6店）             … 店頭でのオーダー焙煎のみ。
+#                                               mamecocoro.jp に売り場が無い
+#   Cindi Roast & Brew（北千住）              … 売り場が見つからない（Instagramのみ）
+#
+# BASE・STORES・Square は Shopify の products.json も WooCommerce の API も
+# 持たないので、sitemap + JSON-LD で拾えるかどうかによる。ここで取れなければ
+# config/probed-no-products.yaml に理由ごと移す。
+
+settings:
+  max_pages: 4
+  timeout_sec: 20
+  retries: 2
+  concurrency: 3
+
+roasters:
+  # ---- TYPICA 福岡・熊本 ----
+  # 福岡市中央区天神 / BASE（ドメインは connectcoffe、e が1つ）
+  - name: "ConnectCoffee"
+    country: "JP"
+    url: https://connectcoffe.thebase.in
+    currency: JPY
+  # 熊本市北区植木町 / BASE
+  - name: "Gluck Coffee Spot"
+    country: "JP"
+    url: https://gluckcoffee.base.shop
+    currency: JPY
+  # 熊本市東区錦ケ丘 / Shopify
+  - name: "JUNCTION Coffee Roaster"
+    country: "JP"
+    url: https://junction-coffee.com
+    currency: JPY
+  # 福岡市中央区警固・港 / 自前ドメイン
+  - name: "SHIROUZU COFFEE"
+    country: "JP"
+    url: https://shirouzucoffee.com
+    currency: JPY
+
+  # ---- 東京（貼られた焙煎所リストから） ----
+  # 台東区台東1-29-4 / 北欧系の浅煎り
+  - name: "KIELO COFFEE"
+    country: "JP"
+    url: https://kielocoffee.shop
+    currency: JPY
+  # 足立区大谷田 / STORES（外神田の SHI-TEN はこの店の豆）
+  - name: "BRÜCKE coffee"
+    country: "JP"
+    url: https://odaibrucke.stores.jp
+    currency: JPY
+  # 台東区谷中1-3-6 / BASE
+  - name: "FIVE COFFEE STAND&ROASTERY"
+    country: "JP"
+    url: https://www.fivecoffee.jp
+    currency: JPY
+  # 足立区千住3-33 / STORES / 東ティモール専門
+  - name: "LUSH-COFFEE"
+    country: "JP"
+    url: https://lush-coffee.stores.jp
+    currency: JPY
+  # 千代田区外神田6-16-9 / WordPress。売り場があるかは叩いて確かめる
+  - name: "シャンズカフェ"
+    country: "JP"
+    url: https://shangs-cafe.com
+    currency: JPY
+
+  # ---- TYPICA 海外 ----
+  # Houston, TX。ドメインが2つ見つかった。取れた方だけを図鑑に入れる
+  - name: "New Heights Coffee Roasters"
+    country: "US"
+    url: https://www.newheightscoffeeroasters.com
+    currency: USD
+  - name: "New Heights Coffee"
+    country: "US"
+    url: https://newheightscoffee.com
+    currency: USD
+  # Madrid, Chamberí
+  - name: "Cafés Guayacán"
+    country: "ES"
+    url: https://cafesguayacan.com
+    currency: EUR
+  # Fairfax, VA（Chubby Squirrel 内の焙煎所）
+  - name: "Kustomcoffee"
+    country: "US"
+    url: https://kustomcoffee.com
+    currency: USD
+  # Guatemala City, Paseo Cayalá
+  - name: "Family Bonds"
+    country: "GT"
+    url: https://familybondscoffee.com
+    currency: GTQ

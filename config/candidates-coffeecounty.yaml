@@ -1,0 +1,20 @@
+# Coffee County（福岡・久留米）の売り場URL。本人から教わったもの。
+#
+# 図鑑にはもう入っているが豆0件だった。登録していたのが coffeecounty.cc で、
+# 調べると sitemap が無く、トップの商品リンクの先にも JSON-LD が無い。
+# 小川珈琲（oc-ogawa.co.jp → oc-shop.co.jp）と同じ形で、
+# ブランドサイトを登録して売り場を見ていなかった。
+#
+# 取れることを確かめてから roasters.yaml のURLを差し替える。
+
+settings:
+  max_pages: 4
+  timeout_sec: 20
+  retries: 2
+  concurrency: 2
+
+roasters:
+  - name: "Coffee County"
+    country: "JP"
+    url: https://shop.coffeecounty.cc
+    currency: JPY

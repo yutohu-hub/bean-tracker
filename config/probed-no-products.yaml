@@ -1,0 +1,219 @@
+# 叩いてみたが商品が取れなかった店。
+#
+# ここは巡回対象ではない。巡回するのは config/roasters.yaml だけ。
+#
+# ■ なぜ残すのか
+#
+# 候補ファイルを役目が終わるたびに消していたら、同じ店を何度も叩き直す
+# ことになる。実際、豆香洞コーヒーは tokado-coffee.com で失敗したあと、
+# 別の機会に同じドメインをもう一度並べていた。
+#
+# 取れなかった店をここに集めておけば、次に候補を作るときに突き合わせられる。
+# 店の作りは変わるので、時間が経ってから叩き直す価値はある。そのときは
+# このファイルをそのまま probe_roasters.py に渡せる形にしてある。
+#
+#   python scripts/probe_roasters.py config/probed-no-products.yaml
+#
+# 理由は測ったものだけ書いてある。分からないものは書いていない。
+
+settings:
+  max_pages: 2
+  timeout_sec: 10
+  retries: 1
+  concurrency: 6
+
+roasters:
+
+  # ---- メルボルン ----
+  - name: "Everyday Coffee"
+    country: "AU"
+    url: https://everydaycoffee.com.au
+    currency: AUD
+  - name: "Bureaux Collective"
+    country: "AU"
+    url: https://bureauxcollective.com
+    currency: AUD
+  - name: "Bench Coffee Co"
+    country: "AU"
+    url: https://benchcoffee.com.au
+    currency: AUD
+  - name: "Cartel Coffee"
+    country: "AU"
+    url: https://cartelcoffee.com.au
+    currency: AUD
+  - name: "Reformatory Caffeine Lab"
+    country: "AU"
+    url: https://reformatorycaffeinelab.com.au
+    currency: AUD
+  - name: "Aunty Peg's"
+    country: "AU"
+    url: https://auntypegs.com.au
+    currency: AUD
+  - name: "Brother Baba Budan"
+    country: "AU"
+    url: https://brotherbababudan.com.au
+    currency: AUD
+  - name: "Tinker Coffee"
+    country: "AU"
+    url: https://tinkercoffee.com.au
+    currency: AUD
+  - name: "Kōhī Coffee"
+    country: "AU"
+    url: https://kohicoffee.com.au
+    currency: AUD
+  - name: "Ora Coffee"
+    country: "AU"
+    url: https://oracoffee.com.au
+    currency: AUD
+  - name: "Barry Coffee"
+    country: "AU"
+    url: https://barrycoffee.com.au
+    currency: AUD
+  - name: "Cibi"
+    country: "AU"
+    url: https://cibi.com.au
+    currency: AUD
+
+  # ---- 日本（1巡目） ----
+  - name: "About Life Coffee Brewers"
+    country: "JP"
+    url: https://aboutlifecoffeebrewers.com
+    currency: JPY
+  - name: "Counterpart Coffee Gallery"
+    country: "JP"
+    url: https://counterpartcoffeegallery.com
+    currency: JPY
+  - name: "The Coffeeshop"
+    country: "JP"
+    url: https://thecoffeeshop.jp
+    currency: JPY
+  - name: "Tailored Cafe"
+    country: "JP"
+    url: https://tailoredcafe.jp
+    currency: JPY
+  - name: "Kaburaki"
+    country: "JP"
+    url: https://kaburaki.jp
+    currency: JPY
+  - name: "Coffee Elementary School"
+    country: "JP"
+    url: https://coffee-syo.com
+    currency: JPY
+  # 店が閉じている（404 This store is unavailable）。robots.txt も Disallow: /
+  - name: "Rokumei Coffee"
+    country: "JP"
+    url: https://rokumeicoffee.com
+    currency: JPY
+  - name: "Koto Coffee Roasters"
+    country: "JP"
+    url: https://kotocoffee.com
+    currency: JPY
+  - name: "Tsujimoto Coffee"
+    country: "JP"
+    url: https://www.tsujimoto-coffee.com
+    currency: JPY
+  - name: "Kakuozan Coffee"
+    country: "JP"
+    url: https://kakuozancoffee.com
+    currency: JPY
+  - name: "Ryumon Coffee Stand"
+    country: "JP"
+    url: https://ryumoncoffee.com
+    currency: JPY
+  # ここは売り場ではない。売り場は tokado-coffee.shop-pro.jp（下記）
+  - name: "Tokado Coffee"
+    country: "JP"
+    url: https://tokado-coffee.com
+    currency: JPY
+  - name: "Honey Coffee"
+    country: "JP"
+    url: https://honeycoffee.com
+    currency: JPY
+  # robots.txt で断られている
+  - name: "Hoshikawa Cafe"
+    country: "JP"
+    url: https://hoshikawacafe.com
+    currency: JPY
+
+  # ---- 日本（2巡目） ----
+  - name: "TERA COFFEE and ROASTER"
+    country: "JP"
+    url: https://shop.teracoffee.jp
+    currency: JPY
+  - name: "常盤珈琲焙煎所"
+    country: "JP"
+    url: https://tokiwacoffee.com
+    currency: JPY
+  - name: "Nagasawa Coffee"
+    country: "JP"
+    url: https://www.nagasawa-coffee.net
+    currency: JPY
+  - name: "TAOCA COFFEE"
+    country: "JP"
+    url: https://taocacoffee.net
+    currency: JPY
+  - name: "ヒロコーヒー"
+    country: "JP"
+    url: https://www.hirocoffee.jp
+    currency: JPY
+  - name: "大山崎 COFFEE ROASTERS"
+    country: "JP"
+    url: https://oyamazakicr.thebase.in
+    currency: JPY
+  - name: "GREENS"
+    country: "JP"
+    url: https://www.greens-kobe167.jp
+    currency: JPY
+  # sitemapに商品ページが無い（カラーミーは商品の sitemap を出さない）
+  - name: "豆香洞コーヒー"
+    country: "JP"
+    url: https://tokado-coffee.shop-pro.jp
+    currency: JPY
+
+  # ---- 京都 ----
+  - name: "Sentido"
+    country: "JP"
+    url: https://sentidocoffe.theshop.jp
+    currency: JPY
+  - name: "オオヤコーヒ焙煎所"
+    country: "JP"
+    url: https://ooyacoffee.stores.jp
+    currency: JPY
+  - name: "イノダコーヒ"
+    country: "JP"
+    url: https://store.inoda-coffee.co.jp
+    currency: JPY
+  - name: "カフェ・ヴェルディ"
+    country: "JP"
+    url: https://www.verdi.jp
+    currency: JPY
+  - name: "Coffee Base KANONDO"
+    country: "JP"
+    url: https://www.kanondo.coffee
+    currency: JPY
+  - name: "びーんず亭"
+    country: "JP"
+    url: https://www.beanstei.com
+    currency: JPY
+  - name: "ニシナ屋珈琲 京都"
+    country: "JP"
+    url: https://kyoto.nishinaya.com
+    currency: JPY
+  # sitemapに商品ページが無い（同上）。図鑑の Circus Coffee は豆0件のまま
+  - name: "Circus Coffee（売り場）"
+    country: "JP"
+    url: https://circuscoffee.shop-pro.jp
+    currency: JPY
+
+  # ---- 教わった店 ----
+  # STORES が403。sitemap も商品APIもトップページも塞がれている（/cart.js だけ200）
+  - name: "COFFEE DOT"
+    country: "JP"
+    url: https://coffeedot.stores.jp
+    currency: JPY
+
+  # acid coffee（東京・代々木上原 / acidcoffee.stores.jp）
+  #   教わった店。2026-08-30 に叩いて「sitemapに商品ページが無い」。
+  #   STORES の売り場で、トップの一覧からも商品リンクが拾えない。
+  #   同じ STORES の COFFEE DOT は全経路403だった。売り場は人には見えるが、
+  #   機械には商品が出ていない。別のドメインがあれば取れる見込みがある。

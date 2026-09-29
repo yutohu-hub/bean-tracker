@@ -101,6 +101,10 @@ export default function RootLayout({ children }) {
             #bt-print {
               color: #17150F; font-size: 10pt; line-height: 1.6;
               font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+              /* ブラウザは刷るとき背景色を既定で落とす。棒グラフは背景色で
+                 引いているので、これが無いと目盛りだけ残って棒が消える。
+                 写真（img）は元から刷られるので、これは棒のための指定。 */
+              -webkit-print-color-adjust: exact; print-color-adjust: exact;
             }
             .bt-p-head { border-bottom: 2px solid #17150F; padding-bottom: 8pt; margin-bottom: 14pt; }
             .bt-p-brand { font-size: 8pt; letter-spacing: 0.2em; color: #8A857B; }
@@ -127,7 +131,21 @@ export default function RootLayout({ children }) {
             .bt-p-list td { border-bottom: 1px solid #EFECE3; }
             .bt-p-date { white-space: nowrap; color: #8A857B; font-variant-numeric: tabular-nums; }
             .bt-p-star { white-space: nowrap; color: #A87B2E; }
-            .bt-p-memo { font-size: 8pt; color: #8A857B; margin-top: 1pt; }
+            /* メモは改行したまま書かれている。詰めると別の文がつながって読めなくなる */
+            .bt-p-memo { font-size: 8pt; color: #8A857B; margin-top: 1pt; white-space: pre-wrap; }
+            /* 写真。枚数が多いとページに収まらないので、ここだけはまたぐことを許す。
+               1枚ずつは切らない（figure 単位で avoid）。 */
+            .bt-p-sec-flow { break-inside: auto; }
+            .bt-p-shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7pt; }
+            .bt-p-shot { margin: 0; break-inside: avoid; }
+            .bt-p-shot img {
+              display: block; width: 100%; height: 38mm;
+              object-fit: cover;                       /* 縦横がまちまちなので枠に合わせて切る */
+              border: 1px solid #E4E1D8; border-radius: 2pt;
+            }
+            .bt-p-shot figcaption { font-size: 7.5pt; line-height: 1.4; margin-top: 2.5pt; }
+            .bt-p-shot-name { display: block; font-weight: 700; }
+            .bt-p-shot-sub { display: block; color: #8A857B; }
             .bt-p-foot { margin-top: 16pt; padding-top: 6pt; border-top: 1px solid #E4E1D8; font-size: 7.5pt; color: #8A857B; }
           }
 ` }} />

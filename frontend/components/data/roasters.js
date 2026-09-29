@@ -15,5 +15,11 @@ export const ROASTER_GROUPS = { nordic, uk, europe, northAmerica, oceania, eastA
 
 import { LIVE_ROASTERS } from "./live";
 
-// 全ロースターを統合（末尾に巡回実データを重ねてキー一致で上書き）
-export const ROASTERS = { ...nordic, ...uk, ...europe, ...northAmerica, ...oceania, ...eastAsia, ...seAsiaIndia, ...latinAmerica, ...africaMideast, ...LIVE_ROASTERS };
+import { mergeOverlay } from "../lib/mergeOverlay";
+
+// 全ロースターを統合（末尾に巡回実データを重ねる）。
+// 店ごと丸ごとではなく欄ごとに重ねる。理由は lib/mergeOverlay.js に書いてある。
+export const ROASTERS = mergeOverlay(
+  { ...nordic, ...uk, ...europe, ...northAmerica, ...oceania, ...eastAsia, ...seAsiaIndia, ...latinAmerica, ...africaMideast },
+  LIVE_ROASTERS,
+);

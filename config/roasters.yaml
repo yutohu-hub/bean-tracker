@@ -45,6 +45,34 @@ roasters:
     country: JP
     url: https://kurasu.kyoto
     currency: JPY
+  # ---- 日本 追加分（config/candidates-japan.yaml で20店を叩き、
+  #      実際に商品が取れた6店だけを写した）----
+  - name: "Sol's Coffee"
+    country: "JP"
+    url: https://solscoffee.com
+    currency: JPY
+  - name: "Cafe Facon"
+    country: "JP"
+    url: https://cafe-facon.jp
+    currency: JPY
+  - name: "Life Size Cribe"
+    country: "JP"
+    url: https://lifesizecribe.com
+    currency: JPY
+  - name: "Bach Kaffee"
+    country: "JP"
+    url: https://www.bach-kaffee.co.jp
+    currency: JPY
+  # 米国の Blue Bottle / Verve Coffee は別に入っている。日本法人は別ストア・
+  # 別通貨で、扱う豆も違う（Single O と Single O Japan と同じ関係）
+  - name: "Blue Bottle Coffee Japan"
+    country: "JP"
+    url: https://store.bluebottlecoffee.jp
+    currency: JPY
+  - name: "Verve Coffee Roasters Japan"
+    country: "JP"
+    url: https://www.vervecoffee.jp
+    currency: JPY
 
   # ---- 北欧 ----
   - name: Tim Wendelboe
@@ -70,11 +98,11 @@ roasters:
 
   # ---- 欧州 ----
   - name: Square Mile Coffee
-    country: UK
+    country: GB
     url: https://shop.squaremilecoffee.com
     currency: GBP
   - name: Crankhouse Coffee
-    country: UK
+    country: GB
     url: https://www.crankhousecoffee.co.uk
     currency: GBP
   - name: The Barn
@@ -287,6 +315,30 @@ roasters:
     country: "AU"
     url: https://wideopenroad.com.au
     currency: AUD
+  # ---- メルボルン追加分（config/candidates-melbourne.yaml で18店を叩き、
+  #      実際に商品が取れた店だけを写した）----
+  - name: "Wood and Co Coffee"
+    country: "AU"
+    url: https://woodandcocoffee.com.au   # Brunswick。下見で20件（在庫18）
+    currency: AUD
+  - name: "Genovese Coffee"
+    country: "AU"
+    url: https://genovese.com.au
+    currency: AUD
+  - name: "Square One Coffee Roasters"
+    country: "AU"
+    url: https://squareonecoffee.com.au
+    currency: AUD
+  - name: "Inglewood Coffee Roasters"
+    country: "AU"
+    url: https://inglewoodcoffeeroasters.com.au
+    currency: AUD
+  # メルボルンではなくビクトリア州 Moe（車で2時間ほど東）。
+  # 依頼はメルボルンだったが、ゲイシャや発酵ロットが並ぶ良い店なので入れておく。
+  - name: "Zest Coffee"
+    country: "AU"
+    url: https://zestcoffee.com.au   # 下見で64件（在庫60）
+    currency: AUD
   - name: "Caffènation"
     country: "BE"
     url: https://caffenation.be
@@ -375,10 +427,6 @@ roasters:
     country: "CA"
     url: https://rossocoffeeroasters.com
     currency: CAD
-  - name: "September Coffee"
-    country: "CA"
-    url: https://septembercoffee.co
-    currency: CAD
   - name: "Subtext Coffee"
     country: "CA"
     url: https://subtext.coffee
@@ -435,6 +483,7 @@ roasters:
     country: "DE"
     url: https://coffeecircle.com
     currency: EUR
+    scan_pages: 40
   - name: "Companion Coffee"
     country: "DE"
     url: https://companioncoffee.com
@@ -518,6 +567,10 @@ roasters:
   - name: "Cafés El Magnífico"
     country: "ES"
     url: https://cafeselmagnifico.com
+    currency: EUR
+  - name: "Cafés Guayacán"
+    country: "ES"
+    url: https://cafesguayacan.com
     currency: EUR
   - name: "Hola Coffee"
     country: "ES"
@@ -679,6 +732,7 @@ roasters:
     country: "GB"
     url: https://laynesespresso.co.uk
     currency: GBP
+    scan_pages: 8
   - name: "Modern Standard"
     country: "GB"
     url: https://modernstandardcoffee.co.uk
@@ -715,10 +769,6 @@ roasters:
     country: "GB"
     url: https://roundhillroastery.com
     currency: GBP
-  - name: "Square Mile"
-    country: "GB"
-    url: https://squaremilecoffee.com
-    currency: GBP
   - name: "Workshop Coffee"
     country: "GB"
     url: https://workshopcoffee.com
@@ -727,6 +777,10 @@ roasters:
     country: "GR"
     url: https://cafetaf.gr
     currency: EUR
+  - name: "Family Bonds"
+    country: "GT"
+    url: https://familybondscoffee.com
+    currency: GTQ
   - name: "Coffee Roasters Asia"
     country: "HK"
     url: https://coffeeroasters.com.hk
@@ -847,6 +901,10 @@ roasters:
     country: "JP"
     url: https://arabica.com
     currency: JPY
+  - name: "Allpress Espresso Japan"
+    country: "JP"
+    url: https://jp.shop.allpressespresso.com
+    currency: JPY
   - name: "Amameria Espresso"
     country: "JP"
     url: https://amameria.com
@@ -883,6 +941,22 @@ roasters:
     country: "JP"
     url: https://golpiecoffee.jp
     currency: JPY
+  - name: "FINETIME COFFEE ROASTERS"
+    country: "JP"
+    url: https://finetime.theshop.jp
+    currency: JPY
+  - name: "G☆P COFFEE ROASTER"
+    country: "JP"
+    url: https://gpcoffee.base.shop
+    currency: JPY
+  - name: "IFNi ROASTING & CO."
+    country: "JP"
+    url: https://ifni.theshop.jp
+    currency: JPY
+  - name: "ILMIIO ROASTERY Lab."
+    country: "JP"
+    url: https://ilmiioroastery.com
+    currency: JPY
   - name: "Kaikado Café"
     country: "JP"
     url: https://kaikado-cafe.jp
@@ -898,10 +972,6 @@ roasters:
   - name: "Koffee Mameya"
     country: "JP"
     url: https://koffee-mameya.com
-    currency: JPY
-  - name: "Leaves Coffee"
-    country: "JP"
-    url: https://leavescoffee.jp
     currency: JPY
   - name: "LiLo Coffee Roasters"
     country: "JP"
@@ -939,6 +1009,10 @@ roasters:
     country: "JP"
     url: https://morihico.com
     currency: JPY
+  - name: "MOUNT COFFEE"
+    country: "JP"
+    url: https://mount-coffee.myshopify.com
+    currency: JPY
   - name: "Möwe Coffee"
     country: "JP"
     url: https://moewecoffee.buyshop.jp
@@ -959,9 +1033,10 @@ roasters:
     country: "JP"
     url: https://obscura-coffee.com
     currency: JPY
+  # oc-ogawa.co.jp は会社案内で商品が無く、豆0件だった。売り場はこちら
   - name: "Ogawa Coffee"
     country: "JP"
-    url: https://oc-ogawa.co.jp
+    url: https://oc-shop.co.jp
     currency: JPY
   - name: "Okaffe Kyoto"
     country: "JP"
@@ -1007,6 +1082,18 @@ roasters:
     country: "JP"
     url: https://setouchicoffee.jp
     currency: JPY
+  - name: "SOT Coffee Roaster"
+    country: "JP"
+    url: https://www.sotcoffee.com
+    currency: JPY
+  - name: "3s... COFFEE ROASTER"
+    country: "JP"
+    url: https://3scr.base.shop
+    currency: JPY
+  - name: "27 COFFEE ROASTERS"
+    country: "JP"
+    url: https://27coffee.jp
+    currency: JPY
   - name: "Single O Japan"
     country: "JP"
     url: https://singleo.jp
@@ -1043,6 +1130,19 @@ roasters:
     country: "JP"
     url: https://walden-woods.com
     currency: JPY
+  - name: "WIFE&HUSBAND"
+    country: "JP"
+    url: https://wandh.buyshop.jp
+    currency: JPY
+  - name: "DRIP & DROP COFFEE SUPPLY"
+    country: "JP"
+    url: https://drpdrp.com
+    currency: JPY
+  # URL は本人から教わったもの。当てずっぽうで試した8つは全部外れていた
+  - name: "Wavy Coffee"
+    country: "JP"
+    url: https://shop.wavycoffee.jp
+    currency: JPY
   - name: "Weekenders Coffee"
     country: "JP"
     url: https://weekenderscoffee.com
@@ -1054,6 +1154,25 @@ roasters:
   - name: "Yanaka Coffee"
     country: "JP"
     url: https://yanaka-coffeeten.com
+    currency: JPY
+  # 世田谷・千歳船橋（BASE）
+  - name: "IRON COFFEE"
+    country: "JP"
+    url: https://ironcoffee.official.ec
+    currency: JPY
+  # 武蔵野・吉祥寺（BASE）
+  - name: "SACHIOPIA COFFEE"
+    country: "JP"
+    url: https://sachiopia.base.ec
+    currency: JPY
+  - name: "Scrop COFFEE ROASTERS"
+    country: "JP"
+    url: https://scrop-coffee-roasters.com
+    currency: JPY
+  # 中央区・築地（BASE）
+  - name: "YAZAWA COFFEE ROASTERS"
+    country: "JP"
+    url: https://yazawacoffee.base.shop
     currency: JPY
   - name: "Zhyvago Coffee"
     country: "JP"
@@ -1070,6 +1189,32 @@ roasters:
   - name: "堀口珈琲"
     country: "JP"
     url: https://horiguchicoffee.com
+    currency: JPY
+  # ---- 日本 追加分（TYPICA の一覧から。config/candidates-typica.yaml で
+  #      叩き、商品が取れた店だけを写した）----
+  - name: "ConnectCoffee"
+    country: "JP"
+    url: https://connectcoffe.thebase.in
+    currency: JPY
+  - name: "Gluck Coffee Spot"
+    country: "JP"
+    url: https://gluckcoffee.base.shop
+    currency: JPY
+  - name: "JUNCTION Coffee Roaster"
+    country: "JP"
+    url: https://junction-coffee.com
+    currency: JPY
+  # ---- 日本 追加分（教わった店。叩いて商品と通貨を確かめたもの）----
+  # 福岡・高砂 / Shopify。店の通貨は JPY だが、こちらの居場所では USD で
+  # 返ってくる（Shopify Markets）。通貨の見分けは _shop_currencies にある
+  - name: "FILTER SUPPLY"
+    country: "JP"
+    url: https://filter-supply.jp
+    currency: JPY
+  # 東京・千駄木 / Shopify。FILTER SUPPLY と同じく USD で返ってくる
+  - name: "ignis coffee"
+    country: "JP"
+    url: https://igniscoffee.jp
     currency: JPY
   - name: "Vava Coffee"
     country: "KE"
@@ -1091,6 +1236,7 @@ roasters:
     country: "KR"
     url: https://coffeelibre.kr
     currency: KRW
+    scan_pages: 40
   - name: "Felt Coffee"
     country: "KR"
     url: https://felt.coffee
@@ -1099,10 +1245,12 @@ roasters:
     country: "KR"
     url: https://fritz.co.kr
     currency: KRW
+    scan_pages: 40
   - name: "Manufact Coffee"
     country: "KR"
     url: https://manufact.co.kr
     currency: KRW
+    scan_pages: 40
   - name: "Momos Coffee"
     country: "KR"
     url: https://momos.co.kr
@@ -1287,6 +1435,7 @@ roasters:
     country: "PH"
     url: https://coffeetonyaph.com
     currency: PHP
+    scan_pages: 40
   - name: "Coffeellera"
     country: "PH"
     url: https://coffeellera.com
@@ -1660,6 +1809,10 @@ roasters:
     country: "US"
     url: https://kumacoffee.com
     currency: USD
+  - name: "Kustomcoffee"
+    country: "US"
+    url: https://kustomcoffee.com
+    currency: USD
   - name: "LAMILL Coffee"
     country: "US"
     url: https://lamillcoffee.com
@@ -1695,6 +1848,10 @@ roasters:
   - name: "Milstead & Co"
     country: "US"
     url: https://milsteadandco.com
+    currency: USD
+  - name: "New Heights Coffee Roasters"
+    country: "US"
+    url: https://newheightscoffee.com
     currency: USD
   - name: "Novo Coffee"
     country: "US"
