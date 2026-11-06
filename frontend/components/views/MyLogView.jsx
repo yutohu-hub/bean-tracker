@@ -12,6 +12,7 @@ import { Portfolio } from "../ui/Portfolio";
 import { PhotoPicker } from "../ui/PhotoPicker";
 import { PrintSheet } from "../ui/PrintSheet";
 import { savePhotoDataUrl, deletePhoto, getPhotos } from "../lib/photos";
+import { shareUrl, MAX_SHARED_BEANS } from "../lib/urlState";
 
 const stars = (n) => "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
 const validEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s || "").trim());
@@ -55,6 +56,35 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
   const [showCode, setShowCode] = useState(false); // 6桁コードの欄を出すか（メールを送ってから）
   const [form, setForm] = useState({ name: "", roaster: "", origin: "", rating: 0, notes: "", photo: null });
   const [photos, setPhotos] = useState({});   // beanId -> dataURL（一覧のサムネイル）
+  const [withPhotos, setWithPhotos] = useState(true);   // PDFに写真を入れるか
+  /* 書き出しているあいだだけ、印刷用の紙に写真を渡す。
+     ずっと渡しておくと、写真の数だけ data URL が画面の木に載ったままになる
+     （1枚数百KB。50枚で十数MB）。刷るときしか要らないので、そのときだけ載せる。 */
+  const [printPhotos, setPrintPhotos] = useState(null);
+  const [printing, setPrinting] = useState(false);
+  const [printHint, setPrintHint] = useState("");
+  const [favMsg, setFavMsg] = useState("");        // 好きな豆のリンクをコピーしたとき
+
+  /* 「PDFとして保存」の選び方は端末で言葉が違う。どこを押せばいいのか
+     書いていないと、印刷の画面が出たところで止まってしまう。
+     端末を見て決めるので、組み上がってから入れる（静的HTMLと食い違わせない）。 */
+  useEffect(() => {
+    const ua = (typeof navigator !== "undefined" && navigator.userAgent) || "";
+    if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && typeof document !== "undefined" && "ontouchend" in document)) {
+      setPrintHint("開いた画面を下に送り、共有ボタンから「ファイルに保存」を選んでください。");
+    } else if (/Android/.test(ua)) {
+      setPrintHint("「送信先」を「PDF形式で保存」にしてください。");
+    } else {
+      setPrintHint("送信先（プリンター）を「PDFに保存」にしてください。");
+    }
+  }, []);
+
+  // 刷り終わったら写真を外す。印刷の途中で外すと、白い枠だけが残る端末がある
+  useEffect(() => {
+    const done = () => { setPrintPhotos(null); setPrinting(false); };
+    window.addEventListener("afterprint", done);
+    return () => window.removeEventListener("afterprint", done);
+  }, []);
 
   const saveManual = async () => {
     if (!form.name.trim() || !form.rating) return;
@@ -69,6 +99,78 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
     setForm({ name: "", roaster: "", origin: "", rating: 0, notes: "", photo: null });
     setShowAdd(false);
     refresh();
+  };
+
+  /* 好きな豆をまとめて送る。
+     1本のリンクに豆の番号を並べ、開くとその一覧が出る。
+
+     これまでは豆を1つずつ送るしかなく、10個好きな豆があれば10回送っていた。
+
+     送れるのは図鑑にある豆だけ。手で足した記録（負の番号）は相手の図鑑に
+     無いので入れない。番号は key から作っていて巡回しても動かないので、
+     送ったリンクは後から別の豆を指したりしない。 */
+  const favIds = list
+    .filter((t) => Number(t.rating) >= 4 && Number(t.beanId) > 0)
+    // 評価の高い順、同じなら新しく飲んだ順。上限で切れるとき、上に来るものが残る
+    .sort((a, b) => Number(b.rating) - Number(a.rating) || Number(b.at || 0) - Number(a.at || 0))
+    .map((t) => t.beanId)
+    .slice(0, MAX_SHARED_BEANS);
+
+  const shareFavs = async () => {
+    if (!favIds.length) return;
+    const url = shareUrl({ beanIds: favIds });
+    const title = `好きなコーヒー豆 ${favIds.length}件`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try { await navigator.share({ title, text: title, url }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setFavMsg("リンクをコピーしました");
+    } catch { setFavMsg("コピーできませんでした"); return; }
+    setTimeout(() => setFavMsg(""), 2000);
+  };
+
+  /* PDFに入る写真の枚数。写真は豆ごとに1枚なので、記録の数とは一致しない
+     （同じ豆を5回飲んでいても写真は1枚）。 */
+  const photoCount = new Set(list.map((t) => t.beanId).filter((id) => photos[id])).size;
+
+  /* 写真を先に復号しておく。印刷用の紙は画面では display:none なので、
+     中の画像は「刷る」と言われて初めて解かれることがある。間に合わないと
+     枠だけが刷られて中身が白くなる。刷る前にここで解いておけば確実に出る。 */
+  const warmPhotos = (map) => Promise.all(
+    Object.values(map).map((src) => new Promise((resolve) => {
+      const im = new Image();
+      im.onload = resolve; im.onerror = resolve;   // 壊れていても書き出しは続ける
+      im.src = src;
+    }))
+  );
+
+  // 2回待つ。1回目で React が組み直し、2回目で画面に載ったことが確かめられる
+  const nextPaint = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  const exportPdf = async () => {
+    if (!list.length || printing) return;
+    setBackupMsg("");
+    setPrinting(true);
+    const use = withPhotos ? photos : {};
+    try {
+      if (Object.keys(use).length) {
+        setBackupMsg("写真を読み込んでいます…");
+        await warmPhotos(use);
+      }
+      setPrintPhotos(use);
+      await nextPaint();
+      setBackupMsg("");
+      window.print();
+    } catch {
+      setBackupMsg("");
+      window.print();          // 写真で失敗しても、文字だけは書き出せるようにする
+    }
+    /* 片づけは afterprint に任せる。ここで消すと、印刷が非同期な端末で
+       まだ刷っている途中の紙から写真が抜ける。afterprint が来ない端末のために
+       時間で戻す手も残す。 */
+    setTimeout(() => { setPrintPhotos(null); setPrinting(false); }, 60000);
   };
 
   const refresh = () => {
@@ -128,8 +230,9 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
 
   /* 普段は使わない節を畳む。マイページは「記録を見る場所」なので、
      控えの持ち出しや過去の診断まで常時開いていると、本題が下に押し出される。 */
-  const foldBlock = (id, title, sub, body) => {
-    const open = !!folds[id];
+  const foldBlock = (id, title, sub, body, defaultOpen) => {
+    // まだ触っていない節は defaultOpen に従う。触ったあとは、その人の選びを覚える
+    const open = folds[id] === undefined ? !!defaultOpen : !!folds[id];
     return (
       <div style={{ marginTop: 10, border: `1px solid ${LINE}`, borderRadius: 10, overflow: "hidden" }}>
         <button onClick={() => setFolds({ ...folds, [id]: !open })}
@@ -464,6 +567,24 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
                 ))}
             </div>
           </div>
+          {/* 好きな豆をまとめて送る。★4以上に絞っているときだけ出す。
+              1つずつ送ると、好きな豆が10個あれば10回送ることになっていた。 */}
+          {onlyFav && favIds.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <button onClick={shareFavs}
+                style={{ width: "100%", padding: "11px 0", background: INK, color: PAPER, border: "none",
+                  borderRadius: 8, fontSize: FS.body, fontWeight: 700, cursor: "pointer" }}>
+                この{favIds.length}件をまとめて送る
+              </button>
+              <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 6 }}>
+                受け取った人は、この{favIds.length}件だけが並んだ図鑑が開きます。
+                {favCount > favIds.length && (
+                  <>（手で足した記録は、相手の図鑑に無いので入りません）</>
+                )}
+              </div>
+              {favMsg && <div style={{ fontSize: FS.meta, color: GREEN, marginTop: 6 }}>{favMsg}</div>}
+            </div>
+          )}
           {(showAll ? shown : shown.slice(0, 8)).map((t) => (
             <div key={t.beanId} style={{ borderBottom: `1px solid ${LINE}`, padding: "12px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
@@ -616,18 +737,28 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
       {/* 記録の持ち出し。クラウド同期は設定に依存するが、これはファイル1つで完結する。
           端末を変えても、ブラウザのデータを消しても、これがあれば戻せる。
           ただし毎回使うものではないので畳んでおく。 */}
-      {foldBlock("backup", "記録を書き出す", `${list.length}件`, () => (
+      {foldBlock("backup", "PDFで保存する", `${list.length}件`, () => (
         <div>
-          <button onClick={() => { setBackupMsg(""); window.print(); }}
-            disabled={list.length === 0}
-            style={{ width: "100%", padding: "11px 0", background: list.length ? INK : "#EDEAE1",
-              color: list.length ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700,
-              cursor: list.length ? "pointer" : "default" }}>
-            PDFで書き出す
+          <button onClick={exportPdf}
+            disabled={list.length === 0 || printing}
+            style={{ width: "100%", padding: "13px 0", background: list.length && !printing ? INK : "#EDEAE1",
+              color: list.length && !printing ? PAPER : GRAY, border: "none", borderRadius: 8, fontSize: FS.body, fontWeight: 700,
+              cursor: list.length && !printing ? "pointer" : "default" }}>
+            {printing ? "用意しています…" : "PDFで保存する"}
           </button>
-          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 6 }}>
+
+          {/* 写真は1枚数百KB。何十枚もあるとPDFが重くなって送りにくくなるので、
+              入れるかどうかをここで選べるようにする。写真が無ければ出さない。 */}
+          {photoCount > 0 && (
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 9, cursor: "pointer" }}>
+              <input type="checkbox" checked={withPhotos} onChange={(e) => setWithPhotos(e.target.checked)} />
+              <span style={{ fontSize: FS.meta, color: INK }}>写真も入れる（{photoCount}枚）</span>
+            </label>
+          )}
+
+          <div style={{ fontSize: FS.meta, color: GRAY, lineHeight: 1.7, marginTop: 8 }}>
             産地・精製方法・焙煎所・評価ごとにまとめて、全記録の一覧を付けます。
-            印刷の画面が開くので、送信先で「PDFとして保存」を選んでください。
+            {printHint && <><br />{printHint}</>}
           </div>
           {/* PDF は読むためのもので、読み戻せない。端末を変えたときに記録を持って
               いけるのは、いまはクラウド同期だけになる。黙っていると、書き出して
@@ -638,10 +769,11 @@ export function MyLogView({ onOpen, onRoaster, authNotice, onDismissNotice }) {
           </div>
           {backupMsg && <div style={{ fontSize: FS.meta, color: GREEN, marginTop: 7 }}>{backupMsg}</div>}
         </div>
-      ))}
+      ), true)}
 
-      {/* 印刷のときだけ現れる。画面には出ない */}
-      <PrintSheet list={list} email={accountEmail} />
+      {/* 印刷のときだけ現れる。画面には出ない。
+          写真は書き出しているあいだだけ渡す（普段から載せると重い） */}
+      <PrintSheet list={list} email={accountEmail} photos={printPhotos} />
     </div>
   );
 }

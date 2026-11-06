@@ -1,0 +1,327 @@
+# 店の Instagram アカウント名。scripts/collect_instagram.py が集める。
+# 店のトップページに貼ってある導線から拾っている。
+# 手で直したいときは、この表を直接編集してよい
+# （次に集めたとき、取れた店だけが上書きされる）。
+#
+# 店名の綴りと結びつかないものは自動では採らない。
+# 略称（Subtext → @sbtxt.coffee）や日本語だけの店名は、ここに手で足す。
+# 自動では選べないので、次に集めても消えない。
+instagram:
+  '% Arabica': arabica.global
+  3fe: 3fecoffee
+  Alchemist: alchemist.sg
+  Almanegra Café: almanegracafe
+  Alt Wien Kaffee: altwienkaffee
+  Amameria Espresso: amameria_espresso
+  Amor Perfecto: amorperfectocoffeeus
+  Andersen & Maillard: andersenmaillard
+  Andytown Coffee: andytownsf
+  Anthracite Coffee: anthracite_coffee_roasters
+  Apollon's Gold: apollonsgold
+  April Coffee Roasters: aprilcoffeecph
+  ARAKU Coffee: arakucoffeein
+  Archers Coffee: archers.ae
+  Artisan Roast: artisanroastcoffeeroasters
+  Assembly Coffee: assemblyroast
+  Atomic Coffee: atomiccoffeeroasters
+  Axil Coffee: axilcoffeeroasters
+  Azahar Coffee: azaharcoffee
+  Barefoot Coffee: barefootcoffee
+  Barista Parlor: baristaparlor
+  Batch Coffee: batchcoffeeuk
+  Bean Brothers: bean_brothers
+  Bean Shipper: beanshipper
+  Bean There: beantherecoffee
+  Beasty Coffee: beastycoffee
+  Belleville Brûlerie: cafesbelleville
+  Bird Rock Coffee: birdrockcoffeeroasters
+  Black & White: blackwhiteroasters
+  Blossom Coffee: blossomcoffeeroasters
+  Blue Tokai: bluetokaicoffee
+  Bocca Coffee: boccacoffee
+  Bombay Island: bombayisland
+  Bonanza Coffee: bonanzacoffee
+  Boon Coffee: booncoffee
+  Bourbon Coffee: bourboncoffeerwanda
+  Bows & Arrows: bowscoffeeroasters
+  Brave Roasters: braveroasters
+  Broadsheet Coffee: broadsheetcoffee
+  Buna: bunamx
+  Buraca Roasters: buracaroasters
+  Cafetoria Roastery: cafetoriaroastery
+  Caffènation: caffenation_coffee
+  Café Mokxa: cafemokxa
+  Café Unido: cafeunido
+  Cafés El Magnífico: cafeselmagnifico
+  Camel Step: camelstep
+  Caravan Coffee: caravanroastery
+  Casino Mocca: casinomocca
+  Cat & Cloud Coffee: catcloudcoffee
+  Center Coffee: centercoffee
+  Circus Coffee: circuscoffee55
+  Clark St Coffee: clarkstcoffee
+  Clifton Coffee: cliftoncoffee
+  Cloud Picker: cloud_picker
+  Coava Coffee: coavacoffee
+  Code Black Coffee: codeblackcoffee
+  Coffee Circle: coffeecircle
+  Coffee Collective: coffeecollectif
+  Coffee County: coffeecountycc
+  Coffee Lab: coffeelab_br
+  Coffee Libre: coffeelibrekorea
+  COFFEE LOVER's PLANET: coffeeloversplanet
+  Coffee Roasters Asia: coffeeroasters.asia
+  Coffee Stopover: coffeestopover
+  Coffee Supreme: coffee_supreme
+  Coffee Tonya PH: coffeetonyaph
+  Coffee Wrights: coffeewrights_kuramae
+  Coffeelab: coffeelab_pl
+  Coffeellera: coffeellera
+  Colonna Coffee: colonnacoffee
+  Combi Coffee: combi_coffee
+  Common Man Coffee: commonmancoffee
+  Copenhagen Coffee Lab: cphcoffeelab
+  Corridor Seven: corridorsevencoffee
+  Corvus Coffee: corvuscoffee
+  Counter Culture: counterculturecoffee
+  Coutume: coutumecafe
+  Crankhouse Coffee: crankhouseroast
+  Crema Coffee: cremacrema
+  da Matteo: damatteo
+  Dark Arts Coffee: darkartscoffee
+  Dayglow Coffee: dayglowcoffee
+  De Mello: demellocoffee
+  Dear Green Coffee: deargreen
+  DEVAN'S: devanscoffee
+  Devoción: devocionusa
+  Ditta Artigianale: dittaartigianale
+  Dogwood Coffee: dogwoodcoffee
+  Doubleshot: doubleshotcz
+  Drop Coffee: dropcoffeeroasters
+  Dukes Coffee: dukes_coffee
+  Dune Coffee: dunecoffee
+  Dutch Colony Coffee: dutchcolony
+  Eight Ounce Coffee: eightouncecoffee
+  Eighthirty: eighthirty
+  Elbgold: elbgoldkaffee
+  Elm Coffee Roasters: elmcoffeeroasters
+  Equator Coffees: equatorcoffees
+  Expat Roasters: expatroasters
+  Fika Fika Cafe: fikafikacafe
+  Fineprint Co: fineprint_co
+  Five Elephant: fiveelephant
+  Five Senses Coffee: 5sensescoffee
+  Flight Coffee: flightcoffee
+  Friedhats: friedhats
+  Fritz Coffee: fritzcoffeecompany
+  Fuglen Coffee: fuglencoffee_oslo
+  Fuglen Coffee Roasters: fuglencoffee_tokyo
+  Fábrica Coffee Roasters: fabricacoffeeroasters
+  Gardelli Specialty Coffees: gardellicoffees
+  GB Roasters: gb.roasters
+  George Howell Coffee: ghowellcoffee
+  Ghost Bird Coffee: ghostbirdcoffee
+  Gimme! Coffee: gimmecoffee
+  Girls Who Grind: girlswhogrindcoffee
+  Golpie Coffee: golpiecoffee
+  Good Life Coffee: goodlifecoffeeroasters
+  Goodman Roaster: goodman_roaster_kyoto
+  Halfwit Coffee: halfwitcoffee
+  Havana Coffee Works: havanacoffeeworks
+  Heart Coffee Roasters: heartroasters
+  Heilandt: heilandt
+  Herkimer Coffee: herkimercoffee
+  Hola Coffee: holacoffee
+  Homeground Coffee: homeground.coffee
+  Huckleberry Roasters: huckleberryroasters
+  Hydrangea: hydrangeacoffeeroaster
+  Impact Roasters: impact_roasters
+  Industry Beans: industrybeans
+  Intelligentsia: intelligentsiacoffee
+  Jacu Coffee Roastery: jacucoffeeroastery
+  Java Coffee: java_coffeeroasters
+  JC咖啡 Justin Coffee: justin_coffee_tw
+  Joe Coffee: joecoffeecompany
+  Johan & Nyström: johanochnystrom
+  kafeD: daskafed
+  Kaffa: kaffa_oslo
+  Kaffa Roastery: kaffaroastery
+  Kaffebrenneriet: kaffebrenneriet.no
+  Kaffelabbet: kaffelabbet.se
+  Kaffemisjonen: kaffemisjonen
+  Kafferäven: kafferaven
+  Kahiwa Coffee Roasters: kahiwacoffeeroasters
+  Kaikado Café: kaikadocafe
+  kakalove cafe: kakalovecafe
+  Kalsada Coffee: kalsadacoffee
+  Kannon Coffee: kannoncoffee
+  Kaveri Coffee: kavericoffee
+  Kiss the Hippo: kissthehippo
+  Kitasando Coffee: kitasando_coffee
+  Kontra Coffee: kontracoffee
+  Koppi: koppi_roasters
+  Kronotrop: kronotrop
+  Kuma Coffee: kumacoffee
+  Kōkako: kokakocoffee
+  L'Arbre à Café: larbreacafe
+  La Cabra: lacabracoffee
+  La Colombe: lacolombecoffee
+  La Viet Coffee: lavietcoffee
+  LAMILL Coffee: lamillcoffee
+  Langøra Kaffe: langorakaffe
+  Laynes Espresso: laynescafe
+  LCC Roastery: lccroastery
+  Leaves Coffee: leaves_coffee_roasters
+  Lehmus Roastery: lehmusroastery
+  Light Up Coffee: lightupcoffee
+  Lippe: lippekaffe
+  Little Victories: littlevictoriescoffee
+  Luna: enjoylunacoffee
+  Lykke Kaffegårdar: lykkecoffeefarms
+  Madcap Coffee: madcapcoffee
+  Maker Coffee: makercoffeemelbourne
+  MAME: mamespecialtycoffee
+  Man met Bril Koffie: manmetbrilkoffie
+  Manhattan Coffee Roasters: manhattancoffeeroasters
+  Manly Coffee: manly_coffee
+  Manu Coffee: manucoffee.official
+  Manufact Coffee: manufact_official
+  Market Lane Coffee: marketlane
+  Marufuku Coffee: marufukucoffee1934
+  Mecca Coffee: meccacoffee
+  Merit Coffee: meritcoffee
+  Methodical Coffee: methodicalcoffee
+  Metropolis Coffee: metropoliscoffeeco
+  Milagros Coffee Roastery: milagrosroastery
+  Modern Standard: mscroasters
+  MOK Coffee: mok_coffee
+  Momos Coffee: momoscoffee_official
+  Monogram Coffee: monogramco
+  Morihico: morihico.official
+  Nem Coffee & Espresso: _nem_coffee_espresso
+  Nemesis Coffee: nemesis.coffee
+  Nightjar Coffee: nightjar.coffee
+  Nineteen Grams: 19grams.coffee
+  Nomad Coffee: nomadcoffee
+  North Star Coffee: northstarroast
+  Novo Coffee: novocoffee
+  Nylon Coffee: nyloncoffee
+  Obadiah Coffee: obadiahcoffeeroasters
+  Obscura Coffee: obscuracoffeeroasters
+  OddKin Coffee: oddkinandco
+  Ogawa Coffee: ogawacoffee
+  Okaffe Kyoto: okaffe.kyoto
+  Olfactory Coffee: olfactorycoffee
+  Olympia Coffee Roasting: olympiacoffee
+  ONA Coffee: onacoffee
+  One Half Coffee: onehalfcoffee
+  Onibus Coffee: onibuscoffee
+  Onyx Coffee Lab: onyxcoffeelab
+  OR Coffee: orcoffeeroasters
+  Origin Coffee: origincoffeeroasters
+  Origin Coffee Roasting: origincoffeesa
+  Original Coffee: originalcoffee
+  Orsonero: orsonerocoffee
+  Ozone Coffee: ozonecoffeeuk
+  Partners Coffee: partnerscoffee
+  Passage Coffee: passagecoffee
+  Passenger Coffee: drinkpassenger
+  Peace Coffee: peace_coffee
+  Petra Roasting Co: petracoffee
+  Phil & Sebastian: philandseb
+  Philocoffea: philocoffea
+  Pilot Coffee: pilotcoffee
+  Plain Sight Coffee: plainsightcoffee
+  Portrait Coffee: portraitcoffee
+  PPP Coffee: ppp.coffee
+  Prodigal Coffee: getprodigalcoffee
+  Prolog Coffee: prologcoffee.cph
+  Proud Mary Coffee: proudmarycoffee
+  Public Coffee: publiccoffeeroasters
+  Q.O.L. Coffee: q.o.l.coffee
+  Question Coffee: questioncaferw
+  RAW Coffee Company: rawcoffeecompany
+  Raw Sugar Roast: rawsugar_roast
+  ReAnimator Coffee: reanimatorcoffee
+  Rec Coffee: rec_coffee
+  Red Bay Coffee: redbaycoffee
+  Reykjavik Roasters: reykjavik_roasters
+  Rias Coffee Roaster: riascoffeeroaster
+  Right Side Coffee: rightsidecoffee
+  Risteriet Coffee: risteriet
+  Ritual Coffee: ritualcoffee
+  Roastery Coffee House: roasterycoffeehouseindia
+  Roastwork: roastwork
+  Rogue Wave Coffee: rogue_wave_coffee
+  Roots Coffee: rootsbkk
+  Rosetta Roastery: rosettaroastery
+  Rosso Coffee: rossocoffeeroasters
+  Round Hill Roastery: roundhillroastery
+  Ruby Coffee: rubyroasters
+  Rufous Coffee: rufous_coffee_1
+  Rumble Coffee: rumblecoffee
+  Röststätte: roeststaetteberlin
+  Saza Coffee: sazacoffee
+  Sensory Lab: sensory_lab
+  Seven Seeds: 7seedscoffee
+  Sey Coffee: seycoffee
+  Sightglass: sightglass
+  Simple Kaffa: simplekaffa
+  Single O: single_o
+  Single O Japan: single_ojapan
+  Slow Coffee: sl.owcoffee
+  SlowMov: slow.mov
+  Solberg & Hansen: solbergoghansen
+  Solde Kafferosteri: soldekaffe
+  Soon Specialty Coffee: soonspecialtycoffee
+  Square Mile Coffee: squaremilecoffee
+  St. Ali: st_ali
+  Standout Coffee: standoutcoffee
+  Streamer Coffee: streamercoffeecompany
+  Stumptown: stumptowncoffee
+  Subtext Coffee: sbtxt.coffee
+  Supreme Roastworks: supremeroastworks
+  Suzuki Coffee: suzukicoffee.co.ltd
+  Sweet Bloom: sweetbloomcoffee
+  Syra Coffee: syracoffee
+  Takamura Coffee: takamura_coffee_roasters
+  Talormade: talormade
+  Tanamera Coffee: tanameracoffee
+  Tandem Coffee: tandemcoffeeroasters
+  Te & Kaffi: teogkaffi
+  Terarosa: terarosacoffee
+  The Barn: thebarnberlin
+  The Coffee Academics: thecoffeeacademics
+  The Crackpots: thecrackpots
+  The Espresso Lab: theespressolab
+  The Factory / Mojocoffee: mojocoffee.2003
+  The Miners: theminerscoffee
+  Three Marks Coffee: threemarkscoffee
+  Tim Wendelboe: timwendelboe
+  Tiong Hoe Specialty: tionghoespecialtycoffee
+  Torra Roasting & Coffee: torra.pt
+  Transcend Coffee: transcendcoffee
+  Trunk Coffee: trunkcoffee
+  Truth Coffee: truth.coffee.roasting
+  Unir: unir_coffee
+  Vacation Coffee: vacation.coffee
+  Variety Coffee: varietycoffee
+  VCR: vcrlovesyou
+  Veneziano Coffee: venezianocoffeeroasters
+  Verve Coffee: vervecoffee
+  Victrola Coffee: victrolacoffee
+  Walden Woods Kyoto: waldenwoodskyoto
+  Water Avenue Coffee: wateravecoffee
+  Weekenders Coffee: weekenders_coffee
+  Wells Cafe: wellscafe.pg
+  Wes Ngopi: _wes_ngopi
+  White Label Coffee: whitelabelcoffee
+  Wide Open Road: wideopenroad.coffee
+  WILBECK CAFE: wilbeckone
+  Woodberry Coffee: woodberrycoffee
+  Workshop Coffee: workshopcoffee
+  Wrecking Ball: wreckingballcoffee
+  Yanaka Coffee: yanakacoffee
+  Yardstick Coffee: yardstickcoffee
+  丸山珈琲: maruyama_coffee
+  步昂咖啡 Buon Caffe: buoncaffetw

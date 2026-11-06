@@ -98,6 +98,14 @@ export function computeFlavor(b) {
       fy: Math.max(4, Math.min(96, byNotes.fy + jy)),
       fam: byNotes.fam,
       src: "notes",
+      /* そのノートをどうやって取ったか。巡回が付ける（crawler の note_src）。
+         "label" = 店が「Tasting Notes:」の見出しを付けている。
+                   "Grape, Guava, Floral" のような列挙なので、語を数えれば座標が決まる。
+         "guess" = 見出しが無く、風味語が2つ以上ある行から拾った。
+                   "A comforting and sweet coffee with flavours of chocolate" のような
+                   地の文が混ざる。間違ってはいないが、語の密度が低く座標がぶれる。
+         味わいマップはこれを見て、確かな方だけに絞れるようにしている。 */
+      noteSrc: b.noteSrc || "",
     };
   }
   const proc = b.process || "", o = b.origin || "";

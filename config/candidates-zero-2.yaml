@@ -1,0 +1,234 @@
+# 図鑑に名前はあるのに豆が1件も出ていない165店の 2/3。
+#
+# 1本にまとめて叩いたら15分の上限に当たった。閉じたドメインが混ざると
+# 1店あたり最大 6経路×timeout かかるので、店数×待ち時間で上限を超える。
+# 3つに割り、待ち時間を8秒に縮め、同時に12店叩く。
+# 下見で知りたいのは「いまつながるか」だけなので、粘る意味はない。
+
+settings:
+  max_pages: 2
+  timeout_sec: 8
+  retries: 1
+  concurrency: 12
+
+roasters:
+  - name: "Bear Pond Espresso"
+    country: "JP"
+    url: https://bear-pond.com
+    currency: JPY
+  - name: "Brooklyn Roasting Osaka"
+    country: "JP"
+    url: https://brooklynroasting.jp
+    currency: JPY
+  - name: "Circus Coffee"
+    country: "JP"
+    url: https://circus-coffee.jp
+    currency: JPY
+  - name: "Coffee County"
+    country: "JP"
+    url: https://coffeecounty.cc
+    currency: JPY
+  - name: "Coffee Wrights"
+    country: "JP"
+    url: https://coffee-wrights.jp
+    currency: JPY
+  - name: "Golpie Coffee"
+    country: "JP"
+    url: https://golpiecoffee.jp
+    currency: JPY
+  - name: "Kaikado Café"
+    country: "JP"
+    url: https://kaikado-cafe.jp
+    currency: JPY
+  - name: "Kannon Coffee"
+    country: "JP"
+    url: https://kannoncoffee.com
+    currency: JPY
+  - name: "Koffee Mameya"
+    country: "JP"
+    url: https://koffee-mameya.com
+    currency: JPY
+  - name: "Little Nap Coffee"
+    country: "JP"
+    url: https://littlenap.jp
+    currency: JPY
+  - name: "Lucent Coffee"
+    country: "JP"
+    url: https://lucentcoffee.stores.jp
+    currency: JPY
+  - name: "Manu Coffee"
+    country: "JP"
+    url: https://manucoffee.com
+    currency: JPY
+  - name: "Marufuku Coffee"
+    country: "JP"
+    url: https://marufukucoffeeten.com
+    currency: JPY
+  - name: "Mel Coffee Roasters"
+    country: "JP"
+    url: https://melcoffee.stores.jp
+    currency: JPY
+  - name: "Morihico"
+    country: "JP"
+    url: https://morihico.com
+    currency: JPY
+  - name: "Nem Coffee & Espresso"
+    country: "JP"
+    url: https://nem-coffee.com
+    currency: JPY
+  - name: "Nozy Coffee"
+    country: "JP"
+    url: https://nozycoffee.jp
+    currency: JPY
+  - name: "Obscura Coffee"
+    country: "JP"
+    url: https://obscura-coffee.com
+    currency: JPY
+  - name: "Ogawa Coffee"
+    country: "JP"
+    url: https://oc-shop.co.jp
+    currency: JPY
+  - name: "Okaffe Kyoto"
+    country: "JP"
+    url: https://okaffe.kyoto
+    currency: JPY
+  - name: "Paddlers Coffee"
+    country: "JP"
+    url: https://paddlerscoffee.com
+    currency: JPY
+  - name: "Philocoffea"
+    country: "JP"
+    url: https://philocoffea.com
+    currency: JPY
+  - name: "Q.O.L. Coffee"
+    country: "JP"
+    url: https://qolcoffee.com
+    currency: JPY
+  - name: "Sarutahiko Coffee"
+    country: "JP"
+    url: https://sarutahiko.co
+    currency: JPY
+  - name: "Saza Coffee"
+    country: "JP"
+    url: https://saza.co.jp
+    currency: JPY
+  - name: "Setouchi Coffee"
+    country: "JP"
+    url: https://setouchicoffee.jp
+    currency: JPY
+  - name: "Streamer Coffee"
+    country: "JP"
+    url: https://streamer.coffee
+    currency: JPY
+  - name: "Suzuki Coffee"
+    country: "JP"
+    url: https://suzukicoffee.co.jp
+    currency: JPY
+  - name: "Switch Coffee"
+    country: "JP"
+    url: https://switchcoffeetokyo.com
+    currency: JPY
+  - name: "Takamura Coffee"
+    country: "JP"
+    url: https://takamuranet.com
+    currency: JPY
+  - name: "Trunk Coffee"
+    country: "JP"
+    url: https://trunkcoffee.com
+    currency: JPY
+  - name: "Unir"
+    country: "JP"
+    url: https://unir-coffee.com
+    currency: JPY
+  - name: "Unlimited Coffee"
+    country: "JP"
+    url: https://unlimitedcoffeeroasters.com
+    currency: JPY
+  - name: "Walden Woods Kyoto"
+    country: "JP"
+    url: https://walden-woods.com
+    currency: JPY
+  - name: "Yanaka Coffee"
+    country: "JP"
+    url: https://yanaka-coffeeten.com
+    currency: JPY
+  - name: "Zhyvago Coffee"
+    country: "JP"
+    url: https://zhyvago-okinawa.com
+    currency: JPY
+  - name: "iki ESPRESSO TOKYO"
+    country: "JP"
+    url: https://ikiespresso.com
+    currency: JPY
+  - name: "丸山珈琲"
+    country: "JP"
+    url: https://maruyamacoffee.com
+    currency: JPY
+  - name: "堀口珈琲"
+    country: "JP"
+    url: https://horiguchicoffee.com
+    currency: JPY
+  - name: "Vava Coffee"
+    country: "KE"
+    url: https://vavacoffee.com
+    currency: KES
+  - name: "Anthracite Coffee"
+    country: "KR"
+    url: https://anthracitecoffee.com
+    currency: KRW
+  - name: "Bean Brothers"
+    country: "KR"
+    url: https://beanbrothers.co.kr
+    currency: KRW
+  - name: "Center Coffee"
+    country: "KR"
+    url: https://centercoffee.co.kr
+    currency: KRW
+  - name: "Coffee Libre"
+    country: "KR"
+    url: https://coffeelibre.kr
+    currency: KRW
+  - name: "Felt Coffee"
+    country: "KR"
+    url: https://felt.coffee
+    currency: KRW
+  - name: "Fritz Coffee"
+    country: "KR"
+    url: https://fritz.co.kr
+    currency: KRW
+  - name: "Manufact Coffee"
+    country: "KR"
+    url: https://manufact.co.kr
+    currency: KRW
+  - name: "Momos Coffee"
+    country: "KR"
+    url: https://momos.co.kr
+    currency: KRW
+  - name: "Namusairo"
+    country: "KR"
+    url: https://namusairo.com
+    currency: KRW
+  - name: "Terarosa"
+    country: "KR"
+    url: https://terarosa.com
+    currency: KRW
+  - name: "Backstage Roasters"
+    country: "LT"
+    url: https://backstageroasters.com
+    currency: EUR
+  - name: "Rocket Bean Roastery"
+    country: "LV"
+    url: https://rocketbean.eu
+    currency: EUR
+  - name: "Cardinal Casa de Café"
+    country: "MX"
+    url: https://cardinal.coffee
+    currency: MXN
+  - name: "VCR"
+    country: "MY"
+    url: https://vcr.my
+    currency: MYR
+  - name: "DAK Coffee"
+    country: "NL"
+    url: https://dakcoffeeroasters.com
+    currency: EUR

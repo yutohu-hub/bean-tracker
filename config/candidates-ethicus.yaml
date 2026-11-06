@@ -1,0 +1,25 @@
+# ETHICUS（エートス、静岡）。ドメインが2つあるので両方叩く。
+#
+#   ethicus.jp         ブランドサイト
+#   ethicus-store.jp   「エートス【通販】」＝売り場
+#
+# 小川珈琲（oc-ogawa.co.jp が会社案内で、売り場は oc-shop.co.jp）と
+# 豆香洞コーヒー（.com ではなく shop-pro.jp）で同じ形を2回踏んでいる。
+# ブランドサイトの方を登録すると、図鑑に載るのに豆が0件の店ができる。
+# どちらから商品が取れるかを見てから、取れた方を roasters.yaml に写す。
+
+settings:
+  max_pages: 4
+  timeout_sec: 20
+  retries: 2
+  concurrency: 2
+
+roasters:
+  - name: "ETHICUS"
+    country: "JP"
+    url: https://ethicus-store.jp
+    currency: JPY
+  - name: "ETHICUS（ブランドサイト）"
+    country: "JP"
+    url: https://ethicus.jp
+    currency: JPY

@@ -2,8 +2,13 @@ name: Bean Tracker 巡回
 
 on:
   schedule:
-    # 442店を13分割して毎時1スライスずつ巡回する（1周およそ13時間）。
-    # 一度に全店を叩くと Shopify の共有IP制限(429)でほぼ全滅するため、量を分けて回す。
+    # 毎時1スライスずつ巡回する。一度に全店を叩くと Shopify の共有IP制限(429)で
+    # ほぼ全滅するため、量を分けて回す。
+    #
+    # 分割数は 8。以前は13だったが、応答しない店（445店中171店）を
+    # 24時間に1回へ落としたぶん、1回あたりの実質店数が減った。
+    # 分割を 13→8 に詰めても1回あたりは約34店で以前と同じ重さのまま、
+    # 取れる店の一周が 13時間 → 8時間に縮む。相手に出す量は増えない。
     - cron: "0 * * * *"
   workflow_dispatch:         # 手動実行ボタン
     inputs:
@@ -12,6 +17,13 @@ on:
         # 店を足した直後は、その店の入っているスライスだけ先に回したい。
         # 空なら今までどおり run 番号から決める。
         description: "回すスライス（例: 3 / 空なら実行番号から自動）"
+        default: ""
+      shards:
+        # 1周を何回に分けるか。既定の13は「毎時×13回＝約13時間で一周」。
+        # 減らすと1回の店数が増えて一周は速くなるが、同じIPからの総量が増えて
+        # 429（レート制限）が出やすくなる。どこまで増やせるかは実測でしか
+        # 分からないので、手で走らせて確かめられるようにしてある。
+        description: "1周の分割数（既定 8。減らすほど1回の店数が増える）"
         default: ""
 
 permissions:
@@ -79,10 +91,10 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           PUSH_SEND_TOKEN: ${{ secrets.PUSH_SEND_TOKEN }}
           RUN_NUMBER: ${{ github.run_number }}
-          SHARDS: "13"
+          SHARDS: ${{ inputs.shards || '8' }}
           PICK: ${{ inputs.shard }}
         run: |
-          # run ごとにスライスをずらし、13回で全店を一周する。
+          # run ごとにスライスをずらし、分割数の回数で全店を一周する。
           # 手動実行でスライスを指定したときはそれを使う（店を足した直後に、
           # その店の入っているスライスだけ先に回すため）。
           SLICE="$(( RUN_NUMBER % SHARDS ))"
@@ -98,7 +110,16 @@ jobs:
         run: |
           "$RUNPY" scripts/build_frontend_data.py
 
+      # push に失敗しても、ジョブは落とさない。
+      #
+      # 実測: 110店を6分かけて巡回したあと、別の実行が先に押していて push に失敗し、
+      # ジョブごと落ちた。すると巡回履歴DB（state.db）のキャッシュ保存も飛ばされ、
+      # 6分ぶんの巡回が丸ごと消える。
+      #
+      # 書き出したものは state.db から作り直せるので、押せなかった回は次の回で
+      # 一緒に出れば足りる。取り直しの利かない巡回結果の方を優先して残す。
       - name: 結果をコミット（frontendの更新でPages再デプロイがトリガー）
+        continue-on-error: true
         run: |
           git config user.name "bean-tracker-bot"
           git config user.email "actions@users.noreply.github.com"

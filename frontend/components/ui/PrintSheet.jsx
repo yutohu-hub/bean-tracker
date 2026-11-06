@@ -65,9 +65,12 @@ function Bar({ rows, total }) {
   );
 }
 
-function Section({ title, note, children }) {
+/* flow=true のときはページをまたぐことを許す。
+   節は普段まとめて1ページに収めたいが、写真は何十枚にもなるので
+   まとめようとすると入りきらず、大きな空白だけが残る。 */
+function Section({ title, note, flow, children }) {
   return (
-    <section className="bt-p-sec">
+    <section className={flow ? "bt-p-sec bt-p-sec-flow" : "bt-p-sec"}>
       <h2 className="bt-p-h2">{title}</h2>
       {note && <p className="bt-p-note">{note}</p>}
       {children}
@@ -75,7 +78,7 @@ function Section({ title, note, children }) {
   );
 }
 
-export function PrintSheet({ list, email }) {
+export function PrintSheet({ list, email, photos }) {
   /* 端末に置いてある記録から作るので、静的に書き出したHTMLとは中身が食い違う。
      そのまま出すと React が組み直しに失敗する（#425）。
      画面に出るものではないので、端末側で組み上がってから描けばいい。 */
@@ -94,6 +97,19 @@ export function PrintSheet({ list, email }) {
   const byProc = tally(list, procOf);
   const byRoaster = tally(list, (t) => t.roaster);
   const byRating = [5, 4, 3, 2, 1].map((n) => [`${stars(n)}`, rated.filter((t) => Math.round(t.rating) === n).length]).filter(([, n]) => n);
+
+  /* 写真は豆ごとに1枚しか持てない（IndexedDB の鍵が beanId）。
+     同じ豆を何度も飲んでいると記録は何件にもなるので、豆で重ねて1枚にする。
+     日付は、その豆をいちばん新しく飲んだ日を使う（sorted は新しい順）。 */
+  const shots = [];
+  if (photos) {
+    const seen = new Set();
+    for (const t of sorted) {
+      if (!photos[t.beanId] || seen.has(t.beanId)) continue;
+      seen.add(t.beanId);
+      shots.push({ id: t.beanId, src: photos[t.beanId], name: t.name, roaster: t.roaster, at: t.at });
+    }
+  }
 
   return (
     <div id="bt-print">
@@ -134,6 +150,25 @@ export function PrintSheet({ list, email }) {
         </Section>
       )}
 
+      {shots.length > 0 && (
+        <Section title="写真" note={`${shots.length}枚・新しい順`} flow>
+          <div className="bt-p-shots">
+            {shots.map((s) => (
+              <figure className="bt-p-shot" key={s.id}>
+                {/* 端末の中の写真を data URL のまま置く。外に取りに行かないので、
+                    圏外でも刷れるし、印刷のときに欠けることもない */}
+                <img src={s.src} alt="" />
+                <figcaption>
+                  <b className="bt-p-shot-name">{s.name}</b>
+                  {s.roaster ? <span className="bt-p-shot-sub">{s.roaster}</span> : null}
+                  <span className="bt-p-shot-sub">{ymd(s.at)}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </Section>
+      )}
+
       <Section title="すべての記録" note={`${total} 件・新しい順`}>
         <table className="bt-p-table bt-p-list">
           <thead>
@@ -143,7 +178,9 @@ export function PrintSheet({ list, email }) {
             {sorted.map((t) => (
               <tr key={`${t.beanId}-${t.at}`}>
                 <td className="bt-p-date">{ymd(t.at)}</td>
-                <td>{t.name}{t.note ? <div className="bt-p-memo">{t.note}</div> : null}</td>
+                {/* 記録が持っているのは notes。ここは note を見ていたので、
+                    書いたメモが一度もPDFに出ていなかった。 */}
+                <td>{t.name}{t.notes ? <div className="bt-p-memo">{t.notes}</div> : null}</td>
                 <td>{t.roaster || "—"}</td>
                 <td>{t.origin || "—"}</td>
                 <td className="bt-p-star">{t.rating ? stars(t.rating) : "—"}</td>

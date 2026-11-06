@@ -42,6 +42,19 @@ jobs:
           python tests/test_build_prices.py
           python tests/test_looks_like_coffee.py
           python tests/test_origin.py
+          python tests/test_bean_evidence.py
+          python tests/test_withdrawn.py
+          python tests/test_bean_id.py
+          python tests/test_notes.py
+          python tests/test_shopify_adapter.py
+          python tests/test_instagram_pick.py
+          python tests/test_prune.py
+          python tests/test_roaster_key.py
+          python tests/test_health.py
+          python tests/test_robots.py
+          python tests/test_shop_denies.py
+          python tests/test_cjk_spec.py
+          python tests/test_currency.py
 
       # ネットに出ずに一巡できるかを見る。ECの仕様変更とは無関係に、
       # 差分検知と書き出しの配線が生きているかの確認
@@ -86,6 +99,22 @@ jobs:
       - name: 値段の扱い
         working-directory: .
         run: node tests/test_price.mjs
+
+      # 昔の豆番号で残っている記録の付け替え。人の記録を書き替えるので落とせない
+      - name: 記録の付け替え
+        working-directory: .
+        run: node tests/test_relink.mjs
+
+      # 好きな豆をまとめて送るリンク。壊れると相手の手元で起き、送った側は気づけない
+      - name: まとめリンクのURL
+        working-directory: .
+        run: node tests/test_url_beans.mjs
+
+      # 手で書いた店の情報と巡回のデータの重ね方。浅すぎると巡回で集めた欄が
+      # 出ず、強すぎると手で書いた街・座標が消える。どちらも画面では気づきにくい
+      - name: 店の情報の重ね方
+        working-directory: .
+        run: node tests/test_roaster_merge.mjs
 
       # 公開と同じ条件（サブパスあり）で書き出せるところまで確かめる
       - name: 静的ビルド

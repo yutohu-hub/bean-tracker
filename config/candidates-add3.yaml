@@ -1,0 +1,31 @@
+# 教わった3店。売り場のURLをそのまま置く。
+#
+# 巡回は店のトップから探すので、/collections/… の付いたURLではなく
+# ドメインの根を登録する。Shopify なら products.json が、
+# STORES なら sitemap + JSON-LD が入口になる。
+#
+#   FILTER SUPPLY  福岡・高砂。2019年から。自家焙煎と他店の豆の両方を扱う
+#                  （STORES の hifiltersupply.stores.jp もあるが、教わった
+#                    filter-supply.jp を登録する）
+#   ignis coffee   東京・千駄木。2020年12月開店、鎌倉にも
+#   acid coffee    東京・代々木上原
+
+settings:
+  max_pages: 4
+  timeout_sec: 20
+  retries: 2
+  concurrency: 3
+
+roasters:
+  - name: "FILTER SUPPLY"
+    country: "JP"
+    url: https://filter-supply.jp
+    currency: JPY
+  - name: "ignis coffee"
+    country: "JP"
+    url: https://igniscoffee.jp
+    currency: JPY
+  - name: "acid coffee"
+    country: "JP"
+    url: https://acidcoffee.stores.jp
+    currency: JPY

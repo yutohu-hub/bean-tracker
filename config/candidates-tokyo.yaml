@@ -1,0 +1,57 @@
+# 東京のスペシャルティコーヒー候補。
+#
+# BRUTUS「東京のスペシャルティコーヒー新店ガイド」（2024年、全52店）から
+# 店名を拾い、1店ずつ検索して実際の売り場URLを確かめたもの。
+#
+# ■ 制約
+#
+# brutus.jp はこの環境の外向き通信で遮断されていて直接読めない。
+# 記事本体ではなく検索結果から店名を拾っているので、52店すべては拾えていない。
+# 拾えた中で、さらに「売り場URLが確認できた店」だけをここに置いている。
+#
+# 売り場が見つからなかった店（豆を通販していないか、こちらが見つけられなかった）:
+#   Tasse Coffee Roastery / ロニック / ストロール / SCHOOL BUS COFFEE STOP /
+#   SPIEL COFFEE / Brewman Tokyo / 街と山 / dotcom coffee /
+#   BLUEM COFFEE COUNTER / GOOD COFFEE FARMS / Coffee Session
+# 推測でドメインを並べると当たらないうえに他所のサイトを叩くので、入れない。
+#
+# BASE・Square は Shopify の products.json も WooCommerce のAPIも持たない。
+# sitemap + JSON-LD で拾えるかどうかによる（Möwe Coffee は BASE で取れている）。
+
+settings:
+  max_pages: 4
+  timeout_sec: 20
+  retries: 2
+  concurrency: 3
+
+roasters:
+  # 世田谷・千歳船橋 / BASE
+  - name: "IRON COFFEE"
+    country: "JP"
+    url: https://ironcoffee.official.ec
+    currency: JPY
+  # 中央区・築地 / BASE
+  - name: "YAZAWA COFFEE ROASTERS"
+    country: "JP"
+    url: https://yazawacoffee.base.shop
+    currency: JPY
+  # 武蔵野・吉祥寺 / BASE
+  - name: "SACHIOPIA COFFEE"
+    country: "JP"
+    url: https://sachiopia.base.ec
+    currency: JPY
+  # 江東区・清澄白河 / Square
+  - name: "FIRST CROP COFFEE JAPAN"
+    country: "JP"
+    url: https://firstcropcoffeejapan.square.site
+    currency: JPY
+  # 所在地は未確認
+  - name: "Scrop COFFEE ROASTERS"
+    country: "JP"
+    url: https://scrop-coffee-roasters.com
+    currency: JPY
+  # 新宿
+  - name: "トーアコーヒー"
+    country: "JP"
+    url: https://toacoffee-online.com
+    currency: JPY

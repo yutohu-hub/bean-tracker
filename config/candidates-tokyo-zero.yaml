@@ -1,0 +1,79 @@
+# 図鑑にあるのに豆が0件の東京の店。巡回一覧には入っているので、
+# 毎時叩かれているのに商品が取れていない。理由を出すために叩き直す。
+#
+# 小川珈琲（会社案内のURLを登録していた）と同じ形が混ざっている可能性がある。
+# 理由が「sitemapに商品ページが無い」なら店の作りの問題、
+# 「robots.txt で断られている」なら方針どおり取らない、
+# 404 や届かないなら URL が違う。分けないと打つ手が決まらない。
+
+settings:
+  max_pages: 4
+  timeout_sec: 20
+  retries: 2
+  concurrency: 4
+
+roasters:
+  - name: "Switch Coffee"
+    country: "JP"
+    url: https://switchcoffeetokyo.com
+    currency: JPY
+  - name: "Nozy Coffee"
+    country: "JP"
+    url: https://nozycoffee.jp
+    currency: JPY
+  - name: "堀口珈琲"
+    country: "JP"
+    url: https://horiguchicoffee.com
+    currency: JPY
+  - name: "Koffee Mameya"
+    country: "JP"
+    url: https://koffee-mameya.com
+    currency: JPY
+  - name: "Unlimited Coffee"
+    country: "JP"
+    url: https://unlimitedcoffeeroasters.com
+    currency: JPY
+  - name: "Bear Pond Espresso"
+    country: "JP"
+    url: https://bear-pond.com
+    currency: JPY
+  - name: "Coffee Wrights"
+    country: "JP"
+    url: https://coffee-wrights.jp
+    currency: JPY
+  - name: "Amameria Espresso"
+    country: "JP"
+    url: https://amameria.com
+    currency: JPY
+  - name: "Sarutahiko Coffee"
+    country: "JP"
+    url: https://sarutahiko.co
+    currency: JPY
+  - name: "Yanaka Coffee"
+    country: "JP"
+    url: https://yanaka-coffeeten.com
+    currency: JPY
+  - name: "Streamer Coffee"
+    country: "JP"
+    url: https://streamer.coffee
+    currency: JPY
+  - name: "Obscura Coffee"
+    country: "JP"
+    url: https://obscura-coffee.com
+    currency: JPY
+  - name: "Nem Coffee & Espresso"
+    country: "JP"
+    url: https://nem-coffee.com
+    currency: JPY
+  - name: "Little Nap Coffee"
+    country: "JP"
+    url: https://littlenap.jp
+    currency: JPY
+  - name: "Paddlers Coffee"
+    country: "JP"
+    url: https://paddlerscoffee.com
+    currency: JPY
+  - name: "iki ESPRESSO TOKYO"
+    country: "JP"
+    url: https://ikiespresso.com
+    currency: JPY
